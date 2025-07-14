@@ -85,12 +85,13 @@ class AASXETLPipeline:
             'errors': []
         }
     
-    def process_aasx_file(self, file_path: Union[str, Path]) -> Dict[str, Any]:
+    def process_aasx_file(self, file_path: Union[str, Path], project_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Process a single AASX file through the complete ETL pipeline.
         
         Args:
             file_path: Path to the AASX file
+            project_id: Optional project ID for project-based output organization
             
         Returns:
             Dictionary with processing results
@@ -100,6 +101,7 @@ class AASXETLPipeline:
         
         result = {
             'file_path': str(file_path),
+            'project_id': project_id,
             'status': 'processing',
             'extract_result': None,
             'transform_result': None,
@@ -131,7 +133,7 @@ class AASXETLPipeline:
             
             # Step 3: Load
             load_start = time.time()
-            load_result = self._load_phase(transform_result['data'], str(file_path))
+            load_result = self._load_phase(transform_result['data'], str(file_path), project_id)
             result['load_result'] = load_result
             self.stats['load_time'] += time.time() - load_start
             
@@ -316,22 +318,70 @@ class AASXETLPipeline:
                 'processing_time': 0
             }
     
-    def _load_phase(self, transformed_data: Dict[str, Any], source_file: Optional[str] = None) -> Dict[str, Any]:
-        """Execute loading phase"""
+    def _load_phase(self, transformed_data: Dict[str, Any], source_file: Optional[str] = None, project_id: Optional[str] = None) -> Dict[str, Any]:
+        """Execute loading phase with project-based output organization"""
         try:
             logger.info("Starting loading phase")
             
+            # Create project-specific loader configuration
+            load_config = self.config.load_config
+            
+            # If project_id is provided, create project-based output directory
+            if project_id:
+                # Create project-specific output directory structure
+                project_output_dir = f"output/projects/{project_id}"
+                # Ensure SQLite and vector DB exports are enabled for project-based outputs
+                export_formats = load_config.export_formats.copy() if load_config.export_formats else []
+                if 'sqlite' not in export_formats:
+                    export_formats.append('sqlite')
+                if 'vector_db' not in export_formats:
+                    export_formats.append('vector_db')
+                
+                load_config = LoaderConfig(
+                    output_directory=project_output_dir,
+                    database_path=f"{project_output_dir}/aasx_data.db",
+                    vector_db_path=f"{project_output_dir}/vector_db",
+                    vector_db_type=load_config.vector_db_type,
+                    qdrant_url=load_config.qdrant_url,
+                    qdrant_collection_prefix=f"aasx_project_{project_id}",
+                    embedding_model=load_config.embedding_model,
+                    chunk_size=load_config.chunk_size,
+                    overlap_size=load_config.overlap_size,
+                    include_metadata=load_config.include_metadata,
+                    create_indexes=load_config.create_indexes,
+                    backup_existing=load_config.backup_existing,
+                    separate_file_outputs=load_config.separate_file_outputs,
+                    include_filename_in_output=load_config.include_filename_in_output,
+                    systematic_structure=load_config.systematic_structure,
+                    folder_structure=load_config.folder_structure,
+                    export_formats=export_formats,  # Use updated export formats
+                    export_json=load_config.export_json,
+                    export_yaml=load_config.export_yaml,
+                    export_csv=load_config.export_csv,
+                    export_tsv=load_config.export_tsv,
+                    export_graph=load_config.export_graph,
+                    export_rag=load_config.export_rag,
+                    export_vector_db=True,  # Always enable for project-based outputs
+                    export_sqlite=True      # Always enable for project-based outputs
+                )
+                logger.info(f"Using project-based output directory: {project_output_dir}")
+            
             # Create file-specific loader if needed
-            if self.config.load_config.separate_file_outputs:
-                loader = AASXLoader(self.config.load_config, source_file)
+            if load_config.separate_file_outputs:
+                loader = AASXLoader(load_config, source_file)
             else:
                 # Use shared loader for all files
                 if self.loader is None:
-                    self.loader = AASXLoader(self.config.load_config)
+                    self.loader = AASXLoader(load_config)
                 loader = self.loader
             
             # Load transformed data
             load_result = loader.load_aasx_data(transformed_data)
+            
+            # Add project information to load result
+            if project_id:
+                load_result['project_id'] = project_id
+                load_result['project_output_dir'] = project_output_dir
             
             logger.info("Loading completed successfully")
             return {
@@ -339,6 +389,8 @@ class AASXETLPipeline:
                 'files_exported': load_result.get('files_exported', []),
                 'database_records': load_result.get('database_records', 0),
                 'vector_embeddings': load_result.get('vector_embeddings', 0),
+                'project_id': project_id,
+                'project_output_dir': load_result.get('project_output_dir'),
                 'errors': load_result.get('errors', [])
             }
                 
@@ -346,7 +398,8 @@ class AASXETLPipeline:
             logger.error(f"Loading phase error: {e}")
             return {
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'project_id': project_id
             }
     
     def validate_pipeline(self) -> Dict[str, Any]:

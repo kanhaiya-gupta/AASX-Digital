@@ -6,6 +6,8 @@ This directory contains comprehensive AASX (Asset Administration Shell Exchange)
 
 ## Data Examples
 
+https://admin-shell-io.com/samples/
+
 ### 1. Additive Manufacturing - Industrial 3D Printer
 **File:** `data/aasx-examples/additive-manufacturing-3d-printer.aasx`
 

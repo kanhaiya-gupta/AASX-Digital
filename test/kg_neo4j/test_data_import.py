@@ -17,8 +17,8 @@ try:
 except ImportError:
     pass
 
-# Add backend to path for imports
-sys.path.append(str(Path(__file__).parent.parent.parent / "backend"))
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 
 def test_data_import():
     """Test Neo4j data import functionality"""

@@ -10,11 +10,11 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-# Add backend to path
-sys.path.append(str(Path(__file__).parent.parent / 'backend'))
+# Add src to path
+sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
 # Import with correct module path
-sys.path.append(str(Path(__file__).parent.parent / 'backend' / 'ai-rag'))
+sys.path.append(str(Path(__file__).parent.parent / 'src' / 'ai-rag'))
 from ai_rag import EnhancedRAGSystem
 
 class EnhancedRAGDemo:

@@ -27,8 +27,8 @@ except ImportError:
     pass  # dotenv not available, will use system environment variables
 import pandas as pd
 
-# Add backend to path for imports
-sys.path.append(str(Path(__file__).parent.parent / "backend"))
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from kg_neo4j.neo4j_manager import Neo4jManager
 from kg_neo4j.graph_analyzer import AASXGraphAnalyzer

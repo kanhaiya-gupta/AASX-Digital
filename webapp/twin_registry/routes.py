@@ -14,7 +14,7 @@ import random
 import os
 
 # Create router
-router = APIRouter(prefix="/twin-registry", tags=["twin-registry"])
+router = APIRouter(tags=["twin-registry"])
 
 # Setup templates
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -369,4 +369,27 @@ async def get_twin_statistics():
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/status")
+async def get_twin_registry_status():
+    """Get twin registry status"""
+    try:
+        total_twins = len(TWINS_DB)
+        active_twins = len([twin for twin in TWINS_DB if twin["status"] == "active"])
+        
+        status = {
+            "status": "available",
+            "total_twins": total_twins,
+            "active_twins": active_twins,
+            "registry_ready": True,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return status
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        } 

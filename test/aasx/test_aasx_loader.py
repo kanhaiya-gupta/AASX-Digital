@@ -15,8 +15,8 @@ from unittest.mock import Mock, patch, MagicMock
 import sys
 import os
 
-# Add the backend directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
+# Add the src directory to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from aasx.aasx_loader import AASXLoader, LoaderConfig
 

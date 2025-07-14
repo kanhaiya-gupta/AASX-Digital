@@ -12,7 +12,9 @@ Welcome to the comprehensive documentation for the AASX Digital Twin Analytics F
 - **[AAS Processor](AAS_PROCESSOR.md)** - .NET-based AASX file processing
 - **[Knowledge Graph](KNOWLEDGE_GRAPH.md)** - Neo4j integration and graph analytics
 - **[ETL Pipeline](AASX_ETL_PIPELINE.md)** - Data extraction, transformation, and loading
+- **[Export Formats](EXPORT_FORMATS.md)** - 7 comprehensive data export formats
 - **[AI/RAG System](AAS_INTEGRATION.md)** - AI-powered retrieval and analysis
+- **[GUI Vector Database Guide](GUI_VECTOR_DATABASE_GUIDE.md)** - Web interface for vector database management
 
 ### 📊 Data & Examples
 - **[Data Examples](DATA_EXAMPLES.md)** - Sample AASX files and data structures

@@ -10,7 +10,7 @@ import json
 import tempfile
 
 # Add parent directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def test_transformation_imports():
     """Test that transformation modules can be imported"""

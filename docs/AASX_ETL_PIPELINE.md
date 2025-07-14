@@ -200,17 +200,51 @@ print(f"Failed: {result['files_failed']}")
 print(f"Total time: {result['total_time']:.2f}s")
 ```
 
-### Vector Database Integration
+### Global Vector Database Integration
+
+The ETL pipeline integrates with a **global vector database** that accumulates embeddings from all processed files, enabling cross-file semantic search and AI-powered analysis.
+
+#### 🎯 **Global Vector Database Architecture**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Global Vector Database                       │
+│                        (Qdrant Server)                         │
+│                    http://localhost:6333                        │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    File-Specific Collections                    │
+│                                                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │ aasx_file1_     │  │ aasx_file2_     │  │ aasx_file3_     │  │
+│  │ assets          │  │ assets          │  │ assets          │  │
+│  │ submodels       │  │ submodels       │  │ submodels       │  │
+│  │ documents       │  │ documents       │  │ documents       │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### ✅ **Key Features**
+
+1. **Global Accumulation**: All ETL runs add to the same global vector database
+2. **File-Specific Collections**: Each file gets its own collections (e.g., `aasx_additive-manufacturing-3d-printer_converted_assets`)
+3. **Duplicate Prevention**: Uses `upsert` operations to prevent data accumulation
+4. **Cross-File Search**: Search across all processed files simultaneously
+5. **Persistent Storage**: Vector database persists across server restarts
+
+#### 🔧 **Configuration**
 
 ```python
-# Initialize pipeline with vector database
+# Initialize pipeline with global vector database
 config = ETLPipelineConfig()
 pipeline = AASXETLPipeline(config)
 
-# Process files (automatically creates embeddings)
+# Process files (automatically adds to global vector database)
 pipeline.process_aasx_file("file.aasx")
 
-# Search for similar entities
+# Search across ALL processed files
 results = pipeline.loader.search_similar(
     query="motor quality control",
     entity_type="asset",
@@ -219,9 +253,77 @@ results = pipeline.loader.search_similar(
 
 for result in results:
     print(f"ID: {result['id']}")
+    print(f"File: {result['metadata']['source_file']}")
     print(f"Similarity: {result['similarity']}")
     print(f"Content: {result['document']}")
 ```
+
+#### 📊 **Vector Database Status**
+
+```bash
+# Check global vector database status
+curl http://localhost:6333/collections
+
+# Example response showing accumulated collections:
+{
+  "collections": [
+    {"name": "aasx_additive-manufacturing-3d-printer_converted_assets"},
+    {"name": "aasx_additive-manufacturing-3d-printer_converted_submodels"},
+    {"name": "aasx_hydrogen-filling-station_converted_assets"},
+    {"name": "aasx_hydrogen-filling-station_converted_submodels"},
+    {"name": "aasx_smart-grid-substation_converted_assets"},
+    {"name": "aasx_smart-grid-substation_converted_submodels"},
+    # ... hundreds more collections from previous ETL runs
+  ]
+}
+```
+
+#### 🔄 **Duplicate Handling**
+
+The system prevents data accumulation when re-running ETL on the same files:
+
+- **SQLite Database**: Uses `INSERT OR REPLACE` to update existing records
+- **Vector Database**: Uses `upsert` operations to update existing embeddings
+- **File Exports**: Overwrites existing files in the same location
+- **Collections**: Updates existing file-specific collections
+
+#### 💾 **Local Backup Strategy**
+
+While the global vector database is stored in Qdrant, you can create local backups:
+
+```bash
+# 1. Export vector database metadata
+curl http://localhost:6333/collections > vector_db_backup.json
+
+# 2. Create backup script
+cat > backup_vector_db.sh << 'EOF'
+#!/bin/bash
+BACKUP_DIR="backups/vector_db_$(date +%Y%m%d_%H%M%S)"
+mkdir -p $BACKUP_DIR
+
+# Export collections metadata
+curl -s http://localhost:6333/collections > $BACKUP_DIR/collections.json
+
+# Export each collection's points (optional - can be large)
+for collection in $(curl -s http://localhost:6333/collections | jq -r '.collections[].name'); do
+    echo "Backing up collection: $collection"
+    curl -s "http://localhost:6333/collections/$collection/points" > $BACKUP_DIR/${collection}_points.json
+done
+
+echo "Vector database backup completed: $BACKUP_DIR"
+EOF
+
+chmod +x backup_vector_db.sh
+./backup_vector_db.sh
+```
+
+#### 🚨 **Important Notes**
+
+1. **No Local Vector Database Directory**: The vector database is stored in Qdrant server, not in local files
+2. **Global Persistence**: Data persists across ETL runs and server restarts
+3. **Collection Growth**: Each file creates new collections, but existing collections are updated
+4. **Memory Usage**: Large numbers of collections may impact Qdrant performance
+5. **Backup Recommended**: Regular backups of the Qdrant data directory are recommended
 
 ### RAG Dataset Creation
 
@@ -280,7 +382,7 @@ print(f"RAG dataset created: {rag_path}")
 
 ## Output Formats
 
-The ETL pipeline generates multiple output formats, each optimized for specific use cases:
+The ETL pipeline generates **7 comprehensive export formats**, each optimized for specific use cases and ensuring complete data accessibility:
 
 ### 1. JSON Format (General Purpose)
 ```json
@@ -370,21 +472,113 @@ submodel,submodel_001,TechData_001,Technical Data,TechnicalData,MEDIUM,COMPLIANT
 **Use case**: Graph databases (Neo4j, ArangoDB), relationship analysis, network visualization  
 **Features**: Nodes and edges structure optimized for graph operations
 
-### 5. Vector Database Format
-```python
+### 5. RAG Format (AI/Retrieval-Augmented Generation)
+```json
 {
-  'id': 'asset_001',
-  'embedding': [0.1, 0.2, 0.3, ...],
-  'document': 'Asset: Motor_001 - DC Servo Motor for Quality Control',
-  'metadata': {
-    'entity_type': 'asset',
-    'quality_level': 'high',
-    'compliance_status': 'certified'
+  "version": "1.0",
+  "format": "rag_ready",
+  "timestamp": "2025-07-11T12:03:34.314886",
+  "source_file": "test.aasx",
+  "entities": [
+    {
+      "type": "asset",
+      "id": "asset_001",
+      "id_short": "Motor1",
+      "description": "DC Servo Motor",
+      "content": "Asset: Motor1 - DC Servo Motor",
+      "metadata": {}
+    }
+  ]
+}
+```
+**Use case**: AI systems, semantic search, retrieval-augmented generation  
+**Features**: Pre-formatted content optimized for AI model consumption
+
+### 6. SQLite Database Format (Relational Storage)
+```sql
+-- Assets table
+CREATE TABLE assets (
+    id TEXT PRIMARY KEY,
+    id_short TEXT,
+    description TEXT,
+    type TEXT,
+    quality_level TEXT,
+    compliance_status TEXT,
+    metadata TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Submodels table
+CREATE TABLE submodels (
+    id TEXT PRIMARY KEY,
+    id_short TEXT,
+    description TEXT,
+    type TEXT,
+    quality_level TEXT,
+    compliance_status TEXT,
+    metadata TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+**Use case**: Relational queries, SQL-based analytics, structured data access  
+**Features**: Full SQLite database with indexed tables and relationships
+
+### 7. Vector Database Format (Semantic Search)
+```json
+{
+  "format": "vector_database",
+  "version": "1.0",
+  "vector_db_type": "qdrant",
+  "created_at": "2025-07-11T12:03:34.314886",
+  "collections": [
+    {
+      "name": "test_aasx_test_assets",
+      "points_count": 3,
+      "vector_size": 384,
+      "distance": "Cosine",
+      "type": "qdrant_collection"
+    }
+  ],
+  "metadata": {
+    "embedding_model": "all-MiniLM-L6-v2",
+    "chunk_size": 512,
+    "overlap_size": 50,
+    "collection_prefix": "test_aasx"
   }
 }
 ```
-**Use case**: Semantic search, AI/RAG systems, similarity analysis  
-**Features**: Text embeddings for semantic search capabilities
+**Use case**: Semantic search, similarity analysis, AI embeddings  
+**Features**: Vector embeddings with metadata for advanced search capabilities
+
+## Export Configuration
+
+### Complete Export Setup
+```python
+from backend.aasx.aasx_loader import LoaderConfig
+
+# Configure all 7 export formats
+config = LoaderConfig(
+    output_directory="output/test_etl",
+    database_path="output/test_etl/test/aasx_data.db",
+    vector_db_type="qdrant",
+    qdrant_url="http://localhost:6333",
+    qdrant_collection_prefix="test_aasx",
+    backup_existing=False,  # Disable backup for cleaner output
+    export_formats=['json', 'yaml', 'csv', 'graph', 'rag', 'vector_db', 'sqlite']
+)
+```
+
+### Expected Output Structure
+```
+output/test_etl/test/
+├── aasx_data.csv              # CSV export (analytics)
+├── aasx_data.db               # SQLite database (relational)
+├── aasx_data.json             # JSON export (general)
+├── aasx_data.yaml             # YAML export (human-readable)
+├── aasx_data_graph.json       # Graph export (Neo4j compatible)
+├── aasx_data_rag.json         # RAG export (AI-ready)
+└── aasx_data_vector_db.json   # Vector DB export (semantic search)
+```
 
 ## Performance Optimization
 

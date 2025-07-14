@@ -6,7 +6,7 @@ This script tests AASX integration with the platform.
 """
 
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def test_aasx_integration():
     """Test AASX integration functionality"""

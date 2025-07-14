@@ -99,7 +99,7 @@ def check_dependencies():
     
     # Check .NET processor
     try:
-        from webapp.aasx.dotnet_bridge import DotNetAasBridge
+        from src.aasx.dotnet_bridge import DotNetAasBridge
         bridge = DotNetAasBridge()
         if bridge.is_available():
             print("  OK: .NET AAS processor available")

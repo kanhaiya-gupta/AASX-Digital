@@ -1,0 +1,149 @@
+# Enhanced AI/RAG System Configuration
+# Configuration file for the enhanced RAG system
+
+# Vector Database Configuration
+qdrant:
+  url: "http://localhost:6333"
+  timeout: 30
+  prefer_grpc: false
+  collection_name: "aasx_assets"  # Default collection name
+  vector_size: 384
+  port: 6333
+
+# Neo4j Configuration
+neo4j:
+  uri: "neo4j://localhost:7688"
+  user: "neo4j"
+  password: "Neo4j123"
+  database: "neo4j"
+  max_connection_lifetime: 3600
+
+# OpenAI Configuration
+openai:
+  api_key: ""  # Set via environment variable OPENAI_API_KEY
+  model: "gpt-4o-mini"
+  max_tokens: 500
+  temperature: 0.7
+  timeout: 30
+
+# Embedding Model Configuration
+embeddings:
+  model: "all-MiniLM-L6-v2"
+  max_length: 512
+  device: "cpu"  # or "cuda" for GPU
+  use_local: true  # Use local embeddings instead of OpenAI
+
+# ETL Integration
+etl:
+  output_directory: "output/etl_results"
+  supported_formats: ["json", "yaml", "csv"]
+  index_graph_files: false  # Use Neo4j for graph data
+
+# Search Configuration
+search:
+  max_results: 10
+  similarity_threshold: 0.7
+  include_metadata: true
+  include_sources: true
+
+# RAG Configuration
+rag:
+  include_graph_context: true
+  max_context_length: 2000
+  fallback_enabled: true
+  cache_responses: true
+  cache_ttl: 3600
+  top_k: 10
+  similarity_threshold: 0.7
+  system_prompt: "You are an AI assistant specialized in analyzing Asset Administrative Shell (AASX) data for Quality Infrastructure applications. You have access to detailed digital twin data including assets, submodels, documents, and technical specifications from various manufacturers and systems. When analyzing the data, be specific about the actual assets, components, and technical details found in the digital twin data. Provide concrete insights based on the specific data available rather than generic responses."
+
+# Collections Configuration
+collections:
+  aasx_assets:
+    size: 384
+    description: "AASX asset descriptions and metadata"
+    distance: "COSINE"
+  aasx_submodels:
+    size: 384
+    description: "AASX submodel descriptions"
+    distance: "COSINE"
+  quality_standards:
+    size: 384
+    description: "Quality infrastructure standards"
+    distance: "COSINE"
+  compliance_data:
+    size: 384
+    description: "Compliance and certification data"
+    distance: "COSINE"
+  analysis_results:
+    size: 384
+    description: "Previous analysis results and insights"
+    distance: "COSINE"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/enhanced_rag.log"
+  max_size: "10MB"
+  backup_count: 5
+
+# Performance Configuration
+performance:
+  batch_size: 100
+  max_concurrent_requests: 10
+  connection_pool_size: 5
+  timeout: 30
+
+# Analysis Types
+analysis_types:
+  general:
+    description: "General analysis and information retrieval"
+    system_prompt: "You are an AI assistant specialized in analyzing Asset Administrative Shell (AASX) data for Quality Infrastructure applications."
+  quality:
+    description: "Quality assessment and compliance analysis"
+    system_prompt: "Focus on quality assessment, compliance status, and quality improvement recommendations."
+  risk:
+    description: "Risk identification and assessment"
+    system_prompt: "Focus on risk identification, assessment, and mitigation strategies."
+  optimization:
+    description: "Optimization and efficiency improvements"
+    system_prompt: "Focus on optimization opportunities, efficiency improvements, and cost savings."
+
+# Analysis Categories
+analysis_categories:
+  quality:
+    name: "Quality Analysis"
+    description: "Quality assessment and compliance analysis"
+  risk:
+    name: "Risk Analysis"
+    description: "Risk identification and assessment"
+  optimization:
+    name: "Optimization Analysis"
+    description: "Optimization and efficiency improvements"
+  general:
+    name: "General Analysis"
+    description: "General analysis and information retrieval"
+
+# Example Queries for UI
+example_queries:
+  general:
+    - "Tell me about the servo motor asset"
+    - "What submodels are associated with the smart grid?"
+    - "Describe the hydrogen filling station components"
+    - "What is the structure of the wastewater treatment plant?"
+  quality:
+    - "What is the quality level of the servo motor?"
+    - "Are there any compliance issues with the current assets?"
+    - "What quality metrics are available for the manufacturing process?"
+    - "How does the asset quality compare to industry standards?"
+  risk:
+    - "What are the main risk factors for the hydrogen filling station?"
+    - "Are there any safety concerns with the current setup?"
+    - "What is the risk level of the wastewater treatment plant?"
+    - "What mitigation strategies are recommended?"
+  optimization:
+    - "How can we optimize the 3D printer performance?"
+    - "What efficiency improvements are possible?"
+    - "Are there cost-saving opportunities in the current setup?"
+    - "What optimization recommendations do you have?" 

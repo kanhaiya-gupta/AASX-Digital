@@ -44,12 +44,23 @@ The AASX Digital Twin Analytics Framework provides a complete solution for:
 - **Analytics Dashboard** - Digital twin analytics and visualization
 
 ### 🔧 Technical Capabilities
-- **ETL Pipeline** - Automated processing of AASX files
+- **ETL Pipeline** - Automated processing of AASX files with **7 export formats**
 - **Neo4j Integration** - Graph database for relationship analysis
-- **Qdrant Vector Database** - Semantic search and similarity matching
+- **Global Vector Database** - Persistent Qdrant server with cross-file semantic search
 - **OpenAI Integration** - AI-powered querying and analysis
 - **RESTful APIs** - Complete API for integration
 - **Web Interface** - Modern, responsive web application
+
+### 📊 **7 Comprehensive Export Formats**
+The ETL pipeline generates complete data accessibility through multiple formats:
+
+1. **JSON** - General purpose data exchange
+2. **YAML** - Human-readable configuration
+3. **CSV** - Analytics and spreadsheet ready
+4. **Graph** - Neo4j graph database format
+5. **RAG** - AI/Retrieval-Augmented Generation ready
+6. **SQLite** - Relational database storage
+7. **Vector DB** - Semantic search embeddings
 
 ## Quick Start
 
@@ -103,8 +114,9 @@ The AASX Digital Twin Analytics Framework provides a complete solution for:
                                 │                        │
                                 ▼                        ▼
                        ┌─────────────────┐    ┌─────────────────┐
-                       │  Vector Store   │    │   AI/RAG System │
-                       │   (Qdrant)      │    │   (OpenAI)      │
+                       │ Global Vector   │    │   AI/RAG System │
+                       │ Database        │    │   (OpenAI)      │
+                       │ (Qdrant Server) │    │                 │
                        └─────────────────┘    └─────────────────┘
                                 │                        │
                                 └──────────┬─────────────┘
@@ -115,13 +127,61 @@ The AASX Digital Twin Analytics Framework provides a complete solution for:
                                   └─────────────────┘
 ```
 
+## 🌐 Global Vector Database
+
+The framework uses a **persistent global vector database** (Qdrant server) that accumulates embeddings from all processed AASX files, enabling:
+
+### ✅ **Key Features**
+- **Cross-File Search** - Search across all processed files simultaneously
+- **Persistent Storage** - Data persists across server restarts and ETL runs
+- **File-Specific Collections** - Each file gets dedicated collections (e.g., `aasx_file1_assets`)
+- **Duplicate Prevention** - Uses `upsert` operations to prevent data accumulation
+- **Semantic Search** - AI-powered similarity matching and retrieval
+
+### 📊 **Database Status**
+```bash
+# Check global vector database
+curl http://localhost:6333/collections
+
+# Example: Shows accumulated collections from all ETL runs
+{
+  "collections": [
+    {"name": "aasx_additive-manufacturing-3d-printer_converted_assets"},
+    {"name": "aasx_hydrogen-filling-station_converted_submodels"},
+    # ... hundreds more collections
+  ]
+}
+```
+
+### 💾 **Local Backup**
+```bash
+# Create metadata backup
+python scripts/backup_vector_db.py
+
+# Create full backup with point data
+python scripts/backup_vector_db.py --include-points
+
+# Custom backup location
+python scripts/backup_vector_db.py --backup-dir /path/to/backup
+```
+
+### 🔄 **Duplicate Handling**
+When re-running ETL on the same files:
+- **SQLite**: Uses `INSERT OR REPLACE` to update existing records
+- **Vector DB**: Uses `upsert` operations to update existing embeddings
+- **Files**: Overwrites existing files in the same location
+- **Collections**: Updates existing file-specific collections
+
+**No data accumulation occurs** - the system updates rather than duplicates data.
+
 ## Usage
 
 ### Processing AASX Files
 1. Navigate to the AASX Package Explorer
 2. Upload your AASX files
-3. Monitor the ETL processing
+3. Monitor the ETL processing with **7 export formats**
 4. View processed data and statistics
+5. Access data in your preferred format (JSON, CSV, SQLite, etc.)
 
 ### Knowledge Graph Analysis
 1. Access the Knowledge Graph module
@@ -151,7 +211,7 @@ NEO4J_URI=neo4j://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=password
 
-# Vector Database
+# Global Vector Database (Qdrant Server)
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
 

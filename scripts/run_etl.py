@@ -23,8 +23,8 @@ import traceback
 import subprocess
 import importlib
 
-# Add backend to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Define required packages for ETL pipeline
 REQUIRED_PACKAGES = {
@@ -339,11 +339,13 @@ def create_pipeline_config(config):
     output_config = config.get('output', {})
     loader_config = LoaderConfig(
         output_directory=output_config.get('base_directory', 'output/etl_results'),
-        database_path=load_config.get('sqlite_path', 'output/aasx_data.db'),
+        database_path=load_config.get('sqlite_path', 'aasx_data.db'),
         vector_db_path=vector_config.get('path', 'output/vector_db'),
         backup_existing=load_config.get('backup_existing', True),
         separate_file_outputs=output_config.get('separate_file_outputs', False),
-        include_filename_in_output=output_config.get('include_filename_in_output', False)
+        include_filename_in_output=output_config.get('include_filename_in_output', False),
+        systematic_structure=output_config.get('systematic_structure', True),
+        folder_structure=output_config.get('folder_structure', 'timestamped_by_file')
     )
     
     # Create ETL pipeline config
@@ -506,7 +508,7 @@ def create_rag_dataset(pipeline, config):
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description='Run AASX ETL Pipeline')
-    parser.add_argument('--config', default='config_etl.yaml', help='Configuration file path')
+    parser.add_argument('--config', default='webapp/config/config_etl.yaml', help='Configuration file path')
     parser.add_argument('--files', nargs='+', help='Specific files to process')
     parser.add_argument('--output-dir', help='Override output directory')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')

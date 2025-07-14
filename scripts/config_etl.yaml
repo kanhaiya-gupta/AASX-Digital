@@ -32,6 +32,10 @@ output:
   separate_file_outputs: true
   # Include file name in output directory
   include_filename_in_output: true
+  # Create systematic folder structure
+  systematic_structure: true
+  # Folder structure: etl_results/[timestamp]/[filename]/[formats]
+  folder_structure: "timestamped_by_file"
 
 # Transformation Configuration
 transformation:
@@ -44,6 +48,7 @@ transformation:
     - "json"
     - "yaml"
     - "csv"
+    - "tsv"
     - "graph"
   # Include metadata in output
   include_metadata: true

@@ -18,8 +18,8 @@ try:
 except ImportError:
     pass  # dotenv not available, will use system environment variables
 
-# Add backend to path for imports
-sys.path.append(str(Path(__file__).parent.parent.parent / "backend"))
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 
 def test_imports():
     """Test that all modules can be imported"""

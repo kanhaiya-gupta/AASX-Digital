@@ -13,6 +13,14 @@ import time
 from pathlib import Path
 import uvicorn
 
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # If python-dotenv is not installed, continue without it
+    pass
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -49,6 +57,12 @@ class AASXDigitalTwinFramework:
         app_path = self.webapp_dir / "app.py"
         if not app_path.exists():
             logger.error("❌ app.py not found in webapp directory!")
+            return False
+        
+        # Check src directory (renamed from backend)
+        src_dir = self.project_root / "src"
+        if not src_dir.exists():
+            logger.error("❌ src directory not found! (renamed from backend)")
             return False
         
         logger.info("✅ Environment check passed")
@@ -99,7 +113,13 @@ class AASXDigitalTwinFramework:
         # Check Neo4j
         try:
             from neo4j import GraphDatabase
-            driver = GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "password"))
+            # Use environment variables with defaults for Docker setup
+            neo4j_uri = os.getenv('NEO4J_URI', 'neo4j://localhost:7688')
+            neo4j_user = os.getenv('NEO4J_USER', 'neo4j')
+            neo4j_password = os.getenv('NEO4J_PASSWORD', 'Neo4j123')
+            
+            logger.info(f"🔌 Connecting to Neo4j at {neo4j_uri}")
+            driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
             driver.verify_connectivity()
             driver.close()
             services_status['Neo4j'] = "✅ Connected"

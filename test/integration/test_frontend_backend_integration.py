@@ -1,33 +1,32 @@
 #!/usr/bin/env python3
 """
-Frontend-Backend Integration Test
-Tests the integration between frontend webapp and backend services
+Frontend-Src Integration Test
+Tests the integration between frontend webapp and src services
 """
 
-import os
 import sys
+import os
 import time
-import json
-import requests
-import asyncio
-from pathlib import Path
-from typing import Dict, Any, List
 import logging
+import requests
+import json
+from pathlib import Path
+from typing import Dict, Any, List, Optional
+import argparse
 
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.append(str(project_root))
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 
-from backend.ai_rag.ai_rag import get_rag_system
-from backend.kg_neo4j.neo4j_manager import Neo4jManager
-from backend.kg_neo4j.cypher_queries import CypherQueries
+from src.ai_rag.ai_rag import get_rag_system
+from src.kg_neo4j.neo4j_manager import Neo4jManager
+from src.kg_neo4j.cypher_queries import CypherQueries
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class FrontendBackendIntegrationTest:
-    """Test class for frontend-backend integration"""
+class FrontendSrcIntegrationTest:
+    """Test class for frontend-src integration"""
     
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url
@@ -264,65 +263,43 @@ class FrontendBackendIntegrationTest:
             )
             return False
     
-    def test_backend_services(self) -> bool:
-        """Test backend services directly"""
+    def test_src_services(self) -> bool:
+        """Test src services directly"""
         try:
-            # Test AI/RAG system
-            try:
-                rag_system = get_rag_system()
-                self.log_test(
-                    "Backend AI/RAG System",
-                    True,
-                    "AI/RAG system initialized successfully"
-                )
-            except Exception as e:
-                self.log_test(
-                    "Backend AI/RAG System",
-                    False,
-                    f"AI/RAG system error: {str(e)}"
-                )
+            logger.info("Testing src services...")
+            
+            # Test AI/RAG System
+            logger.info("Testing AI/RAG System...")
+            rag_system = get_rag_system()
+            if rag_system:
+                logger.info("✅ AI/RAG System initialized successfully")
+            else:
+                logger.error("❌ AI/RAG System failed to initialize")
                 return False
             
-            # Test Neo4j connection
-            try:
-                neo4j_uri = os.getenv('NEO4J_URI', 'neo4j://127.0.0.1:7687')
-                neo4j_user = os.getenv('NEO4J_USER', 'neo4j')
-                neo4j_password = os.getenv('NEO4J_PASSWORD', 'password')
-                
-                neo4j_manager = Neo4jManager(neo4j_uri, neo4j_user, neo4j_password)
-                if neo4j_manager.test_connection():
-                    self.log_test(
-                        "Backend Neo4j Connection",
-                        True,
-                        "Neo4j connection successful"
-                    )
-                else:
-                    self.log_test(
-                        "Backend Neo4j Connection",
-                        False,
-                        "Neo4j connection failed"
-                    )
-                    return False
-            except Exception as e:
-                self.log_test(
-                    "Backend Neo4j Connection",
-                    False,
-                    f"Neo4j connection error: {str(e)}"
-                )
+            # Test Neo4j Connection
+            logger.info("Testing Neo4j Connection...")
+            neo4j_manager = Neo4jManager(
+                uri=os.getenv('NEO4J_URI', 'neo4j://localhost:7687'),
+                user=os.getenv('NEO4J_USER', 'neo4j'),
+                password=os.getenv('NEO4J_PASSWORD', 'password')
+            )
+            
+            if neo4j_manager.test_connection():
+                logger.info("✅ Neo4j Connection successful")
+            else:
+                logger.error("❌ Neo4j Connection failed")
                 return False
             
+            logger.info("✅ All src services are working")
             return True
             
         except Exception as e:
-            self.log_test(
-                "Backend Services",
-                False,
-                f"Backend services error: {str(e)}"
-            )
+            logger.error(f"Src services error: {str(e)}")
             return False
     
-    def test_data_flow(self) -> bool:
-        """Test complete data flow from frontend to backend"""
+    def test_complete_data_flow(self) -> bool:
+        """Test complete data flow from frontend to src"""
         try:
             # Test AI/RAG query flow
             query_data = {
@@ -385,30 +362,31 @@ class FrontendBackendIntegrationTest:
             )
             return False
     
-    def run_all_tests(self) -> Dict[str, Any]:
+    def run_all_tests(self) -> Dict[str, bool]:
         """Run all integration tests"""
-        logger.info("🚀 Starting Frontend-Backend Integration Tests")
-        logger.info(f"Testing against: {self.base_url}")
+        logger.info("🚀 Starting Frontend-Src Integration Tests")
         
-        test_functions = [
-            ("Webapp Health", self.test_webapp_health),
-            ("Backend Services", self.test_backend_services),
+        test_results = {}
+        
+        # Define test functions
+        tests = [
+            ("Frontend Services", self.test_webapp_health),
+            ("Src Services", self.test_src_services),
             ("AI/RAG API", self.test_ai_rag_api),
             ("Knowledge Graph API", self.test_knowledge_graph_api),
             ("Frontend Pages", self.test_frontend_pages),
             ("API Documentation", self.test_api_documentation),
-            ("Data Flow", self.test_data_flow)
+            ("Data Flow", self.test_complete_data_flow),
         ]
         
-        results = {}
-        for test_name, test_func in test_functions:
+        for test_name, test_func in tests:
             logger.info(f"\n📋 Running {test_name} tests...")
             try:
                 success = test_func()
-                results[test_name] = success
+                test_results[test_name] = success
             except Exception as e:
                 logger.error(f"❌ {test_name} test failed with exception: {e}")
-                results[test_name] = False
+                test_results[test_name] = False
         
         # Generate summary
         total_tests = len(self.test_results)
@@ -421,7 +399,7 @@ class FrontendBackendIntegrationTest:
             "failed_tests": failed_tests,
             "success_rate": (passed_tests / total_tests * 100) if total_tests > 0 else 0,
             "test_results": self.test_results,
-            "component_results": results
+            "component_results": test_results
         }
         
         logger.info(f"\n📊 Integration Test Summary:")
@@ -432,7 +410,7 @@ class FrontendBackendIntegrationTest:
         
         # Log component results
         logger.info(f"\n🔧 Component Results:")
-        for component, success in results.items():
+        for component, success in test_results.items():
             status = "✅ PASS" if success else "❌ FAIL"
             logger.info(f"   {component}: {status}")
         
@@ -442,10 +420,9 @@ def main():
     """Main test runner"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Frontend-Backend Integration Test")
-    parser.add_argument("--url", default="http://localhost:8000", help="Base URL for testing")
-    parser.add_argument("--output", help="Output file for test results")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    parser = argparse.ArgumentParser(description="Frontend-Src Integration Test")
+    parser.add_argument("--url", default="http://localhost:8000", help="Base URL for the application")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
     
     args = parser.parse_args()
     
@@ -453,7 +430,7 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     
     # Run tests
-    tester = FrontendBackendIntegrationTest(args.url)
+    tester = FrontendSrcIntegrationTest(args.url)
     results = tester.run_all_tests()
     
     # Save results if output file specified

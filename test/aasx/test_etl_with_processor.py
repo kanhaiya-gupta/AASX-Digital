@@ -14,7 +14,7 @@ sys.path.insert(0, str(project_root))
 import subprocess
 import json
 import time
-from backend.aasx.dotnet_bridge import DotNetAasBridge
+from src.aasx.dotnet_bridge import DotNetAasBridge
 
 def test_dotnet_installation():
     """Test if .NET 6.0 is installed"""
@@ -154,7 +154,7 @@ def test_etl_pipeline_integration():
     print("🧪 Testing ETL Pipeline Integration...")
     
     try:
-        from backend.aasx.aasx_etl_pipeline import AASXETLPipeline, ETLPipelineConfig
+        from src.aasx.aasx_etl_pipeline import AASXETLPipeline, ETLPipelineConfig
         
         # Create ETL pipeline
         config = ETLPipelineConfig(

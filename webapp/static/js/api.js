@@ -24,11 +24,11 @@ class APIClient {
             },
             // Knowledge Graph
             kg: {
-                status: '/kg-neo4j/status',
-                query: '/kg-neo4j/query',
-                graph: '/kg-neo4j/graph',
-                stats: '/kg-neo4j/stats',
-                load_data: '/kg-neo4j/load-data'
+                status: '/kg-neo4j/api/status',
+                query: '/kg-neo4j/api/query',
+                graph: '/kg-neo4j/api/graph',
+                stats: '/kg-neo4j/api/stats',
+                load_data: '/kg-neo4j/api/load-data'
             },
             // Twin Registry
             twin: {
@@ -242,12 +242,16 @@ class APIClient {
         const results = {};
         for (const [service, promise] of Object.entries(services)) {
             try {
+                console.log(`🔍 Checking ${service} service...`);
                 results[service] = await promise;
+                console.log(`✅ ${service} service result:`, results[service]);
             } catch (error) {
+                console.error(`❌ ${service} service error:`, error);
                 results[service] = { error: error.message, status: 'error' };
             }
         }
 
+        console.log('🔍 All services results:', results);
         return results;
     }
 }

@@ -61,6 +61,7 @@ services:
       - ./data:/app/data
       - ./output:/app/output
       - ./logs:/app/logs
+      - ./src:/app/src
     depends_on:
       neo4j:
         condition: service_healthy
@@ -87,6 +88,7 @@ services:
       - ./data:/app/data
       - ./output:/app/output
       - ./logs:/app/logs
+      - ./src:/app/src
     depends_on:
       neo4j:
         condition: service_healthy
@@ -109,6 +111,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+      - ./src:/app/src
     depends_on:
       neo4j:
         condition: service_healthy
@@ -129,6 +132,7 @@ services:
     volumes:
       - ./certificates:/app/certificates
       - ./logs:/app/logs
+      - ./src:/app/src
     depends_on:
       neo4j:
         condition: service_healthy
@@ -152,6 +156,7 @@ services:
       - ./data:/app/data
       - ./output:/app/output
       - ./logs:/app/logs
+      - ./src:/app/src
     depends_on:
       neo4j:
         condition: service_healthy

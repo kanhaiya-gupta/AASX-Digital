@@ -10,8 +10,8 @@ import asyncio
 import argparse
 from pathlib import Path
 
-# Add backend to path for imports
-sys.path.append(str(Path(__file__).parent.parent / "backend"))
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 from ai_rag.ai_rag import EnhancedRAGSystem
 

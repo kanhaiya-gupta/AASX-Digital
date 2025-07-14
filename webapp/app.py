@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-QI Digital Platform Web Application
-Main FastAPI application for the Quality Infrastructure Digital Platform.
+AASX Digital Twin Analytics Framework
+Main FastAPI application for the AASX Digital Twin Analytics Framework.
 """
 
-from fastapi import FastAPI, Request, HTTPException
+import os
+# Set default SECRET_KEY for development
+if not os.environ.get('SECRET_KEY'):
+    os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+
+from fastapi import FastAPI, Request, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 import uvicorn
-import os
 import time
+import json
 from pathlib import Path
+from datetime import datetime
 
 # Create FastAPI app
 app = FastAPI(
@@ -169,6 +175,153 @@ async def health_check():
         }
     }
 
+# API status endpoint (for frontend compatibility)
+@app.get("/api/status")
+async def api_status():
+    """API status endpoint for frontend compatibility"""
+    return {
+        "status": "available",
+        "service": "aasx-digital-twin-analytics-framework",
+        "version": "1.0.0",
+        "timestamp": time.time(),
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "aasx": "/aasx",
+            "kg_neo4j": "/kg-neo4j",
+            "ai_rag": "/ai-rag",
+            "twin_registry": "/twin-registry",
+            "certificates": "/certificates",
+            "analytics": "/analytics"
+        }
+    }
+
+# PyTorch status endpoint (for frontend compatibility)
+@app.get("/api/pytorch/status")
+async def pytorch_status():
+    """PyTorch status endpoint for frontend compatibility"""
+    try:
+        import torch
+        return {
+            "status": "available",
+            "pytorch_version": torch.__version__,
+            "cuda_available": torch.cuda.is_available(),
+            "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
+            "timestamp": time.time()
+        }
+    except ImportError:
+        return {
+            "status": "unavailable",
+            "error": "PyTorch not installed",
+            "timestamp": time.time()
+        }
+
+# WebSocket endpoint for real-time updates
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time updates"""
+    await websocket.accept()
+    try:
+        while True:
+            # Send periodic status updates
+            status_data = {
+                "type": "status",
+                "timestamp": time.time(),
+                "services": {
+                    "ai_rag": ai_rag_router is not None,
+                    "kg_neo4j": kg_neo4j_router is not None,
+                    "twin_registry": twin_registry_router is not None,
+                    "certificate_manager": certificate_manager_router is not None,
+                    "qi_analytics": qi_analytics_router is not None,
+                    "aasx": aasx_router is not None
+                }
+            }
+            await websocket.send_text(json.dumps(status_data))
+            
+            # Wait for 30 seconds before next update
+            import asyncio
+            await asyncio.sleep(30)
+            
+    except WebSocketDisconnect:
+        print("WebSocket client disconnected")
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        try:
+            await websocket.close()
+        except:
+            pass
+
+# ETL status endpoint (for frontend compatibility)
+@app.get("/etl/status")
+async def get_etl_status():
+    """ETL pipeline status endpoint for frontend compatibility"""
+    try:
+        if aasx_router is None:
+            return {
+                "status": "unavailable",
+                "error": "AASX router not loaded",
+                "timestamp": time.time()
+            }
+        
+        # Import the function from aasx routes
+        from webapp.aasx.routes import get_etl_pipeline
+        
+        pipeline = get_etl_pipeline()
+        
+        # Get pipeline validation status
+        validation_status = "unknown"
+        try:
+            validation_result = pipeline.validate_pipeline()
+            validation_status = "valid" if validation_result else "invalid"
+        except Exception:
+            validation_status = "error"
+        
+        # Get pipeline stats
+        stats = {}
+        try:
+            stats = pipeline.get_pipeline_stats()
+        except Exception:
+            stats = {"error": "Failed to get pipeline stats"}
+        
+        return {
+            "status": "available",
+            "pipeline": "ready",
+            "validation": validation_status,
+            "stats": stats,
+            "timestamp": time.time()
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": time.time()
+        }
+
+# Twin Registry status endpoint (for frontend compatibility)
+@app.get("/twin-registry/status")
+async def get_twin_registry_status():
+    """Twin registry status endpoint for frontend compatibility"""
+    try:
+        if twin_registry_router is None:
+            return {
+                "status": "unavailable",
+                "error": "Twin registry router not loaded",
+                "timestamp": time.time()
+            }
+        
+        # Import the function from twin registry routes
+        from webapp.twin_registry.routes import get_twin_registry_status as get_status
+        
+        return await get_status()
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": time.time()
+        }
+
 # API documentation redirect
 @app.get("/docs")
 async def api_docs():
@@ -211,14 +364,15 @@ async def internal_error_handler(request: Request, exc: HTTPException):
 # Module-specific routes (with availability checks)
 @app.get("/ai-rag", response_class=HTMLResponse)
 async def ai_rag_page(request: Request):
-    """AI/RAG system page"""
+    """AI/RAG System page"""
     if ai_rag_router is None:
         return templates.TemplateResponse(
             "error.html",
             {
                 "request": request,
-                "title": "AI/RAG System - AASX Digital Twin Analytics Framework",
-                "error": "AI/RAG module is not available. Please check the backend services."
+                "title": "AI/RAG System - Not Available",
+                "error": "AI/RAG module is not available. Please check the src services.",
+                "back_url": "/"
             }
         )
     
@@ -226,7 +380,9 @@ async def ai_rag_page(request: Request):
         "ai_rag/index.html",
         {
             "request": request,
-            "title": "AI/RAG System - AASX Digital Twin Analytics Framework"
+            "title": "AI/RAG System",
+            "module_name": "AI/RAG System",
+            "description": "AI-powered analysis and insights for digital twins"
         }
     )
 
@@ -314,37 +470,25 @@ async def kg_neo4j_page(request: Request):
         }
     )
 
-@app.get("/aasx", response_class=HTMLResponse)
-async def aasx_page(request: Request):
-    """AASX Package Explorer page"""
-    if aasx_router is None:
-        return templates.TemplateResponse(
-            "error.html",
-            {
-                "request": request,
-                "title": "AASX Package Explorer - AASX Digital Twin Analytics Framework",
-                "error": "AASX module is not available."
-            }
-        )
-    
-    return templates.TemplateResponse(
-        "aasx/index.html",
-        {
-            "request": request,
-            "title": "AASX Package Explorer - AASX Digital Twin Analytics Framework",
-            "aasx_files": [],
-            "explorer_available": False
-        }
-    )
-
 @app.get("/flowchart", response_class=HTMLResponse)
 async def flowchart_page(request: Request):
-    """Flowchart page showing the complete framework processing flow"""
+    """Flowchart page showing the complete framework processing flow with tabs"""
     return templates.TemplateResponse(
-        "flowchart.html",
+        "flowchart/framework_flowchart.html",
         {
             "request": request,
             "title": "Processing Flow - AASX Digital Twin Analytics Framework"
+        }
+    )
+
+@app.get("/etl-flowchart", response_class=HTMLResponse)
+async def etl_flowchart_page(request: Request):
+    """ETL page flowchart showing detailed user journey and system architecture"""
+    return templates.TemplateResponse(
+        "flowchart/etl_page_flowchart.html",
+        {
+            "request": request,
+            "title": "ETL Page Flowchart - AASX Digital Twin Analytics Framework"
         }
     )
 

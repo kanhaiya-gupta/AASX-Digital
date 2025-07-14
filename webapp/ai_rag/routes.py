@@ -14,12 +14,12 @@ import logging
 from pathlib import Path
 import sys
 
-# Add backend to path
-sys.path.append(str(Path(__file__).parent.parent.parent / 'backend'))
+# Add src to path
+sys.path.append(str(Path(__file__).parent.parent.parent / 'src'))
 
-from ai_rag.ai_rag import get_rag_system, EnhancedRAGSystem
-from kg_neo4j.neo4j_manager import Neo4jManager
-from kg_neo4j.cypher_queries import CypherQueries
+from src.ai_rag.ai_rag import get_rag_system, EnhancedRAGSystem
+from src.kg_neo4j.neo4j_manager import Neo4jManager
+from src.kg_neo4j.cypher_queries import CypherQueries
 
 logger = logging.getLogger(__name__)
 

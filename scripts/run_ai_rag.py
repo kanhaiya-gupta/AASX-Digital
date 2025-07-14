@@ -30,9 +30,9 @@ try:
 except ImportError:
     pass  # dotenv not available, will use system environment variables
 
-# Add backend to path for imports
-backend_path = Path(__file__).parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
+# Add src to path for imports
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
 
 # Also add the current directory for local imports
 current_dir = Path(__file__).parent
@@ -42,7 +42,7 @@ try:
     from ai_rag.ai_rag import EnhancedRAGSystem
 except ImportError as e:
     print(f"❌ Error importing EnhancedRAGSystem: {e}")
-    print(f"📁 Backend path: {backend_path}")
+    print(f"📁 Backend path: {src_path}")
     print(f"📁 Current directory: {current_dir}")
     print(f"📁 Python path: {sys.path}")
     sys.exit(1)

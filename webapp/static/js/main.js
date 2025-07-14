@@ -1,4 +1,4 @@
-// QI Digital Platform Main JavaScript
+// AASX Digital Twin Analytics Framework Main JavaScript
 
 // Global variables
 let currentModule = 'home';
@@ -6,7 +6,7 @@ let refreshInterval = null;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('QI Digital Platform initialized');
+    console.log('AASX Digital Twin Analytics Framework initialized');
     
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

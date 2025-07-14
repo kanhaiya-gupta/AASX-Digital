@@ -6,7 +6,7 @@ This script tests the .NET bridge for AASX processing.
 """
 
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 def test_dotnet_bridge():
     """Test .NET bridge functionality"""

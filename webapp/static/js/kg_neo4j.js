@@ -1,655 +1,374 @@
-/**
- * Neo4j Knowledge Graph Frontend JavaScript
- * Handles graph visualization, queries, analytics, and data import
- */
+// Neo4j Management Hub JavaScript
+// Focused on launching and managing Neo4j tools
 
-// Global variables
-let graphData = null;
-let simulation = null;
-let charts = {};
+console.log('🔧 Neo4j Management Hub JavaScript loaded');
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    initializeNeo4jInterface();
-});
+// ============================================================================
+// DOCKER NEO4J FUNCTIONS
+// ============================================================================
 
-/**
- * Initialize the Neo4j interface
- */
-function initializeNeo4jInterface() {
-    console.log('Initializing Neo4j Knowledge Graph Interface...');
-    
-    // Check connection status
-    checkConnectionStatus();
-    
-    // Load initial data
-    loadDatabaseStats();
-    
-    // Initialize charts
-    initializeCharts();
-    
-    // Set up event listeners
-    setupEventListeners();
-    
-    // Load graph data if on graph tab
-    if (document.getElementById('graph-tab').classList.contains('active')) {
-        loadGraphData();
-    }
-}
-
-/**
- * Check Neo4j connection status
- */
 async function checkConnectionStatus() {
+    console.log('🔍 Checking Docker Neo4j connection status...');
+    
     try {
-        const response = await fetch('/api/kg-neo4j/status');
+        const response = await fetch('/kg-neo4j/api/status');
         const data = await response.json();
         
-        const statusIndicator = document.getElementById('connectionStatus');
-        const statusText = document.getElementById('connectionText');
+        updateDockerStatus(data);
         
-        if (data.connected) {
-            statusIndicator.className = 'status-indicator status-connected';
-            statusText.textContent = 'Connected';
+        if (data.success) {
+            showNotification('✅ Docker Neo4j connection successful', 'success');
         } else {
-            statusIndicator.className = 'status-indicator status-disconnected';
-            statusText.textContent = 'Disconnected';
+            showNotification('❌ Docker Neo4j connection failed: ' + data.error, 'error');
         }
+        
+        return data.success;
     } catch (error) {
         console.error('Error checking connection status:', error);
-        const statusIndicator = document.getElementById('connectionStatus');
-        const statusText = document.getElementById('connectionText');
-        statusIndicator.className = 'status-indicator status-disconnected';
-        statusText.textContent = 'Error';
+        showNotification('❌ Failed to check Docker Neo4j status', 'error');
+        updateDockerStatus({ success: false, error: error.message });
+        return false;
     }
 }
 
-/**
- * Load database statistics
- */
-async function loadDatabaseStats() {
-    try {
-        const response = await fetch('/api/kg-neo4j/stats');
-        const data = await response.json();
+function updateDockerStatus(data) {
+    const statusContainer = document.getElementById('docker-status');
+    if (!statusContainer) return;
+    
+    const statusItems = statusContainer.querySelectorAll('.status-item');
+    
+    // Update Container Status
+    if (statusItems[0]) {
+        const statusIndicator = statusItems[0].querySelector('.status-indicator');
+        const statusValue = statusItems[0].querySelector('.status-value');
         
-        // Update stats cards
-        document.getElementById('nodeCount').textContent = data.total_nodes || 0;
-        document.getElementById('relationshipCount').textContent = data.total_relationships || 0;
-        document.getElementById('assetCount').textContent = data.asset_count || 0;
-        document.getElementById('submodelCount').textContent = data.submodel_count || 0;
+        if (data.docker_running) {
+            statusIndicator.className = 'status-indicator status-running';
+            statusValue.innerHTML = '<span class="status-indicator status-running"></span>Running';
+        } else {
+            statusIndicator.className = 'status-indicator status-stopped';
+            statusValue.innerHTML = '<span class="status-indicator status-stopped"></span>Stopped';
+        }
+    }
+    
+    // Update Browser Access status
+    if (statusItems[1]) {
+        const statusIndicator = statusItems[1].querySelector('.status-indicator');
+        const statusValue = statusItems[1].querySelector('.status-value');
         
-    } catch (error) {
-        console.error('Error loading database stats:', error);
-        // Set default values
-        document.getElementById('nodeCount').textContent = '-';
-        document.getElementById('relationshipCount').textContent = '-';
-        document.getElementById('assetCount').textContent = '-';
-        document.getElementById('submodelCount').textContent = '-';
+        if (data.browser_accessible) {
+            statusIndicator.className = 'status-indicator status-running';
+            statusValue.innerHTML = '<span class="status-indicator status-running"></span>Available';
+        } else {
+            statusIndicator.className = 'status-indicator status-stopped';
+            statusValue.innerHTML = '<span class="status-indicator status-stopped"></span>Unavailable';
+        }
     }
 }
 
-/**
- * Load graph data for visualization
- */
-async function loadGraphData() {
+async function checkDockerStatus() {
+    console.log('🐳 Checking Docker status...');
+    
     try {
-        const response = await fetch('/api/kg-neo4j/graph-data');
+        const response = await fetch('/kg-neo4j/api/docker-status');
         const data = await response.json();
         
         if (data.success) {
-            graphData = data.data;
-            renderGraph();
+            showNotification(`🐳 Docker: ${data.status}`, 'info');
         } else {
-            console.error('Failed to load graph data:', data.error);
-            showNotification('Failed to load graph data', 'error');
+            showNotification('❌ Failed to check Docker status', 'error');
         }
+        
+        return data;
     } catch (error) {
-        console.error('Error loading graph data:', error);
-        showNotification('Error loading graph data', 'error');
+        console.error('Error checking Docker status:', error);
+        showNotification('❌ Docker status check failed', 'error');
+        return { success: false, error: error.message };
     }
 }
 
-/**
- * Render the graph visualization using D3.js
- */
-function renderGraph() {
-    if (!graphData || !graphData.nodes) {
-        console.warn('No graph data available');
-        return;
-    }
-    
-    const container = document.getElementById('graphVisualization');
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    
-    // Clear previous visualization
-    container.innerHTML = '';
-    
-    // Create SVG
-    const svg = d3.select(container)
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height);
-    
-    // Create zoom behavior
-    const zoom = d3.zoom()
-        .scaleExtent([0.1, 10])
-        .on('zoom', (event) => {
-            svg.select('g').attr('transform', event.transform);
-        });
-    
-    svg.call(zoom);
-    
-    // Create main group
-    const g = svg.append('g');
-    
-    // Create force simulation
-    simulation = d3.forceSimulation(graphData.nodes)
-        .force('link', d3.forceLink(graphData.links || []).id(d => d.id).distance(100))
-        .force('charge', d3.forceManyBody().strength(-300))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(30));
-    
-    // Create links
-    const links = g.append('g')
-        .selectAll('line')
-        .data(graphData.links || [])
-        .enter()
-        .append('line')
-        .attr('class', 'link')
-        .attr('stroke-width', 2);
-    
-    // Create nodes
-    const nodes = g.append('g')
-        .selectAll('circle')
-        .data(graphData.nodes)
-        .enter()
-        .append('circle')
-        .attr('class', 'node')
-        .attr('r', d => getNodeRadius(d))
-        .attr('fill', d => getNodeColor(d))
-        .call(d3.drag()
-            .on('start', dragstarted)
-            .on('drag', dragged)
-            .on('end', dragended));
-    
-    // Add node labels
-    const labels = g.append('g')
-        .selectAll('text')
-        .data(graphData.nodes)
-        .enter()
-        .append('text')
-        .attr('class', 'node-label')
-        .text(d => d.id_short || d.id)
-        .attr('dy', '.35em');
-    
-    // Add tooltips
-    nodes.on('mouseover', function(event, d) {
-        showTooltip(event, d);
-    })
-    .on('mouseout', function() {
-        hideTooltip();
-    });
-    
-    // Update positions on simulation tick
-    simulation.on('tick', () => {
-        links
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y);
-        
-        nodes
-            .attr('cx', d => d.x)
-            .attr('cy', d => d.y);
-        
-        labels
-            .attr('x', d => d.x)
-            .attr('y', d => d.y);
-    });
-}
+// ============================================================================
+// LOCAL NEO4J FUNCTIONS
+// ============================================================================
 
-/**
- * Get node radius based on type
- */
-function getNodeRadius(node) {
-    switch (node.type) {
-        case 'asset': return 15;
-        case 'submodel': return 12;
-        default: return 10;
-    }
-}
-
-/**
- * Get node color based on type
- */
-function getNodeColor(node) {
-    switch (node.type) {
-        case 'asset': return '#4CAF50';
-        case 'submodel': return '#2196F3';
-        default: return '#9E9E9E';
-    }
-}
-
-/**
- * Drag functions for interactive nodes
- */
-function dragstarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-}
-
-function dragged(event, d) {
-    d.fx = event.x;
-    d.fy = event.y;
-}
-
-function dragended(event, d) {
-    if (!event.active) simulation.alphaTarget(0);
-    d.fx = null;
-    d.fy = null;
-}
-
-/**
- * Show tooltip for nodes
- */
-function showTooltip(event, node) {
-    const tooltip = document.getElementById('tooltip');
-    tooltip.style.display = 'block';
-    tooltip.style.left = event.pageX + 10 + 'px';
-    tooltip.style.top = event.pageY - 10 + 'px';
-    
-    tooltip.innerHTML = `
-        <strong>${node.type.toUpperCase()}</strong><br>
-        ID: ${node.id}<br>
-        ${node.id_short ? `Short ID: ${node.id_short}<br>` : ''}
-        ${node.properties?.description ? `Description: ${node.properties.description}<br>` : ''}
-        ${node.properties?.quality_level ? `Quality: ${node.properties.quality_level}` : ''}
-    `;
-}
-
-/**
- * Hide tooltip
- */
-function hideTooltip() {
-    document.getElementById('tooltip').style.display = 'none';
-}
-
-/**
- * Execute Cypher query
- */
-async function executeQuery() {
-    const query = document.getElementById('cypherQuery').value.trim();
-    if (!query) {
-        showNotification('Please enter a query', 'warning');
-        return;
-    }
-    
-    const resultsDiv = document.getElementById('queryResults');
-    resultsDiv.innerHTML = '<p class="text-muted">Executing query...</p>';
+async function checkLocalStatus() {
+    console.log('🖥️ Checking Local Neo4j status...');
     
     try {
-        const response = await fetch('/api/kg-neo4j/query', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ query: query })
-        });
-        
+        const response = await fetch('/kg-neo4j/api/local/status');
         const data = await response.json();
         
+        updateLocalStatus(data);
+        
         if (data.success) {
-            displayQueryResults(data.results);
-        } else {
-            resultsDiv.innerHTML = `<p class="text-danger">Error: ${data.error}</p>`;
-        }
-    } catch (error) {
-        console.error('Error executing query:', error);
-        resultsDiv.innerHTML = '<p class="text-danger">Error executing query</p>';
-    }
-}
-
-/**
- * Display query results
- */
-function displayQueryResults(results) {
-    const resultsDiv = document.getElementById('queryResults');
-    
-    if (!results || results.length === 0) {
-        resultsDiv.innerHTML = '<p class="text-muted">No results found</p>';
-        return;
-    }
-    
-    let html = '<div class="table-responsive"><table class="table table-sm">';
-    
-    // Create header
-    const keys = Object.keys(results[0]);
-    html += '<thead><tr>';
-    keys.forEach(key => {
-        html += `<th>${key}</th>`;
-    });
-    html += '</tr></thead>';
-    
-    // Create rows
-    html += '<tbody>';
-    results.forEach(row => {
-        html += '<tr>';
-        keys.forEach(key => {
-            const value = row[key];
-            if (typeof value === 'object') {
-                html += `<td><code>${JSON.stringify(value)}</code></td>`;
+            if (data.application_running) {
+                showNotification('✅ Local Neo4j Desktop is running', 'success');
             } else {
-                html += `<td>${value}</td>`;
-            }
-        });
-        html += '</tr>';
-    });
-    html += '</tbody></table></div>';
-    
-    resultsDiv.innerHTML = html;
-}
-
-/**
- * Load pre-built queries
- */
-function loadQuery(type) {
-    const queries = {
-        'basic-stats': 'MATCH (n) RETURN labels(n) as labels, count(n) as count ORDER BY count DESC',
-        'quality-distribution': 'MATCH (n) WHERE n.quality_level IS NOT NULL RETURN n.quality_level as quality, count(n) as count ORDER BY count DESC',
-        'compliance-summary': 'MATCH (n) WHERE n.compliance_status IS NOT NULL RETURN n.compliance_status as status, count(n) as count ORDER BY count DESC',
-        'isolated-nodes': 'MATCH (n) WHERE NOT (n)--() RETURN n.id as id, labels(n) as labels LIMIT 10'
-    };
-    
-    document.getElementById('cypherQuery').value = queries[type] || '';
-}
-
-/**
- * Clear query editor
- */
-function clearQuery() {
-    document.getElementById('cypherQuery').value = '';
-    document.getElementById('queryResults').innerHTML = '<p class="text-muted">Execute a query to see results here...</p>';
-}
-
-/**
- * Initialize charts for analytics
- */
-function initializeCharts() {
-    // Quality distribution chart
-    const qualityCtx = document.getElementById('qualityChart');
-    if (qualityCtx) {
-        charts.quality = new Chart(qualityCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['HIGH', 'MEDIUM', 'LOW'],
-                datasets: [{
-                    data: [0, 0, 0],
-                    backgroundColor: ['#28a745', '#ffc107', '#dc3545']
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-    }
-    
-    // Entity types chart
-    const entityCtx = document.getElementById('entityChart');
-    if (entityCtx) {
-        charts.entity = new Chart(entityCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Assets', 'Submodels'],
-                datasets: [{
-                    label: 'Count',
-                    data: [0, 0],
-                    backgroundColor: ['#4CAF50', '#2196F3']
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
-}
-
-/**
- * Load analytics data
- */
-async function loadAnalytics() {
-    try {
-        const response = await fetch('/api/kg-neo4j/analytics');
-        const data = await response.json();
-        
-        if (data.success) {
-            updateCharts(data.analytics);
-            displayAnalyticsResults(data.analytics);
-        }
-    } catch (error) {
-        console.error('Error loading analytics:', error);
-    }
-}
-
-/**
- * Update charts with analytics data
- */
-function updateCharts(analytics) {
-    // Update quality distribution chart
-    if (charts.quality && analytics.quality_distribution) {
-        charts.quality.data.datasets[0].data = [
-            analytics.quality_distribution.HIGH || 0,
-            analytics.quality_distribution.MEDIUM || 0,
-            analytics.quality_distribution.LOW || 0
-        ];
-        charts.quality.update();
-    }
-    
-    // Update entity types chart
-    if (charts.entity && analytics.entity_distribution) {
-        charts.entity.data.datasets[0].data = [
-            analytics.entity_distribution.asset || 0,
-            analytics.entity_distribution.submodel || 0
-        ];
-        charts.entity.update();
-    }
-}
-
-/**
- * Display detailed analytics results
- */
-function displayAnalyticsResults(analytics) {
-    const resultsDiv = document.getElementById('analyticsResults');
-    
-    let html = '<div class="row">';
-    
-    // Quality metrics
-    if (analytics.quality_metrics) {
-        html += `
-            <div class="col-md-6">
-                <h6>Quality Metrics</h6>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>Average Quality Score:</span>
-                        <span class="badge bg-primary">${analytics.quality_metrics.average_score || 'N/A'}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>High Quality Items:</span>
-                        <span class="badge bg-success">${analytics.quality_metrics.high_quality_count || 0}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>Compliance Rate:</span>
-                        <span class="badge bg-info">${analytics.quality_metrics.compliance_rate || 'N/A'}%</span>
-                    </li>
-                </ul>
-            </div>
-        `;
-    }
-    
-    // Graph metrics
-    if (analytics.graph_metrics) {
-        html += `
-            <div class="col-md-6">
-                <h6>Graph Metrics</h6>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>Total Nodes:</span>
-                        <span class="badge bg-secondary">${analytics.graph_metrics.total_nodes || 0}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>Total Relationships:</span>
-                        <span class="badge bg-secondary">${analytics.graph_metrics.total_relationships || 0}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>Isolated Nodes:</span>
-                        <span class="badge bg-warning">${analytics.graph_metrics.isolated_nodes || 0}</span>
-                    </li>
-                </ul>
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    resultsDiv.innerHTML = html;
-}
-
-/**
- * Import data from ETL output
- */
-async function importData() {
-    const directory = document.getElementById('importDirectory').value;
-    const clearDatabase = document.getElementById('clearDatabase').checked;
-    
-    const statusDiv = document.getElementById('importStatus');
-    statusDiv.innerHTML = '<p class="text-info">Importing data...</p>';
-    
-    try {
-        const response = await fetch('/api/kg-neo4j/import', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                directory: directory,
-                clear_database: clearDatabase
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            statusDiv.innerHTML = `
-                <div class="alert alert-success">
-                    <h6>Import Successful!</h6>
-                    <p>Imported ${data.imported_files} files</p>
-                    <p>Nodes: ${data.nodes_imported}</p>
-                    <p>Relationships: ${data.relationships_imported}</p>
-                </div>
-            `;
-            
-            // Refresh stats and data
-            loadDatabaseStats();
-            if (document.getElementById('graph-tab').classList.contains('active')) {
-                loadGraphData();
+                showNotification('ℹ️ Local Neo4j Desktop is not running', 'info');
             }
         } else {
-            statusDiv.innerHTML = `<div class="alert alert-danger">Import failed: ${data.error}</div>`;
+            showNotification('❌ Failed to check Local Neo4j status: ' + data.error, 'error');
+        }
+        
+        return data.success;
+    } catch (error) {
+        console.error('Error checking local status:', error);
+        showNotification('❌ Failed to check Local Neo4j status', 'error');
+        updateLocalStatus({ success: false, error: error.message });
+        return false;
+    }
+}
+
+function updateLocalStatus(data) {
+    const statusContainer = document.getElementById('local-status');
+    if (!statusContainer) return;
+    
+    const statusItems = statusContainer.querySelectorAll('.status-item');
+    
+    // Update Application Status
+    if (statusItems[0]) {
+        const statusIndicator = statusItems[0].querySelector('.status-indicator');
+        const statusValue = statusItems[0].querySelector('.status-value');
+        
+        if (data.application_running) {
+            statusIndicator.className = 'status-indicator status-running';
+            statusValue.innerHTML = '<span class="status-indicator status-running"></span>Running';
+        } else {
+            statusIndicator.className = 'status-indicator status-stopped';
+            statusValue.innerHTML = '<span class="status-indicator status-stopped"></span>Not Running';
+        }
+    }
+    
+    // Update Connection Status
+    if (statusItems[1]) {
+        const statusIndicator = statusItems[1].querySelector('.status-indicator');
+        const statusValue = statusItems[1].querySelector('.status-value');
+        
+        if (data.connection_available) {
+            statusIndicator.className = 'status-indicator status-running';
+            statusValue.innerHTML = '<span class="status-indicator status-running"></span>Connected';
+        } else {
+            statusIndicator.className = 'status-indicator status-stopped';
+            statusValue.innerHTML = '<span class="status-indicator status-stopped"></span>Not Connected';
+        }
+    }
+}
+
+async function launchLocalNeo4jDesktop() {
+    console.log('🖥️ Launching Local Neo4j Desktop...');
+    
+    try {
+        showNotification('🖥️ Launching Neo4j Desktop...', 'info');
+        
+        const response = await fetch('/kg-neo4j/api/local/launch', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('✅ ' + data.message, 'success');
+            
+            // Wait a moment for the application to start
+            setTimeout(() => {
+                checkLocalStatus();
+            }, 3000);
+            
+        } else {
+            showNotification('❌ Failed to launch Neo4j Desktop: ' + data.error, 'error');
+        }
+        
+        return data.success;
+    } catch (error) {
+        console.error('Error launching Neo4j Desktop:', error);
+        showNotification('❌ Failed to launch Neo4j Desktop', 'error');
+        return false;
+    }
+}
+
+async function getLocalNeo4jInfo() {
+    console.log('ℹ️ Getting Local Neo4j info...');
+    
+    try {
+        const response = await fetch('/kg-neo4j/api/local/info');
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('Local Neo4j Info:', data);
+            return data;
+        } else {
+            console.error('Failed to get local Neo4j info:', data.error);
+            return null;
         }
     } catch (error) {
-        console.error('Error importing data:', error);
-        statusDiv.innerHTML = '<div class="alert alert-danger">Error importing data</div>';
+        console.error('Error getting local Neo4j info:', error);
+        return null;
     }
 }
 
-/**
- * Utility functions
- */
-function refreshConnection() {
-    checkConnectionStatus();
-    loadDatabaseStats();
+// ============================================================================
+// NEO4J TOOL LAUNCHING FUNCTIONS
+// ============================================================================
+
+function launchDockerBrowser() {
+    console.log('🌐 Launching Docker Neo4j Browser...');
+    
+    // Open Docker Neo4j Browser in new tab
+    const browserUrl = 'http://localhost:7475';
+    window.open(browserUrl, '_blank');
+    
+    showNotification('🌐 Docker Neo4j Browser opened in new tab', 'success');
 }
 
-function resetZoom() {
-    if (simulation) {
-        simulation.alpha(1).restart();
+function launchLocalBrowser() {
+    console.log('🌐 Launching Local Neo4j Browser...');
+    
+    // Open Local Neo4j Browser in new tab
+    const browserUrl = 'http://localhost:7474';
+    window.open(browserUrl, '_blank');
+    
+    showNotification('🌐 Local Neo4j Browser opened in new tab', 'success');
+}
+
+// ============================================================================
+// DOCKER MANAGEMENT FUNCTIONS
+// ============================================================================
+
+async function startNeo4jDocker() {
+    console.log('🚀 Starting Docker Neo4j container...');
+    
+    try {
+        showNotification('🚀 Starting Docker Neo4j container...', 'info');
+        
+        const response = await fetch('/kg-neo4j/api/docker/start', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('✅ Docker Neo4j container started successfully', 'success');
+            
+            // Wait a moment for the container to fully start
+            setTimeout(() => {
+                checkConnectionStatus();
+                checkDockerStatus();
+            }, 3000);
+            
+        } else {
+            showNotification('❌ Failed to start Docker container: ' + data.error, 'error');
+        }
+        
+        return data.success;
+    } catch (error) {
+        console.error('Error starting Docker container:', error);
+        showNotification('❌ Failed to start Docker container', 'error');
+        return false;
     }
 }
 
-function exportGraph() {
-    if (graphData) {
-        const dataStr = JSON.stringify(graphData, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'neo4j-graph-data.json';
-        link.click();
-        URL.revokeObjectURL(url);
+async function stopNeo4jDocker() {
+    console.log('🛑 Stopping Docker Neo4j container...');
+    
+    try {
+        showNotification('🛑 Stopping Docker Neo4j container...', 'info');
+        
+        const response = await fetch('/kg-neo4j/api/docker/stop', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('✅ Docker Neo4j container stopped successfully', 'success');
+            
+            // Update status immediately
+            setTimeout(() => {
+                checkConnectionStatus();
+                checkDockerStatus();
+            }, 1000);
+            
+        } else {
+            showNotification('❌ Failed to stop Docker container: ' + data.error, 'error');
+        }
+        
+        return data.success;
+    } catch (error) {
+        console.error('Error stopping Docker container:', error);
+        showNotification('❌ Failed to stop Docker container', 'error');
+        return false;
     }
 }
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
 
 function showNotification(message, type = 'info') {
-    // Create a simple notification
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    
+    // Create notification element
     const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.zIndex = '9999';
+    notification.style.minWidth = '300px';
+    
     notification.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
+    // Add to page
     document.body.appendChild(notification);
     
-    // Auto-remove after 5 seconds
+    // Auto-remove after shorter time: 2 seconds for success, 3 seconds for others
+    const timeout = type === 'success' ? 2000 : 3000;
     setTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
         }
-    }, 5000);
+    }, timeout);
 }
 
-/**
- * Set up event listeners
- */
-function setupEventListeners() {
-    // Import form submission
-    const importForm = document.getElementById('importForm');
-    if (importForm) {
-        importForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            importData();
-        });
-    }
+function showLocalHelp() {
+    console.log('❓ Showing Local help...');
+    showNotification('📖 Neo4j Desktop Setup: Download from neo4j.com/desktop', 'info');
+}
+
+function refreshAllStatus() {
+    checkConnectionStatus();
+    checkLocalStatus();
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Neo4j Management Hub initialized');
     
-    // Tab change events
-    const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
-    tabs.forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(e) {
-            if (e.target.id === 'graph-tab') {
-                loadGraphData();
-            } else if (e.target.id === 'analytics-tab') {
-                loadAnalytics();
-            }
-        });
-    });
-}
+    // Initial status check
+    setTimeout(() => {
+        refreshAllStatus();
+    }, 1000);
+});
 
-// Make functions globally available
-window.loadGraphData = loadGraphData;
-window.executeQuery = executeQuery;
-window.loadQuery = loadQuery;
-window.clearQuery = clearQuery;
-window.refreshConnection = refreshConnection;
-window.resetZoom = resetZoom;
-window.exportGraph = exportGraph; 
+// Export functions for global access
+window.kgNeo4j = {
+    checkConnectionStatus,
+    checkDockerStatus,
+    checkLocalStatus,
+    launchDockerBrowser,
+    launchLocalBrowser,
+    launchLocalNeo4jDesktop,
+    startNeo4jDocker,
+    stopNeo4jDocker,
+    showNotification,
+    showLocalHelp,
+    refreshAllStatus,
+    getLocalNeo4jInfo
+}; 

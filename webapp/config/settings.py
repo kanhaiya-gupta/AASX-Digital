@@ -10,7 +10,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Backend service URLs
+    # Src service URLs
     AI_RAG_URL = os.environ.get('AI_RAG_URL', 'http://localhost:8000')
     TWIN_REGISTRY_URL = os.environ.get('TWIN_REGISTRY_URL', 'http://localhost:8001')
     CERTIFICATE_MANAGER_URL = os.environ.get('CERTIFICATE_MANAGER_URL', 'http://localhost:3001')
@@ -32,11 +32,13 @@ class ProductionConfig(Config):
     DEBUG = False
     TESTING = False
     
-    # Override with production settings
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    
-    if not SECRET_KEY:
-        raise ValueError("SECRET_KEY must be set in production")
+    def __init__(self):
+        super().__init__()
+        # Override with production settings
+        self.SECRET_KEY = os.environ.get('SECRET_KEY')
+        
+        if not self.SECRET_KEY:
+            raise ValueError("SECRET_KEY must be set in production")
 
 class TestingConfig(Config):
     """Testing configuration"""

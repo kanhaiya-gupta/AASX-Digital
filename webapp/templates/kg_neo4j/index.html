@@ -1,183 +1,227 @@
 {% extends "base.html" %}
 
-{% block title %}Knowledge Graph - QI Digital Platform{% endblock %}
+{% block title %}Knowledge Graph - AASX Digital Twin Analytics{% endblock %}
 
 {% block extra_css %}
 <style>
-    .graph-container {
-        background: #f8f9fa;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border: 2px solid #e9ecef;
-    }
-    
-    .query-section {
+    .hero-section {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-radius: 15px;
         padding: 2rem;
         margin-bottom: 2rem;
-    }
-    
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
         text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
     }
     
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
-    
-    .stat-icon {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-    }
-    
-    .stat-value {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    
-    .stat-label {
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-    
-    .cypher-input {
-        border-radius: 10px;
-        border: 2px solid #e9ecef;
-        padding: 1rem;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
-    }
-    
-    .cypher-input:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
-    }
-    
-    .query-btn {
-        border-radius: 10px;
-        padding: 0.75rem 1.5rem;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    
-    .query-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    .results-section {
+    .neo4j-column {
         background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e9ecef;
+        height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
-    .result-item {
+    .neo4j-column:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .neo4j-column.docker {
+        border-left: 4px solid #0db7ed;
+    }
+    
+    .neo4j-column.local {
+        border-left: 4px solid #28a745;
+    }
+    
+    .column-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    
+    .column-header.docker {
+        border-bottom-color: #0db7ed;
+    }
+    
+    .column-header.local {
+        border-bottom-color: #28a745;
+    }
+    
+    .column-icon {
+        font-size: 2rem;
+        margin-right: 1rem;
+    }
+    
+    .column-icon.docker {
+        color: #0db7ed;
+    }
+    
+    .column-icon.local {
+        color: #28a745;
+    }
+    
+    .status-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .status-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .status-item:hover {
+        background: #e9ecef;
+        transform: translateY(-1px);
+    }
+    
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    
+    .status-running { background-color: #28a745; }
+    .status-stopped { background-color: #dc3545; }
+    .status-unknown { background-color: #6c757d; }
+    
+    .status-value {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+    }
+    
+    .status-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+    
+    .connection-info {
         background: #f8f9fa;
         border-radius: 8px;
         padding: 1rem;
         margin-bottom: 1rem;
-        border-left: 4px solid #007bff;
+        border: 1px solid #dee2e6;
     }
     
-    .node-item {
-        background: #e3f2fd;
+    .connection-info strong {
+        color: #495057;
+    }
+    
+    .action-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .action-btn {
+        padding: 0.75rem 1rem;
+        border: none;
         border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        border-left: 4px solid #2196f3;
-    }
-    
-    .relationship-item {
-        background: #f3e5f5;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        border-left: 4px solid #9c27b0;
-    }
-    
-    .property-item {
-        background: #e8f5e8;
-        border-radius: 6px;
-        padding: 0.5rem;
-        margin: 0.25rem 0;
-        border-left: 3px solid #4caf50;
-    }
-    
-    .demo-queries {
-        background: #e3f2fd;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .demo-query-btn {
-        margin: 0.5rem;
+        font-weight: 500;
+        text-decoration: none;
+        text-align: center;
         transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
     }
     
-    .demo-query-btn:hover {
+    .action-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-decoration: none;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     
-    .loading-spinner {
-        display: none;
+    .action-btn.primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+    
+    .action-btn.primary:hover {
+        box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        color: white;
+    }
+    
+    .action-btn.success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    
+    .action-btn.success:hover {
+        box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        color: white;
+    }
+    
+    .action-btn.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #212529;
+    }
+    
+    .action-btn.warning:hover {
+        box-shadow: 0 4px 12px rgba(255,193,7,0.3);
+        color: #212529;
+    }
+    
+    .action-btn.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+    
+    .action-btn.danger:hover {
+        box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+        color: white;
+    }
+    
+    .action-btn.secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+    
+    .action-btn.secondary:hover {
+        box-shadow: 0 4px 12px rgba(108,117,125,0.3);
+        color: white;
+    }
+    
+    .info-panel {
+        background: #e3f2fd;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #007bff;
     }
     
     .error-message {
         background: #f8d7da;
         color: #721c24;
         border: 1px solid #f5c6cb;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin: 0.75rem 0;
     }
     
     .success-message {
         background: #d4edda;
         color: #155724;
         border: 1px solid #c3e6cb;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-    
-    .graph-visualization {
-        background: white;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-top: 1rem;
-        border: 1px solid #dee2e6;
-        min-height: 400px;
-    }
-    
-    .table-responsive {
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    
-    .table th {
-        background: #f8f9fa;
-        border-bottom: 2px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin: 0.75rem 0;
     }
 </style>
 {% endblock %}
@@ -189,598 +233,302 @@
         <div class="col-12">
             <h1 class="display-4 text-center mb-3">
                 <i class="fas fa-project-diagram text-primary me-3"></i>
-                Knowledge Graph Explorer
+                Knowledge Graph Management
             </h1>
             <p class="lead text-center text-muted">
-                Explore and analyze digital twin relationships using Neo4j knowledge graph
+                Manage Docker Neo4j and Local Neo4j Desktop instances for advanced graph visualization and analysis
             </p>
         </div>
     </div>
 
-    <!-- System Status -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-heartbeat me-2"></i>
-                        Knowledge Graph Status
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row" id="kg-status">
-                        <div class="col-md-3 text-center">
-                            <div class="stat-card">
-                                <i class="fas fa-database fa-2x text-primary mb-2"></i>
-                                <h6>Neo4j Connection</h6>
-                                <span id="status-neo4j" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <div class="stat-card">
-                                <i class="fas fa-sitemap fa-2x text-info mb-2"></i>
-                                <h6>Graph Database</h6>
-                                <span id="status-graph" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <div class="stat-card">
-                                <i class="fas fa-chart-line fa-2x text-success mb-2"></i>
-                                <h6>GDS Procedures</h6>
-                                <span id="status-gds" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <div class="stat-card">
-                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
-                                <h6>Last Updated</h6>
-                                <span id="last-updated" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistics Grid -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>
-                        Graph Statistics
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="stats-grid" id="graph-stats">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2">Loading statistics...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Query Section -->
+    <!-- Two Column Layout -->
     <div class="row">
-        <div class="col-lg-8">
-            <div class="query-section">
-                <h3 class="mb-4">
-                    <i class="fas fa-search me-2"></i>
-                    Cypher Query Interface
-                </h3>
-                
-                <!-- Query Input -->
-                <div class="mb-3">
-                    <label for="cypher-query" class="form-label fw-bold">Cypher Query:</label>
-                    <textarea 
-                        class="form-control cypher-input" 
-                        id="cypher-query" 
-                        rows="4" 
-                        placeholder="MATCH (n) RETURN n LIMIT 10"
-                    ></textarea>
-                </div>
-
-                <!-- Query Buttons -->
-                <div class="d-flex gap-2 mb-3">
-                    <button type="button" class="btn btn-light query-btn" id="execute-query">
-                        <i class="fas fa-play me-2"></i>
-                        Execute Query
-                    </button>
-                    <button type="button" class="btn btn-outline-light query-btn" id="clear-results">
-                        <i class="fas fa-trash me-2"></i>
-                        Clear Results
-                    </button>
-                </div>
-
-                <!-- Loading Spinner -->
-                <div class="loading-spinner text-center mt-3" id="query-loading">
-                    <div class="spinner-border text-light" role="status">
-                        <span class="visually-hidden">Loading...</span>
+        <!-- Docker Neo4j Column -->
+        <div class="col-lg-6">
+            <div class="neo4j-column docker">
+                <div class="column-header docker">
+                    <i class="fab fa-docker column-icon docker"></i>
+                    <div>
+                        <h4 class="mb-1">Docker Neo4j</h4>
+                        <p class="mb-0 text-muted">Containerized Neo4j instance</p>
                     </div>
-                    <p class="mt-2">Executing query...</p>
                 </div>
-            </div>
-
-            <!-- Results Section -->
-            <div class="results-section" id="results-section" style="display: none;">
-                <h4 class="mb-3">
-                    <i class="fas fa-list me-2 text-primary"></i>
-                    Query Results
-                </h4>
-                <div id="query-results"></div>
+                
+                <!-- Docker Status -->
+                <div class="status-grid" id="docker-status">
+                    <div class="status-item">
+                        <div class="status-value">
+                            <span class="status-indicator status-unknown"></span>
+                            Checking...
+                        </div>
+                        <div class="status-label">Container Status</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">
+                            <span class="status-indicator status-unknown"></span>
+                            Checking...
+                        </div>
+                        <div class="status-label">Browser Access</div>
+                    </div>
+                </div>
+                
+                <!-- Docker Connection Info -->
+                <div class="connection-info">
+                    <strong>Connection Details:</strong><br>
+                    <strong>Browser URL:</strong> <a href="http://localhost:7475" target="_blank">http://localhost:7475</a><br>
+                    <strong>Bolt URL:</strong> bolt://localhost:7688<br>
+                    <strong>Username:</strong> neo4j<br>
+                    <strong>Password:</strong> password
+                </div>
+                
+                <!-- Docker Actions -->
+                <div class="action-buttons">
+                    <a href="#" class="action-btn primary" onclick="launchDockerBrowser()">
+                        <i class="fas fa-globe"></i>
+                        Open Neo4j Browser
+                    </a>
+                    <a href="#" class="action-btn success" onclick="startDockerNeo4j()">
+                        <i class="fas fa-play"></i>
+                        Start Container
+                    </a>
+                    <a href="#" class="action-btn warning" onclick="stopDockerNeo4j()">
+                        <i class="fas fa-stop"></i>
+                        Stop Container
+                    </a>
+                    <a href="#" class="action-btn secondary" onclick="checkDockerStatus()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh Status
+                    </a>
+                </div>
             </div>
         </div>
-
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Demo Queries -->
-            <div class="demo-queries">
-                <h5 class="mb-3">
-                    <i class="fas fa-play-circle me-2"></i>
-                    Try Demo Queries
-                </h5>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="MATCH (n) RETURN n LIMIT 10">
-                        <i class="fas fa-cube me-2"></i>
-                        All Nodes
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="MATCH (n:Asset) RETURN n LIMIT 10">
-                        <i class="fas fa-industry me-2"></i>
-                        Assets Only
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="MATCH (n:Submodel) RETURN n LIMIT 10">
-                        <i class="fas fa-sitemap me-2"></i>
-                        Submodels
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 10">
-                        <i class="fas fa-link me-2"></i>
-                        Relationships
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="CALL db.labels() YIELD label RETURN label">
-                        <i class="fas fa-tags me-2"></i>
-                        All Labels
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType">
-                        <i class="fas fa-arrows-alt-h me-2"></i>
-                        Relationship Types
-                    </button>
-                    <button class="btn btn-outline-success demo-query-btn" id="run-analysis">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Run Analysis
-                    </button>
+        
+        <!-- Local Neo4j Column -->
+        <div class="col-lg-6">
+            <div class="neo4j-column local">
+                <div class="column-header local">
+                    <i class="fas fa-desktop column-icon local"></i>
+                    <div>
+                        <h4 class="mb-1">Local Neo4j Desktop</h4>
+                        <p class="mb-0 text-muted">Desktop Neo4j application</p>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Graph Analysis -->
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>
-                        Graph Analysis
-                    </h5>
-                </div>
-                <div class="card-body" id="analysis-results">
-                    <div class="text-center">
-                        <div class="spinner-border text-success" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                
+                <!-- Local Status -->
+                <div class="status-grid" id="local-status">
+                    <div class="status-item">
+                        <div class="status-value">
+                            <span class="status-indicator status-unknown"></span>
+                            Checking...
                         </div>
-                        <p class="mt-2">Click "Run Analysis" to start</p>
+                        <div class="status-label">Application Status</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value">
+                            <span class="status-indicator status-unknown"></span>
+                            Checking...
+                        </div>
+                        <div class="status-label">Connection Status</div>
                     </div>
                 </div>
+                
+                <!-- Local Connection Info -->
+                <div class="connection-info">
+                    <strong>Connection Details:</strong><br>
+                    <strong>Default Browser:</strong> <a href="http://localhost:7474" target="_blank">http://localhost:7474</a><br>
+                    <strong>Default Bolt:</strong> bolt://localhost:7687<br>
+                    <strong>Username:</strong> neo4j<br>
+                    <strong>Password:</strong> (set in Desktop)
+                </div>
+                
+                <!-- Local Actions -->
+                <div class="action-buttons">
+                    <a href="#" class="action-btn primary" onclick="launchLocalBrowser()">
+                        <i class="fas fa-globe"></i>
+                        Open Neo4j Browser
+                    </a>
+                    <a href="#" class="action-btn success" onclick="launchNeo4jDesktop()">
+                        <i class="fas fa-desktop"></i>
+                        Launch Neo4j Desktop
+                    </a>
+                    <a href="#" class="action-btn secondary" onclick="checkLocalStatus()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh Status
+                    </a>
+                    <a href="#" class="action-btn secondary" onclick="showLocalHelp()">
+                        <i class="fas fa-question-circle"></i>
+                        Setup Help
+                    </a>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Data Loading -->
-            <div class="card mt-3">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">
-                        <i class="fas fa-upload me-2"></i>
-                        Load Data
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="data-path" class="form-label">ETL Output Path:</label>
-                        <input type="text" class="form-control" id="data-path" 
-                               placeholder="output/etl_results" 
-                               value="output/etl_results">
-                    </div>
-                    <button type="button" class="btn btn-warning w-100" id="load-data">
-                        <i class="fas fa-upload me-2"></i>
-                        Load Graph Data
-                    </button>
-                </div>
+    <!-- Information Panel -->
+    <div class="info-panel">
+        <h5><i class="fas fa-lightbulb me-2"></i>How to Use Neo4j</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fab fa-docker me-2"></i>Docker Neo4j:</h6>
+                <ul class="mb-0">
+                    <li>Quick setup with containerized instance</li>
+                    <li>Runs on ports 7475 (browser) and 7688 (bolt)</li>
+                    <li>Perfect for development and testing</li>
+                    <li>Easy to start/stop with management controls</li>
+                </ul>
             </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-desktop me-2"></i>Local Neo4j Desktop:</h6>
+                <ul class="mb-0">
+                    <li>Full desktop application with advanced features</li>
+                    <li>Multiple database management</li>
+                    <li>Advanced visualization and plugins</li>
+                    <li>Professional development environment</li>
+                </ul>
+            </div>
+        </div>
+        
+        <hr class="my-3">
+        
+        <h6><i class="fas fa-link me-2"></i>Connect Neo4j Desktop to Docker:</h6>
+        <div class="row">
+            <div class="col-md-12">
+                <ol class="mb-0">
+                    <li>Launch Neo4j Desktop using the button above</li>
+                    <li>Create a new project or open existing one</li>
+                    <li>Click "Add Database" → "Connect to existing database"</li>
+                    <li>Use these connection details:
+                        <ul class="mt-1">
+                            <li><strong>URI:</strong> <code>bolt://localhost:7688</code></li>
+                            <li><strong>Username:</strong> <code>neo4j</code></li>
+                            <li><strong>Password:</strong> <code>password</code></li>
+                        </ul>
+                    </li>
+                    <li>Test connection and save</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section (for status updates) -->
+    <div id="results-section" style="display: none;">
+        <div class="neo4j-column">
+            <h5 id="results-title">Results</h5>
+            <div id="results-content"></div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- JavaScript -->
+<script src="/static/js/kg_neo4j.js"></script>
 <script>
-// Knowledge Graph System JavaScript
-class KnowledgeGraphSystem {
-    constructor() {
-        this.apiClient = window.apiClient;
-        this.uiHelper = window.uiHelper;
-        this.init();
-    }
+console.log('🔧 Testing if JavaScript is working on this page');
 
-    init() {
-        this.bindEvents();
-        this.loadSystemStatus();
-        this.loadGraphStats();
-    }
+function launchDockerBrowser() {
+    console.log('🌐 Launching Docker Neo4j Browser...');
+    window.open('http://localhost:7475', '_blank');
+    showNotification('🌐 Docker Neo4j Browser opened', 'success');
+}
 
-    bindEvents() {
-        // Query execution
-        document.getElementById('execute-query').addEventListener('click', () => {
-            this.executeQuery();
-        });
+function launchLocalBrowser() {
+    console.log('🌐 Launching Local Neo4j Browser...');
+    window.open('http://localhost:7474', '_blank');
+    showNotification('🌐 Local Neo4j Browser opened', 'success');
+}
 
-        // Enter key in query input
-        document.getElementById('cypher-query').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                e.preventDefault();
-                this.executeQuery();
-            }
-        });
-
-        // Clear results
-        document.getElementById('clear-results').addEventListener('click', () => {
-            this.clearResults();
-        });
-
-        // Demo query buttons
-        document.querySelectorAll('.demo-query-btn').forEach(btn => {
-            if (btn.id !== 'run-analysis') {
-                btn.addEventListener('click', () => {
-                    const query = btn.getAttribute('data-query');
-                    document.getElementById('cypher-query').value = query;
-                    this.executeQuery();
-                });
-            }
-        });
-
-        // Run analysis
-        document.getElementById('run-analysis').addEventListener('click', () => {
-            this.runAnalysis();
-        });
-
-        // Load data
-        document.getElementById('load-data').addEventListener('click', () => {
-            this.loadData();
-        });
-    }
-
-    async executeQuery() {
-        const query = document.getElementById('cypher-query').value.trim();
-        if (!query) {
-            this.uiHelper.showWarning('Please enter a Cypher query to execute.');
-            return;
-        }
-
-        // Show loading
-        this.showQueryLoading(true);
-        this.hideResults();
-
-        try {
-            const response = await this.apiClient.queryKG(query);
-            this.displayResults(response);
-            this.uiHelper.showSuccess('Query executed successfully!');
-        } catch (error) {
-            console.error('Query failed:', error);
-            this.uiHelper.showError('Failed to execute query. Please check your syntax and try again.');
-            this.hideResults();
-        } finally {
-            this.showQueryLoading(false);
-        }
-    }
-
-    async runAnalysis() {
-        this.uiHelper.showInfo('Running graph analysis...');
+async function launchNeo4jDesktop() {
+    console.log('🖥️ Launching Neo4j Desktop...');
+    
+    try {
+        showNotification('🖥️ Launching Neo4j Desktop...', 'info');
         
-        try {
-            const analysis = await this.apiClient.getKGStats();
-            this.displayAnalysis(analysis);
-            this.uiHelper.showSuccess('Analysis completed successfully!');
-        } catch (error) {
-            console.error('Analysis failed:', error);
-            this.uiHelper.showError('Failed to run analysis. Please try again.');
-        }
-    }
-
-    async loadData() {
-        const dataPath = document.getElementById('data-path').value.trim();
-        if (!dataPath) {
-            this.uiHelper.showWarning('Please enter a data path.');
-            return;
-        }
-
-        this.uiHelper.showInfo('Loading graph data...');
+        const response = await fetch('/kg-neo4j/api/local/launch', {
+            method: 'POST'
+        });
         
-        try {
-            const response = await this.apiClient.loadKGData(dataPath);
-            this.uiHelper.showSuccess('Data loaded successfully!');
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('✅ ' + data.message, 'success');
             
-            // Refresh stats
-            this.loadGraphStats();
-        } catch (error) {
-            console.error('Data loading failed:', error);
-            this.uiHelper.showError('Failed to load data. Please check the path and try again.');
-        }
-    }
-
-    displayResults(response) {
-        const resultsSection = document.getElementById('results-section');
-        const resultsContent = document.getElementById('query-results');
-
-        let html = `
-            <div class="mb-3">
-                <strong>Query:</strong> <code>${response.query || 'Unknown'}</code>
-            </div>
-            <div class="mb-3">
-                <strong>Results:</strong> ${response.results?.length || 0} items found
-            </div>
-        `;
-
-        if (response.results && response.results.length > 0) {
-            // Create table for results
-            html += `
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Type</th>
-                                <th>Properties</th>
-                                <th>Labels/Type</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            response.results.forEach((result, index) => {
-                if (result.type === 'node') {
-                    html += `
-                        <tr>
-                            <td><span class="badge bg-primary">Node</span></td>
-                            <td>
-                                <div class="node-item">
-                                    <strong>ID:</strong> ${result.id}<br>
-                                    ${this.formatProperties(result.properties)}
-                                </div>
-                            </td>
-                            <td>${result.labels?.join(', ') || 'No labels'}</td>
-                        </tr>
-                    `;
-                } else if (result.type === 'relationship') {
-                    html += `
-                        <tr>
-                            <td><span class="badge bg-success">Relationship</span></td>
-                            <td>
-                                <div class="relationship-item">
-                                    <strong>Type:</strong> ${result.type_name}<br>
-                                    ${this.formatProperties(result.properties)}
-                                </div>
-                            </td>
-                            <td>${result.type_name || 'Unknown'}</td>
-                        </tr>
-                    `;
-                } else {
-                    html += `
-                        <tr>
-                            <td><span class="badge bg-secondary">Other</span></td>
-                            <td><pre>${JSON.stringify(result, null, 2)}</pre></td>
-                            <td>-</td>
-                        </tr>
-                    `;
-                }
-            });
-
-            html += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            // Wait a moment for the application to start
+            setTimeout(() => {
+                checkLocalStatus();
+            }, 3000);
+            
         } else {
-            html += '<div class="alert alert-info">No results found for this query.</div>';
+            showNotification('❌ Failed to launch Neo4j Desktop: ' + data.error, 'error');
         }
-
-        resultsContent.innerHTML = html;
-        resultsSection.style.display = 'block';
-    }
-
-    displayAnalysis(analysis) {
-        const container = document.getElementById('analysis-results');
         
-        let html = `
-            <div class="mb-3">
-                <h6 class="text-success">Graph Analysis Results</h6>
-            </div>
-        `;
-
-        if (analysis.node_count !== undefined) {
-            html += `
-                <div class="mb-2">
-                    <strong>Total Nodes:</strong> ${analysis.node_count}
-                </div>
-            `;
-        }
-
-        if (analysis.relationship_count !== undefined) {
-            html += `
-                <div class="mb-2">
-                    <strong>Total Relationships:</strong> ${analysis.relationship_count}
-                </div>
-            `;
-        }
-
-        if (analysis.node_labels && analysis.node_labels.length > 0) {
-            html += `
-                <div class="mb-2">
-                    <strong>Node Labels:</strong><br>
-                    ${analysis.node_labels.map(label => 
-                        `<span class="badge bg-primary me-1">${label}</span>`
-                    ).join('')}
-                </div>
-            `;
-        }
-
-        if (analysis.relationship_types && analysis.relationship_types.length > 0) {
-            html += `
-                <div class="mb-2">
-                    <strong>Relationship Types:</strong><br>
-                    ${analysis.relationship_types.map(type => 
-                        `<span class="badge bg-success me-1">${type}</span>`
-                    ).join('')}
-                </div>
-            `;
-        }
-
-        if (analysis.community_detection) {
-            html += `
-                <div class="mb-2">
-                    <strong>Communities Found:</strong> ${analysis.community_detection.communities_count || 0}
-                </div>
-            `;
-        }
-
-        if (analysis.centrality_analysis) {
-            html += `
-                <div class="mb-2">
-                    <strong>Centrality Analysis:</strong><br>
-                    <small class="text-muted">Available for connected nodes</small>
-                </div>
-            `;
-        }
-
-        container.innerHTML = html;
-    }
-
-    formatProperties(properties) {
-        if (!properties || Object.keys(properties).length === 0) {
-            return '<em>No properties</em>';
-        }
-
-        return Object.entries(properties).map(([key, value]) => {
-            const displayValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-            return `<div class="property-item"><strong>${key}:</strong> ${displayValue}</div>`;
-        }).join('');
-    }
-
-    async loadSystemStatus() {
-        try {
-            const status = await this.apiClient.getKGStatus();
-            
-            // Update status indicators
-            this.updateStatusIndicator('neo4j', status.status || 'error');
-            this.updateStatusIndicator('graph', status.graph_available ? 'available' : 'unavailable');
-            this.updateStatusIndicator('gds', status.gds_available ? 'available' : 'unavailable');
-            
-            if (status.last_updated) {
-                document.getElementById('last-updated').textContent = 
-                    new Date(status.last_updated).toLocaleString();
-                document.getElementById('last-updated').className = 'badge bg-success';
-            }
-            
-        } catch (error) {
-            console.error('Failed to load system status:', error);
-            this.updateStatusIndicator('neo4j', 'error');
-            this.updateStatusIndicator('graph', 'error');
-            this.updateStatusIndicator('gds', 'error');
-        }
-    }
-
-    async loadGraphStats() {
-        try {
-            const stats = await this.apiClient.getKGStats();
-            this.displayGraphStats(stats);
-        } catch (error) {
-            console.error('Failed to load graph stats:', error);
-            document.getElementById('graph-stats').innerHTML = 
-                '<div class="text-danger">Failed to load statistics</div>';
-        }
-    }
-
-    updateStatusIndicator(service, status) {
-        const indicator = document.getElementById(`status-${service}`);
-        if (indicator) {
-            const isHealthy = status === 'connected' || status === 'available' || status === 'healthy';
-            indicator.className = `badge ${isHealthy ? 'bg-success' : 'bg-danger'}`;
-            indicator.textContent = isHealthy ? 'Connected' : 'Error';
-        }
-    }
-
-    displayGraphStats(stats) {
-        const container = document.getElementById('graph-stats');
-        
-        let html = `
-            <div class="stat-card">
-                <div class="stat-icon text-primary">
-                    <i class="fas fa-cube"></i>
-                </div>
-                <div class="stat-value">${stats.node_count || 0}</div>
-                <div class="stat-label">Total Nodes</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon text-success">
-                    <i class="fas fa-link"></i>
-                </div>
-                <div class="stat-value">${stats.relationship_count || 0}</div>
-                <div class="stat-label">Relationships</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon text-info">
-                    <i class="fas fa-tags"></i>
-                </div>
-                <div class="stat-value">${stats.node_labels?.length || 0}</div>
-                <div class="stat-label">Node Labels</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon text-warning">
-                    <i class="fas fa-arrows-alt-h"></i>
-                </div>
-                <div class="stat-value">${stats.relationship_types?.length || 0}</div>
-                <div class="stat-label">Relationship Types</div>
-            </div>
-        `;
-
-        container.innerHTML = html;
-    }
-
-    showQueryLoading(show) {
-        const loading = document.getElementById('query-loading');
-        const executeBtn = document.getElementById('execute-query');
-        
-        if (show) {
-            loading.style.display = 'block';
-            executeBtn.disabled = true;
-        } else {
-            loading.style.display = 'none';
-            executeBtn.disabled = false;
-        }
-    }
-
-    hideResults() {
-        document.getElementById('results-section').style.display = 'none';
-    }
-
-    clearResults() {
-        document.getElementById('cypher-query').value = '';
-        this.hideResults();
-        this.uiHelper.showInfo('Query and results cleared.');
+        return data.success;
+    } catch (error) {
+        console.error('Error launching Neo4j Desktop:', error);
+        showNotification('❌ Failed to launch Neo4j Desktop', 'error');
+        return false;
     }
 }
 
-// Initialize the Knowledge Graph system when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    new KnowledgeGraphSystem();
+function startDockerNeo4j() {
+    console.log('🚀 Starting Docker Neo4j...');
+    startNeo4jDocker();
+}
+
+function stopDockerNeo4j() {
+    console.log('🛑 Stopping Docker Neo4j...');
+    stopNeo4jDocker();
+}
+
+function checkDockerStatus() {
+    console.log('🔍 Checking Docker status...');
+    checkConnectionStatus();
+}
+
+async function checkLocalStatus() {
+    console.log('🔍 Checking Local status...');
+    
+    try {
+        const response = await fetch('/kg-neo4j/api/local/status');
+        const data = await response.json();
+        
+        // Update the status indicators
+        updateLocalStatus(data);
+        
+        if (data.success) {
+            if (data.application_running) {
+                showNotification('✅ Local Neo4j Desktop is running', 'success');
+            } else {
+                showNotification('ℹ️ Local Neo4j Desktop is not running', 'info');
+            }
+        } else {
+            showNotification('❌ Failed to check Local Neo4j status: ' + data.error, 'error');
+        }
+        
+        return data.success;
+    } catch (error) {
+        console.error('Error checking local status:', error);
+        showNotification('❌ Failed to check Local Neo4j status', 'error');
+        updateLocalStatus({ success: false, error: error.message });
+        return false;
+    }
+}
+
+function showLocalHelp() {
+    console.log('❓ Showing Local help...');
+    showNotification('📖 Neo4j Desktop Setup: Download from neo4j.com/desktop', 'info');
+}
+
+function refreshAllStatus() {
+    checkDockerStatus();
+    checkLocalStatus();
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial status check
+    setTimeout(() => {
+        refreshAllStatus();
+    }, 1000);
 });
 </script>
+
 {% endblock %} 
