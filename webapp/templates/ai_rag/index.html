@@ -217,6 +217,14 @@
                                             <button class="btn btn-outline-info btn-sm" onclick="refreshVectorDbInfo()">
                                                 <i class="fas fa-sync-alt me-1"></i>Refresh Info
                                             </button>
+                                            
+                                            <hr class="my-3">
+                                            
+                                            <h6><i class="fas fa-chart-bar text-warning me-2"></i>Data Statistics</h6>
+                                            <button class="btn btn-outline-warning btn-sm" onclick="showDataStats()">
+                                                <i class="fas fa-chart-bar me-1"></i>Show Data Statistics
+                                            </button>
+                                            <div id="data-management-status" class="mt-2"></div>
                                         </div>
                                         <div class="col-md-6">
                                             <h6><i class="fas fa-download text-success me-2"></i>Backup Operations</h6>
@@ -232,6 +240,15 @@
                                                 </button>
                                             </div>
                                             <div id="backup-status" class="mt-2"></div>
+                                            
+                                            <hr class="my-3">
+                                            
+                                            <h6><i class="fas fa-trash text-danger me-2"></i>Data Management</h6>
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-outline-danger btn-sm" onclick="clearGlobalVectorData()">
+                                                    <i class="fas fa-trash me-1"></i>Clear Global Vector Data
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -253,21 +270,119 @@
                     Ask Questions About Your Digital Twins
                 </h3>
                 
-                <!-- Analysis Type Selector -->
+                <!-- Model and Technique Configuration -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="analysis-type-selector">
+                            <label class="form-label fw-bold">Analysis Type:</label>
+                            <div class="btn-group" role="group" id="analysis-type-group">
+                                <input type="radio" class="btn-check" name="analysis-type" id="general" value="general" checked>
+                                <label class="btn btn-outline-primary" for="general">General</label>
+                                
+                                <input type="radio" class="btn-check" name="analysis-type" id="quality" value="quality">
+                                <label class="btn btn-outline-primary" for="quality">Quality</label>
+                                
+                                <input type="radio" class="btn-check" name="analysis-type" id="risk" value="risk">
+                                <label class="btn btn-outline-primary" for="risk">Risk</label>
+                                
+                                <input type="radio" class="btn-check" name="analysis-type" id="optimization" value="optimization">
+                                <label class="btn btn-outline-primary" for="optimization">Optimization</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="analysis-type-selector">
+                            <label class="form-label fw-bold">LLM Model:</label>
+                            <select class="form-select" id="llm-model-select">
+                                <option value="gpt-4">GPT-4 (OpenAI)</option>
+                                <option value="gpt-3.5-turbo" selected>GPT-3.5 Turbo (OpenAI)</option>
+                                <option value="claude-3">Claude-3 (Anthropic)</option>
+                                <option value="gemini-pro">Gemini Pro (Google)</option>
+                                <option value="llama-2">Llama-2 (Local)</option>
+                                <option value="mistral">Mistral (Local)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAG Technique Selector -->
                 <div class="analysis-type-selector mb-3">
-                    <label class="form-label fw-bold">Analysis Type:</label>
-                    <div class="btn-group" role="group" id="analysis-type-group">
-                        <input type="radio" class="btn-check" name="analysis-type" id="general" value="general" checked>
-                        <label class="btn btn-outline-primary" for="general">General</label>
+                    <label class="form-label fw-bold">RAG Technique:</label>
+                    <div class="btn-group" role="group" id="rag-technique-group">
+                        <input type="radio" class="btn-check" name="rag-technique" id="basic-rag" value="basic" checked>
+                        <label class="btn btn-outline-success" for="basic-rag">Basic RAG</label>
                         
-                        <input type="radio" class="btn-check" name="analysis-type" id="quality" value="quality">
-                        <label class="btn btn-outline-primary" for="quality">Quality</label>
+                        <input type="radio" class="btn-check" name="rag-technique" id="hybrid-rag" value="hybrid">
+                        <label class="btn btn-outline-success" for="hybrid-rag">Hybrid RAG</label>
                         
-                        <input type="radio" class="btn-check" name="analysis-type" id="risk" value="risk">
-                        <label class="btn btn-outline-primary" for="risk">Risk</label>
+                        <input type="radio" class="btn-check" name="rag-technique" id="multi-step-rag" value="multi_step">
+                        <label class="btn btn-outline-success" for="multi-step-rag">Multi-Step RAG</label>
                         
-                        <input type="radio" class="btn-check" name="analysis-type" id="optimization" value="optimization">
-                        <label class="btn btn-outline-primary" for="optimization">Optimization</label>
+                        <input type="radio" class="btn-check" name="rag-technique" id="graph-rag" value="graph">
+                        <label class="btn btn-outline-success" for="graph-rag">Graph RAG</label>
+                        
+                        <input type="radio" class="btn-check" name="rag-technique" id="advanced-rag" value="advanced">
+                        <label class="btn btn-outline-success" for="advanced-rag">Advanced RAG</label>
+                    </div>
+                </div>
+
+                <!-- RAG Technique Information Panel -->
+                <div class="card mb-3" id="rag-technique-info">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span id="technique-title">Basic RAG</span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div id="technique-description">
+                                    <p class="mb-2"><strong>Description:</strong> Simple retrieval + generation approach using vector search and LLM</p>
+                                    <p class="mb-2"><strong>Best For:</strong> Simple queries, quick responses, baseline performance comparison</p>
+                                    <p class="mb-2"><strong>Performance:</strong> Fastest, lowest resource usage</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <div class="technique-icon mb-2">
+                                        <i class="fas fa-rocket fa-2x text-success"></i>
+                                    </div>
+                                    <div class="technique-stats">
+                                        <small class="text-muted">
+                                            <div><i class="fas fa-tachometer-alt me-1"></i>Speed: Fast</div>
+                                            <div><i class="fas fa-memory me-1"></i>Memory: Low</div>
+                                            <div><i class="fas fa-brain me-1"></i>Complexity: Simple</div>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Technique-specific configuration -->
+                        <div id="technique-config" class="mt-3">
+                            <h6><i class="fas fa-cog me-2"></i>Configuration Options</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Top K Results:</label>
+                                    <select class="form-select form-select-sm" id="top-k-select">
+                                        <option value="3">3 results</option>
+                                        <option value="5" selected>5 results</option>
+                                        <option value="10">10 results</option>
+                                        <option value="15">15 results</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Similarity Threshold:</label>
+                                    <select class="form-select form-select-sm" id="similarity-threshold">
+                                        <option value="0.5">0.5 (Loose)</option>
+                                        <option value="0.7" selected>0.7 (Balanced)</option>
+                                        <option value="0.8">0.8 (Strict)</option>
+                                        <option value="0.9">0.9 (Very Strict)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -376,6 +491,8 @@
                     </div>
                 </div>
             </div>
+
+
         </div>
     </div>
 </div>
@@ -506,6 +623,134 @@ function showBackupHistory() {
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     Could not load backup history
+                </div>
+            `;
+        });
+}
+
+function clearGlobalVectorData() {
+    if (!confirm('⚠️ WARNING: This will permanently delete ALL vector data from the global database!\n\nThis action cannot be undone. Are you sure you want to continue?')) {
+        return;
+    }
+    
+    const statusDiv = document.getElementById('data-management-status');
+    statusDiv.innerHTML = `
+        <div class="alert alert-warning">
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            Clearing global vector data... This may take a few moments.
+        </div>
+    `;
+    
+    fetch('/ai-rag/clear-vector-data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            clear_all: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Global Vector Data Cleared Successfully!</strong><br>
+                    <strong>Collections Removed:</strong> ${data.collections_removed}<br>
+                    <strong>Total Points Deleted:</strong> ${data.points_deleted}<br>
+                    <strong>Storage Freed:</strong> ${data.storage_freed}<br>
+                    <small class="text-muted">Cleared at ${data.timestamp}</small>
+                </div>
+            `;
+            
+            // Refresh the vector database info
+            setTimeout(() => {
+                refreshVectorDbInfo();
+            }, 1000);
+        } else {
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Failed to Clear Data:</strong> ${data.error}<br>
+                    <small class="text-muted">Check server logs for details</small>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing vector data:', error);
+        statusDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> Network error while clearing data<br>
+                <small class="text-muted">Please try again or check server status</small>
+            </div>
+        `;
+    });
+}
+
+function showDataStats() {
+    const statusDiv = document.getElementById('data-management-status');
+    statusDiv.innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            Loading data statistics...
+        </div>
+    `;
+    
+    console.log('🔍 Fetching vector data stats...');
+    fetch('/ai-rag/vector-data-stats')
+        .then(response => {
+            console.log('🔍 Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('🔍 Response data:', data);
+            if (data.success) {
+                let statsHtml = `
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-chart-bar me-2"></i>Vector Database Statistics</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Total Collections:</strong> ${data.total_collections}<br>
+                                <strong>Total Points:</strong> ${data.total_points}<br>
+                                <strong>Total Storage:</strong> ${data.total_storage}
+                            </div>
+                            <div class="col-6">
+                                <strong>Largest Collection:</strong> ${data.largest_collection}
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>Collection Breakdown:</h6>
+                        <ul class="list-unstyled">
+                `;
+                
+                data.collection_stats.forEach(collection => {
+                    statsHtml += `
+                        <li class="mb-1">
+                            <strong>${collection.name}:</strong> ${collection.points} points (${collection.storage})
+                        </li>
+                    `;
+                });
+                
+                statsHtml += '</ul></div>';
+                statusDiv.innerHTML = statsHtml;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Could not load data statistics: ${data.error || 'Unknown error'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching data stats:', error);
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Could not load data statistics: ${error.message || 'Network error'}
                 </div>
             `;
         });

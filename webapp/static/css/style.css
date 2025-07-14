@@ -285,3 +285,76 @@ footer {
     font-size: 0.75rem;
     line-height: 8px;
 }
+
+/* RAG Technique Information Panel */
+#rag-technique-info {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+#rag-technique-info:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+#rag-technique-info .card-header {
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.technique-icon {
+    margin-bottom: 1rem;
+}
+
+.technique-stats {
+    font-size: 0.85rem;
+}
+
+.technique-stats div {
+    margin-bottom: 0.25rem;
+}
+
+#technique-config {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+#technique-config h6 {
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+/* RAG Technique Button Group */
+#rag-technique-group .btn {
+    border-radius: 6px;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+#rag-technique-group .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+#rag-technique-group .btn-check:checked + .btn {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Feature List Styling */
+#technique-description ul {
+    margin-top: 0.5rem;
+}
+
+#technique-description li {
+    margin-bottom: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+#technique-description li i {
+    width: 16px;
+    text-align: center;
+}

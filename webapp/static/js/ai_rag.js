@@ -45,15 +45,153 @@ class AIRAGSystem {
         // Hide loading spinner initially
         this.showQueryLoading(false);
         
+        // Initialize technique information
+        this.techniqueInfo = {
+            basic: {
+                title: 'Basic RAG',
+                description: 'Simple retrieval + generation approach using vector search and LLM',
+                bestFor: 'Simple queries, quick responses, baseline performance comparison',
+                performance: 'Fastest, lowest resource usage',
+                icon: 'fas fa-rocket',
+                color: 'success',
+                speed: 'Fast',
+                memory: 'Low',
+                complexity: 'Simple',
+                features: ['Standard vector similarity search', 'Simple context combination', 'Basic prompt engineering', 'Minimal configuration required']
+            },
+            hybrid: {
+                title: 'Hybrid RAG',
+                description: 'Dense + sparse retrieval approach using vector search and keyword matching',
+                bestFor: 'Queries with specific keywords, mixed semantic and exact matching needs',
+                performance: 'Moderate performance, better results',
+                icon: 'fas fa-layer-group',
+                color: 'info',
+                speed: 'Medium',
+                memory: 'Medium',
+                complexity: 'Moderate',
+                features: ['Combines dense vector search with sparse keyword search', 'Weighted scoring of results', 'Deduplication of results', 'Enhanced relevance through multiple retrieval methods']
+            },
+            multi_step: {
+                title: 'Multi-Step RAG',
+                description: 'Iterative refinement approach with multiple retrieval and generation steps',
+                bestFor: 'Complex queries requiring deep analysis, research-style questions',
+                performance: 'Slower, more thorough analysis',
+                icon: 'fas fa-route',
+                color: 'warning',
+                speed: 'Slow',
+                memory: 'High',
+                complexity: 'Complex',
+                features: ['Multi-step query refinement', 'Iterative context retrieval', 'Query evolution based on intermediate results', 'Step-by-step analysis']
+            },
+            graph: {
+                title: 'Graph RAG',
+                description: 'Knowledge graph integration approach using graph queries and relationships',
+                bestFor: 'Queries about relationships and connections, structural analysis questions',
+                performance: 'Depends on graph size and complexity',
+                icon: 'fas fa-project-diagram',
+                color: 'primary',
+                speed: 'Variable',
+                memory: 'Medium',
+                complexity: 'Moderate',
+                features: ['Graph-based context retrieval', 'Relationship-aware search', 'Structural insights from knowledge graph', 'Enhanced understanding of entity connections']
+            },
+            advanced: {
+                title: 'Advanced RAG',
+                description: 'Multi-modal + reasoning approach with advanced context processing',
+                bestFor: 'Complex, multi-faceted queries, comprehensive analysis requirements',
+                performance: 'Most resource-intensive, most comprehensive',
+                icon: 'fas fa-brain',
+                color: 'danger',
+                speed: 'Slowest',
+                memory: 'Highest',
+                complexity: 'Very Complex',
+                features: ['Multi-modal context combination', 'Advanced filtering and reranking', 'Sophisticated reasoning capabilities', 'Metadata analysis and insights']
+            }
+        };
+        
         // Load initial data
         await this.loadSystemStatus();
         await this.loadSystemStats();
         await this.loadCollections();
+        await this.loadRAGTechniques();
         
         // Setup event listeners
         this.setupEventListeners();
         
+        // Initialize technique display
+        this.updateTechniqueInfo('basic');
+        
         console.log('✅ AI/RAG System initialized');
+    }
+    
+    async loadRAGTechniques() {
+        try {
+            console.log('🔧 Loading RAG techniques...');
+            const response = await this.apiClient.getRAGTechniques();
+            
+            if (response.techniques) {
+                // Store techniques for later use
+                this.availableTechniques = response.techniques;
+                console.log(`✅ Loaded ${response.techniques.length} RAG techniques`);
+                
+                // Update technique selection UI if available
+                this.updateTechniqueSelection();
+            }
+        } catch (error) {
+            console.error('❌ Failed to load RAG techniques:', error);
+        }
+    }
+    
+    updateTechniqueSelection() {
+        const techniqueContainer = document.getElementById('rag-techniques-container');
+        if (!techniqueContainer || !this.availableTechniques) return;
+        
+        techniqueContainer.innerHTML = '';
+        
+        this.availableTechniques.forEach(technique => {
+            const div = document.createElement('div');
+            div.className = 'form-check';
+            div.innerHTML = `
+                <input class="form-check-input" type="radio" name="rag-technique" 
+                       id="technique-${technique.id}" value="${technique.id}" 
+                       ${technique.id === 'basic' ? 'checked' : ''}>
+                <label class="form-check-label" for="technique-${technique.id}">
+                    <strong>${technique.name}</strong>
+                    <small class="text-muted d-block">${technique.description}</small>
+                </label>
+            `;
+            techniqueContainer.appendChild(div);
+        });
+    }
+    
+    async getTechniqueRecommendations(query) {
+        try {
+            const response = await this.apiClient.getTechniqueRecommendations(query);
+            return response.recommendations || [];
+        } catch (error) {
+            console.error('Failed to get technique recommendations:', error);
+            return [];
+        }
+    }
+    
+    async executeRAGTechnique(query, techniqueId, parameters = {}) {
+        try {
+            const response = await this.apiClient.executeRAGTechnique(query, techniqueId, parameters);
+            return response;
+        } catch (error) {
+            console.error('Failed to execute RAG technique:', error);
+            throw error;
+        }
+    }
+    
+    async compareRAGTechniques(query, techniqueIds = null, parameters = {}) {
+        try {
+            const response = await this.apiClient.compareRAGTechniques(query, techniqueIds, parameters);
+            return response;
+        } catch (error) {
+            console.error('Failed to compare RAG techniques:', error);
+            throw error;
+        }
     }
 
     setupEventListeners() {
@@ -89,6 +227,12 @@ class AIRAGSystem {
             collectionSelect.addEventListener('change', () => this.onCollectionChange());
         }
 
+        // RAG technique changes
+        const ragTechniqueRadios = document.querySelectorAll('input[name="rag-technique"]');
+        ragTechniqueRadios.forEach(radio => {
+            radio.addEventListener('change', () => this.onRAGTechniqueChange());
+        });
+
         // Index data button
         const indexDataBtn = document.getElementById('index-data');
         if (indexDataBtn) {
@@ -104,8 +248,10 @@ class AIRAGSystem {
 
     async submitQuery() {
         const queryInput = document.getElementById('query-input');
-        const analysisTypeSelect = document.getElementById('analysis-type');
+        const analysisTypeSelect = document.querySelector('input[name="analysis-type"]:checked');
         const collectionSelect = document.getElementById('collection-select');
+        const llmModelSelect = document.getElementById('llm-model-select');
+        const ragTechniqueSelect = document.querySelector('input[name="rag-technique"]:checked');
         
         if (!queryInput || !queryInput.value.trim()) {
             this.uiHelper.showError('Please enter a query');
@@ -115,16 +261,78 @@ class AIRAGSystem {
         const query = queryInput.value.trim();
         const analysisType = analysisTypeSelect ? analysisTypeSelect.value : 'general';
         const collection = collectionSelect ? collectionSelect.value : 'aasx_assets';
+        const llmModel = llmModelSelect ? llmModelSelect.value : 'gpt-3.5-turbo';
+        const ragTechnique = ragTechniqueSelect ? ragTechniqueSelect.value : 'basic';
+        
+        // Get RAG configuration
+        const topK = document.getElementById('top-k-select')?.value || '5';
+        const similarityThreshold = document.getElementById('similarity-threshold')?.value || '0.7';
+        
+        // Technique-specific parameters
+        const ragParams = {
+            top_k: parseInt(topK),
+            similarity_threshold: parseFloat(similarityThreshold)
+        };
+        
+        // Add technique-specific parameters
+        switch (ragTechnique) {
+            case 'hybrid':
+                const denseWeight = document.getElementById('dense-weight')?.value || '0.7';
+                const sparseWeight = document.getElementById('sparse-weight')?.value || '0.3';
+                ragParams.dense_weight = parseFloat(denseWeight);
+                ragParams.sparse_weight = parseFloat(sparseWeight);
+                break;
+                
+            case 'multi_step':
+                const maxSteps = document.getElementById('max-steps')?.value || '3';
+                const refinementTemp = document.getElementById('refinement-temp')?.value || '0.3';
+                ragParams.max_steps = parseInt(maxSteps);
+                ragParams.refinement_temperature = parseFloat(refinementTemp);
+                break;
+                
+            case 'graph':
+                const graphQueryType = document.getElementById('graph-query-type')?.value || 'auto';
+                const maxGraphResults = document.getElementById('max-graph-results')?.value || '10';
+                ragParams.graph_query_type = graphQueryType;
+                ragParams.max_graph_results = parseInt(maxGraphResults);
+                break;
+                
+            case 'advanced':
+                const enableReranking = document.getElementById('enable-reranking')?.checked || false;
+                const enableGraphContext = document.getElementById('enable-graph-context')?.checked || false;
+                const enableMetadataFiltering = document.getElementById('enable-metadata-filtering')?.checked || false;
+                const reasoningMode = document.getElementById('reasoning-mode')?.value || 'standard';
+                ragParams.enable_reranking = enableReranking;
+                ragParams.enable_graph_context = enableGraphContext;
+                ragParams.enable_metadata_filtering = enableMetadataFiltering;
+                ragParams.reasoning_mode = reasoningMode;
+                break;
+        }
 
         this.showQueryLoading(true);
         this.hideResponse();
 
         try {
-            console.log(`🔍 Submitting query: ${query} (${analysisType})`);
+            console.log(`🔍 Submitting query: ${query} (${analysisType}) with ${llmModel} and ${ragTechnique} technique`);
             
-            const response = await this.apiClient.queryAIRAG(query, analysisType, collection);
+            const response = await this.apiClient.queryAIRAG(
+                query, 
+                analysisType, 
+                collection,
+                {
+                    llm_model: llmModel,
+                    rag_technique: ragTechnique,
+                    ...ragParams
+                }
+            );
             
             console.log('✅ Query response received:', response);
+            console.log('🔍 Response keys:', Object.keys(response));
+            console.log('🔍 Technique info:', {
+                technique_name: response.technique_name,
+                rag_technique: response.rag_technique,
+                technique: response.technique
+            });
             this.displayResponse(response);
             
         } catch (error) {
@@ -235,7 +443,7 @@ class AIRAGSystem {
             
             this.updateStatusIndicator('qdrant', status.ai_rag?.qdrant_status || 'error');
             this.updateStatusIndicator('qdrant-client', status.ai_rag?.qdrant_status || 'error'); // Qdrant client uses same status
-            this.updateStatusIndicator('neo4j', status.kg?.neo4j_status || 'error');
+            this.updateStatusIndicator('neo4j', status.kg?.success ? 'connected' : 'error');
             this.updateStatusIndicator('openai', status.ai_rag?.openai_status || 'error');
             this.updateStatusIndicator('etl', status.etl?.status || 'error');
             this.updateStatusIndicator('system', status.system?.status || 'error');
@@ -422,6 +630,10 @@ class AIRAGSystem {
                     <strong>Analysis Type:</strong> ${response.analysis_type || 'General'}
                 </div>
                 <div class="mb-3">
+                    <strong>RAG Technique:</strong> 
+                    <span class="badge bg-success">${response.technique_name || response.rag_technique || 'Basic RAG'}</span>
+                </div>
+                <div class="mb-3">
                     <strong>Response:</strong>
                     <div class="mt-2 response-text">${formattedResponse}</div>
                 </div>
@@ -536,6 +748,217 @@ class AIRAGSystem {
     onCollectionChange() {
         // Could add logic to update available data based on collection
         console.log('Collection changed');
+    }
+    
+    onRAGTechniqueChange() {
+        const selectedTechnique = document.querySelector('input[name="rag-technique"]:checked');
+        if (selectedTechnique) {
+            const techniqueId = selectedTechnique.value;
+            this.updateTechniqueInfo(techniqueId);
+        }
+    }
+    
+    updateTechniqueInfo(techniqueId) {
+        const info = this.techniqueInfo[techniqueId];
+        if (!info) return;
+        
+        // Update title
+        const titleElement = document.getElementById('technique-title');
+        if (titleElement) {
+            titleElement.textContent = info.title;
+        }
+        
+        // Update card header color
+        const cardHeader = document.querySelector('#rag-technique-info .card-header');
+        if (cardHeader) {
+            cardHeader.className = `card-header bg-${info.color} text-white`;
+        }
+        
+        // Update description
+        const descriptionElement = document.getElementById('technique-description');
+        if (descriptionElement) {
+            descriptionElement.innerHTML = `
+                <p class="mb-2"><strong>Description:</strong> ${info.description}</p>
+                <p class="mb-2"><strong>Best For:</strong> ${info.bestFor}</p>
+                <p class="mb-2"><strong>Performance:</strong> ${info.performance}</p>
+                <div class="mt-3">
+                    <strong>Key Features:</strong>
+                    <ul class="list-unstyled mt-1">
+                        ${info.features.map(feature => `<li><i class="fas fa-check text-${info.color} me-2"></i>${feature}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // Update icon
+        const iconElement = document.querySelector('.technique-icon i');
+        if (iconElement) {
+            iconElement.className = `${info.icon} fa-2x text-${info.color}`;
+        }
+        
+        // Update stats
+        const statsElement = document.querySelector('.technique-stats');
+        if (statsElement) {
+            statsElement.innerHTML = `
+                <small class="text-muted">
+                    <div><i class="fas fa-tachometer-alt me-1"></i>Speed: ${info.speed}</div>
+                    <div><i class="fas fa-memory me-1"></i>Memory: ${info.memory}</div>
+                    <div><i class="fas fa-brain me-1"></i>Complexity: ${info.complexity}</div>
+                </small>
+            `;
+        }
+        
+        // Update configuration options based on technique
+        this.updateTechniqueConfiguration(techniqueId);
+    }
+    
+    updateTechniqueConfiguration(techniqueId) {
+        const configElement = document.getElementById('technique-config');
+        if (!configElement) return;
+        
+        let configHTML = '<h6><i class="fas fa-cog me-2"></i>Configuration Options</h6>';
+        
+        // Common options
+        configHTML += `
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Top K Results:</label>
+                    <select class="form-select form-select-sm" id="top-k-select">
+                        <option value="3">3 results</option>
+                        <option value="5" selected>5 results</option>
+                        <option value="10">10 results</option>
+                        <option value="15">15 results</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Similarity Threshold:</label>
+                    <select class="form-select form-select-sm" id="similarity-threshold">
+                        <option value="0.5">0.5 (Loose)</option>
+                        <option value="0.7" selected>0.7 (Balanced)</option>
+                        <option value="0.8">0.8 (Strict)</option>
+                        <option value="0.9">0.9 (Very Strict)</option>
+                    </select>
+                </div>
+            </div>
+        `;
+        
+        // Technique-specific options
+        switch (techniqueId) {
+            case 'hybrid':
+                configHTML += `
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Dense Weight:</label>
+                            <select class="form-select form-select-sm" id="dense-weight">
+                                <option value="0.6">0.6</option>
+                                <option value="0.7" selected>0.7</option>
+                                <option value="0.8">0.8</option>
+                                <option value="0.9">0.9</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sparse Weight:</label>
+                            <select class="form-select form-select-sm" id="sparse-weight">
+                                <option value="0.1">0.1</option>
+                                <option value="0.2">0.2</option>
+                                <option value="0.3" selected>0.3</option>
+                                <option value="0.4">0.4</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'multi_step':
+                configHTML += `
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Max Steps:</label>
+                            <select class="form-select form-select-sm" id="max-steps">
+                                <option value="2">2 steps</option>
+                                <option value="3" selected>3 steps</option>
+                                <option value="4">4 steps</option>
+                                <option value="5">5 steps</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Refinement Temperature:</label>
+                            <select class="form-select form-select-sm" id="refinement-temp">
+                                <option value="0.1">0.1 (Conservative)</option>
+                                <option value="0.3" selected>0.3 (Balanced)</option>
+                                <option value="0.5">0.5 (Creative)</option>
+                                <option value="0.7">0.7 (Very Creative)</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'graph':
+                configHTML += `
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Graph Query Type:</label>
+                            <select class="form-select form-select-sm" id="graph-query-type">
+                                <option value="auto" selected>Auto-detect</option>
+                                <option value="entity">Entity-focused</option>
+                                <option value="relationship">Relationship-focused</option>
+                                <option value="hierarchical">Hierarchical</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Max Graph Results:</label>
+                            <select class="form-select form-select-sm" id="max-graph-results">
+                                <option value="5">5 results</option>
+                                <option value="10" selected>10 results</option>
+                                <option value="15">15 results</option>
+                                <option value="20">20 results</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'advanced':
+                configHTML += `
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Enable Reranking:</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable-reranking" checked>
+                                <label class="form-check-label" for="enable-reranking">Use advanced reranking</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Enable Metadata Filtering:</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable-metadata-filtering">
+                                <label class="form-check-label" for="enable-metadata-filtering">Filter by metadata</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Enable Graph Context:</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable-graph-context" checked>
+                                <label class="form-check-label" for="enable-graph-context">Include graph data</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Reasoning Mode:</label>
+                            <select class="form-select form-select-sm" id="reasoning-mode">
+                                <option value="standard" selected>Standard</option>
+                                <option value="enhanced">Enhanced</option>
+                                <option value="comprehensive">Comprehensive</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                break;
+        }
+        
+        configElement.innerHTML = configHTML;
     }
 }
 

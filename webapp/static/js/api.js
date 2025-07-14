@@ -13,7 +13,11 @@ class APIClient {
                 demo: '/ai-rag/demo',
                 stats: '/ai-rag/stats',
                 collections: '/ai-rag/collections',
-                index_data: '/ai-rag/index-data'
+                index_data: '/ai-rag/index-data',
+                techniques: '/ai-rag/techniques',
+                technique_recommendations: '/ai-rag/techniques/recommendations',
+                technique_execute: '/ai-rag/techniques/execute',
+                technique_compare: '/ai-rag/techniques/compare'
             },
             // ETL Pipeline
             etl: {
@@ -85,14 +89,17 @@ class APIClient {
     /**
      * AI/RAG System API Methods
      */
-    async queryAIRAG(query, analysisType = 'general', collection = 'aasx_assets') {
+    async queryAIRAG(query, analysisType = 'general', collection = 'aasx_assets', config = {}) {
+        const requestBody = {
+            query: query,
+            analysis_type: analysisType,
+            collection: collection,
+            ...config
+        };
+        
         return this.request(this.endpoints.ai_rag.query, {
             method: 'POST',
-            body: JSON.stringify({
-                query: query,
-                analysis_type: analysisType,
-                collection: collection
-            })
+            body: JSON.stringify(requestBody)
         });
     }
 
@@ -113,6 +120,39 @@ class APIClient {
     async indexETLData() {
         return this.request(this.endpoints.ai_rag.index_data, {
             method: 'POST'
+        });
+    }
+    
+    async getRAGTechniques() {
+        return this.request(this.endpoints.ai_rag.techniques);
+    }
+    
+    async getTechniqueRecommendations(query) {
+        return this.request(this.endpoints.ai_rag.technique_recommendations, {
+            method: 'POST',
+            body: JSON.stringify({ query })
+        });
+    }
+    
+    async executeRAGTechnique(query, techniqueId, parameters = {}) {
+        return this.request(this.endpoints.ai_rag.technique_execute, {
+            method: 'POST',
+            body: JSON.stringify({
+                query,
+                technique_id: techniqueId,
+                ...parameters
+            })
+        });
+    }
+    
+    async compareRAGTechniques(query, techniqueIds = null, parameters = {}) {
+        return this.request(this.endpoints.ai_rag.technique_compare, {
+            method: 'POST',
+            body: JSON.stringify({
+                query,
+                technique_ids: techniqueIds,
+                ...parameters
+            })
         });
     }
 

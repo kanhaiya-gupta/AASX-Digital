@@ -23,6 +23,14 @@ except ImportError:
     MIGRATION_AVAILABLE = False
     logging.warning("Data migration module not available")
 
+# Import RAG technique manager
+try:
+    from .rag_technique_manager import RAGTechniqueManager
+    RAG_TECHNIQUES_AVAILABLE = True
+except ImportError:
+    RAG_TECHNIQUES_AVAILABLE = False
+    logging.warning("RAG techniques module not available")
+
 # Load environment variables from .env if present
 try:
     from dotenv import load_dotenv
@@ -417,7 +425,7 @@ class AASXDigitalTwinRAG:
             logger.error(f"Error deleting file data: {e}")
             return False
     
-    def query_ai(self, question: str, context_docs: List[Dict] = None) -> Dict:
+    def query_ai(self, question: str, context_docs: List[Dict] = None, llm_model: str = "gpt-3.5-turbo") -> Dict:
         """Query AI with context from vector search"""
         try:
             # Get relevant context
@@ -448,9 +456,9 @@ Context from digital twin data:
 Please provide a comprehensive analysis based on the available digital twin data.
 """
             
-            # Query OpenAI
+            # Query OpenAI with specified model
             response = openai.chat.completions.create(
-                model=self.config['openai']['model'],
+                model=llm_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -462,7 +470,7 @@ Please provide a comprehensive analysis based on the available digital twin data
             # Format response
             result = {
                 'answer': response.choices[0].message.content,
-                'model': self.config['openai']['model'],
+                'model': llm_model,
                 'usage': {
                     'prompt_tokens': response.usage.prompt_tokens,
                     'completion_tokens': response.usage.completion_tokens,
@@ -611,55 +619,219 @@ class EnhancedRAGSystem(AASXDigitalTwinRAG):
                 self.use_local_embeddings = False
                 self.local_embedding_model = None
         
+        # Initialize RAG technique manager
+        if RAG_TECHNIQUES_AVAILABLE:
+            self.technique_manager = RAGTechniqueManager(self.config)
+            logger.info("✅ RAG technique manager initialized")
+        else:
+            self.technique_manager = None
+            logger.warning("⚠️  RAG technique manager not available")
+        
         self._setup_enhanced_features()
     
     def _setup_enhanced_features(self):
         """Setup enhanced features"""
         logger.info("🔧 Setting up enhanced RAG features")
     
-    async def generate_rag_response(self, query: str, analysis_type: str = "general") -> Dict[str, Any]:
-        """Generate a comprehensive RAG response for web interface"""
+    async def generate_rag_response(self, query: str, analysis_type: str = "general", 
+                                  llm_model: str = "gpt-3.5-turbo", rag_technique: str = "basic",
+                                  top_k: int = 5, similarity_threshold: float = 0.7,
+                                  enable_reranking: bool = False, enable_graph_context: bool = True,
+                                  enable_metadata_filtering: bool = False) -> Dict[str, Any]:
+        """Generate a comprehensive RAG response for web interface with enhanced parameters"""
         try:
-            # Get relevant context from vector search
-            context_docs = self.search_similar(query)
+            logger.info(f"🔍 Generating RAG response with {rag_technique} technique using {llm_model}")
             
-            # Get additional context from Neo4j if available
-            graph_context = await self._get_graph_context(query)
+            # Get relevant context from vector search with enhanced parameters
+            context_docs = self.search_similar(query, top_k=top_k)
             
-            # Combine contexts
-            combined_context = self._combine_contexts(context_docs, graph_context)
+            # Apply similarity threshold filtering
+            if similarity_threshold > 0:
+                context_docs = [doc for doc in context_docs if doc.get('score', 0) >= similarity_threshold]
             
-            # Generate AI response
-            ai_response = self.query_ai(query, context_docs)
+            # Apply metadata filtering if enabled
+            if enable_metadata_filtering:
+                context_docs = self._apply_metadata_filtering(context_docs, query)
             
-            # Enhance response with analysis type
+            # Apply reranking if enabled
+            if enable_reranking:
+                context_docs = self._apply_reranking(context_docs, query)
+            
+            # Get additional context from Neo4j if available and enabled
+            graph_context = {}
+            if enable_graph_context:
+                graph_context = await self._get_graph_context(query)
+            
+            # Combine contexts based on RAG technique
+            combined_context = self._combine_contexts_advanced(context_docs, graph_context, rag_technique)
+            
+            # Generate AI response with specified model
+            ai_response = self.query_ai(query, context_docs, llm_model=llm_model)
+            
+            # Enhance response with analysis type and technique info
             enhanced_response = {
                 'analysis': ai_response['answer'],
                 'context': [doc['content'] for doc in context_docs],
                 'sources': [doc['metadata'] for doc in context_docs],
                 'confidence': self._calculate_confidence(context_docs),
                 'analysis_type': analysis_type,
+                'rag_technique': rag_technique,
+                'llm_model': llm_model,
                 'graph_context': graph_context,
                 'model': ai_response['model'],
                 'usage': ai_response['usage'],
-                'timestamp': ai_response['timestamp']
+                'timestamp': ai_response['timestamp'],
+                'parameters': {
+                    'top_k': top_k,
+                    'similarity_threshold': similarity_threshold,
+                    'enable_reranking': enable_reranking,
+                    'enable_graph_context': enable_graph_context,
+                    'enable_metadata_filtering': enable_metadata_filtering
+                }
             }
             
-            logger.info(f"✅ Generated enhanced RAG response for '{analysis_type}' analysis")
+            logger.info(f"✅ Generated enhanced RAG response for '{analysis_type}' analysis using {rag_technique}")
             return enhanced_response
             
         except Exception as e:
             logger.error(f"❌ Enhanced RAG response generation failed: {e}")
             raise
     
+    async def execute_rag_technique(self, query: str, technique_id: str = "basic", 
+                                  llm_model: str = "gpt-3.5-turbo", **kwargs) -> Dict[str, Any]:
+        """
+        Execute a specific RAG technique using the technique manager
+        
+        Args:
+            query: User query
+            technique_id: ID of the RAG technique to use
+            llm_model: LLM model to use
+            **kwargs: Additional parameters for the technique
+            
+        Returns:
+            Response from the RAG technique
+        """
+        if not self.technique_manager:
+            raise ValueError("RAG technique manager not available")
+        
+        try:
+            # Prepare parameters for the technique
+            technique_params = {
+                'vector_search_func': self.search_similar,
+                'llm_model': llm_model,
+                'top_k': kwargs.get('top_k', 5),
+                'similarity_threshold': kwargs.get('similarity_threshold', 0.7),
+                'enable_reranking': kwargs.get('enable_reranking', False),
+                'enable_metadata_filtering': kwargs.get('enable_metadata_filtering', False)
+            }
+            
+            # Add graph context if available
+            if kwargs.get('enable_graph_context', True):
+                try:
+                    graph_context = await self._get_graph_context(query)
+                    technique_params['graph_context'] = graph_context
+                except Exception as e:
+                    logger.warning(f"Graph context not available: {e}")
+                    technique_params['graph_context'] = {}
+            
+            # Execute the technique
+            result = self.technique_manager.execute_technique(technique_id, query, **technique_params)
+            
+            logger.info(f"✅ Executed {technique_id} technique successfully")
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ RAG technique execution failed: {e}")
+            raise
+    
+    def get_available_rag_techniques(self) -> List[Dict[str, Any]]:
+        """
+        Get list of available RAG techniques
+        
+        Returns:
+            List of technique information
+        """
+        if not self.technique_manager:
+            return []
+        
+        return self.technique_manager.get_available_techniques()
+    
+    def get_technique_recommendations(self, query: str) -> List[Dict[str, Any]]:
+        """
+        Get recommendations for which RAG techniques to use
+        
+        Args:
+            query: User query
+            
+        Returns:
+            List of technique recommendations
+        """
+        if not self.technique_manager:
+            return []
+        
+        return self.technique_manager.get_technique_recommendations(query)
+    
+    async def compare_rag_techniques(self, query: str, technique_ids: List[str] = None, 
+                                   llm_model: str = "gpt-3.5-turbo", **kwargs) -> Dict[str, Any]:
+        """
+        Compare multiple RAG techniques on the same query
+        
+        Args:
+            query: User query
+            technique_ids: List of technique IDs to compare (default: all available)
+            llm_model: LLM model to use
+            **kwargs: Additional parameters
+            
+        Returns:
+            Comparison results
+        """
+        if not self.technique_manager:
+            raise ValueError("RAG technique manager not available")
+        
+        if technique_ids is None:
+            # Use all available techniques
+            available_techniques = self.get_available_rag_techniques()
+            technique_ids = [tech['id'] for tech in available_techniques]
+        
+        try:
+            # Prepare parameters for comparison
+            comparison_params = {
+                'vector_search_func': self.search_similar,
+                'llm_model': llm_model,
+                'top_k': kwargs.get('top_k', 5),
+                'similarity_threshold': kwargs.get('similarity_threshold', 0.7),
+                'enable_reranking': kwargs.get('enable_reranking', False),
+                'enable_metadata_filtering': kwargs.get('enable_metadata_filtering', False)
+            }
+            
+            # Add graph context if available
+            if kwargs.get('enable_graph_context', True):
+                try:
+                    graph_context = await self._get_graph_context(query)
+                    comparison_params['graph_context'] = graph_context
+                except Exception as e:
+                    logger.warning(f"Graph context not available: {e}")
+                    comparison_params['graph_context'] = {}
+            
+            # Execute comparison
+            comparison_result = self.technique_manager.compare_techniques(
+                query, technique_ids, **comparison_params
+            )
+            
+            logger.info(f"✅ Compared {len(technique_ids)} RAG techniques")
+            return comparison_result
+            
+        except Exception as e:
+            logger.error(f"❌ RAG technique comparison failed: {e}")
+            raise
+    
     async def _get_graph_context(self, query: str) -> Dict[str, Any]:
         """Get relevant context from Neo4j knowledge graph"""
         try:
-            # Simple graph query to get asset information
+            # Simple graph query to get any nodes (handle missing labels gracefully)
             graph_query = """
             MATCH (n)
-            WHERE n.type = "asset" OR n.type = "submodel"
-            RETURN n.id as id, n.type as type, n.properties as properties
+            RETURN n.id as id, labels(n)[0] as type, n.properties as properties
             LIMIT 10
             """
             
@@ -692,6 +864,153 @@ class EnhancedRAGSystem(AASXDigitalTwinRAG):
                 combined.append(f"- {record['type']}: {record['id']}")
         
         return "\n\n".join(combined)
+    
+    def _combine_contexts_advanced(self, vector_docs: List[Dict], graph_context: Dict, rag_technique: str) -> str:
+        """Combine contexts based on RAG technique"""
+        if rag_technique == "basic":
+            return self._combine_contexts(vector_docs, graph_context)
+        elif rag_technique == "hybrid":
+            return self._combine_contexts_hybrid(vector_docs, graph_context)
+        elif rag_technique == "multi_step":
+            return self._combine_contexts_multi_step(vector_docs, graph_context)
+        elif rag_technique == "graph":
+            return self._combine_contexts_graph(vector_docs, graph_context)
+        elif rag_technique == "advanced":
+            return self._combine_contexts_advanced_technique(vector_docs, graph_context)
+        else:
+            return self._combine_contexts(vector_docs, graph_context)
+    
+    def _combine_contexts_hybrid(self, vector_docs: List[Dict], graph_context: Dict) -> str:
+        """Combine contexts using hybrid approach (dense + sparse)"""
+        combined = []
+        
+        # Add dense vector results
+        combined.append("=== Dense Vector Search Results ===")
+        for doc in vector_docs:
+            combined.append(f"Score: {doc.get('score', 0):.3f} | {doc['content']}")
+        
+        # Add sparse/keyword results (simulated)
+        combined.append("\n=== Keyword/Graph Context ===")
+        if graph_context.get('graph_data'):
+            for record in graph_context['graph_data']:
+                combined.append(f"Graph Node: {record['type']} - {record['id']}")
+        
+        return "\n".join(combined)
+    
+    def _combine_contexts_multi_step(self, vector_docs: List[Dict], graph_context: Dict) -> str:
+        """Combine contexts using multi-step approach"""
+        combined = []
+        
+        # Step 1: Initial retrieval
+        combined.append("=== Step 1: Initial Retrieval ===")
+        for i, doc in enumerate(vector_docs[:3], 1):
+            combined.append(f"{i}. {doc['content']}")
+        
+        # Step 2: Refined context
+        combined.append("\n=== Step 2: Refined Context ===")
+        if graph_context.get('graph_data'):
+            combined.append("Related Graph Entities:")
+            for record in graph_context['graph_data'][:5]:
+                combined.append(f"- {record['type']}: {record['id']}")
+        
+        return "\n".join(combined)
+    
+    def _combine_contexts_graph(self, vector_docs: List[Dict], graph_context: Dict) -> str:
+        """Combine contexts with graph emphasis"""
+        combined = []
+        
+        # Start with graph context
+        if graph_context.get('graph_data'):
+            combined.append("=== Knowledge Graph Context ===")
+            for record in graph_context['graph_data']:
+                combined.append(f"Entity: {record['type']} | ID: {record['id']}")
+                if record.get('properties'):
+                    combined.append(f"  Properties: {record['properties']}")
+        
+        # Add vector results as supporting evidence
+        combined.append("\n=== Supporting Vector Evidence ===")
+        for doc in vector_docs:
+            combined.append(f"Evidence: {doc['content']}")
+        
+        return "\n".join(combined)
+    
+    def _combine_contexts_advanced_technique(self, vector_docs: List[Dict], graph_context: Dict) -> str:
+        """Combine contexts using advanced multi-modal approach"""
+        combined = []
+        
+        # Multi-modal context combination
+        combined.append("=== Multi-Modal RAG Context ===")
+        
+        # Vector search results
+        combined.append("Vector Search Results:")
+        for doc in vector_docs:
+            combined.append(f"• {doc['content']} (Score: {doc.get('score', 0):.3f})")
+        
+        # Graph context
+        if graph_context.get('graph_data'):
+            combined.append("\nKnowledge Graph Context:")
+            for record in graph_context['graph_data']:
+                combined.append(f"• {record['type']}: {record['id']}")
+        
+        # Metadata analysis
+        combined.append("\nMetadata Analysis:")
+        metadata_summary = self._analyze_metadata(vector_docs)
+        combined.append(metadata_summary)
+        
+        return "\n".join(combined)
+    
+    def _apply_metadata_filtering(self, context_docs: List[Dict], query: str) -> List[Dict]:
+        """Apply metadata-based filtering to context documents"""
+        # Simple keyword-based filtering
+        query_keywords = set(query.lower().split())
+        filtered_docs = []
+        
+        for doc in context_docs:
+            metadata = doc.get('metadata', {})
+            metadata_text = str(metadata).lower()
+            
+            # Check if any query keywords appear in metadata
+            if any(keyword in metadata_text for keyword in query_keywords if len(keyword) > 3):
+                filtered_docs.append(doc)
+        
+        return filtered_docs if filtered_docs else context_docs
+    
+    def _apply_reranking(self, context_docs: List[Dict], query: str) -> List[Dict]:
+        """Apply reranking to context documents"""
+        # Simple reranking based on content relevance
+        for doc in context_docs:
+            content = doc.get('content', '').lower()
+            query_terms = query.lower().split()
+            
+            # Calculate relevance score
+            relevance_score = sum(1 for term in query_terms if term in content)
+            doc['rerank_score'] = relevance_score
+        
+        # Sort by rerank score
+        context_docs.sort(key=lambda x: x.get('rerank_score', 0), reverse=True)
+        return context_docs
+    
+    def _analyze_metadata(self, context_docs: List[Dict]) -> str:
+        """Analyze metadata from context documents"""
+        if not context_docs:
+            return "No metadata available"
+        
+        metadata_summary = []
+        file_types = set()
+        sources = set()
+        
+        for doc in context_docs:
+            metadata = doc.get('metadata', {})
+            if isinstance(metadata, dict):
+                file_types.add(metadata.get('file_type', 'unknown'))
+                sources.add(metadata.get('source', 'unknown'))
+        
+        if file_types:
+            metadata_summary.append(f"File Types: {', '.join(file_types)}")
+        if sources:
+            metadata_summary.append(f"Sources: {', '.join(sources)}")
+        
+        return " | ".join(metadata_summary) if metadata_summary else "Standard metadata"
     
     def _calculate_confidence(self, context_docs: List[Dict]) -> float:
         """Calculate confidence score based on context relevance"""
@@ -738,18 +1057,45 @@ class EnhancedRAGSystem(AASXDigitalTwinRAG):
             # Get Neo4j stats
             try:
                 with self.neo4j_driver.session() as session:
-                    # Count assets
-                    result = session.run("MATCH (n) WHERE n.type = 'asset' RETURN count(n) as count")
-                    stats['assets_count'] = result.single()['count']
+                    # Count all nodes first
+                    result = session.run("MATCH (n) RETURN count(n) as count")
+                    total_nodes = result.single()['count']
                     
-                    # Count submodels
-                    result = session.run("MATCH (n) WHERE n.type = 'submodel' RETURN count(n) as count")
-                    stats['submodels_count'] = result.single()['count']
+                    # Get available labels
+                    try:
+                        result = session.run("CALL db.labels() YIELD label RETURN label")
+                        labels = [record['label'] for record in result]
+                        logger.info(f"Available Neo4j labels: {labels}")
+                    except Exception as e:
+                        logger.warning(f"Could not get labels: {e}")
+                        labels = []
+                    
+                    # Try to count assets (handle missing label gracefully)
+                    try:
+                        if 'Asset' in labels:
+                            result = session.run("MATCH (n:Asset) RETURN count(n) as count")
+                            stats['assets_count'] = result.single()['count']
+                        else:
+                            stats['assets_count'] = 0
+                    except Exception:
+                        stats['assets_count'] = 0
+                    
+                    # Try to count submodels (handle missing label gracefully)
+                    try:
+                        if 'Submodel' in labels:
+                            result = session.run("MATCH (n:Submodel) RETURN count(n) as count")
+                            stats['submodels_count'] = result.single()['count']
+                        else:
+                            stats['submodels_count'] = 0
+                    except Exception:
+                        stats['submodels_count'] = 0
                     
                 stats['neo4j_status'] = 'connected'
             except Exception as e:
                 logger.warning(f"⚠️  Neo4j stats failed: {e}")
                 stats['neo4j_status'] = 'error'
+                stats['assets_count'] = 0
+                stats['submodels_count'] = 0
             
             # Check OpenAI
             try:
@@ -773,10 +1119,18 @@ class EnhancedRAGSystem(AASXDigitalTwinRAG):
             collection_info = []
             
             for collection in collections.collections:
+                try:
+                    # Get detailed collection info
+                    collection_detail = self.qdrant_client.get_collection(collection.name)
+                    points_count = collection_detail.points_count
+                except Exception:
+                    # Fallback if detailed info fails
+                    points_count = 0
+                
                 info = {
                     'name': collection.name,
-                    'points_count': collection.points_count,
-                    'description': f"Collection with {collection.points_count} points"
+                    'points_count': points_count,
+                    'description': f"Collection with {points_count} points"
                 }
                 collection_info.append(info)
             
