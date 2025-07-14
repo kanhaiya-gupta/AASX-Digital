@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block title %}Processing Flow - AASX Digital Twin Analytics Framework{% endblock %}
+
+{% block extra_head %}
+<style>
+    .flowchart-container {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 30px;
+        margin: 20px 0;
+        min-height: 600px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .mermaid {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 1400px;
+    }
+    .mermaid svg {
+        width: 100% !important;
+        height: auto !important;
+        min-width: 1000px !important;
+    }
+    .description {
+        background: #ecf0f1;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #2563eb;
+    }
+    .description h3 {
+        color: #1e293b;
+        margin-top: 0;
+    }
+    .description p {
+        margin: 10px 0;
+        line-height: 1.6;
+    }
+    .flow-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    .flow-step {
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #2563eb;
+    }
+    .flow-step h4 {
+        color: #1e293b;
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .flow-step p {
+        margin: 10px 0 0 0;
+        color: #64748b;
+    }
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .page-header h1 {
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+    .page-header p {
+        color: #64748b;
+        font-size: 1.1em;
+    }
+    .nav-tabs {
+        margin-bottom: 30px;
+    }
+    .nav-tabs .nav-link {
+        color: #64748b;
+        border: none;
+        border-bottom: 2px solid transparent;
+    }
+    .nav-tabs .nav-link.active {
+        color: #2563eb;
+        border-bottom: 2px solid #2563eb;
+        background: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-project-diagram text-primary me-3"></i>
+            Processing Flowcharts
+        </h1>
+        <p>Complete architecture and data flow of the AASX Digital Twin Analytics Framework</p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs" id="flowchartTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="framework-tab" data-bs-toggle="tab" href="#framework-flowchart" role="tab">
+                <i class="fas fa-project-diagram me-2"></i>Framework Overview
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="etl-tab" data-bs-toggle="tab" href="#etl-flowchart" role="tab">
+                <i class="fas fa-cogs me-2"></i>ETL Pipeline
+            </a>
+        </li>
+    </ul>
+
+    <!-- ETL Page Flowchart Link -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="alert-heading mb-1">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Detailed ETL Page Flowchart Available
+                        </h6>
+                        <p class="mb-0">Explore the complete user journey and system architecture for the ETL page at <code>/aasx/</code></p>
+                    </div>
+                    <a href="/etl-flowchart" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt me-2"></i>
+                        View ETL Page Flowchart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="flowchartTabContent">
+        <!-- Framework Overview Tab -->
+        <div class="tab-pane fade show active" id="framework-flowchart" role="tabpanel">
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sitemap me-2"></i>
+                        Processing Flowchart
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="flowchart-container">
+                        <div class="mermaid" id="aasx-flowchart">
+                            graph TD
+                                %% User Interface & Creation
+                                U1[User<br/>👤] --> A0[AASX Package Explorer<br/>🛠️<br/>Create/Edit/Save]
+                                A0 --> A1[AASX Files<br/>📦]
+                                
+                                %% Input Sources
+                                A1 --> B1[AASX ETL Pipeline<br/>⚙️]
+                                A2[Additive Manufacturing<br/>🏭] --> A1
+                                A3[Hydrogen Filling Station<br/>⛽] --> A1
+                                A4[Smart Grid Substation<br/>⚡] --> A1
+                                A5[Wastewater Treatment<br/>💧] --> A1
+                                
+                                %% ETL Processing
+                                B1 --> C1[Data Extraction<br/>📤]
+                                C1 --> D1[Data Transformation<br/>🔄]
+                                D1 --> E1[Data Loading<br/>📥]
+                                
+                                %% Data Storage
+                                E1 --> F1[Structured Data<br/>📊]
+                                E1 --> G1[Vector Embeddings<br/>🧠]
+                                E1 --> H1[Metadata<br/>🏷️]
+                                
+                                %% Knowledge Graph
+                                F1 --> I1[Knowledge Graph<br/>🕸️<br/>Neo4j]
+                                H1 --> I1
+                                
+                                %% Vector Database
+                                G1 --> J1[Vector Database<br/>🔍<br/>Qdrant]
+                                
+                                %% AI/RAG System
+                                K1[Natural Language Query<br/>❓] --> L1[AI/RAG System<br/>🤖]
+                                L1 --> M1[Query Understanding<br/>🧠]
+                                M1 --> N1[Semantic Search<br/>🔍]
+                                M1 --> O1[Graph Query<br/>🕸️]
+                                
+                                %% Search Sources
+                                N1 --> J1
+                                O1 --> I1
+                                
+                                %% Results Processing
+                                N1 --> P1[Retrieved Documents<br/>📄]
+                                O1 --> Q1[Graph Results<br/>🕸️]
+                                P1 --> R1[Answer Synthesis<br/>🧠]
+                                Q1 --> R1
+                                R1 --> S1[AI-Generated Response<br/>💬]
+                                
+                                %% Management Systems
+                                F1 --> T1[Digital Twin Registry<br/>🔄]
+                                H1 --> CM1[Certificate Manager<br/>📜]
+                                
+                                %% Analytics
+                                I1 --> V1[Analytics Dashboard<br/>📊]
+                                J1 --> V1
+                                T1 --> V1
+                                CM1 --> V1
+                                
+                                %% Output
+                                V1 --> W1[Actionable Insights<br/>💡]
+                                S1 --> W1
+                                
+                                %% Styling
+                                classDef userNode fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+                                classDef inputNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+                                classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+                                classDef storageNode fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+                                classDef aiNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+                                classDef outputNode fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+                                classDef toolNode fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+                                
+                                class U1 userNode
+                                class A0 toolNode
+                                class A1,A2,A3,A4,A5 inputNode
+                                class B1,C1,D1,E1,L1,M1,N1,O1,R1 processNode
+                                class F1,G1,H1,I1,J1 storageNode
+                                class K1,S1 aiNode
+                                class T1,CM1,V1,W1 outputNode
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Flow Description
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="description">
+                        <h3>Framework Flow Description</h3>
+                        <p>The AASX Digital Twin Analytics Framework follows a comprehensive processing flow that transforms AASX files into actionable insights through multiple stages of data processing, analysis, and management.</p>
+                        
+                        <div class="flow-steps">
+                            <div class="flow-step">
+                                <h4><i class="fas fa-tools text-success"></i> 1. AASX Package Explorer</h4>
+                                <p>Professional tool for creating, editing, and saving AASX files. Users can design digital twin models, define asset relationships, and export standardized AASX packages for processing.</p>
+                            </div>
+                            
+                            <div class="flow-step">
+                                <h4><i class="fas fa-cogs text-primary"></i> 2. AASX ETL Pipeline</h4>
+                                <p>Processes AASX files from various infrastructure sources (additive manufacturing, hydrogen stations, smart grids, etc.) through extraction, transformation, and loading phases.</p>
+                            </div>
+                            
+                            <div class="flow-step">
+                                <h4><i class="fas fa-project-diagram text-success"></i> 3. Knowledge Graph Construction</h4>
+                                <p>Builds Neo4j-based knowledge graphs from structured data and metadata, creating relationship networks between assets, properties, and components.</p>
+                            </div>
+                            
+                            <div class="flow-step">
+                                <h4><i class="fas fa-robot text-warning"></i> 4. AI/RAG Analysis</h4>
+                                <p>Provides intelligent analysis through OpenAI integration, combining semantic search and graph queries to generate comprehensive responses to natural language questions.</p>
+                            </div>
+                            
+                            <div class="flow-step">
+                                <h4><i class="fas fa-sync text-info"></i> 5. Digital Twin Management</h4>
+                                <p>Manages digital twin registrations and monitors asset health through the twin registry and certificate management systems.</p>
+                            </div>
+                            
+                            <div class="flow-step">
+                                <h4><i class="fas fa-chart-bar text-danger"></i> 6. Analytics & Insights</h4>
+                                <p>Generates actionable insights through the analytics dashboard, combining data from all sources to provide comprehensive digital twin analytics.</p>
+                            </div>
+                        </div>
+                        
+                        <p><strong>Goal</strong>: This framework provides a complete digital twin lifecycle from creation (AASX Package Explorer) to analysis (AI/RAG) and management (Twin Registry), transforming complex AASX data into actionable insights through automated ETL processing, intelligent AI analysis, and comprehensive digital twin management, supporting critical infrastructure operations and decision-making.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+
+        <!-- ETL Pipeline Tab -->
+        <div class="tab-pane fade" id="etl-flowchart" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>
+                                ETL Pipeline Flowchart
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="flowchart-container">
+                                <div class="mermaid" id="etl-flowchart">
+                                    graph TD
+                                        %% Input Sources
+                                        A1[AASX Files<br/>📦<br/>Project Uploads] --> B1[File Validation<br/>✅<br/>Format Check]
+                                        A2[URL Imports<br/>🌐<br/>External Sources] --> B1
+                                        A3[Manual Uploads<br/>📤<br/>User Interface] --> B1
+                                        
+                                        %% File Processing
+                                        B1 --> C1[File Extraction<br/>📂<br/>ZIP Processing]
+                                        C1 --> D1[Content Parsing<br/>🔍<br/>XML/JSON Parse]
+                                        
+                                        %% Extract Phase
+                                        D1 --> E1[Asset Extraction<br/>🏭<br/>AAS Shells]
+                                        D1 --> E2[Submodel Extraction<br/>📋<br/>Properties & Collections]
+                                        D1 --> E3[Document Extraction<br/>📄<br/>PDFs & Images]
+                                        D1 --> E4[Metadata Extraction<br/>🏷️<br/>Descriptions & IDs]
+                                        
+                                        %% Transform Phase
+                                        E1 --> F1[Data Normalization<br/>🔄<br/>Standardize Format]
+                                        E2 --> F1
+                                        E3 --> F2[Document Processing<br/>📝<br/>Text Extraction]
+                                        E4 --> F3[Metadata Enrichment<br/>✨<br/>Add Context]
+                                        
+                                        F1 --> G1[Entity Resolution<br/>🔗<br/>Link Related Data]
+                                        F2 --> G1
+                                        F3 --> G1
+                                        
+                                        %% Load Phase
+                                        G1 --> H1[SQLite Database<br/>💾<br/>Structured Storage]
+                                        G1 --> H2[Vector Database<br/>🧠<br/>Qdrant Embeddings]
+                                        G1 --> H3[Graph Database<br/>🕸️<br/>Neo4j Relationships]
+                                        G1 --> H4[File Exports<br/>📁<br/>JSON/YAML/CSV]
+                                        
+                                        %% Output Organization
+                                        H1 --> I1[Project Database<br/>📊<br/>Per-Project SQLite]
+                                        H2 --> I2[Vector Collections<br/>🔍<br/>Project & File Specific]
+                                        H3 --> I3[Knowledge Graph<br/>🕸️<br/>Cross-Project Relations]
+                                        H4 --> I4[Export Directory<br/>📂<br/>Organized by Project]
+                                        
+                                        %% Quality Control
+                                        I1 --> J1[Data Validation<br/>✅<br/>Quality Checks]
+                                        I2 --> J1
+                                        I3 --> J1
+                                        I4 --> J1
+                                        
+                                        %% Final Outputs
+                                        J1 --> K1[Processing Complete<br/>✅<br/>Ready for Analysis]
+                                        J1 --> K2[Error Reports<br/>⚠️<br/>Issues Found]
+                                        
+                                        %% Error Handling
+                                        K2 --> L1[Error Logging<br/>📝<br/>Detailed Reports]
+                                        L1 --> M1[Retry Mechanism<br/>🔄<br/>Failed Files]
+                                        M1 --> B1
+                                        
+                                        %% Styling
+                                        classDef inputNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+                                        classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+                                        classDef storageNode fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+                                        classDef outputNode fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+                                        classDef errorNode fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+                                        classDef validationNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+                                        
+                                        class A1,A2,A3 inputNode
+                                        class B1,C1,D1,E1,E2,E3,E4,F1,F2,F3,G1 processNode
+                                        class H1,H2,H3,H4,I1,I2,I3,I4 storageNode
+                                        class K1 outputNode
+                                        class K2,L1,M1 errorNode
+                                        class J1 validationNode
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                ETL Pipeline Description
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="description">
+                                <h3>ETL Pipeline Flow Description</h3>
+                                <p>The ETL (Extract, Transform, Load) pipeline processes AASX files through three main phases, transforming raw AASX data into structured, queryable formats for analysis and insights.</p>
+                            </div>
+
+                            <div class="flow-steps">
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-download text-primary"></i> Extract Phase</h4>
+                                    <p>Validates and extracts content from AASX files, parsing XML/JSON structures and extracting assets, submodels, documents, and metadata.</p>
+                                </div>
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-sync-alt text-warning"></i> Transform Phase</h4>
+                                    <p>Normalizes data formats, processes documents, enriches metadata, and resolves entity relationships across the extracted data.</p>
+                                </div>
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-upload text-success"></i> Load Phase</h4>
+                                    <p>Stores processed data in multiple formats: SQLite databases, vector embeddings, graph relationships, and export files organized by project.</p>
+                                </div>
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-check-circle text-info"></i> Quality Control</h4>
+                                    <p>Validates data quality, generates error reports, and provides retry mechanisms for failed processing steps.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis',
+            nodeSpacing: 50,
+            rankSpacing: 70,
+            diagramPadding: 20
+        },
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+        fontSize: 12
+    });
+    
+    // Handle tab switching to re-render flowcharts
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabLinks = document.querySelectorAll('[data-bs-toggle="tab"]');
+        tabLinks.forEach(link => {
+            link.addEventListener('shown.bs.tab', function(e) {
+                // Re-render the flowchart when tab is shown
+                const targetId = e.target.getAttribute('href');
+                const flowchartElement = document.querySelector(targetId + ' .mermaid');
+                if (flowchartElement) {
+                    mermaid.init(undefined, flowchartElement);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 
