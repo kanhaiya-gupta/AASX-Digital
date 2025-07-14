@@ -1,0 +1,709 @@
+{% extends "base.html" %}
+
+{% block title %}Graph Visualization - AASX Digital Twin Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .visualization-container {
+        background: #f8fafc;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+        min-height: 600px;
+        position: relative;
+    }
+    
+    .graph-canvas {
+        width: 100%;
+        height: 600px;
+        background: white;
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .controls-panel {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .graph-info {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        color: #64748b;
+        z-index: 1000;
+    }
+    
+    .legend {
+        display: flex;
+        gap: 15px;
+        margin-top: 10px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        font-size: 12px;
+    }
+    
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+    
+    .node-asset { background-color: #3b82f6; }
+    .node-submodel { background-color: #10b981; }
+    .node-property { background-color: #f59e0b; }
+    .node-document { background-color: #ef4444; }
+    .node-relationship { background-color: #8b5cf6; }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .error-message {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+        display: none;
+    }
+    
+    .success-message {
+        background: #f0fdf4;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-2">
+                        <i class="fas fa-project-diagram text-primary me-3"></i>
+                        Graph Visualization
+                    </h1>
+                    <p class="text-muted mb-0">Visual representation of AASX data relationships and structure</p>
+                    <div class="alert alert-info mt-2 mb-0" style="font-size: 0.9rem;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Purpose:</strong> This page shows you what the graph structure looks like. 
+                        For detailed queries and analysis, use the Neo4j management page.
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/kg-neo4j" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Management
+                    </a>
+                    <button class="btn btn-success" onclick="location.reload()">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        Refresh Graph
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project & File Selection -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-folder me-2"></i>
+                        Select Data to Visualize
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Project:</label>
+                                <select class="form-select" id="project-select">
+                                    <option value="">Choose a project...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">File:</label>
+                                <select class="form-select" id="file-select" disabled>
+                                    <option value="">Choose a file...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" onclick="viewGraph()">
+                                    <i class="fas fa-chart-network me-2"></i>
+                                    View Graph
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graph Visualization -->
+    <div class="row">
+        <div class="col-12">
+            <div class="visualization-container">
+                <div class="graph-info">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color node-asset"></div>
+                            Assets
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color node-submodel"></div>
+                            Submodels
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color node-property"></div>
+                            Properties
+                        </div>
+                    </div>
+                </div>
+                <div id="graph-canvas" class="graph-canvas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading and Messages -->
+    <div id="loading-spinner" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading graph data...</p>
+    </div>
+    
+    <div id="error-message" class="error-message"></div>
+    <div id="success-message" class="success-message"></div>
+</div>
+
+<!-- Node Details Modal -->
+<div class="modal fade" id="nodeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Node Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="nodeModalBody">
+                <!-- Node details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="expandNode()">Expand Node</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Include D3.js for graph visualization -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script>
+// Global variables
+let graphData = null;
+let selectedNode = null;
+let graphContainer = null;
+let currentProject = null;
+let currentFile = null;
+let projectsList = [];
+let filesList = [];
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 Graph Visualization page loaded');
+    
+    // Initialize graph container
+    graphContainer = d3.select('#graph-canvas');
+    
+    // Ensure loading spinner is hidden on page load
+    showLoading(false);
+    
+    // Load projects and files
+    loadProjects();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Show welcome message
+    showWelcomeMessage();
+});
+
+// Set up event listeners
+function setupEventListeners() {
+    // Project selection change
+    document.getElementById('project-select').addEventListener('change', function() {
+        const projectId = this.value;
+        if (projectId) {
+            currentProject = projectsList.find(p => p.id === projectId);
+            loadProjectFiles(projectId);
+            document.getElementById('file-select').disabled = false;
+            // Clear current file selection
+            currentFile = null;
+            document.getElementById('file-select').value = '';
+            // Show welcome message to select a file
+            showWelcomeMessage();
+        } else {
+            currentProject = null;
+            currentFile = null;
+            document.getElementById('file-select').disabled = true;
+            document.getElementById('file-select').innerHTML = '<option value="">Choose a file...</option>';
+            // Show welcome message when nothing is selected
+            showWelcomeMessage();
+        }
+    });
+    
+    // File selection change
+    document.getElementById('file-select').addEventListener('change', function() {
+        const fileId = this.value;
+        if (fileId) {
+            currentFile = filesList.find(f => f.id === fileId);
+            // Show welcome message - don't auto-load
+            showWelcomeMessage();
+        } else {
+            currentFile = null;
+            showWelcomeMessage();
+        }
+    });
+}
+
+// Load projects from AASX system
+async function loadProjects() {
+    try {
+        const response = await fetch('/kg-neo4j/api/projects');
+        const data = await response.json();
+        
+        if (data.success) {
+            projectsList = data.projects || [];
+            updateProjectSelect();
+        } else {
+            console.error('Failed to load projects:', data.error);
+            showError('Failed to load projects');
+        }
+    } catch (error) {
+        console.error('Error loading projects:', error);
+        showError('Failed to load projects');
+    }
+}
+
+// Update project select dropdown
+function updateProjectSelect() {
+    const projectSelect = document.getElementById('project-select');
+    projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+    
+    projectsList.forEach(project => {
+        const option = document.createElement('option');
+        option.value = project.id;
+        option.textContent = `${project.name} (${project.file_count} files)`;
+        projectSelect.appendChild(option);
+    });
+}
+
+// Load files for a specific project
+async function loadProjectFiles(projectId) {
+    try {
+        const response = await fetch(`/kg-neo4j/api/projects/${projectId}/files`);
+        const data = await response.json();
+        
+        if (data.success) {
+            filesList = data.files || [];
+            updateFileSelect();
+        } else {
+            console.error('Failed to load project files:', data.error);
+            showError('Failed to load project files');
+        }
+    } catch (error) {
+        console.error('Error loading project files:', error);
+        showError('Failed to load project files');
+    }
+}
+
+// Update file select dropdown
+function updateFileSelect() {
+    const fileSelect = document.getElementById('file-select');
+    fileSelect.innerHTML = '<option value="">Choose a file...</option>';
+    
+    filesList.forEach(file => {
+        const option = document.createElement('option');
+        option.value = file.id;
+        const graphStatus = file.graph_exists ? '✓' : '✗';
+        option.textContent = `${file.original_filename} (${file.status}) ${graphStatus}`;
+        fileSelect.appendChild(option);
+    });
+}
+
+// Load project graph
+async function loadProjectGraph() {
+    if (!currentProject) {
+        showError('Please select a project first');
+        return;
+    }
+    
+    showLoading(true);
+    try {
+        console.log('Loading project graph for:', currentProject);
+        const response = await fetch(`/kg-neo4j/api/projects/${currentProject.id}/graph-data`);
+        const data = await response.json();
+        
+        console.log('Project graph data response:', data);
+        
+        if (data.success && data.graph_data && data.graph_data.nodes && data.graph_data.nodes.length > 0) {
+            graphData = data.graph_data;
+            console.log('Graph data to render:', graphData);
+            console.log('Nodes count:', graphData.nodes ? graphData.nodes.length : 0);
+            console.log('Links count:', graphData.links ? graphData.links.length : 0);
+            renderGraphFromData(data.graph_data);
+            showSuccess(`Loaded graph for project: ${currentProject.name}`);
+        } else {
+            console.log('No graph data found or empty data');
+            showError('No graph data available for this project. Please ensure the project has processed files.');
+        }
+    } catch (error) {
+        console.error('Error loading project graph:', error);
+        showError('Failed to load project graph');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Load file graph
+async function loadFileGraph() {
+    if (!currentFile) {
+        showError('Please select a file first');
+        return;
+    }
+    
+    showLoading(true);
+    try {
+        const response = await fetch(`/kg-neo4j/api/files/${currentFile.id}/graph-data`);
+        const data = await response.json();
+        
+        if (data.success) {
+            graphData = data.graph_data;
+            renderGraphFromData(data.graph_data);
+            showSuccess(`Loaded graph for file: ${currentFile.original_filename}`);
+        } else {
+            showError('Failed to load file graph: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error loading file graph:', error);
+        showError('Failed to load file graph');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Load initial graph - removed auto-loading functionality
+
+// Render graph from JSON data format
+function renderGraphFromData(data) {
+    console.log('renderGraphFromData called with:', data);
+    
+    // Clear existing graph
+    graphContainer.selectAll('*').remove();
+    
+    if (!data || !data.nodes || data.nodes.length === 0) {
+        console.log('No data to display - showing empty message');
+        graphContainer.append('text')
+            .attr('x', '50%')
+            .attr('y', '50%')
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .style('font-size', '18px')
+            .style('fill', '#64748b')
+            .text('No data to display');
+        return;
+    }
+    
+    // Create SVG with explicit dimensions
+    const containerWidth = graphContainer.node().getBoundingClientRect().width || 800;
+    const containerHeight = graphContainer.node().getBoundingClientRect().height || 600;
+    console.log('Container dimensions:', containerWidth, 'x', containerHeight);
+    
+    const svg = graphContainer.append('svg')
+        .attr('width', containerWidth)
+        .attr('height', containerHeight)
+        .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`);
+    
+    console.log('SVG created with dimensions:', svg.node().getBoundingClientRect().width, 'x', svg.node().getBoundingClientRect().height);
+    
+    // Add zoom behavior
+    const zoom = d3.zoom()
+        .on('zoom', (event) => {
+            svg.selectAll('g').attr('transform', event.transform);
+        });
+    
+    svg.call(zoom);
+    
+    // Create main group
+    const g = svg.append('g');
+    
+    // Process data for visualization
+    const nodes = data.nodes;
+    const links = data.links;
+    
+    console.log('Processing nodes:', nodes.length);
+    console.log('Processing links:', links.length);
+    console.log('Sample nodes:', nodes.slice(0, 2));
+    console.log('Sample links:', links.slice(0, 2));
+    console.log('Node types:', [...new Set(nodes.map(n => n.type))]);
+    console.log('Link types:', [...new Set(links.map(l => l.type))]);
+    
+    // Create node map for efficient lookup
+    const nodeMap = new Map();
+    nodes.forEach(node => {
+        nodeMap.set(node.id, node);
+        // Set initial positions if not set
+        if (node.x === undefined) node.x = Math.random() * containerWidth;
+        if (node.y === undefined) node.y = Math.random() * containerHeight;
+    });
+    
+    // Create force simulation
+    console.log('Creating force simulation with', nodes.length, 'nodes and', links.length, 'links');
+    const centerX = containerWidth / 2;
+    const centerY = containerHeight / 2;
+    console.log('Force center coordinates:', centerX, centerY);
+    
+    const simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id(d => d.id).distance(150))
+        .force('charge', d3.forceManyBody().strength(-500))
+        .force('center', d3.forceCenter(centerX, centerY))
+        .force('collision', d3.forceCollide().radius(25));
+    
+    console.log('Simulation created, starting tick events');
+    
+    // Add a timeout to check if simulation is running
+    setTimeout(() => {
+        console.log('Simulation alpha after 1s:', simulation.alpha());
+        console.log('Simulation alpha decay after 1s:', simulation.alphaDecay());
+        console.log('Sample node positions after 1s:', nodes.slice(0, 2).map(n => ({id: n.id, x: n.x, y: n.y})));
+    }, 1000);
+    
+    // Create links
+    console.log('Creating links...');
+    const link = g.append('g')
+        .selectAll('line')
+        .data(links)
+        .enter().append('line')
+        .attr('stroke', '#999')
+        .attr('stroke-opacity', 0.8)
+        .attr('stroke-width', 3);
+    
+    console.log('Links created:', link.size());
+    
+    // Create nodes
+    console.log('Creating nodes...');
+    const node = g.append('g')
+        .selectAll('circle')
+        .data(nodes)
+        .enter().append('circle')
+        .attr('r', 12)
+        .attr('fill', d => getNodeColor(d.type))
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 3)
+        .style('cursor', 'pointer')
+        .on('click', function(event, d) {
+            showNodeDetails(d);
+        })
+        .on('mouseover', function(event, d) {
+            d3.select(this).attr('r', 18);
+        })
+        .on('mouseout', function(event, d) {
+            d3.select(this).attr('r', 12);
+        });
+    
+    console.log('Nodes created:', node.size());
+    
+    // Add node labels
+    const label = g.append('g')
+        .selectAll('text')
+        .data(nodes)
+        .enter().append('text')
+        .text(d => d.label || d.id)
+        .attr('font-size', '14px')
+        .attr('font-weight', 'bold')
+        .attr('text-anchor', 'middle')
+        .attr('dy', '0.35em')
+        .style('pointer-events', 'none')
+        .style('fill', '#333');
+    
+    // Update positions on simulation tick
+    simulation.on('tick', () => {
+        console.log('Tick event - updating positions');
+        link
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+        
+        node
+            .attr('cx', d => d.x)
+            .attr('cy', d => d.y);
+        
+        label
+            .attr('x', d => d.x)
+            .attr('y', d => d.y + 25);
+    });
+}
+
+// Get node color based on type
+function getNodeColor(type) {
+    const colors = {
+        'asset': '#3b82f6',
+        'submodel': '#10b981',
+        'property': '#f59e0b',
+        'document': '#ef4444',
+        'unknown': '#8b5cf6'
+    };
+    return colors[type] || colors.unknown;
+}
+
+// Show node details in modal
+function showNodeDetails(node) {
+    selectedNode = node;
+    
+    const modalBody = document.getElementById('nodeModalBody');
+    modalBody.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Node Information</h6>
+                <p><strong>ID:</strong> ${node.id}</p>
+                <p><strong>Label:</strong> ${node.label}</p>
+                <p><strong>Type:</strong> ${node.type}</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Properties</h6>
+                <pre style="font-size: 12px; max-height: 200px; overflow-y: auto;">${JSON.stringify(node.properties, null, 2)}</pre>
+            </div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('nodeModal'));
+    modal.show();
+}
+
+// Expand selected node (placeholder for future functionality)
+function expandNode() {
+    if (selectedNode) {
+        showSuccess(`Node ${selectedNode.label} selected for expansion`);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('nodeModal'));
+        modal.hide();
+    }
+}
+
+// View graph based on current selection
+async function viewGraph() {
+    if (currentFile) {
+        await loadFileGraph();
+    } else if (currentProject) {
+        await loadProjectGraph();
+    } else {
+        showError('Please select a project or file first');
+    }
+}
+
+// Refresh graph
+function refreshGraph() {
+    if (currentFile) {
+        loadFileGraph();
+    } else if (currentProject) {
+        loadProjectGraph();
+    } else {
+        showError('Please select a project or file first');
+    }
+}
+
+// Show loading spinner
+function showLoading(show) {
+    console.log('showLoading called with:', show);
+    const spinner = document.getElementById('loading-spinner');
+    spinner.style.display = show ? 'block' : 'none';
+}
+
+// Show error message
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Show welcome message
+function showWelcomeMessage() {
+    // Clear existing graph
+    graphContainer.selectAll('*').remove();
+    
+    // Show welcome message
+    let message = 'Select a project and file to visualize data';
+    
+    if (currentProject && currentFile) {
+        message = `Ready to view graph for "${currentFile.original_filename}" in project "${currentProject.name}". Click "View Graph" to load the visualization.`;
+    } else if (currentProject && !currentFile) {
+        message = `Project "${currentProject.name}" selected. Please choose a file to view its graph.`;
+    } else if (!currentProject) {
+        message = 'Select a project and file to visualize data';
+    }
+    
+    graphContainer.append('text')
+        .attr('x', '50%')
+        .attr('y', '50%')
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'middle')
+        .style('font-size', '18px')
+        .style('fill', '#64748b')
+        .text(message);
+}
+
+// Show success message
+function showSuccess(message) {
+    const successDiv = document.getElementById('success-message');
+    successDiv.textContent = message;
+    successDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        successDiv.style.display = 'none';
+    }, 3000);
+}
+</script>
+{% endblock %}

@@ -410,6 +410,60 @@ class Neo4jManager:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def execute_query_docker(self, query: str) -> List[Dict]:
+        """Execute Cypher query using Docker Neo4j connection"""
+        try:
+            # Try to connect to Docker Neo4j
+            docker_uri = "bolt://localhost:7688"
+            docker_user = "neo4j"
+            docker_password = "password"
+            
+            driver = GraphDatabase.driver(docker_uri, auth=(docker_user, docker_password))
+            
+            with driver.session() as session:
+                result = session.run(query)
+                records = []
+                for record in result:
+                    # Convert Neo4j record to dict
+                    record_dict = {}
+                    for key, value in record.items():
+                        record_dict[key] = value
+                    records.append(record_dict)
+                
+                driver.close()
+                return records
+                
+        except Exception as e:
+            logger.error(f"Docker query execution failed: {e}")
+            raise
+
+    def execute_query_local(self, query: str) -> List[Dict]:
+        """Execute Cypher query using Local Neo4j connection"""
+        try:
+            # Try to connect to Local Neo4j
+            local_uri = "bolt://localhost:7687"
+            local_user = "neo4j"
+            local_password = "password"  # This should be configurable
+            
+            driver = GraphDatabase.driver(local_uri, auth=(local_user, local_password))
+            
+            with driver.session() as session:
+                result = session.run(query)
+                records = []
+                for record in result:
+                    # Convert Neo4j record to dict
+                    record_dict = {}
+                    for key, value in record.items():
+                        record_dict[key] = value
+                    records.append(record_dict)
+                
+                driver.close()
+                return records
+                
+        except Exception as e:
+            logger.error(f"Local query execution failed: {e}")
+            raise
+
 # Global instance for management operations (no database connection)
 neo4j_manager = Neo4jManager()
 
