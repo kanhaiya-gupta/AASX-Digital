@@ -265,6 +265,9 @@ class TwinRegistryRealtime {
         // Update UI
         this.updateRealtimePanel();
         this.updateTwinCards();
+        
+        // Update connection status to reflect current subscriber count
+        this.updateConnectionStatus('connected');
     }
     
     handleTwinUpdate(twinId, data) {
@@ -303,6 +306,7 @@ class TwinRegistryRealtime {
             
             this.websocket.send(JSON.stringify(message));
             this.subscribedTwins.add(twinId);
+            this.updateConnectionStatus('connected'); // Update status after subscribing
         }
     }
     
@@ -315,13 +319,30 @@ class TwinRegistryRealtime {
             
             this.websocket.send(JSON.stringify(message));
             this.subscribedTwins.delete(twinId);
+            this.updateConnectionStatus('disconnected'); // Update status after unsubscribing
         }
     }
     
     updateConnectionStatus(status) {
+        console.log('🔄 Updating connection status:', status, 'Subscribers:', this.subscribedTwins.size);
+        
         const statusDot = document.getElementById('realtimeStatusDot');
         const statusText = document.getElementById('realtimeStatusText');
         const connectionCount = document.getElementById('connectionCount');
+        
+        // Also update the real-time monitoring panel elements
+        const realtimeStatus = document.getElementById('realtimeStatus');
+        const realtimeStatusText = document.getElementById('realtimeStatusText');
+        const realtimeStatusDetails = document.getElementById('realtimeStatusDetails');
+        const subscriberCount = document.getElementById('subscriberCount');
+        const lastUpdate = document.getElementById('lastUpdate');
+        
+        console.log('🔍 Found elements:', {
+            realtimeStatusText: !!realtimeStatusText,
+            realtimeStatusDetails: !!realtimeStatusDetails,
+            subscriberCount: !!subscriberCount,
+            lastUpdate: !!lastUpdate
+        });
         
         if (statusDot && statusText) {
             statusDot.className = 'status-dot';
@@ -330,32 +351,57 @@ class TwinRegistryRealtime {
                 case 'connected':
                     statusDot.classList.add('connected');
                     statusText.textContent = 'Real-Time Connected';
+                    if (realtimeStatusText) realtimeStatusText.textContent = 'Connected';
+                    if (realtimeStatusDetails) realtimeStatusDetails.textContent = 'Real-time monitoring active';
                     break;
                     
                 case 'disconnected':
                     statusDot.classList.add('disconnected');
                     statusText.textContent = 'Disconnected';
+                    if (realtimeStatusText) realtimeStatusText.textContent = 'Disconnected';
+                    if (realtimeStatusDetails) realtimeStatusDetails.textContent = 'Connection lost';
                     break;
                     
                 case 'error':
                     statusDot.classList.add('error');
                     statusText.textContent = 'Connection Error';
+                    if (realtimeStatusText) realtimeStatusText.textContent = 'Error';
+                    if (realtimeStatusDetails) realtimeStatusDetails.textContent = 'Connection error occurred';
                     break;
                     
                 case 'failed':
                     statusDot.classList.add('failed');
                     statusText.textContent = 'Connection Failed';
+                    if (realtimeStatusText) realtimeStatusText.textContent = 'Failed';
+                    if (realtimeStatusDetails) realtimeStatusDetails.textContent = 'Connection failed';
                     break;
                     
                 default:
                     statusDot.classList.add('connecting');
                     statusText.textContent = 'Connecting...';
+                    if (realtimeStatusText) realtimeStatusText.textContent = 'Connecting...';
+                    if (realtimeStatusDetails) realtimeStatusDetails.textContent = 'Establishing connection';
             }
         }
         
+        // Update subscriber count in both header and panel
+        const subscriberCountValue = this.subscribedTwins.size;
+        console.log('📊 Updating subscriber count to:', subscriberCountValue);
+        
         if (connectionCount) {
-            connectionCount.textContent = this.subscribedTwins.size;
+            connectionCount.textContent = subscriberCountValue;
         }
+        if (subscriberCount) {
+            subscriberCount.textContent = subscriberCountValue;
+        }
+        
+        // Update last update timestamp
+        const now = new Date().toLocaleTimeString();
+        if (lastUpdate) {
+            lastUpdate.textContent = now;
+        }
+        
+        console.log('✅ Connection status updated');
     }
     
     updateRealtimePanel() {

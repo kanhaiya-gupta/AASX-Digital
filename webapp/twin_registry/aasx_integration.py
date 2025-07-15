@@ -585,6 +585,9 @@ class AASXIntegration:
             
             twins = []
             for result in results:
+                # Calculate actual data points instead of using stored value
+                actual_data_points = self._calculate_data_points(result[2])  # aasx_filename
+                
                 twins.append({
                     "twin_id": result[1],
                     "aasx_filename": result[2],
@@ -595,7 +598,7 @@ class AASXIntegration:
                     "status": result[7],
                     "created_at": result[8],
                     "last_sync": result[9],
-                    "data_points": result[10],
+                    "data_points": actual_data_points,  # Use calculated value
                     "metadata": json.loads(result[11]) if result[11] else {}
                 })
             
@@ -603,8 +606,8 @@ class AASXIntegration:
             
         except Exception as e:
             logger.error(f"Error getting all twins: {e}")
-            return [] 
-
+            return []
+    
     def get_all_projects(self) -> List[Dict[str, Any]]:
         """Get all available projects from the output directory structure"""
         projects = []

@@ -301,6 +301,8 @@ class TwinRegistryPerformance {
                 
                 this.updatePerformanceCards();
                 this.updateDashboard();
+                this.populateTwinSelector(); // Add this line
+                this.updatePerformanceMetrics(); // Add this line
             }
             
             // Get alerts
@@ -316,6 +318,29 @@ class TwinRegistryPerformance {
             
         } catch (error) {
             console.error('❌ Error refreshing performance data:', error);
+        }
+    }
+    
+    populateTwinSelector() {
+        const selector = document.getElementById('performanceTwinSelect');
+        if (!selector) return;
+        
+        // Clear existing options
+        selector.innerHTML = '<option value="">Choose a twin...</option>';
+        
+        // Add options for each twin
+        Object.values(this.performanceData).forEach(twin => {
+            const option = document.createElement('option');
+            option.value = twin.twin_id;
+            option.textContent = twin.twin_name;
+            selector.appendChild(option);
+        });
+        
+        // If there's only one twin, select it automatically
+        if (Object.keys(this.performanceData).length === 1) {
+            const firstTwinId = Object.keys(this.performanceData)[0];
+            selector.value = firstTwinId;
+            this.updatePerformanceMetrics();
         }
     }
     
