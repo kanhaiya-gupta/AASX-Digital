@@ -1,305 +1,151 @@
 <!-- Add Twin Modal -->
 <div class="modal fade" id="addTwinModal" tabindex="-1" aria-labelledby="addTwinModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header">
                 <h5 class="modal-title" id="addTwinModalLabel">
-                    <i class="fas fa-plus-circle me-2"></i>
+                    <i class="fas fa-plus-circle text-primary"></i>
                     Add New Digital Twin
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="addTwinForm">
-                    <!-- Basic Information -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-primary border-bottom pb-2">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Basic Information
-                            </h6>
-                        </div>
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="twinId" class="form-label">Twin ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="twinId" name="twinId" required 
-                                       placeholder="e.g., DT-001, AM-FACILITY-01">
+                                <label for="twinId" class="form-label">Twin ID *</label>
+                                <input type="text" class="form-control" id="twinId" required>
                                 <div class="form-text">Unique identifier for the digital twin</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="twinName" class="form-label">Twin Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="twinName" name="twinName" required 
-                                       placeholder="e.g., Additive Manufacturing Facility">
-                                <div class="form-text">Descriptive name for the digital twin</div>
+                                <label for="twinName" class="form-label">Twin Name *</label>
+                                <input type="text" class="form-control" id="twinName" required>
+                                <div class="form-text">Human-readable name for the twin</div>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="twinType" class="form-label">Twin Type <span class="text-danger">*</span></label>
-                                <select class="form-select" id="twinType" name="twinType" required>
-                                    <option value="">Select Twin Type</option>
-                                    <option value="manufacturing">Manufacturing</option>
-                                    <option value="energy">Energy</option>
-                                    <option value="transportation">Transportation</option>
-                                    <option value="healthcare">Healthcare</option>
-                                    <option value="agriculture">Agriculture</option>
-                                    <option value="construction">Construction</option>
+                                <label for="twinType" class="form-label">Twin Type *</label>
+                                <select class="form-select" id="twinType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="additive_manufacturing">Additive Manufacturing</option>
+                                    <option value="hydrogen_station">Hydrogen Station</option>
+                                    <option value="quality_lab">Quality Lab</option>
                                     <option value="logistics">Logistics</option>
-                                    <option value="smart_city">Smart City</option>
-                                    <option value="custom">Custom</option>
+                                    <option value="energy">Energy</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="twinCategory" class="form-label">Category</label>
-                                <select class="form-select" id="twinCategory" name="twinCategory">
-                                    <option value="">Select Category</option>
-                                    <option value="equipment">Equipment</option>
-                                    <option value="facility">Facility</option>
-                                    <option value="process">Process</option>
-                                    <option value="system">System</option>
-                                    <option value="product">Product</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Physical Asset Information -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-primary border-bottom pb-2">
-                                <i class="fas fa-cube me-2"></i>
-                                Physical Asset Information
-                            </h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="assetId" class="form-label">Asset ID</label>
-                                <input type="text" class="form-control" id="assetId" name="assetId" 
-                                       placeholder="e.g., ASSET-2024-001">
-                                <div class="form-text">Physical asset identifier</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="assetLocation" class="form-label">Asset Location</label>
-                                <input type="text" class="form-control" id="assetLocation" name="assetLocation" 
-                                       placeholder="e.g., Building A, Floor 2, Room 205">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="assetModel" class="form-label">Asset Model</label>
-                                <input type="text" class="form-control" id="assetModel" name="assetModel" 
-                                       placeholder="e.g., 3D Printer X1-Pro">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="assetManufacturer" class="form-label">Manufacturer</label>
-                                <input type="text" class="form-control" id="assetManufacturer" name="assetManufacturer" 
-                                       placeholder="e.g., IndustrialTech Inc.">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="assetSerialNumber" class="form-label">Serial Number</label>
-                                <input type="text" class="form-control" id="assetSerialNumber" name="assetSerialNumber" 
-                                       placeholder="e.g., SN-2024-001234">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="assetInstallationDate" class="form-label">Installation Date</label>
-                                <input type="date" class="form-control" id="assetInstallationDate" name="assetInstallationDate">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Digital Twin Configuration -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-primary border-bottom pb-2">
-                                <i class="fas fa-cog me-2"></i>
-                                Digital Twin Configuration
-                            </h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="syncFrequency" class="form-label">Sync Frequency</label>
-                                <select class="form-select" id="syncFrequency" name="syncFrequency">
-                                    <option value="realtime">Real-time</option>
-                                    <option value="1min">Every 1 minute</option>
-                                    <option value="5min">Every 5 minutes</option>
-                                    <option value="15min">Every 15 minutes</option>
-                                    <option value="1hour">Every hour</option>
-                                    <option value="daily">Daily</option>
-                                    <option value="manual">Manual</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="dataRetention" class="form-label">Data Retention Period</label>
-                                <select class="form-select" id="dataRetention" name="dataRetention">
-                                    <option value="30days">30 days</option>
-                                    <option value="90days">90 days</option>
-                                    <option value="6months">6 months</option>
-                                    <option value="1year">1 year</option>
-                                    <option value="2years">2 years</option>
-                                    <option value="indefinite">Indefinite</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="alertThreshold" class="form-label">Alert Threshold</label>
-                                <select class="form-select" id="alertThreshold" name="alertThreshold">
-                                    <option value="low">Low (Conservative)</option>
-                                    <option value="medium">Medium (Standard)</option>
-                                    <option value="high">High (Sensitive)</option>
-                                    <option value="custom">Custom</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="twinStatus" class="form-label">Initial Status</label>
-                                <select class="form-select" id="twinStatus" name="twinStatus">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="testing">Testing</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Data Sources -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-primary border-bottom pb-2">
-                                <i class="fas fa-database me-2"></i>
-                                Data Sources
-                            </h6>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="dataSourceType" class="form-label">Primary Data Source</label>
-                                <select class="form-select" id="dataSourceType" name="dataSourceType">
-                                    <option value="">Select Data Source</option>
-                                    <option value="sensors">IoT Sensors</option>
-                                    <option value="plc">PLC/SCADA</option>
-                                    <option value="database">Database</option>
-                                    <option value="api">API Integration</option>
-                                    <option value="manual">Manual Entry</option>
-                                    <option value="file">File Upload</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="dataFormat" class="form-label">Data Format</label>
-                                <select class="form-select" id="dataFormat" name="dataFormat">
-                                    <option value="">Select Format</option>
-                                    <option value="json">JSON</option>
-                                    <option value="xml">XML</option>
-                                    <option value="csv">CSV</option>
-                                    <option value="opcua">OPC UA</option>
-                                    <option value="modbus">Modbus</option>
-                                    <option value="mqtt">MQTT</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="dataEndpoints" class="form-label">Data Endpoints</label>
-                                <textarea class="form-control" id="dataEndpoints" name="dataEndpoints" rows="3" 
-                                          placeholder="Enter data source endpoints (one per line)&#10;e.g., http://sensor1.local:8080/data&#10;e.g., opc.tcp://plc.local:4840"></textarea>
-                                <div class="form-text">One endpoint per line</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- AAS Integration -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-primary border-bottom pb-2">
-                                <i class="fas fa-link me-2"></i>
-                                Asset Administration Shell (AAS) Integration
-                            </h6>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="aasId" class="form-label">AAS ID</label>
-                                <input type="text" class="form-control" id="aasId" name="aasId" 
-                                       placeholder="e.g., AAS-2024-001">
+                                <input type="text" class="form-control" id="aasId">
                                 <div class="form-text">Asset Administration Shell identifier</div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="aasVersion" class="form-label">AAS Version</label>
-                                <select class="form-select" id="aasVersion" name="aasVersion">
-                                    <option value="3.0">AAS 3.0</option>
-                                    <option value="2.0">AAS 2.0</option>
-                                    <option value="1.0">AAS 1.0</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="aasSubmodels" class="form-label">AAS Submodels</label>
-                                <textarea class="form-control" id="aasSubmodels" name="aasSubmodels" rows="3" 
-                                          placeholder="Enter AAS submodels (comma-separated)&#10;e.g., TechnicalData, Documentation, QualityAssurance, Maintenance"></textarea>
-                                <div class="form-text">Comma-separated list of AAS submodels</div>
-                            </div>
-                        </div>
                     </div>
-
-                    <!-- Description and Tags -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-primary border-bottom pb-2">
-                                <i class="fas fa-tags me-2"></i>
-                                Description and Tags
-                            </h6>
-                        </div>
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="twinDescription" class="form-label">Description</label>
-                                <textarea class="form-control" id="twinDescription" name="twinDescription" rows="4" 
-                                          placeholder="Provide a detailed description of the digital twin, its purpose, and key features..."></textarea>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="twinTags" class="form-label">Tags</label>
-                                <input type="text" class="form-control" id="twinTags" name="twinTags" 
-                                       placeholder="Enter tags separated by commas (e.g., critical, high-priority, maintenance)">
-                                <div class="form-text">Comma-separated tags for easy categorization</div>
-                            </div>
-                        </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" rows="3"></textarea>
+                        <div class="form-text">Detailed description of the digital twin</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="metadata" class="form-label">Metadata (JSON)</label>
+                        <textarea class="form-control" id="metadata" rows="4" placeholder='{"location": "Building A", "capacity": "1000 parts/day"}'></textarea>
+                        <div class="form-text">Additional metadata in JSON format</div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>
-                    Cancel
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-outline-primary" id="saveAsDraft">
-                    <i class="fas fa-save me-1"></i>
+                    <i class="fas fa-save"></i>
                     Save as Draft
                 </button>
                 <button type="button" class="btn btn-primary" id="createTwin">
-                    <i class="fas fa-plus-circle me-1"></i>
-                    Create Digital Twin
+                    <i class="fas fa-plus"></i>
+                    Create Twin
                 </button>
             </div>
         </div>
     </div>
-</div> 
+</div>
+
+<script>
+// Auto-generation setup
+function setupAutoGeneration() {
+    // Auto-generate Twin ID when name is entered
+    $('#twinName').on('input', function() {
+        var name = $(this).val();
+        if (name && !$('#twinId').val()) {
+            var twinId = 'DT-' + name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 8);
+            $('#twinId').val(twinId);
+        }
+    });
+}
+
+// Collect form data
+function collectFormData() {
+    return {
+        twin_id: $('#twinId').val(),
+        twin_name: $('#twinName').val(),
+        twin_type: $('#twinType').val(),
+        aas_id: $('#aasId').val(),
+        description: $('#description').val(),
+        metadata: parseMetadata($('#metadata').val())
+    };
+}
+
+// Parse metadata JSON
+function parseMetadata(metadataStr) {
+    if (!metadataStr) return {};
+    try {
+        return JSON.parse(metadataStr);
+    } catch (e) {
+        return {};
+    }
+}
+
+// Validate form data
+function validateFormData(data, requireAll) {
+    var errors = [];
+    
+    if (!data.twin_id) errors.push('Twin ID is required');
+    if (!data.twin_name) errors.push('Twin Name is required');
+    if (!data.twin_type) errors.push('Twin Type is required');
+    
+    if (requireAll && errors.length > 0) {
+        alert('Please fix the following errors:\n' + errors.join('\n'));
+        return false;
+    }
+    
+    return true;
+}
+
+// Save twin as draft
+function saveTwinAsDraft(formData) {
+    // Mock implementation - would save to database
+    console.log('Saving as draft:', formData);
+    alert('Twin saved as draft successfully!');
+    $('#addTwinModal').modal('hide');
+}
+
+// Create new twin
+function createNewTwin(formData) {
+    // Mock implementation - would create in database
+    console.log('Creating twin:', formData);
+    alert('Twin created successfully!');
+    $('#addTwinModal').modal('hide');
+    location.reload();
+}
+</script> 

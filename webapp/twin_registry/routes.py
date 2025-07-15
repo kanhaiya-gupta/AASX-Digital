@@ -13,12 +13,18 @@ import json
 import random
 import os
 
+# Import AASX integration
+from .aasx_integration import AASXIntegration
+
 # Create router
 router = APIRouter(tags=["twin-registry"])
 
 # Setup templates
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
+
+# Initialize AASX integration
+aasx_integration = AASXIntegration()
 
 # Pydantic models
 class TwinRegistration(BaseModel):
@@ -41,7 +47,11 @@ class TwinSyncRequest(BaseModel):
     sync_type: str
     force: bool = False
 
-# Mock twin data
+class AASXRegistrationRequest(BaseModel):
+    aasx_filename: str
+    project_id: str
+
+# Mock twin data (will be replaced with real data from AASX integration)
 TWINS_DB = [
     {
         "id": "dt-001",
@@ -102,12 +112,28 @@ TWINS_DB = [
 @router.get("/", response_class=HTMLResponse)
 async def twin_registry_dashboard(request: Request):
     """Twin registry dashboard"""
+    print("🔍 Twin Registry dashboard route called")
+    
+    try:
+        # Get real twins from AASX integration
+        print("📊 Getting AASX twins...")
+        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        print(f"✅ Found {len(aasx_twins)} AASX twins")
+    except Exception as e:
+        print(f"⚠️ Warning: AASX integration error: {e}")
+        aasx_twins = []
+    
+    # Combine mock data with real AASX twins
+    all_twins = TWINS_DB + aasx_twins
+    print(f"📋 Total twins: {len(all_twins)}")
+    
+    print("🎨 Rendering twin registry template...")
     return templates.TemplateResponse(
         "twin_registry/index.html",
         {
             "request": request,
             "title": "Digital Twin Registry - QI Digital Platform",
-            "twins": TWINS_DB,
+            "twins": all_twins,
             "twin_types": [
                 {"id": "additive_manufacturing", "name": "Additive Manufacturing", "count": 1},
                 {"id": "hydrogen_station", "name": "Hydrogen Station", "count": 1},
@@ -393,3 +419,183 @@ async def get_twin_registry_status():
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         } 
+
+# AASX Integration Endpoints
+
+@router.post("/api/twins/register-from-aasx")
+async def register_twin_from_aasx(request: AASXRegistrationRequest):
+    """Register a new twin from processed AASX file"""
+    try:
+        result = aasx_integration.auto_register_twin_from_aasx(
+            request.aasx_filename, 
+            request.project_id
+        )
+        
+        if result.get("success", False):
+            return {
+                "message": "Digital twin registered successfully from AASX",
+                "twin_id": result["twin_id"],
+                "twin_name": result["twin_name"],
+                "aasx_filename": result["aasx_filename"],
+                "status": result["status"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to register twin"))
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/api/twins/{twin_id}/sync-status")
+async def get_twin_sync_status(twin_id: str):
+    """Get real-time sync status between twin and AASX data"""
+    try:
+        status = aasx_integration.get_sync_status(twin_id)
+        
+        if "error" in status:
+            raise HTTPException(status_code=404, detail=status["error"])
+        
+        return status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/api/aasx/discover")
+async def discover_processed_aasx_files():
+    """Discover AASX files that have been processed by the ETL pipeline"""
+    try:
+        files = aasx_integration.discover_processed_aasx_files()
+        return {
+            "files": files,
+            "total_count": len(files),
+            "discovered_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/aasx/auto-register-all")
+async def auto_register_all_processed_aasx():
+    """Automatically register twins for all processed AASX files"""
+    try:
+        files = aasx_integration.discover_processed_aasx_files()
+        registered_twins = []
+        errors = []
+        
+        for file_info in files:
+            try:
+                result = aasx_integration.auto_register_twin_from_aasx(
+                    file_info["aasx_filename"],
+                    file_info["project_id"]
+                )
+                
+                if result.get("success", False):
+                    registered_twins.append(result)
+                else:
+                    errors.append({
+                        "file": file_info["aasx_filename"],
+                        "error": result.get("error", "Unknown error")
+                    })
+                    
+            except Exception as e:
+                errors.append({
+                    "file": file_info["aasx_filename"],
+                    "error": str(e)
+                })
+        
+        return {
+            "message": f"Auto-registration completed. {len(registered_twins)} twins registered, {len(errors)} errors.",
+            "registered_twins": registered_twins,
+            "errors": errors,
+            "total_processed": len(files)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/api/twins/aasx/{aasx_filename}")
+async def get_twin_by_aasx_filename(aasx_filename: str):
+    """Get twin information by AASX filename"""
+    try:
+        twin = aasx_integration.get_twin_by_aasx(aasx_filename)
+        
+        if twin:
+            return twin
+        else:
+            raise HTTPException(status_code=404, detail="Twin not found for this AASX file")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 
+
+@router.get("/api/aasx/projects")
+async def get_aasx_projects():
+    """Get all available projects with AASX files"""
+    try:
+        projects = aasx_integration.get_all_projects()
+        return {
+            "success": True,
+            "projects": projects,
+            "total_count": len(projects)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/api/aasx/projects/{project_id}/files")
+async def get_aasx_files_by_project(project_id: str):
+    """Get all AASX files for a specific project"""
+    try:
+        # Get all processed files and filter by project
+        all_files = aasx_integration.discover_processed_aasx_files()
+        project_files = [file for file in all_files if file.get("project_id") == project_id]
+        
+        return {
+            "success": True,
+            "project_id": project_id,
+            "files": project_files,
+            "total_count": len(project_files)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/aasx/projects/{project_id}/auto-register")
+async def auto_register_project_twins(project_id: str):
+    """Auto-register all twins from a specific project"""
+    try:
+        # Get all files for this project
+        all_files = aasx_integration.discover_processed_aasx_files()
+        project_files = [file for file in all_files if file.get("project_id") == project_id]
+        
+        if not project_files:
+            return {
+                "success": False,
+                "error": f"No processed AASX files found for project {project_id}"
+            }
+        
+        # Register each file
+        results = []
+        for file_info in project_files:
+            aasx_filename = file_info["aasx_filename"]
+            result = aasx_integration.auto_register_twin_from_aasx(aasx_filename, project_id)
+            results.append({
+                "aasx_filename": aasx_filename,
+                "result": result
+            })
+        
+        # Count successes and failures
+        successful = sum(1 for r in results if r["result"].get("success", False))
+        failed = len(results) - successful
+        
+        return {
+            "success": True,
+            "project_id": project_id,
+            "total_files": len(project_files),
+            "successful_registrations": successful,
+            "failed_registrations": failed,
+            "results": results
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 

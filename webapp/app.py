@@ -67,12 +67,14 @@ try:
 except Exception as e:
     print(f"⚠️  Knowledge Graph router failed to load: {e}")
 
+# Import twin registry router
 try:
     from webapp.twin_registry.routes import router as twin_registry_router
+    print("✅ Twin Registry router imported successfully")
     app.include_router(twin_registry_router, prefix="/twin-registry", tags=["twin-registry"])
-    print("✅ Twin Registry router loaded successfully")
 except Exception as e:
-    print(f"⚠️  Twin Registry router failed to load: {e}")
+    print(f"❌ Error importing Twin Registry router: {e}")
+    twin_registry_router = None
 
 try:
     from webapp.certificate_manager.routes import router as certificate_manager_router
@@ -397,7 +399,10 @@ async def ai_rag_page(request: Request):
 @app.get("/twin-registry", response_class=HTMLResponse)
 async def twin_registry_page(request: Request):
     """Twin registry page"""
+    print(f"🔍 Twin Registry page requested. Router available: {twin_registry_router is not None}")
+    
     if twin_registry_router is None:
+        print("❌ Twin Registry router is None, showing error page")
         return templates.TemplateResponse(
             "error.html",
             {
@@ -407,11 +412,24 @@ async def twin_registry_page(request: Request):
             }
         )
     
+    print("✅ Serving Twin Registry page")
     return templates.TemplateResponse(
         "twin_registry/index.html",
         {
             "request": request,
             "title": "Digital Twin Registry - AASX Digital Twin Analytics Framework"
+        }
+    )
+
+@app.get("/twin-registry-test", response_class=HTMLResponse)
+async def twin_registry_test_page(request: Request):
+    """Test twin registry template"""
+    print("🧪 Serving Twin Registry test page")
+    return templates.TemplateResponse(
+        "twin_registry/test.html",
+        {
+            "request": request,
+            "title": "Twin Registry Test"
         }
     )
 
@@ -497,6 +515,17 @@ async def etl_flowchart_page(request: Request):
         {
             "request": request,
             "title": "ETL Page Flowchart - AASX Digital Twin Analytics Framework"
+        }
+    )
+
+@app.get("/aasx-integration-flowchart", response_class=HTMLResponse)
+async def aasx_integration_flowchart_page(request: Request):
+    """AASX Auto Integration flowchart showing digital twin registration process"""
+    return templates.TemplateResponse(
+        "flowchart/aasx_integration_flowchart.html",
+        {
+            "request": request,
+            "title": "AASX Auto Integration Flowchart - Digital Twin Analytics Framework"
         }
     )
 

@@ -115,6 +115,11 @@
                 <i class="fas fa-cogs me-2"></i>ETL Pipeline
             </a>
         </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="aasx-integration-tab" data-bs-toggle="tab" href="#aasx-integration-flowchart" role="tab">
+                <i class="fas fa-link me-2"></i>AASX Auto Integration
+            </a>
+        </li>
     </ul>
 
     <!-- ETL Page Flowchart Link -->
@@ -125,14 +130,20 @@
                     <div>
                         <h6 class="alert-heading mb-1">
                             <i class="fas fa-info-circle me-2"></i>
-                            Detailed ETL Page Flowchart Available
+                            Detailed Flowcharts Available
                         </h6>
-                        <p class="mb-0">Explore the complete user journey and system architecture for the ETL page at <code>/aasx/</code></p>
+                        <p class="mb-0">Explore detailed flowcharts for specific components: ETL page user journey and AASX Auto Integration process</p>
                     </div>
-                    <a href="/etl-flowchart" class="btn btn-primary">
-                        <i class="fas fa-external-link-alt me-2"></i>
-                        View ETL Page Flowchart
-                    </a>
+                    <div>
+                        <a href="/etl-flowchart" class="btn btn-primary me-2">
+                            <i class="fas fa-cogs me-2"></i>
+                            ETL Flowchart
+                        </a>
+                        <a href="/aasx-integration-flowchart" class="btn btn-success">
+                            <i class="fas fa-link me-2"></i>
+                            AASX Integration
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -410,6 +421,144 @@
                                 <div class="flow-step">
                                     <h4><i class="fas fa-check-circle text-info"></i> Quality Control</h4>
                                     <p>Validates data quality, generates error reports, and provides retry mechanisms for failed processing steps.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AASX Auto Integration Tab -->
+        <div class="tab-pane fade" id="aasx-integration-flowchart" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-link me-2"></i>
+                                AASX Auto Integration Flowchart
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="flowchart-container">
+                                <div class="mermaid" id="aasx-integration-flowchart">
+                                    graph TD
+                                        %% ETL Output Discovery
+                                        A1[ETL Output Discovery<br/>🔍] --> B1[Scan Project Directories<br/>📂<br/>output/projects/]
+                                        A2[User Interface<br/>🖥️<br/>Twin Registry] --> B1
+                                        
+                                        %% Project Discovery
+                                        B1 --> C1[Project List<br/>📋<br/>Available Projects]
+                                        C1 --> D1[File Discovery<br/>📁<br/>Per Project Files]
+                                        
+                                        %% AASX Integration Module
+                                        D1 --> E1[AASX Integration<br/>🔗<br/>Module]
+                                        E1 --> F1[SQLite Database Scan<br/>💾<br/>Extract Twin Info]
+                                        E1 --> F2[File Format Detection<br/>📄<br/>JSON/YAML/CSV]
+                                        
+                                        %% Twin Information Extraction
+                                        F1 --> G1[Twin Metadata<br/>🏷️<br/>ID, Name, Description]
+                                        F1 --> G2[Asset Information<br/>🏭<br/>Properties & Relations]
+                                        F1 --> G3[Project Context<br/>📊<br/>Source Project & File]
+                                        
+                                        %% Twin Registration Process
+                                        G1 --> H1[Twin Validation<br/>✅<br/>Check Duplicates]
+                                        G2 --> H1
+                                        G3 --> H1
+                                        
+                                        %% Database Operations
+                                        H1 --> I1[Register Twin<br/>📝<br/>Twin Registry DB]
+                                        H1 --> I2[Update Sync Status<br/>🔄<br/>Last Sync Time]
+                                        H1 --> I3[Link AASX File<br/>🔗<br/>File Association]
+                                        
+                                        %% Twin Registry Database
+                                        I1 --> J1[Twin Registry DB<br/>💾<br/>SQLite Database]
+                                        I2 --> J1
+                                        I3 --> J1
+                                        
+                                        %% API Endpoints
+                                        J1 --> K1[API Endpoints<br/>🌐<br/>REST API]
+                                        K1 --> L1[Project Discovery<br/>📋<br/>GET /api/projects]
+                                        K1 --> L2[File Discovery<br/>📁<br/>GET /api/files/{project}]
+                                        K1 --> L3[Twin Registration<br/>📝<br/>POST /api/register-twin]
+                                        K1 --> L4[Sync Status<br/>🔄<br/>GET /api/sync-status]
+                                        
+                                        %% Frontend Integration
+                                        L1 --> M1[Twin Registry UI<br/>🖥️<br/>Dashboard]
+                                        L2 --> M1
+                                        L3 --> M1
+                                        L4 --> M1
+                                        
+                                        %% User Actions
+                                        M1 --> N1[Load Projects<br/>📂<br/>User Action]
+                                        M1 --> N2[Discover Files<br/>🔍<br/>User Action]
+                                        M1 --> N3[Register Twins<br/>📝<br/>User Action]
+                                        M1 --> N4[View Sync Status<br/>📊<br/>User Action]
+                                        
+                                        %% Feedback Loop
+                                        N1 --> C1
+                                        N2 --> D1
+                                        N3 --> E1
+                                        N4 --> J1
+                                        
+                                        %% Error Handling
+                                        H1 --> O1[Error Handling<br/>⚠️<br/>Validation Errors]
+                                        O1 --> P1[Error Logging<br/>📝<br/>Detailed Reports]
+                                        P1 --> Q1[User Notification<br/>🔔<br/>Error Messages]
+                                        
+                                        %% Styling
+                                        classDef discoveryNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+                                        classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+                                        classDef databaseNode fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+                                        classDef apiNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+                                        classDef uiNode fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+                                        classDef errorNode fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+                                        
+                                        class A1,A2 discoveryNode
+                                        class B1,C1,D1,E1,F1,F2,G1,G2,G3,H1,I1,I2,I3 processNode
+                                        class J1 databaseNode
+                                        class K1,L1,L2,L3,L4 apiNode
+                                        class M1,N1,N2,N3,N4 uiNode
+                                        class O1,P1,Q1 errorNode
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                AASX Auto Integration Description
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="description">
+                                <h3>AASX Auto Integration Flow Description</h3>
+                                <p>This flowchart illustrates the automated process for discovering ETL-processed AASX files and registering them as digital twins in the Twin Registry. It shows how the system scans project directories, extracts twin information, and provides a seamless integration between AASX data and digital twin management.</p>
+                            </div>
+
+                            <div class="flow-steps">
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-search text-primary"></i> ETL Output Discovery</h4>
+                                    <p>Scans the ETL output directory structure to discover processed AASX files organized by project, enabling automatic twin registration from existing data.</p>
+                                </div>
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-link text-warning"></i> Twin Information Extraction</h4>
+                                    <p>Extracts twin metadata, asset information, and project context from SQLite databases and export files generated by the ETL pipeline.</p>
+                                </div>
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-database text-success"></i> Twin Registration</h4>
+                                    <p>Registers discovered twins in the Twin Registry database with proper validation, sync status tracking, and AASX file associations.</p>
+                                </div>
+                                <div class="flow-step">
+                                    <h4><i class="fas fa-cogs text-info"></i> API & UI Integration</h4>
+                                    <p>Provides REST API endpoints and user interface for project discovery, file browsing, twin registration, and sync status monitoring.</p>
                                 </div>
                             </div>
                         </div>

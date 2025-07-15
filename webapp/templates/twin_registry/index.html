@@ -20,6 +20,10 @@
                         <i class="fas fa-plus"></i>
                         Add Twin
                     </button>
+                    <button id="showAASXSection" class="btn btn-success">
+                        <i class="fas fa-file-archive"></i>
+                        AASX Integration
+                    </button>
                     <button id="refreshRegistry" class="btn btn-outline-secondary">
                         <i class="fas fa-sync-alt"></i>
                         Refresh
@@ -322,83 +326,105 @@
     </div>
 </div>
 
+<!-- AASX Integration Section -->
+<div class="row mb-4" id="aasxSection" style="display: none;">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-file-archive"></i>
+                    AASX Integration
+                </h6>
+                <div class="btn-group" role="group">
+                    <button id="loadProjects" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-folder"></i>
+                        Load Projects
+                    </button>
+                    <button id="registerAllTwins" class="btn btn-sm btn-success" style="display: none;">
+                        <i class="fas fa-magic"></i>
+                        Register All Twins
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Project Selection -->
+                <div class="row mb-3" id="projectSelection" style="display: none;">
+                    <div class="col-md-6">
+                        <label for="projectSelect" class="form-label">Select Project:</label>
+                        <select id="projectSelect" class="form-select">
+                            <option value="">Choose a project...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">&nbsp;</label>
+                        <div>
+                            <button id="autoRegisterProject" class="btn btn-success">
+                                <i class="fas fa-magic"></i>
+                                Auto-Register Project
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Projects List -->
+                <div id="projectsList" style="display: none;">
+                    <h6 class="text-primary mb-3">Available Projects</h6>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="projectsTable">
+                            <thead>
+                                <tr>
+                                    <th>Project ID</th>
+                                    <th>Name</th>
+                                    <th>Files</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Projects will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- AASX Files List -->
+                <div id="aasxFilesList" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-primary mb-0">Processed AASX Files</h6>
+                        <button id="backToProjects" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Projects
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="aasxFilesTable">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Project</th>
+                                    <th>Processed At</th>
+                                    <th>Twin Name</th>
+                                    <th>Type</th>
+                                    <th>Available Formats</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- AASX files will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Include Add Twin Modal -->
 {% include 'twin_registry/twin.html' %}
 {% endblock %}
 
-{% block scripts %}
-<script>
-$(document).ready(function() {
-    // Setup auto-generation
-    setupAutoGeneration();
-    
-    // View twin details
-    $('.view-twin').click(function() {
-        var twinId = $(this).data('id');
-        alert('Viewing details for ' + twinId);
-    });
-    
-    // Edit twin
-    $('.edit-twin').click(function() {
-        var twinId = $(this).data('id');
-        alert('Editing ' + twinId);
-    });
-    
-    // Sync twin
-    $('.sync-twin').click(function() {
-        var twinId = $(this).data('id');
-        var button = $(this);
-        button.prop('disabled', true);
-        button.html('<i class="fas fa-spinner fa-spin"></i> Syncing...');
-        
-        setTimeout(function() {
-            button.prop('disabled', false);
-            button.html('<i class="fas fa-sync"></i> Sync');
-            alert('Sync completed for ' + twinId);
-        }, 2000);
-    });
-    
-    // Add new twin
-    $('#addTwin').click(function() {
-        $('#addTwinModal').modal('show');
-    });
-    
-    // Refresh registry
-    $('#refreshRegistry').click(function() {
-        location.reload();
-    });
-    
-    // Export data
-    $('#exportData').click(function() {
-        alert('Exporting twin registry data...');
-    });
-    
-    // Bulk update
-    $('#bulkUpdate').click(function() {
-        alert('Bulk update functionality');
-    });
-    
-    // Twin selector change
-    $('#twinSelector').change(function() {
-        var selectedTwin = $(this).val();
-        updateTwinMetrics(selectedTwin);
-    });
-
-    // Add Twin Modal Save as Draft
-    $('#saveAsDraft').click(function() {
-        var formData = collectFormData();
-        if (validateFormData(formData, false)) {
-            saveTwinAsDraft(formData);
-        }
-    });
-
-    // Add Twin Modal Create Twin
-    $('#createTwin').click(function() {
-        var formData = collectFormData();
-        if (validateFormData(formData, true)) {
-            createNewTwin(formData);
-        }
-    });
-});
-</script>
+{% block extra_scripts %}
+<!-- Twin Registry JavaScript -->
+<script src="{{ url_for('static', path='/js/twin_registry.js') }}?v={{ range(1, 1000) | random }}"></script>
 {% endblock %} 
