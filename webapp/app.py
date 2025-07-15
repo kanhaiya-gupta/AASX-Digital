@@ -51,6 +51,7 @@ certificate_manager_router = None
 qi_analytics_router = None
 aasx_router = None
 kg_neo4j_router = None
+aasx_explorer_router = None
 
 try:
     from webapp.ai_rag.routes import router as ai_rag_router
@@ -93,6 +94,13 @@ try:
     print("✅ AASX router loaded successfully")
 except Exception as e:
     print(f"⚠️  AASX router failed to load: {e}")
+
+try:
+    from webapp.aasx_explorer.routes import router as aasx_explorer_router
+    app.include_router(aasx_explorer_router, prefix="/aasx-explorer", tags=["aasx-explorer"])
+    print("✅ AASX Explorer router loaded successfully")
+except Exception as e:
+    print(f"⚠️  AASX Explorer router failed to load: {e}")
 
 # Main dashboard route
 @app.get("/", response_class=HTMLResponse)

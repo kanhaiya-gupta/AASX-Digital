@@ -1,298 +1,114 @@
 {% extends "base.html" %}
 
-{% block title %}AI/RAG System - QI Digital Platform{% endblock %}
-
-{% block extra_css %}
-<style>
-    .query-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .response-section {
-        background: #f8f9fa;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border-left: 5px solid #007bff;
-    }
-    
-    .demo-queries {
-        background: #e3f2fd;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .demo-query-btn {
-        margin: 0.5rem;
-        transition: all 0.3s ease;
-    }
-    
-    .demo-query-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    .stats-card {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-    }
-    
-    .stats-card:hover {
-        transform: translateY(-2px);
-    }
-    
-    .collection-badge {
-        background: #28a745;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        margin: 0.25rem;
-        display: inline-block;
-    }
-    
-    .analysis-type-selector {
-        background: white;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .query-input {
-        border-radius: 25px;
-        border: 2px solid #e9ecef;
-        padding: 1rem 1.5rem;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .query-input:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
-    }
-    
-    .submit-btn {
-        border-radius: 25px;
-        padding: 1rem 2rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-    }
-    
-    .submit-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    .response-content {
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-top: 1rem;
-        border-left: 4px solid #28a745;
-    }
-    
-    .loading-spinner {
-        display: none;
-    }
-    
-    .error-message {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-    
-    .success-message {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
-    }
-</style>
-{% endblock %}
+{% block title %}AI/RAG Analytics - AASX Digital Twin Platform{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="display-4 text-center mb-3">
-                <i class="fas fa-robot text-primary me-3"></i>
-                AI/RAG System
-            </h1>
-            <p class="lead text-center text-muted">
-                AI-powered analysis and insights for digital twins using Retrieval-Augmented Generation
-            </p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-brain text-primary me-2"></i>
+                        AI/RAG Analytics Platform
+                    </h2>
+                    <p class="text-muted mb-0">Advanced AI-powered analysis for AASX Digital Twin data</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-success fs-6">Production Ready</span>
+                    <br>
+                    <small class="text-muted">v2.0 - Enhanced RAG System</small>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- System Status -->
+    <!-- System Status Dashboard -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-heartbeat me-2"></i>
-                        System Status
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        System Status Dashboard
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row" id="system-status">
-                        <div class="col-md-2 text-center">
-                            <div class="stats-card">
-                                <i class="fas fa-database fa-2x text-primary mb-2"></i>
-                                <h6>Vector Database</h6>
-                                <span id="status-qdrant" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <div class="stats-card">
-                                <i class="fas fa-server fa-2x text-secondary mb-2"></i>
-                                <h6>Qdrant Client</h6>
-                                <span id="status-qdrant-client" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <div class="stats-card">
-                                <i class="fas fa-project-diagram fa-2x text-info mb-2"></i>
-                                <h6>Knowledge Graph</h6>
-                                <span id="status-neo4j" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <div class="stats-card">
-                                <i class="fas fa-brain fa-2x text-success mb-2"></i>
-                                <h6>AI Model</h6>
-                                <span id="status-openai" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <div class="stats-card">
-                                <i class="fas fa-chart-line fa-2x text-warning mb-2"></i>
-                                <h6>ETL Pipeline</h6>
-                                <span id="status-etl" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <div class="stats-card">
-                                <i class="fas fa-cogs fa-2x text-dark mb-2"></i>
-                                <h6>System Health</h6>
-                                <span id="status-system" class="badge bg-secondary">Checking...</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Vector Database Management -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header bg-info text-white">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-database me-2"></i>
-                                        Global Vector Database Management
-                                    </h6>
+                    <div class="row">
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-qdrant">
+                                    <i class="fas fa-database fa-2x text-muted"></i>
                                 </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <h6><i class="fas fa-info-circle text-info me-2"></i>Database Information</h6>
-                                            <div id="vector-db-info">
-                                                <p class="text-muted">Loading database information...</p>
-                                            </div>
-                                            <button class="btn btn-outline-info btn-sm" onclick="refreshVectorDbInfo()">
-                                                <i class="fas fa-sync-alt me-1"></i>Refresh Info
-                                            </button>
-                                            
-                                            <hr class="my-3">
-                                            
-                                            <h6><i class="fas fa-chart-bar text-warning me-2"></i>Data Statistics</h6>
-                                            <button class="btn btn-outline-warning btn-sm" onclick="showDataStats()">
-                                                <i class="fas fa-chart-bar me-1"></i>Show Data Statistics
-                                            </button>
-                                            <div id="data-management-status" class="mt-2"></div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <h6><i class="fas fa-download text-success me-2"></i>Backup Operations</h6>
-                                            <div class="d-grid gap-2">
-                                                <button class="btn btn-outline-success btn-sm" onclick="createBackup('metadata')">
-                                                    <i class="fas fa-download me-1"></i>Create Metadata Backup
-                                                </button>
-                                                <button class="btn btn-outline-warning btn-sm" onclick="createBackup('full')">
-                                                    <i class="fas fa-download me-1"></i>Create Full Backup
-                                                </button>
-                                                <button class="btn btn-outline-info btn-sm" onclick="showBackupHistory()">
-                                                    <i class="fas fa-history me-1"></i>Backup History
-                                                </button>
-                                            </div>
-                                            <div id="backup-status" class="mt-2"></div>
-                                            
-                                            <hr class="my-3">
-                                            
-                                            <h6><i class="fas fa-trash text-danger me-2"></i>Data Management</h6>
-                                            <div class="d-grid gap-2">
-                                                <button class="btn btn-outline-danger btn-sm" onclick="clearGlobalVectorData()">
-                                                    <i class="fas fa-trash me-1"></i>Clear Global Vector Data
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <small class="d-block mt-1">Vector DB</small>
                             </div>
                         </div>
-                    </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-neo4j">
+                                    <i class="fas fa-project-diagram fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Knowledge Graph</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-openai">
+                                    <i class="fas fa-robot fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">AI Models</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-etl">
+                                    <i class="fas fa-cogs fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">ETL Pipeline</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-system">
+                                    <i class="fas fa-server fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">System</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-qdrant-client">
+                                    <i class="fas fa-memory fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Vector Client</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Query Section -->
+    <!-- Main Content Area -->
     <div class="row">
+        <!-- Left Column - Analysis Interface -->
         <div class="col-lg-8">
-            <div class="query-section">
-                <h3 class="mb-4">
-                    <i class="fas fa-search me-2"></i>
-                    Ask Questions About Your Digital Twins
-                </h3>
-                
-                <!-- Model and Technique Configuration -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="analysis-type-selector">
-                            <label class="form-label fw-bold">Analysis Type:</label>
-                            <div class="btn-group" role="group" id="analysis-type-group">
-                                <input type="radio" class="btn-check" name="analysis-type" id="general" value="general" checked>
-                                <label class="btn btn-outline-primary" for="general">General</label>
-                                
-                                <input type="radio" class="btn-check" name="analysis-type" id="quality" value="quality">
-                                <label class="btn btn-outline-primary" for="quality">Quality</label>
-                                
-                                <input type="radio" class="btn-check" name="analysis-type" id="risk" value="risk">
-                                <label class="btn btn-outline-primary" for="risk">Risk</label>
-                                
-                                <input type="radio" class="btn-check" name="analysis-type" id="optimization" value="optimization">
-                                <label class="btn btn-outline-primary" for="optimization">Optimization</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="analysis-type-selector">
-                            <label class="form-label fw-bold">LLM Model:</label>
+            <!-- Analysis Configuration Panel -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        Analysis Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Model and Technique Selection -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-robot text-primary me-1"></i>AI Model
+                            </label>
                             <select class="form-select" id="llm-model-select">
                                 <option value="gpt-4">GPT-4 (OpenAI)</option>
                                 <option value="gpt-3.5-turbo" selected>GPT-3.5 Turbo (OpenAI)</option>
@@ -302,197 +118,279 @@
                                 <option value="mistral">Mistral (Local)</option>
                             </select>
                         </div>
-                    </div>
-                </div>
-
-                <!-- RAG Technique Selector -->
-                <div class="analysis-type-selector mb-3">
-                    <label class="form-label fw-bold">RAG Technique:</label>
-                    <div class="btn-group" role="group" id="rag-technique-group">
-                        <input type="radio" class="btn-check" name="rag-technique" id="basic-rag" value="basic" checked>
-                        <label class="btn btn-outline-success" for="basic-rag">Basic RAG</label>
-                        
-                        <input type="radio" class="btn-check" name="rag-technique" id="hybrid-rag" value="hybrid">
-                        <label class="btn btn-outline-success" for="hybrid-rag">Hybrid RAG</label>
-                        
-                        <input type="radio" class="btn-check" name="rag-technique" id="multi-step-rag" value="multi_step">
-                        <label class="btn btn-outline-success" for="multi-step-rag">Multi-Step RAG</label>
-                        
-                        <input type="radio" class="btn-check" name="rag-technique" id="graph-rag" value="graph">
-                        <label class="btn btn-outline-success" for="graph-rag">Graph RAG</label>
-                        
-                        <input type="radio" class="btn-check" name="rag-technique" id="advanced-rag" value="advanced">
-                        <label class="btn btn-outline-success" for="advanced-rag">Advanced RAG</label>
-                    </div>
-                </div>
-
-                <!-- RAG Technique Information Panel -->
-                <div class="card mb-3" id="rag-technique-info">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <span id="technique-title">Basic RAG</span>
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div id="technique-description">
-                                    <p class="mb-2"><strong>Description:</strong> Simple retrieval + generation approach using vector search and LLM</p>
-                                    <p class="mb-2"><strong>Best For:</strong> Simple queries, quick responses, baseline performance comparison</p>
-                                    <p class="mb-2"><strong>Performance:</strong> Fastest, lowest resource usage</p>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <div class="technique-icon mb-2">
-                                        <i class="fas fa-rocket fa-2x text-success"></i>
-                                    </div>
-                                    <div class="technique-stats">
-                                        <small class="text-muted">
-                                            <div><i class="fas fa-tachometer-alt me-1"></i>Speed: Fast</div>
-                                            <div><i class="fas fa-memory me-1"></i>Memory: Low</div>
-                                            <div><i class="fas fa-brain me-1"></i>Complexity: Simple</div>
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-brain text-success me-1"></i>RAG Technique
+                            </label>
+                            <select class="form-select" id="rag-technique-select">
+                                <option value="basic">Basic RAG</option>
+                                <option value="hybrid">Hybrid RAG</option>
+                                <option value="multi_step">Multi-Step RAG</option>
+                                <option value="graph">Graph RAG</option>
+                                <option value="advanced">Advanced RAG</option>
+                            </select>
                         </div>
-                        
-                        <!-- Technique-specific configuration -->
-                        <div id="technique-config" class="mt-3">
-                            <h6><i class="fas fa-cog me-2"></i>Configuration Options</h6>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-chart-line text-warning me-1"></i>Analysis Type
+                            </label>
+                            <select class="form-select" id="analysis-type-select">
+                                <option value="general">General Analysis</option>
+                                <option value="quality">Quality Assessment</option>
+                                <option value="risk">Risk Analysis</option>
+                                <option value="optimization">Optimization</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- RAG Technique Information -->
+                    <div class="card bg-light border-0" id="rag-technique-info">
+                        <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label">Top K Results:</label>
-                                    <select class="form-select form-select-sm" id="top-k-select">
-                                        <option value="3">3 results</option>
-                                        <option value="5" selected>5 results</option>
-                                        <option value="10">10 results</option>
-                                        <option value="15">15 results</option>
-                                    </select>
+                                <div class="col-md-8">
+                                    <h6 class="text-success mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <span id="technique-title">Basic RAG</span>
+                                    </h6>
+                                    <div id="technique-description">
+                                        <p class="mb-1 small">Simple retrieval + generation approach using vector search and LLM</p>
+                                        <p class="mb-1 small"><strong>Best For:</strong> Simple queries, quick responses</p>
+                                        <p class="mb-0 small"><strong>Performance:</strong> Fastest, lowest resource usage</p>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Similarity Threshold:</label>
-                                    <select class="form-select form-select-sm" id="similarity-threshold">
-                                        <option value="0.5">0.5 (Loose)</option>
-                                        <option value="0.7" selected>0.7 (Balanced)</option>
-                                        <option value="0.8">0.8 (Strict)</option>
-                                        <option value="0.9">0.9 (Very Strict)</option>
-                                    </select>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <div class="technique-icon mb-2">
+                                            <i class="fas fa-rocket fa-2x text-success"></i>
+                                        </div>
+                                        <div class="technique-stats">
+                                            <small class="text-muted">
+                                                <div><i class="fas fa-tachometer-alt me-1"></i>Speed: Fast</div>
+                                                <div><i class="fas fa-memory me-1"></i>Memory: Low</div>
+                                                <div><i class="fas fa-brain me-1"></i>Complexity: Simple</div>
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Query Input -->
-                <div class="mb-3">
-                    <label for="query-input" class="form-label fw-bold">Your Question:</label>
-                    <textarea 
-                        class="form-control query-input" 
-                        id="query-input" 
-                        rows="3" 
-                        placeholder="Ask about asset quality, risk assessment, optimization opportunities, or general insights..."
-                    ></textarea>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="text-center">
-                    <button type="button" class="btn btn-light btn-lg submit-btn" id="submit-query">
-                        <i class="fas fa-paper-plane me-2"></i>
-                        Get AI Analysis
-                    </button>
-                </div>
-
-                <!-- Loading Spinner -->
-                <div class="loading-spinner text-center mt-3" id="query-loading" style="display: none;">
-                    <div class="spinner-border text-light" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-2">Analyzing your question...</p>
                 </div>
             </div>
 
-            <!-- Response Section -->
-            <div class="response-section" id="response-section" style="display: none;">
-                <h4 class="mb-3">
-                    <i class="fas fa-lightbulb me-2 text-warning"></i>
-                    AI Analysis Results
-                </h4>
-                <div id="response-content"></div>
+            <!-- Query Interface -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>
+                        AI Analysis Query
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="query-input" class="form-label fw-bold">
+                            <i class="fas fa-question-circle text-primary me-1"></i>
+                            Your Question
+                        </label>
+                        <textarea 
+                            class="form-control query-input" 
+                            id="query-input" 
+                            rows="4" 
+                            placeholder="Ask about asset quality, risk assessment, optimization opportunities, or general insights from your digital twin data..."
+                        ></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="button" class="btn btn-primary btn-lg" id="submit-query">
+                                <i class="fas fa-paper-plane me-2"></i>
+                                Analyze with AI
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary ms-2" id="clear-query">
+                                <i class="fas fa-eraser me-1"></i>
+                                Clear
+                            </button>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Try demo queries for quick insights
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="loading-spinner text-center mt-3" id="query-loading" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">AI is analyzing your question...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Results -->
+            <div class="card border-0 shadow-sm" id="response-section" style="display: none;">
+                <div class="card-header bg-gradient-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        AI Analysis Results
+                    </h5>
+                </div>
+                <div class="card-body" id="response-content">
+                    <!-- Results will be populated here -->
+                </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
+        <!-- Right Column - Tools & Information -->
         <div class="col-lg-4">
-            <!-- Demo Queries -->
-            <div class="demo-queries">
-                <h5 class="mb-3">
-                    <i class="fas fa-play-circle me-2"></i>
-                    Try Demo Queries
-                </h5>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="What are the quality issues in our manufacturing assets?">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Quality Issues
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="Assess the risk level of our critical equipment">
-                        <i class="fas fa-shield-alt me-2"></i>
-                        Risk Assessment
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="How can we optimize our production efficiency?">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Optimization
-                    </button>
-                    <button class="btn btn-outline-primary demo-query-btn" data-query="What are the main assets in our digital twin system?">
-                        <i class="fas fa-cube me-2"></i>
-                        Asset Overview
-                    </button>
-                    <button class="btn btn-outline-success demo-query-btn" id="run-all-demos">
-                        <i class="fas fa-rocket me-2"></i>
-                        Run All Demos
-                    </button>
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary demo-query-btn" data-query="What are the quality issues in our manufacturing assets?">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Quality Issues
+                        </button>
+                        <button class="btn btn-outline-primary demo-query-btn" data-query="Assess the risk level of our critical equipment">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Risk Assessment
+                        </button>
+                        <button class="btn btn-outline-primary demo-query-btn" data-query="How can we optimize our production efficiency?">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Optimization
+                        </button>
+                        <button class="btn btn-outline-primary demo-query-btn" data-query="What are the main assets in our digital twin system?">
+                            <i class="fas fa-cube me-2"></i>
+                            Asset Overview
+                        </button>
+                        <button class="btn btn-success demo-query-btn" id="run-all-demos">
+                            <i class="fas fa-rocket me-2"></i>
+                            Run All Demos
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- System Stats -->
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
+            <!-- System Statistics -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h6 class="mb-0">
                         <i class="fas fa-chart-bar me-2"></i>
                         System Statistics
-                    </h5>
+                    </h6>
                 </div>
                 <div class="card-body" id="system-stats">
                     <div class="text-center">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2">Loading statistics...</p>
+                        <p class="mt-2 text-muted">Loading statistics...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Collections Info -->
-            <div class="card mt-3">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">
+            <!-- Collections Overview -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-secondary text-white">
+                    <h6 class="mb-0">
                         <i class="fas fa-database me-2"></i>
-                        Available Collections
-                    </h5>
+                        Data Collections
+                    </h6>
                 </div>
                 <div class="card-body" id="collections-info">
                     <div class="text-center">
                         <div class="spinner-border text-secondary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2">Loading collections...</p>
+                        <p class="mt-2 text-muted">Loading collections...</p>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-
+    <!-- Data Management Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        Vector Database Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Database Information
+                            </h6>
+                            <div id="vector-db-info">
+                                <p class="text-muted">Loading database information...</p>
+                            </div>
+                            <button class="btn btn-outline-info btn-sm" onclick="refreshVectorDbInfo()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh Info
+                            </button>
+                            
+                            <hr class="my-3">
+                            
+                            <h6 class="text-warning">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Data Statistics
+                            </h6>
+                            <button class="btn btn-outline-warning btn-sm" onclick="showDataStats()">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                Show Data Statistics
+                            </button>
+                            <div id="data-management-status" class="mt-2"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-success">
+                                <i class="fas fa-download me-2"></i>
+                                Backup Operations
+                            </h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-success btn-sm" onclick="createBackup('metadata')">
+                                    <i class="fas fa-download me-1"></i>
+                                    Create Metadata Backup
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="createBackup('full')">
+                                    <i class="fas fa-download me-1"></i>
+                                    Create Full Backup
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="showBackupHistory()">
+                                    <i class="fas fa-history me-1"></i>
+                                    Backup History
+                                </button>
+                            </div>
+                            <div id="backup-status" class="mt-2"></div>
+                            
+                            <hr class="my-3">
+                            
+                            <h6 class="text-danger">
+                                <i class="fas fa-trash me-2"></i>
+                                Data Management
+                            </h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-danger btn-sm" onclick="clearGlobalVectorData()">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Clear Global Vector Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

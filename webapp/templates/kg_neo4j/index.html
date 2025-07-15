@@ -1,440 +1,629 @@
 {% extends "base.html" %}
 
-{% block title %}Knowledge Graph - AASX Digital Twin Analytics{% endblock %}
-
-{% block extra_css %}
-<style>
-    .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
-    
-    .neo4j-column {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border: 1px solid #e9ecef;
-        height: 100%;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .neo4j-column:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    
-    .neo4j-column.docker {
-        border-left: 4px solid #0db7ed;
-    }
-    
-    .neo4j-column.local {
-        border-left: 4px solid #28a745;
-    }
-    
-    .column-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid #f8f9fa;
-    }
-    
-    .column-header.docker {
-        border-bottom-color: #0db7ed;
-    }
-    
-    .column-header.local {
-        border-bottom-color: #28a745;
-    }
-    
-    .column-icon {
-        font-size: 2rem;
-        margin-right: 1rem;
-    }
-    
-    .column-icon.docker {
-        color: #0db7ed;
-    }
-    
-    .column-icon.local {
-        color: #28a745;
-    }
-    
-    .status-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .status-item {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-        border: 1px solid #dee2e6;
-        transition: all 0.3s ease;
-    }
-    
-    .status-item:hover {
-        background: #e9ecef;
-        transform: translateY(-1px);
-    }
-    
-    .status-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 0.5rem;
-    }
-    
-    .status-running { background-color: #28a745; }
-    .status-stopped { background-color: #dc3545; }
-    .status-unknown { background-color: #6c757d; }
-    
-    .status-value {
-        font-size: 1.1rem;
-        font-weight: bold;
-        margin-bottom: 0.25rem;
-    }
-    
-    .status-label {
-        color: #6c757d;
-        font-size: 0.85rem;
-    }
-    
-    .connection-info {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border: 1px solid #dee2e6;
-    }
-    
-    .connection-info strong {
-        color: #495057;
-    }
-    
-    .action-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    
-    .action-btn {
-        padding: 0.75rem 1rem;
-        border: none;
-        border-radius: 8px;
-        font-weight: 500;
-        text-decoration: none;
-        text-align: center;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-    
-    .action-btn:hover {
-        transform: translateY(-2px);
-        text-decoration: none;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    
-    .action-btn.primary {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-    }
-    
-    .action-btn.primary:hover {
-        box-shadow: 0 4px 12px rgba(0,123,255,0.3);
-        color: white;
-    }
-    
-    .action-btn.success {
-        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-        color: white;
-    }
-    
-    .action-btn.success:hover {
-        box-shadow: 0 4px 12px rgba(40,167,69,0.3);
-        color: white;
-    }
-    
-    .action-btn.warning {
-        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-        color: #212529;
-    }
-    
-    .action-btn.warning:hover {
-        box-shadow: 0 4px 12px rgba(255,193,7,0.3);
-        color: #212529;
-    }
-    
-    .action-btn.danger {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-    }
-    
-    .action-btn.danger:hover {
-        box-shadow: 0 4px 12px rgba(220,53,69,0.3);
-        color: white;
-    }
-    
-    .action-btn.secondary {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-        color: white;
-    }
-    
-    .action-btn.secondary:hover {
-        box-shadow: 0 4px 12px rgba(108,117,125,0.3);
-        color: white;
-    }
-    
-    .info-panel {
-        background: #e3f2fd;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #007bff;
-    }
-    
-    .error-message {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-        border-radius: 4px;
-        padding: 0.75rem;
-        margin: 0.75rem 0;
-    }
-    
-    .success-message {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-        border-radius: 4px;
-        padding: 0.75rem;
-        margin: 0.75rem 0;
-    }
-</style>
-{% endblock %}
+{% block title %}Knowledge Graph - Advanced Graph Analytics{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header Section -->
+    <!-- Professional Header Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <h1 class="display-4 text-center mb-3">
-                <i class="fas fa-project-diagram text-primary me-3"></i>
-                Knowledge Graph Management
-            </h1>
-            <p class="lead text-center text-muted">
-                Manage Docker Neo4j and Local Neo4j Desktop instances for advanced graph visualization and analysis
-            </p>
-            
-            <!-- Graph Visualization Button -->
-            <div class="text-center mt-4">
-                <a href="/kg-neo4j/visualize" class="btn btn-lg btn-success">
-                    <i class="fas fa-chart-network me-2"></i>
-                    Visualize Knowledge Graph
-                </a>
-                <p class="text-muted mt-2">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Interactive graph visualization with Neo4j data
-                </p>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-project-diagram text-primary me-2"></i>
+                        Knowledge Graph Management
+                    </h2>
+                    <p class="text-muted mb-0">Advanced Neo4j graph database management and visualization platform</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-success fs-6">Production Ready</span>
+                    <br>
+                    <small class="text-muted">v2.0 - Enhanced Graph Analytics</small>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Two Column Layout -->
+    <!-- System Status Dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        System Status Dashboard
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-docker">
+                                    <i class="fab fa-docker fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Docker Neo4j</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-local">
+                                    <i class="fas fa-desktop fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Local Neo4j</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-browser">
+                                    <i class="fas fa-globe fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Browser Access</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-connection">
+                                    <i class="fas fa-plug fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Connection</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-data">
+                                    <i class="fas fa-database fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Data Loaded</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="status-indicator" id="status-performance">
+                                    <i class="fas fa-chart-line fa-2x text-muted"></i>
+                                </div>
+                                <small class="d-block mt-1">Performance</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fab fa-docker fa-3x text-primary"></i>
+                    </div>
+                    <h3 class="fw-bold text-primary mb-1" id="dockerStatus">Checking...</h3>
+                    <p class="text-muted mb-0">Docker Status</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-desktop fa-3x text-info"></i>
+                    </div>
+                    <h3 class="fw-bold text-info mb-1" id="localStatus">Checking...</h3>
+                    <p class="text-muted mb-0">Local Status</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-project-diagram fa-3x text-success"></i>
+                    </div>
+                    <h3 class="fw-bold text-success mb-1" id="graphNodes">0</h3>
+                    <p class="text-muted mb-0">Graph Nodes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-link fa-3x text-warning"></i>
+                    </div>
+                    <h3 class="fw-bold text-warning mb-1" id="graphRelationships">0</h3>
+                    <p class="text-muted mb-0">Relationships</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
     <div class="row">
-        <!-- Docker Neo4j Column -->
-        <div class="col-lg-6">
-            <div class="neo4j-column docker">
-                <div class="column-header docker">
-                    <i class="fab fa-docker column-icon docker"></i>
-                    <div>
-                        <h4 class="mb-1">Docker Neo4j</h4>
-                        <p class="mb-0 text-muted">Containerized Neo4j instance</p>
-                    </div>
+        <!-- Left Column - Neo4j Management -->
+        <div class="col-lg-8">
+            <!-- Docker Neo4j Management -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fab fa-docker me-2"></i>
+                        Docker Neo4j Management
+                    </h5>
                 </div>
-                
-                <!-- Docker Status -->
-                <div class="status-grid" id="docker-status">
-                    <div class="status-item">
-                        <div class="status-value">
-                            <span class="status-indicator status-unknown"></span>
-                            Checking...
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Connection Details
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Browser URL:</strong></p>
+                                            <a href="http://localhost:7475" target="_blank" class="text-decoration-none">
+                                                <i class="fas fa-external-link-alt me-1"></i>http://localhost:7475
+                                            </a>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Bolt URL:</strong></p>
+                                            <code>bolt://localhost:7688</code>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Username:</strong> <code>neo4j</code></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Password:</strong> <code>password</code></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="status-label">Container Status</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-value">
-                            <span class="status-indicator status-unknown"></span>
-                            Checking...
+                        <div class="col-md-4">
+                            <div class="card bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        Quick Actions
+                                    </h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary btn-sm" onclick="launchDockerBrowser()">
+                                            <i class="fas fa-globe me-2"></i>
+                                            Open Browser
+                                        </button>
+                                        <button class="btn btn-success btn-sm" onclick="startDockerNeo4j()">
+                                            <i class="fas fa-play me-2"></i>
+                                            Start Container
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" onclick="stopDockerNeo4j()">
+                                            <i class="fas fa-stop me-2"></i>
+                                            Stop Container
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="checkDockerStatus()">
+                                            <i class="fas fa-sync-alt me-2"></i>
+                                            Refresh Status
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="status-label">Browser Access</div>
                     </div>
-                </div>
-                
-                <!-- Docker Connection Info -->
-                <div class="connection-info">
-                    <strong>Connection Details:</strong><br>
-                    <strong>Browser URL:</strong> <a href="http://localhost:7475" target="_blank">http://localhost:7475</a><br>
-                    <strong>Bolt URL:</strong> bolt://localhost:7688<br>
-                    <strong>Username:</strong> neo4j<br>
-                    <strong>Password:</strong> password
-                </div>
-                
-                <!-- Docker Actions -->
-                <div class="action-buttons">
-                    <a href="#" class="action-btn primary" onclick="launchDockerBrowser()">
-                        <i class="fas fa-globe"></i>
-                        Open Neo4j Browser
-                    </a>
-                    <a href="#" class="action-btn success" onclick="startDockerNeo4j()">
-                        <i class="fas fa-play"></i>
-                        Start Container
-                    </a>
-                    <a href="#" class="action-btn warning" onclick="stopDockerNeo4j()">
-                        <i class="fas fa-stop"></i>
-                        Stop Container
-                    </a>
-                    <a href="#" class="action-btn secondary" onclick="checkDockerStatus()">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh Status
-                    </a>
                 </div>
             </div>
-        </div>
-        
-        <!-- Local Neo4j Column -->
-        <div class="col-lg-6">
-            <div class="neo4j-column local">
-                <div class="column-header local">
-                    <i class="fas fa-desktop column-icon local"></i>
-                    <div>
-                        <h4 class="mb-1">Local Neo4j Desktop</h4>
-                        <p class="mb-0 text-muted">Desktop Neo4j application</p>
-                    </div>
-                </div>
-                
-                <!-- Local Status -->
-                <div class="status-grid" id="local-status">
-                    <div class="status-item">
-                        <div class="status-value">
-                            <span class="status-indicator status-unknown"></span>
-                            Checking...
-                        </div>
-                        <div class="status-label">Application Status</div>
-                    </div>
-                    <div class="status-item">
-                        <div class="status-value">
-                            <span class="status-indicator status-unknown"></span>
-                            Checking...
-                        </div>
-                        <div class="status-label">Connection Status</div>
-                    </div>
-                </div>
-                
-                <!-- Local Connection Info -->
-                <div class="connection-info">
-                    <strong>Connection Details:</strong><br>
-                    <strong>Default Browser:</strong> <a href="http://localhost:7474" target="_blank">http://localhost:7474</a><br>
-                    <strong>Default Bolt:</strong> bolt://localhost:7687<br>
-                    <strong>Username:</strong> neo4j<br>
-                    <strong>Password:</strong> (set in Desktop)
-                </div>
-                
-                <!-- Local Actions -->
-                <div class="action-buttons">
-                    <a href="#" class="action-btn primary" onclick="launchLocalBrowser()">
-                        <i class="fas fa-globe"></i>
-                        Open Neo4j Browser
-                    </a>
-                    <a href="#" class="action-btn success" onclick="launchNeo4jDesktop()">
-                        <i class="fas fa-desktop"></i>
-                        Launch Neo4j Desktop
-                    </a>
-                    <a href="#" class="action-btn secondary" onclick="checkLocalStatus()">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh Status
-                    </a>
-                    <a href="#" class="action-btn secondary" onclick="showLocalHelp()">
-                        <i class="fas fa-question-circle"></i>
-                        Setup Help
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Information Panel -->
-    <div class="info-panel">
-        <h5><i class="fas fa-lightbulb me-2"></i>How to Use Neo4j</h5>
-        <div class="row">
-            <div class="col-md-6">
-                <h6><i class="fab fa-docker me-2"></i>Docker Neo4j:</h6>
-                <ul class="mb-0">
-                    <li>Quick setup with containerized instance</li>
-                    <li>Runs on ports 7475 (browser) and 7688 (bolt)</li>
-                    <li>Perfect for development and testing</li>
-                    <li>Easy to start/stop with management controls</li>
-                </ul>
-            </div>
-            <div class="col-md-6">
-                <h6><i class="fas fa-desktop me-2"></i>Local Neo4j Desktop:</h6>
-                <ul class="mb-0">
-                    <li>Full desktop application with advanced features</li>
-                    <li>Multiple database management</li>
-                    <li>Advanced visualization and plugins</li>
-                    <li>Professional development environment</li>
-                </ul>
+            <!-- Local Neo4j Management -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-desktop me-2"></i>
+                        Local Neo4j Desktop Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="text-success mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Connection Details
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Browser URL:</strong></p>
+                                            <a href="http://localhost:7474" target="_blank" class="text-decoration-none">
+                                                <i class="fas fa-external-link-alt me-1"></i>http://localhost:7474
+                                            </a>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Bolt URL:</strong></p>
+                                            <code>bolt://localhost:7687</code>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Username:</strong> <code>neo4j</code></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-2"><strong>Password:</strong> <em>(set in Desktop)</em></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="text-success mb-3">
+                                        <i class="fas fa-cogs me-2"></i>
+                                        Quick Actions
+                                    </h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-primary btn-sm" onclick="launchLocalBrowser()">
+                                            <i class="fas fa-globe me-2"></i>
+                                            Open Browser
+                                        </button>
+                                        <button class="btn btn-success btn-sm" onclick="launchNeo4jDesktop()">
+                                            <i class="fas fa-desktop me-2"></i>
+                                            Launch Desktop
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="checkLocalStatus()">
+                                            <i class="fas fa-sync-alt me-2"></i>
+                                            Refresh Status
+                                        </button>
+                                        <button class="btn btn-outline-info btn-sm" onclick="showLocalHelp()">
+                                            <i class="fas fa-question-circle me-2"></i>
+                                            Setup Help
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <hr class="my-3">
-        
-        <h6><i class="fas fa-link me-2"></i>Connect Neo4j Desktop to Docker:</h6>
-        <div class="row">
-            <div class="col-md-12">
-                <ol class="mb-0">
-                    <li>Launch Neo4j Desktop using the button above</li>
-                    <li>Create a new project or open existing one</li>
-                    <li>Click "Add Database" → "Connect to existing database"</li>
-                    <li>Use these connection details:
-                        <ul class="mt-1">
-                            <li><strong>URI:</strong> <code>bolt://localhost:7688</code></li>
-                            <li><strong>Username:</strong> <code>neo4j</code></li>
-                            <li><strong>Password:</strong> <code>password</code></li>
-                        </ul>
-                    </li>
-                    <li>Test connection and save</li>
-                </ol>
-            </div>
-        </div>
-    </div>
 
-    <!-- Results Section (for status updates) -->
-    <div id="results-section" style="display: none;">
-        <div class="neo4j-column">
-            <h5 id="results-title">Results</h5>
-            <div id="results-content"></div>
+        <!-- Right Column - Quick Actions & Info -->
+        <div class="col-lg-4">
+            <!-- Quick Actions Panel -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="/kg-neo4j/visualize" class="btn btn-primary">
+                            <i class="fas fa-chart-network me-2"></i>
+                            Visualize Knowledge Graph
+                        </a>
+                        <button class="btn btn-success" onclick="refreshAllStatus()">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            Refresh All Status
+                        </button>
+                        <button class="btn btn-info" onclick="showConnectionHelp()">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Connection Help
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="showGraphStats()">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Graph Statistics
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connection Help -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Quick Setup Guide
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary mb-3">
+                        <i class="fab fa-docker me-2"></i>Docker Neo4j
+                    </h6>
+                    <ul class="small text-muted mb-3">
+                        <li>Quick setup with containerized instance</li>
+                        <li>Runs on ports 7475 (browser) and 7688 (bolt)</li>
+                        <li>Perfect for development and testing</li>
+                    </ul>
+                    
+                    <h6 class="text-success mb-3">
+                        <i class="fas fa-desktop me-2"></i>Local Neo4j Desktop
+                    </h6>
+                    <ul class="small text-muted mb-3">
+                        <li>Full desktop application with advanced features</li>
+                        <li>Multiple database management</li>
+                        <li>Professional development environment</li>
+                    </ul>
+                    
+                    <h6 class="text-warning mb-3">
+                        <i class="fas fa-link me-2"></i>Connect Desktop to Docker
+                    </h6>
+                    <ol class="small text-muted">
+                        <li>Launch Neo4j Desktop</li>
+                        <li>Add Database → Connect to existing</li>
+                        <li>Use: <code>bolt://localhost:7688</code></li>
+                        <li>Username: <code>neo4j</code>, Password: <code>password</code></li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Graph Statistics -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Graph Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="progress-circle" id="graphProgress" data-progress="0">
+                            <span class="progress-text">0%</span>
+                        </div>
+                        <h6 class="mt-2">Data Loaded</h6>
+                    </div>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary fw-bold" id="totalNodes">0</h4>
+                            <small class="text-muted">Nodes</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success fw-bold" id="totalRelationships">0</h4>
+                            <small class="text-muted">Relationships</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<style>
+/* Professional styling for Knowledge Graph page */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.status-indicator {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.status-indicator:hover {
+    transform: scale(1.1);
+}
+
+.status-indicator.status-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+}
+
+.status-indicator.status-error {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+}
+
+.status-indicator.status-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+}
+
+.progress-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(#007bff 0deg, #e9ecef 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+}
+
+.progress-text {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Additional professional enhancements */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Animation for status indicators */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.status-indicator.status-success i {
+    animation: pulse 2s infinite;
+}
+
+/* Enhanced card shadows */
+.card.bg-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Professional button styling */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .status-indicator {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .progress-circle {
+        width: 60px;
+        height: 60px;
+    }
+}
+</style>
+
 <!-- JavaScript -->
 <script src="/static/js/kg_neo4j.js"></script>
 <script>
-console.log('🔧 Testing if JavaScript is working on this page');
+console.log('🔧 Knowledge Graph page initialized');
+
+// System Status Checking
+async function checkSystemStatus() {
+    try {
+        // Check Docker Neo4j status
+        const dockerResponse = await fetch('/kg-neo4j/api/docker/status');
+        const dockerStatus = dockerResponse.ok ? 'success' : 'error';
+        updateStatusIndicator('status-docker', dockerStatus);
+        
+        // Check Local Neo4j status
+        const localResponse = await fetch('/kg-neo4j/api/local/status');
+        const localData = await localResponse.json();
+        const localStatus = localData.success ? 'success' : 'error';
+        updateStatusIndicator('status-local', localStatus);
+        
+        // Check Browser access
+        const browserResponse = await fetch('/kg-neo4j/api/browser/status');
+        const browserStatus = browserResponse.ok ? 'success' : 'error';
+        updateStatusIndicator('status-browser', browserStatus);
+        
+        // Check Connection status
+        const connectionResponse = await fetch('/kg-neo4j/api/connection/status');
+        const connectionStatus = connectionResponse.ok ? 'success' : 'error';
+        updateStatusIndicator('status-connection', connectionStatus);
+        
+        // Check Data loaded status
+        const dataResponse = await fetch('/kg-neo4j/api/data/status');
+        const dataStatus = dataResponse.ok ? 'success' : 'error';
+        updateStatusIndicator('status-data', dataStatus);
+        
+        // Check Performance status
+        const performanceResponse = await fetch('/kg-neo4j/api/performance/status');
+        const performanceStatus = performanceResponse.ok ? 'success' : 'error';
+        updateStatusIndicator('status-performance', performanceStatus);
+        
+    } catch (error) {
+        console.error('Error checking system status:', error);
+        // Set all indicators to error state
+        ['status-docker', 'status-local', 'status-browser', 'status-connection', 'status-data', 'status-performance'].forEach(id => {
+            updateStatusIndicator(id, 'error');
+        });
+    }
+}
+
+function updateStatusIndicator(elementId, status) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const icon = element.querySelector('i');
+    if (!icon) return;
+    
+    // Remove existing status classes
+    element.classList.remove('status-success', 'status-error', 'status-warning');
+    icon.classList.remove('text-success', 'text-danger', 'text-warning', 'text-muted');
+    
+    // Add new status classes
+    switch (status) {
+        case 'success':
+            element.classList.add('status-success');
+            icon.classList.add('text-success');
+            break;
+        case 'error':
+            element.classList.add('status-error');
+            icon.classList.add('text-danger');
+            break;
+        case 'warning':
+            element.classList.add('status-warning');
+            icon.classList.add('text-warning');
+            break;
+        default:
+            icon.classList.add('text-muted');
+    }
+}
 
 function launchDockerBrowser() {
     console.log('🌐 Launching Docker Neo4j Browser...');
@@ -529,13 +718,30 @@ function showLocalHelp() {
     showNotification('📖 Neo4j Desktop Setup: Download from neo4j.com/desktop', 'info');
 }
 
+function showConnectionHelp() {
+    console.log('❓ Showing connection help...');
+    showNotification('🔗 Connection Help: Check the setup guide in the right panel', 'info');
+}
+
+function showGraphStats() {
+    console.log('📊 Showing graph statistics...');
+    showNotification('📊 Graph Statistics: Loading data from Neo4j...', 'info');
+}
+
 function refreshAllStatus() {
     checkDockerStatus();
     checkLocalStatus();
+    checkSystemStatus();
 }
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Knowledge Graph page loaded');
+    checkSystemStatus();
+    
+    // Check status every 30 seconds
+    setInterval(checkSystemStatus, 30000);
+    
     // Initial status check
     setTimeout(() => {
         refreshAllStatus();

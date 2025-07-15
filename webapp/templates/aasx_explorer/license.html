@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}License Information - AASX Package Explorer{% endblock %}
+
+{% block content %}
+<!-- License Header -->
+<div class="bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-gavel me-3"></i>
+                    License Information
+                </h1>
+                <p class="lead">
+                    Complete license details and attributions for the Eclipse AASX Package Explorer
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- License Details -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Apache License Section -->
+            <div class="card border-0 shadow-sm mb-5">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-file-contract me-2"></i>
+                        Apache License 2.0
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info">
+                        <strong>License Type:</strong> Apache Software License 2.0<br>
+                        <strong>Effective Date:</strong> January 2004<br>
+                        <strong>Full License:</strong> <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank">https://www.apache.org/licenses/LICENSE-2.0</a>
+                    </div>
+                    
+                    <h5>Key Terms:</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Use:</strong> Free to use for any purpose, including commercial</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Modify:</strong> Free to modify and create derivative works</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Distribute:</strong> Free to distribute and redistribute</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i><strong>Patent:</strong> Includes patent license for contributions</li>
+                        <li class="mb-2"><i class="fas fa-exclamation-triangle text-warning me-2"></i><strong>Attribution:</strong> Must include license and copyright notices</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">Requirements:</h5>
+                    <ul class="text-muted">
+                        <li>Include a copy of the Apache License 2.0</li>
+                        <li>State changes made to the software</li>
+                        <li>Include copyright notices from the original work</li>
+                        <li>Include NOTICE file if present</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Project Attribution -->
+            <div class="card border-0 shadow-sm mb-5">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-code-branch me-2"></i>
+                        Project Attribution
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Eclipse AASPE Project</h5>
+                            <p class="text-muted">
+                                The AASX Package Explorer is developed by the Eclipse AASPE (Asset Administration Shell Package Explorer) project.
+                            </p>
+                            <ul class="list-unstyled">
+                                <li><i class="fab fa-github me-2"></i><a href="https://github.com/eclipse-aaspe/package-explorer" target="_blank">GitHub Repository</a></li>
+                                <li><i class="fas fa-globe me-2"></i><a href="https://www.eclipse.org/aaspe/" target="_blank">Eclipse AASPE Website</a></li>
+                                <li><i class="fas fa-users me-2"></i>Open Source Community</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Technology Stack</h5>
+                            <ul class="text-muted">
+                                <li><strong>Language:</strong> C# (.NET)</li>
+                                <li><strong>Framework:</strong> WPF (Windows Presentation Foundation)</li>
+                                <li><strong>Platform:</strong> Windows</li>
+                                <li><strong>License:</strong> Apache 2.0</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AAS Specification Attribution -->
+            <div class="card border-0 shadow-sm mb-5">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-book me-2"></i>
+                        AAS Specification Attribution
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">
+                        The implementation uses the concepts of the document "Details of the Asset Administration Shell" 
+                        published on <a href="https://www.plattform-i40.de" target="_blank">www.plattform-i40.de</a>.
+                    </p>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Creative Commons License:</strong> CC BY-ND 3.0 DE<br>
+                        <strong>Attribution Required:</strong> Must give appropriate credit<br>
+                        <strong>No Derivatives:</strong> Cannot distribute modified versions<br>
+                        <strong>German License:</strong> Creative Commons Attribution-NoDerivatives 3.0 Germany
+                    </div>
+                    
+                    <h5>Platform i4.0</h5>
+                    <p class="text-muted">
+                        The Asset Administration Shell specification is maintained by Platform Industrie 4.0, 
+                        a German initiative for Industry 4.0 standardization.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-link me-2"></i><a href="https://www.plattform-i40.de" target="_blank">Platform Industrie 4.0 Website</a></li>
+                        <li><i class="fas fa-file-pdf me-2"></i><a href="https://www.plattform-i40.de/IP/Redaktion/EN/Downloads/Publikation/Details_of_the_Asset_Administration_Shell_Part1_V3.html" target="_blank">AAS Specification Document</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Additional Licenses -->
+            <div class="card border-0 shadow-sm mb-5">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Additional License Considerations
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <h5>eCl@ss and IEC CDD Data</h5>
+                    <p class="text-muted">
+                        When using eCl@ss or IEC CDD (Common Data Dictionary) data within your AASX files, 
+                        please check the corresponding license conditions for these classification systems.
+                    </p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>eCl@ss</h6>
+                            <ul class="text-muted">
+                                <li>International classification system</li>
+                                <li>Standardized product and service classes</li>
+                                <li>Check <a href="https://www.eclass.eu/en/legal/licensing.html" target="_blank">eCl@ss licensing</a></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>IEC CDD</h6>
+                            <ul class="text-muted">
+                                <li>IEC Common Data Dictionary</li>
+                                <li>International Electrotechnical Commission</li>
+                                <li>Check <a href="https://www.iec.ch/dyn/www/f?p=103:23:0::::FSP_ORG_ID,FSP_LANG_ID:1257,25" target="_blank">IEC licensing</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compliance Information -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Compliance Information
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <h5>How to Comply</h5>
+                    <ol class="text-muted">
+                        <li><strong>Include License:</strong> Include a copy of the Apache License 2.0 in your distribution</li>
+                        <li><strong>State Changes:</strong> Clearly indicate any modifications made to the software</li>
+                        <li><strong>Preserve Notices:</strong> Keep all copyright and license notices intact</li>
+                        <li><strong>Attribution:</strong> Give credit to Eclipse AASPE and Platform i4.0</li>
+                        <li><strong>Check Dependencies:</strong> Verify licenses for any additional data (eCl@ss, IEC CDD)</li>
+                    </ol>
+                    
+                    <div class="alert alert-success">
+                        <strong>Good News:</strong> The Apache License 2.0 is one of the most permissive open-source licenses, 
+                        allowing commercial use, modification, and distribution with minimal restrictions.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back to Explorer -->
+<div class="bg-light py-4">
+    <div class="container text-center">
+        <a href="/aasx-explorer" class="btn btn-primary btn-lg">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to AASX Explorer
+        </a>
+        <a href="/aasx-explorer/download" class="btn btn-success btn-lg ms-3">
+            <i class="fas fa-download me-2"></i>
+            Download AASX Package Explorer
+        </a>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.alert {
+    border-radius: 10px;
+}
+
+.list-unstyled li {
+    padding: 5px 0;
+}
+</style>
+{% endblock %} 

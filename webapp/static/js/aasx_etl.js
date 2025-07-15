@@ -1505,7 +1505,7 @@ class ProjectManager {
         this.projects.forEach(project => {
             if (project.files) {
                 processedFiles += project.files.filter(file => 
-                    file.processing_status === 'completed'
+                    file.status === 'completed'
                 ).length;
             }
         });
