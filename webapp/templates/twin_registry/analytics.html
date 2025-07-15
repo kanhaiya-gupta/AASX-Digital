@@ -1,0 +1,70 @@
+<!-- Twin Analytics Dashboard -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Twin Analytics Dashboard
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Analytics Cards -->
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-primary text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sync fa-2x mb-2"></i>
+                                <h4 id="analyticsTotalTwins">0</h4>
+                                <p class="mb-0">Total Twins</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-success text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-heartbeat fa-2x mb-2"></i>
+                                <h4 id="analyticsHealthyTwins">0</h4>
+                                <p class="mb-0">Healthy</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-warning text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <h4 id="analyticsWarningTwins">0</h4>
+                                <p class="mb-0">Warning</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-danger text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-times-circle fa-2x mb-2"></i>
+                                <h4 id="analyticsCriticalTwins">0</h4>
+                                <p class="mb-0">Critical</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Performance Metrics Grid -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-chart-area me-2"></i>Performance Trends
+                        </h6>
+                        <canvas id="performanceTrendsChart" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-clock me-2"></i>Uptime Analysis
+                        </h6>
+                        <canvas id="uptimeChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

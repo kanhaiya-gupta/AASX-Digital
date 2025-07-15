@@ -10,11 +10,172 @@ function setupAutoGeneration() {
     // Currently not needed, but keeping for future use
 }
 
+// Load twin data with pagination
+function loadTwinData(page = 1, pageSize = 5) {
+    console.log('Loading twin data...');
+    
+    // Show loading state
+    $('#loadingTwins').show();
+    $('#emptyTwins').hide();
+    $('#twinTableBody').empty();
+    
+    fetch(`/twin-registry/api/twins?page=${page}&page_size=${pageSize}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Twin data loaded:', data);
+            
+            // Hide loading state
+            $('#loadingTwins').hide();
+            
+            if (data.twins && data.twins.length > 0) {
+                displayTwins(data.twins);
+                updatePagination(data.total_count, page, pageSize);
+                updateStatistics(data.total_count, data.active_count, data.total_data_points, data.active_alerts);
+            } else {
+                // Show empty state
+                $('#emptyTwins').show();
+                updatePagination(0, 1, pageSize);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading twin data:', error);
+            $('#loadingTwins').hide();
+            $('#emptyTwins').show();
+            showNotification('Error loading twin data', 'error');
+        });
+}
+
+// Display twins in the table
+function displayTwins(twins) {
+    const tbody = $('#twinTableBody');
+    tbody.empty();
+    
+    twins.forEach(twin => {
+        const statusClass = getStatusClass(twin.status);
+        const healthClass = getHealthClass(twin.health_score);
+        
+        tbody.append(`
+            <tr data-twin-id="${twin.twin_id}">
+                <td>
+                    <input type="checkbox" class="form-check-input twin-checkbox" value="${twin.twin_id}">
+                </td>
+                <td><code>${twin.twin_id}</code></td>
+                <td>${twin.twin_name}</td>
+                <td><span class="badge bg-secondary">${twin.twin_type}</span></td>
+                <td><span class="badge bg-${statusClass}">${twin.status}</span></td>
+                <td><span class="badge bg-${healthClass}">${twin.health_score || 0}%</span></td>
+                <td>${twin.owner || 'system'}</td>
+                <td>${formatLastSync(twin.last_sync)}</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary view-twin" data-twin-id="${twin.twin_id}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary edit-twin" data-twin-id="${twin.twin_id}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-twin" data-twin-id="${twin.twin_id}" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `);
+    });
+    
+    // Bind row events
+    bindRowEvents();
+}
+
+// Update pagination controls
+function updatePagination(totalCount, currentPage, pageSize) {
+    const totalPages = Math.ceil(totalCount / pageSize);
+    const start = (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalCount);
+    
+    $('#showingStart').text(start);
+    $('#showingEnd').text(end);
+    $('#totalRecords').text(totalCount);
+    
+    $('#prevPage').prop('disabled', currentPage <= 1);
+    $('#nextPage').prop('disabled', currentPage >= totalPages);
+    
+    // Store current page for navigation
+    $('#prevPage').data('page', currentPage - 1);
+    $('#nextPage').data('page', currentPage + 1);
+}
+
+// Update statistics
+function updateStatistics(totalTwins, activeTwins, dataPoints, alerts) {
+    $('#totalTwins').text(totalTwins || 0);
+    $('#activeTwins').text(activeTwins || 0);
+    $('#totalDataPoints').text(dataPoints || 0);
+    $('#activeAlerts').text(alerts || 0);
+}
+
+// Helper functions
+function getStatusClass(status) {
+    switch (status) {
+        case 'active': return 'success';
+        case 'inactive': return 'secondary';
+        case 'error': return 'danger';
+        case 'maintenance': return 'warning';
+        default: return 'info';
+    }
+}
+
+function getHealthClass(score) {
+    if (score >= 80) return 'success';
+    if (score >= 60) return 'warning';
+    return 'danger';
+}
+
+function formatLastSync(lastSync) {
+    if (!lastSync) return 'Never';
+    const date = new Date(lastSync);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    return date.toLocaleDateString();
+}
+
+// Bind row events
+function bindRowEvents() {
+    $('.view-twin').click(function() {
+        const twinId = $(this).data('twin-id');
+        // Implement view twin details
+        console.log('View twin:', twinId);
+    });
+    
+    $('.edit-twin').click(function() {
+        const twinId = $(this).data('twin-id');
+        // Implement edit twin
+        console.log('Edit twin:', twinId);
+    });
+    
+    $('.delete-twin').click(function() {
+        const twinId = $(this).data('twin-id');
+        // Implement delete twin
+        console.log('Delete twin:', twinId);
+    });
+    
+    // Select all checkbox
+    $('#selectAll').change(function() {
+        $('.twin-checkbox').prop('checked', $(this).is(':checked'));
+    });
+}
+
 $(document).ready(function() {
     console.log('Twin Registry JavaScript loaded');
     
     // Setup auto-generation
     setupAutoGeneration();
+    
+    // Auto-load twin data when page loads
+    loadTwinData();
     
     // AASX Integration Section Toggle
     $('#showAASXSection').click(function() {

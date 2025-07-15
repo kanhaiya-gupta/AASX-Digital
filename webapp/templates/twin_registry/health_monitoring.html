@@ -1,0 +1,113 @@
+<!-- Twin Health Monitoring Panel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    Twin Health Monitoring
+                </h5>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-light" id="refreshHealth">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-sm btn-outline-light" id="startHealthMonitoring">
+                        <i class="fas fa-play"></i> Start Monitoring
+                    </button>
+                    <button class="btn btn-sm btn-outline-light" id="exportHealthReport">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Health Overview Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-heartbeat fa-2x mb-2"></i>
+                                <h4 id="healthExcellent">0</h4>
+                                <p class="mb-0">Excellent (90-100%)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <h4 id="healthGood">0</h4>
+                                <p class="mb-0">Good (75-89%)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                <h4 id="healthWarning">0</h4>
+                                <p class="mb-0">Warning (60-74%)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-times-circle fa-2x mb-2"></i>
+                                <h4 id="healthCritical">0</h4>
+                                <p class="mb-0">Critical (<60%)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Metrics Grid -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-chart-line me-2"></i>Health Score Trends
+                        </h6>
+                        <canvas id="healthTrendsChart" height="250"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-chart-pie me-2"></i>Health Distribution
+                        </h6>
+                        <canvas id="healthDistributionChart" height="250"></canvas>
+                    </div>
+                </div>
+
+                <!-- Individual Twin Health Cards -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-microchip me-2"></i>Individual Twin Health Status
+                        </h6>
+                        <div class="row" id="healthTwinCards">
+                            <!-- Individual twin health cards will be inserted here -->
+                            <div class="col-12 text-center text-muted py-4">
+                                <i class="fas fa-heartbeat fa-3x mb-3"></i>
+                                <h6>No Health Data Available</h6>
+                                <p class="mb-0">Health monitoring will start when twins are active</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Alerts -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="text-danger mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Health Alerts
+                        </h6>
+                        <div id="healthAlerts">
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                <p class="mb-0">No health alerts - all twins are healthy</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
