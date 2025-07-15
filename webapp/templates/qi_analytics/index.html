@@ -24,12 +24,16 @@
                         <i class="fas fa-sync-alt"></i>
                         Refresh
                     </button>
+                    <a href="/twin-registry" class="btn btn-outline-info">
+                        <i class="fas fa-sync"></i>
+                        Twin Registry
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- KPI Cards -->
+    <!-- Main Analytics KPIs -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card border-left-primary shadow h-100">
@@ -39,7 +43,7 @@
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Overall Quality Score
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">94.2%</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="overallQualityScore">94.2%</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-star fa-2x text-gray-300"></i>
@@ -57,7 +61,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Compliance Rate
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">98.7%</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="complianceRate">98.7%</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-check-circle fa-2x text-gray-300"></i>
@@ -75,7 +79,7 @@
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Efficiency Index
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">87.3%</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="efficiencyIndex">87.3%</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
@@ -93,7 +97,7 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Risk Score
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">12.5</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="riskScore">12.5</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
@@ -104,8 +108,87 @@
         </div>
     </div>
 
-    <!-- Charts Row -->
-    <div class="row">
+    <!-- Twin Registry Integration Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-gradient-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold">
+                            <i class="fas fa-sync me-2"></i>
+                            Twin Registry Integration
+                        </h6>
+                        <div class="d-flex gap-2">
+                            <a href="/twin-registry" class="btn btn-light btn-sm">
+                                <i class="fas fa-external-link-alt me-1"></i>
+                                Full Twin Registry
+                            </a>
+                            <button class="btn btn-light btn-sm" onclick="refreshTwinData()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Twin Status Overview -->
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-primary mb-1" id="totalTwins">0</div>
+                                <div class="text-muted small">Total Twins</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-success mb-1" id="activeTwins">0</div>
+                                <div class="text-muted small">Active Twins</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-warning mb-1" id="warningTwins">0</div>
+                                <div class="text-muted small">Warning Status</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-danger mb-1" id="errorTwins">0</div>
+                                <div class="text-muted small">Error Status</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Twin Actions -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-center">
+                                <a href="/twin-registry" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-sync me-1"></i>
+                                    Manage Twins
+                                </a>
+                                <button class="btn btn-outline-success btn-sm" onclick="syncAllTwins()">
+                                    <i class="fas fa-sync-alt me-1"></i>
+                                    Sync All Twins
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="viewTwinHealth()">
+                                    <i class="fas fa-heartbeat me-1"></i>
+                                    View Health
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="exportTwinData()">
+                                    <i class="fas fa-download me-1"></i>
+                                    Export Twin Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Analytics Charts -->
+    <div class="row mb-4">
         <!-- Quality Trends Chart -->
         <div class="col-lg-8">
             <div class="card shadow mb-4">
@@ -135,6 +218,74 @@
                 <div class="card-body">
                     <div class="chart-container" style="position: relative; height:300px;">
                         <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Twin Performance Analytics -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-area"></i>
+                        Twin Performance Trends
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:250px;">
+                        <canvas id="twinPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie"></i>
+                        Twin Health Distribution
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height:250px;">
+                        <canvas id="twinHealthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics Grid -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-area"></i>
+                        Performance Trends
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 200px; min-height: 200px; max-height: 200px;">
+                        <canvas id="performanceTrendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clock"></i>
+                        Uptime Analysis
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 200px; min-height: 200px; max-height: 200px;">
+                        <canvas id="uptimeChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -238,53 +389,41 @@
         </div>
     </div>
 
-    <!-- Detailed Analytics -->
-    <div class="row">
+    <!-- Advanced Analytics Actions -->
+    <div class="row mb-4">
         <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-area"></i>
-                        Detailed Performance Analytics
+            <div class="card shadow">
+                <div class="card-header py-3 bg-gradient-info text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-cogs me-2"></i>
+                        Advanced Analytics Actions
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-primary">94.2%</h4>
-                                <p class="text-muted">Overall Quality</p>
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-primary" style="width: 94.2%"></div>
-                                </div>
-                            </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-primary w-100" onclick="generateAnalyticsReport()">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Generate Report
+                            </button>
                         </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-success">98.7%</h4>
-                                <p class="text-muted">Compliance Rate</p>
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-success" style="width: 98.7%"></div>
-                                </div>
-                            </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-success w-100" onclick="exportAnalyticsData()">
+                                <i class="fas fa-download me-2"></i>
+                                Export Data
+                            </button>
                         </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-info">87.3%</h4>
-                                <p class="text-muted">Efficiency Index</p>
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-info" style="width: 87.3%"></div>
-                                </div>
-                            </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-info w-100" onclick="compareTwinAnalytics()">
+                                <i class="fas fa-balance-scale me-2"></i>
+                                Compare Twins
+                            </button>
                         </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-warning">12.5</h4>
-                                <p class="text-muted">Risk Score</p>
-                                <div class="progress" style="height: 5px;">
-                                    <div class="progress-bar bg-warning" style="width: 12.5%"></div>
-                                </div>
-                            </div>
+                        <div class="col-md-3 mb-3">
+                            <button class="btn btn-outline-warning w-100" onclick="predictiveAnalytics()">
+                                <i class="fas fa-crystal-ball me-2"></i>
+                                Predictive Analysis
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -294,85 +433,22 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Debug script loading -->
 <script>
-$(document).ready(function() {
-    // Initialize charts
-    initializeCharts();
-    
-    // Generate report
-    $('#generateReport').click(function() {
-        alert('Generating comprehensive analytics report...');
-    });
-    
-    // Refresh analytics
-    $('#refreshAnalytics').click(function() {
-        location.reload();
-    });
-});
-
-function initializeCharts() {
-    // Quality Trends Chart
-    var qualityCtx = document.getElementById('qualityTrendsChart').getContext('2d');
-    var qualityChart = new Chart(qualityCtx, {
-        type: 'line',
-        data: {
-            labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
-            datasets: [{
-                label: 'Quality Score',
-                data: [92, 93, 94, 93.5, 94.5, 95, 94.2],
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.1
-            }, {
-                label: 'Compliance Rate',
-                data: [97, 98, 98.5, 98.2, 98.8, 99, 98.7],
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    min: 85,
-                    max: 100
-                }
-            }
-        }
-    });
-    
-    // Performance Distribution Chart
-    var performanceCtx = document.getElementById('performanceChart').getContext('2d');
-    var performanceChart = new Chart(performanceCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Excellent', 'Good', 'Average', 'Needs Improvement'],
-            datasets: [{
-                data: [45, 35, 15, 5],
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(255, 99, 132, 0.8)'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-}
+console.log('🔍 Debug: Extra scripts block loaded');
+console.log('🔍 Debug: Chart.js loaded:', typeof Chart !== 'undefined');
+</script>
+<!-- QI Analytics JavaScript with cache busting -->
+<script src="{{ url_for('static', path='/js/qi_analytics.js') }}?v={{ range(1, 1000) | random }}"></script>
+<script>
+console.log('🔍 Debug: QI Analytics script tag added');
+// Check if the script loaded
+setTimeout(() => {
+    console.log('🔍 Debug: Checking if QI Analytics functions are available...');
+    console.log('🔍 Debug: initializeQIAnalytics available:', typeof initializeQIAnalytics !== 'undefined');
+    console.log('🔍 Debug: setupEventListeners available:', typeof setupEventListeners !== 'undefined');
+}, 1000);
 </script>
 {% endblock %} 

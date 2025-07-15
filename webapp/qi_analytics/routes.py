@@ -91,7 +91,7 @@ def calculate_summary(data: List[Dict[str, Any]], metric_type: str):
 
 @router.get("/", response_class=HTMLResponse)
 async def analytics_dashboard(request: Request):
-    """Analytics dashboard"""
+    """Analytics dashboard with comprehensive features"""
     # Generate sample data for dashboard
     quality_data = generate_mock_analytics_data("dt-001", "quality_metrics", 30)
     performance_data = generate_mock_analytics_data("dt-002", "performance_metrics", 30)
@@ -102,6 +102,28 @@ async def analytics_dashboard(request: Request):
         {
             "request": request,
             "title": "QI Analytics Dashboard - QI Digital Platform",
+            "quality_data": quality_data,
+            "performance_data": performance_data,
+            "safety_data": safety_data,
+            "quality_summary": calculate_summary(quality_data, "quality_metrics"),
+            "performance_summary": calculate_summary(performance_data, "performance_metrics"),
+            "safety_summary": calculate_summary(safety_data, "safety_metrics")
+        }
+    )
+
+@router.get("/overview", response_class=HTMLResponse)
+async def analytics_overview(request: Request):
+    """Simple analytics overview page"""
+    # Generate sample data for dashboard
+    quality_data = generate_mock_analytics_data("dt-001", "quality_metrics", 30)
+    performance_data = generate_mock_analytics_data("dt-002", "performance_metrics", 30)
+    safety_data = generate_mock_analytics_data("dt-003", "safety_metrics", 30)
+    
+    return templates.TemplateResponse(
+        "qi_analytics/index.html",
+        {
+            "request": request,
+            "title": "QI Analytics Overview - QI Digital Platform",
             "quality_data": quality_data,
             "performance_data": performance_data,
             "safety_data": safety_data,

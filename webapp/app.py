@@ -117,7 +117,7 @@ async def dashboard(request: Request):
                 {
                     "id": "aasx-etl",
                     "name": "AASX ETL Pipeline",
-                    "description": "Extract, Transform, Load AASX files into structured data",
+                    "description": "Advanced Extract, Transform, Load pipeline with project-based organization, real-time progress tracking, and SQLite integration",
                     "url": "/aasx",
                     "icon": "⚙️",
                     "available": aasx_router is not None
@@ -125,7 +125,7 @@ async def dashboard(request: Request):
                 {
                     "id": "kg-neo4j",
                     "name": "Knowledge Graph",
-                    "description": "Neo4j knowledge graph explorer and analytics",
+                    "description": "Neo4j knowledge graph explorer with interactive D3.js visualizations, relationship mapping, and comprehensive analytics",
                     "url": "/kg-neo4j",
                     "icon": "🕸️",
                     "available": kg_neo4j_router is not None
@@ -133,7 +133,7 @@ async def dashboard(request: Request):
                 {
                     "id": "ai-rag",
                     "name": "AI/RAG System",
-                    "description": "AI-powered analysis and insights for digital twins",
+                    "description": "AI-powered analysis with multiple RAG techniques, LLM integration, and intelligent insights for digital twins",
                     "url": "/ai-rag",
                     "icon": "🤖",
                     "available": ai_rag_router is not None
@@ -141,7 +141,7 @@ async def dashboard(request: Request):
                 {
                     "id": "twin-registry",
                     "name": "Digital Twin Registry",
-                    "description": "Manage and monitor digital twin registrations",
+                    "description": "Advanced digital twin management with real-time monitoring, performance tracking, health analytics, and AASX integration",
                     "url": "/twin-registry",
                     "icon": "🔄",
                     "available": twin_registry_router is not None
@@ -149,7 +149,7 @@ async def dashboard(request: Request):
                 {
                     "id": "certificates",
                     "name": "Certificate Manager",
-                    "description": "Digital certificates and compliance management",
+                    "description": "Digital certificates and compliance management with automated validation and security features",
                     "url": "/certificates",
                     "icon": "📜",
                     "available": certificate_manager_router is not None
@@ -157,7 +157,7 @@ async def dashboard(request: Request):
                 {
                     "id": "analytics",
                     "name": "Analytics Dashboard",
-                    "description": "Digital twin analytics and visualization",
+                    "description": "Comprehensive analytics with quality trends, performance monitoring, predictive analysis, and cross-module integration",
                     "url": "/analytics",
                     "icon": "📊",
                     "available": qi_analytics_router is not None
