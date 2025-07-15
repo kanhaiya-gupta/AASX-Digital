@@ -943,6 +943,7 @@ class TwinRegistryEnhanced {
 }
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    new TwinRegistryEnhanced();
-}); 
+// DISABLED: Enhanced Twin Management is redundant with Twin Registry Management
+// document.addEventListener('DOMContentLoaded', () => {
+//     new TwinRegistryEnhanced();
+// }); 

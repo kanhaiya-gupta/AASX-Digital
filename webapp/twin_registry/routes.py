@@ -58,62 +58,63 @@ class AASXRegistrationRequest(BaseModel):
     project_id: str
 
 # Mock twin data (will be replaced with real data from AASX integration)
-TWINS_DB = [
-    {
-        "id": "dt-001",
-        "twin_id": "dt-001",
-        "twin_name": "Additive Manufacturing Facility",
-        "twin_type": "additive_manufacturing",
-        "aas_id": "aas-001",
-        "description": "Digital twin for additive manufacturing facility with quality monitoring",
-        "status": "active",
-        "version": "1.0",
-        "created_at": "2024-01-15T10:00:00Z",
-        "updated_at": "2024-07-08T15:30:00Z",
-        "metadata": {
-            "location": "Building A, Floor 2",
-            "equipment_count": 15,
-            "capacity": "1000 parts/day",
-            "technology": "SLS, FDM, SLA"
-        }
-    },
-    {
-        "id": "dt-002",
-        "twin_id": "dt-002",
-        "twin_name": "Hydrogen Filling Station",
-        "twin_type": "hydrogen_station",
-        "aas_id": "aas-002",
-        "description": "Digital twin for hydrogen filling station with safety monitoring",
-        "status": "active",
-        "version": "1.0",
-        "created_at": "2024-02-20T14:00:00Z",
-        "updated_at": "2024-07-08T16:45:00Z",
-        "metadata": {
-            "location": "Highway Exit 15",
-            "storage_capacity": "5000 kg",
-            "daily_capacity": "200 vehicles",
-            "safety_level": "high"
-        }
-    },
-    {
-        "id": "dt-003",
-        "twin_id": "dt-003",
-        "twin_name": "Quality Control Lab",
-        "twin_type": "quality_lab",
-        "aas_id": "aas-003",
-        "description": "Digital twin for quality control laboratory",
-        "status": "active",
-        "version": "1.0",
-        "created_at": "2024-03-10T09:00:00Z",
-        "updated_at": "2024-07-08T12:15:00Z",
-        "metadata": {
-            "location": "Building B, Floor 1",
-            "equipment_count": 8,
-            "certifications": ["ISO 17025", "ISO 9001"],
-            "test_capacity": "500 samples/day"
-        }
-    }
-]
+# REMOVED: Mock data is no longer needed - only real AASX twins should be shown
+# TWINS_DB = [
+#     {
+#         "id": "dt-001",
+#         "twin_id": "dt-001",
+#         "twin_name": "Additive Manufacturing Facility",
+#         "twin_type": "additive_manufacturing",
+#         "aas_id": "aas-001",
+#         "description": "Digital twin for additive manufacturing facility with quality monitoring",
+#         "status": "active",
+#         "version": "1.0",
+#         "created_at": "2024-01-15T10:00:00Z",
+#         "updated_at": "2024-07-08T15:30:00Z",
+#         "metadata": {
+#             "location": "Building A, Floor 2",
+#             "equipment_count": 15,
+#             "capacity": "1000 parts/day",
+#             "technology": "SLS, FDM, SLA"
+#         }
+#     },
+#     {
+#         "id": "dt-002",
+#         "twin_id": "dt-002",
+#         "twin_name": "Hydrogen Filling Station",
+#         "twin_type": "hydrogen_station",
+#         "aas_id": "aas-002",
+#         "description": "Digital twin for hydrogen filling station with safety monitoring",
+#         "status": "active",
+#         "version": "1.0",
+#         "created_at": "2024-02-20T14:00:00Z",
+#         "updated_at": "2024-07-08T16:45:00Z",
+#         "metadata": {
+#             "location": "Highway Exit 15",
+#             "storage_capacity": "5000 kg",
+#             "daily_capacity": "200 vehicles",
+#             "safety_level": "high"
+#         }
+#     },
+#     {
+#         "id": "dt-003",
+#         "twin_id": "dt-003",
+#         "twin_name": "Quality Control Lab",
+#         "twin_type": "quality_lab",
+#         "aas_id": "aas-003",
+#         "description": "Digital twin for quality control laboratory",
+#         "status": "active",
+#         "version": "1.0",
+#         "created_at": "2024-03-10T09:00:00Z",
+#         "updated_at": "2024-07-08T12:15:00Z",
+#         "metadata": {
+#             "location": "Building B, Floor 1",
+#             "equipment_count": 8,
+#             "certifications": ["ISO 17025", "ISO 9001"],
+#             "test_capacity": "500 samples/day"
+#         }
+#     }
+# ]
 
 @router.get("/", response_class=HTMLResponse)
 async def twin_registry_dashboard(request: Request):
@@ -130,7 +131,7 @@ async def twin_registry_dashboard(request: Request):
         aasx_twins = []
     
     # Combine mock data with real AASX twins
-    all_twins = TWINS_DB + aasx_twins
+    all_twins = aasx_twins
     print(f"📋 Total twins: {len(all_twins)}")
     
     print("🎨 Rendering twin registry template...")
@@ -165,7 +166,7 @@ async def get_twins_with_pagination(
         aasx_twins = aasx_integration.get_all_twins_with_aasx()
         
         # Combine with mock data
-        all_twins = TWINS_DB + aasx_twins
+        all_twins = aasx_twins
         
         # Apply filters
         filtered_twins = []
@@ -440,9 +441,10 @@ async def create_twin_enhanced(twin_data: Dict[str, Any]):
 async def sync_twin(twin_id: str, sync_request: TwinSyncRequest):
     """Sync digital twin with AAS"""
     try:
-        # Find the twin
+        # Find the twin from AASX integration
+        aasx_twins = aasx_integration.get_all_twins_with_aasx()
         twin = None
-        for t in TWINS_DB:
+        for t in aasx_twins:
             if t["twin_id"] == twin_id:
                 twin = t
                 break
@@ -464,13 +466,8 @@ async def sync_twin(twin_id: str, sync_request: TwinSyncRequest):
             }
         }
         
-        # Update twin status
-        for i, t in enumerate(TWINS_DB):
-            if t["twin_id"] == twin_id:
-                t["status"] = "active"
-                t["updated_at"] = datetime.now().isoformat()
-                TWINS_DB[i] = t
-                break
+        # Note: Twin status is managed by AASX integration database
+        # No need to update here as it's handled by the integration system
         
         return sync_result
         
@@ -545,18 +542,21 @@ async def get_twin_relationships(twin_id: str):
 async def get_twin_statistics():
     """Get twin registry statistics"""
     try:
+        # Get real twins from AASX integration
+        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        
         # Calculate statistics
-        total_twins = len(TWINS_DB)
-        active_twins = len([twin for twin in TWINS_DB if twin["status"] == "active"])
+        total_twins = len(aasx_twins)
+        active_twins = len([twin for twin in aasx_twins if twin.get("status") == "active"])
         
         # Count by type
         type_counts = {}
-        for twin in TWINS_DB:
-            twin_type = twin["twin_type"]
+        for twin in aasx_twins:
+            twin_type = twin.get("twin_type", "unknown")
             type_counts[twin_type] = type_counts.get(twin_type, 0) + 1
         
-        # Recent activity
-        recent_twins = [twin for twin in TWINS_DB if twin["created_at"] > "2024-06-01"]
+        # Recent activity (using current timestamp for all twins since they're recent)
+        recent_twins = aasx_twins  # All AASX twins are considered recent
         
         return {
             "total_twins": total_twins,
@@ -574,8 +574,11 @@ async def get_twin_statistics():
 async def get_twin_registry_status():
     """Get twin registry status"""
     try:
-        total_twins = len(TWINS_DB)
-        active_twins = len([twin for twin in TWINS_DB if twin["status"] == "active"])
+        # Get real twins from AASX integration
+        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        
+        total_twins = len(aasx_twins)
+        active_twins = len([twin for twin in aasx_twins if twin.get("status") == "active"])
         
         status = {
             "status": "available",
