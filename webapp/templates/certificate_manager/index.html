@@ -313,54 +313,7 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-$(document).ready(function() {
-    // View certificate
-    $('.view-cert').click(function() {
-        var certId = $(this).data('id');
-        alert('Viewing certificate ' + certId);
-    });
-    
-    // Download certificate
-    $('.download-cert').click(function() {
-        var certId = $(this).data('id');
-        alert('Downloading certificate ' + certId);
-    });
-    
-    // Renew certificate
-    $('.renew-cert').click(function() {
-        var certId = $(this).data('id');
-        var button = $(this);
-        button.prop('disabled', true);
-        button.html('<i class="fas fa-spinner fa-spin"></i> Renewing...');
-        
-        setTimeout(function() {
-            button.prop('disabled', false);
-            button.html('<i class="fas fa-redo"></i> Renew');
-            alert('Certificate renewal initiated for ' + certId);
-        }, 2000);
-    });
-    
-    // Issue new certificate
-    $('#issueCertificate').click(function() {
-        alert('Issue new certificate functionality');
-    });
-    
-    // Refresh certificates
-    $('#refreshCertificates').click(function() {
-        location.reload();
-    });
-    
-    // Export certificates
-    $('#exportCertificates').click(function() {
-        alert('Exporting all certificates...');
-    });
-    
-    // Bulk renewal
-    $('#bulkRenewal').click(function() {
-        alert('Bulk renewal functionality');
-    });
-});
-</script>
+{% block extra_scripts %}
+<!-- Certificate Manager JavaScript -->
+<script src="{{ url_for('static', path='/js/certificate_manager.js') }}?v={{ range(1, 1000) | random }}"></script>
 {% endblock %} 

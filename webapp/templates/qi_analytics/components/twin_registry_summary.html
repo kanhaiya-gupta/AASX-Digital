@@ -1,0 +1,78 @@
+<!-- Twin Registry Integration Summary Component -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-gradient-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-sync me-2"></i>
+                        Twin Registry Integration
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <a href="/twin-registry" class="btn btn-light btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            Full Twin Registry
+                        </a>
+                        <button class="btn btn-light btn-sm" onclick="refreshTwinData()">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Twin Status Overview -->
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-primary mb-1" id="totalTwins">0</div>
+                            <div class="text-muted small">Total Twins</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-success mb-1" id="activeTwins">0</div>
+                            <div class="text-muted small">Active Twins</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-warning mb-1" id="warningTwins">0</div>
+                            <div class="text-muted small">Warning Status</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-danger mb-1" id="errorTwins">0</div>
+                            <div class="text-muted small">Error Status</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Twin Actions -->
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="/twin-registry" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-sync me-1"></i>
+                                Manage Twins
+                            </a>
+                            <button class="btn btn-outline-success btn-sm" onclick="syncAllTwins()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Sync All Twins
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="viewTwinHealth()">
+                                <i class="fas fa-heartbeat me-1"></i>
+                                View Health
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="exportTwinData()">
+                                <i class="fas fa-download me-1"></i>
+                                Export Twin Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

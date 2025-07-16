@@ -2,434 +2,190 @@
 
 {% block title %}{{ title }}{% endblock %}
 
+{% block head %}
+<style>
+/* Advanced Chart Interactions Styling */
+.chart-control-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-control-panel .btn {
+    border-radius: 6px;
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    transition: all 0.3s ease;
+}
+
+.chart-control-panel .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.chart-status {
+    font-weight: 500;
+    color: #6c757d;
+    background: rgba(255,255,255,0.8);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+/* Enhanced tooltip styling */
+.chartjs-tooltip {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
+}
+
+/* Filter modal enhancements */
+.filter-modal .form-range {
+    height: 6px;
+    border-radius: 3px;
+}
+
+.filter-modal .form-range::-webkit-slider-thumb {
+    background: #007bff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}
+
+.filter-modal .form-range::-moz-range-thumb {
+    background: #007bff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}
+
+/* Chart interaction feedback */
+.chart-container {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+    transform: scale(1.01);
+}
+
+.chart-container canvas {
+    cursor: pointer;
+}
+
+/* Drill-down animation */
+.chart-drill-down {
+    animation: drillDown 0.3s ease-in-out;
+}
+
+@keyframes drillDown {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.95); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Export button animation */
+.btn-export {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-export::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-export:hover::before {
+    left: 100%;
+}
+
+/* Performance indicators */
+.performance-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.performance-excellent { background-color: #28a745; }
+.performance-good { background-color: #17a2b8; }
+.performance-average { background-color: #ffc107; }
+.performance-poor { background-color: #dc3545; }
+
+/* Responsive chart controls */
+@media (max-width: 768px) {
+    .chart-control-panel .d-flex {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .chart-control-panel .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .chart-status {
+        text-align: center;
+        margin-top: 8px;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-0">
-                        <i class="fas fa-chart-bar text-primary"></i>
-                        QI Analytics Dashboard
-                    </h1>
-                    <p class="text-muted mb-0">Quality Infrastructure analytics and dashboards</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button id="generateReport" class="btn btn-primary">
-                        <i class="fas fa-file-alt"></i>
-                        Generate Report
-                    </button>
-                    <button id="refreshAnalytics" class="btn btn-outline-secondary">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh
-                    </button>
-                    <a href="/twin-registry" class="btn btn-outline-info">
-                        <i class="fas fa-sync"></i>
-                        Twin Registry
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Header Component -->
+    {% include 'qi_analytics/components/header.html' %}
 
-    <!-- Main Analytics KPIs -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card border-left-primary shadow h-100">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Overall Quality Score
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="overallQualityScore">94.2%</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-star fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Advanced Filters Component -->
+    {% include 'qi_analytics/components/advanced_filters.html' %}
 
-        <div class="col-md-3">
-            <div class="card border-left-success shadow h-100">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Compliance Rate
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="complianceRate">98.7%</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Custom Dashboard Builder Component -->
+    {% include 'qi_analytics/components/dashboard_builder.html' %}
 
-        <div class="col-md-3">
-            <div class="card border-left-info shadow h-100">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Efficiency Index
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="efficiencyIndex">87.3%</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-tachometer-alt fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- KPI Cards Component -->
+    {% include 'qi_analytics/components/kpi_cards.html' %}
 
-        <div class="col-md-3">
-            <div class="card border-left-warning shadow h-100">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Risk Score
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="riskScore">12.5</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Twin Registry Integration Summary -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 bg-gradient-primary text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold">
-                            <i class="fas fa-sync me-2"></i>
-                            Twin Registry Integration
-                        </h6>
-                        <div class="d-flex gap-2">
-                            <a href="/twin-registry" class="btn btn-light btn-sm">
-                                <i class="fas fa-external-link-alt me-1"></i>
-                                Full Twin Registry
-                            </a>
-                            <button class="btn btn-light btn-sm" onclick="refreshTwinData()">
-                                <i class="fas fa-sync-alt me-1"></i>
-                                Refresh
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <!-- Twin Status Overview -->
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <div class="h4 text-primary mb-1" id="totalTwins">0</div>
-                                <div class="text-muted small">Total Twins</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <div class="h4 text-success mb-1" id="activeTwins">0</div>
-                                <div class="text-muted small">Active Twins</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <div class="h4 text-warning mb-1" id="warningTwins">0</div>
-                                <div class="text-muted small">Warning Status</div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <div class="h4 text-danger mb-1" id="errorTwins">0</div>
-                                <div class="text-muted small">Error Status</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Twin Actions -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="d-flex gap-2 justify-content-center">
-                                <a href="/twin-registry" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-sync me-1"></i>
-                                    Manage Twins
-                                </a>
-                                <button class="btn btn-outline-success btn-sm" onclick="syncAllTwins()">
-                                    <i class="fas fa-sync-alt me-1"></i>
-                                    Sync All Twins
-                                </button>
-                                <button class="btn btn-outline-info btn-sm" onclick="viewTwinHealth()">
-                                    <i class="fas fa-heartbeat me-1"></i>
-                                    View Health
-                                </button>
-                                <button class="btn btn-outline-warning btn-sm" onclick="exportTwinData()">
-                                    <i class="fas fa-download me-1"></i>
-                                    Export Twin Data
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Twin Registry Summary Component -->
+    {% include 'qi_analytics/components/twin_registry_summary.html' %}
 
     <!-- Advanced Analytics Charts -->
     <div class="row mb-4">
-        <!-- Quality Trends Chart -->
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-line"></i>
-                        Quality Trends (Last 30 Days)
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height:300px;">
-                        <canvas id="qualityTrendsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Performance Distribution -->
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-pie"></i>
-                        Performance Distribution
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height:300px;">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Quality Trends Chart Component -->
+        {% include 'qi_analytics/components/quality_trends_chart.html' %}
+        
+        <!-- Performance Distribution Chart Component -->
+        {% include 'qi_analytics/components/performance_distribution_chart.html' %}
     </div>
 
     <!-- Twin Performance Analytics -->
     <div class="row mb-4">
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-area"></i>
-                        Twin Performance Trends
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height:250px;">
-                        <canvas id="twinPerformanceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-pie"></i>
-                        Twin Health Distribution
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="position: relative; height:250px;">
-                        <canvas id="twinHealthChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Twin Performance Chart Component -->
+        {% include 'qi_analytics/components/twin_performance_chart.html' %}
+        
+        <!-- Twin Health Chart Component -->
+        {% include 'qi_analytics/components/twin_health_chart.html' %}
     </div>
 
-    <!-- Performance Metrics Grid -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-chart-area"></i>
-                        Performance Trends
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div style="height: 200px; min-height: 200px; max-height: 200px;">
-                        <canvas id="performanceTrendsChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-clock"></i>
-                        Uptime Analysis
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div style="height: 200px; min-height: 200px; max-height: 200px;">
-                        <canvas id="uptimeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Performance Metrics Grid Component -->
+    {% include 'qi_analytics/components/performance_metrics_grid.html' %}
 
-    <!-- Analytics Tables -->
-    <div class="row">
-        <!-- Quality Metrics Table -->
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-table"></i>
-                        Quality Metrics by Facility
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Facility</th>
-                                    <th>Quality Score</th>
-                                    <th>Compliance</th>
-                                    <th>Efficiency</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Additive Manufacturing</td>
-                                    <td>96.2%</td>
-                                    <td>99.1%</td>
-                                    <td>89.3%</td>
-                                    <td><span class="badge bg-success">Excellent</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Hydrogen Filling Station</td>
-                                    <td>94.8%</td>
-                                    <td>98.7%</td>
-                                    <td>92.1%</td>
-                                    <td><span class="badge bg-success">Excellent</span></td>
-                                </tr>
-                                <tr>
-                                    <td>Servo DC Motor Assembly</td>
-                                    <td>91.6%</td>
-                                    <td>98.3%</td>
-                                    <td>80.5%</td>
-                                    <td><span class="badge bg-warning">Good</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- Analytics Tables Component -->
+    {% include 'qi_analytics/components/analytics_tables.html' %}
 
-        <!-- Recent Analytics -->
-        <div class="col-lg-6">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-clock"></i>
-                        Recent Analytics Events
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="text-success">Quality Improvement</strong>
-                                <br><small class="text-muted">Additive Manufacturing Facility</small>
-                            </div>
-                            <small class="text-muted">2 hours ago</small>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="text-info">Performance Analysis</strong>
-                                <br><small class="text-muted">Hydrogen Filling Station</small>
-                            </div>
-                            <small class="text-muted">4 hours ago</small>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="text-warning">Maintenance Alert</strong>
-                                <br><small class="text-muted">Servo DC Motor Assembly</small>
-                            </div>
-                            <small class="text-muted">6 hours ago</small>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="text-primary">Compliance Check</strong>
-                                <br><small class="text-muted">System-wide audit</small>
-                            </div>
-                            <small class="text-muted">1 day ago</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Advanced Analytics Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3 bg-gradient-info text-white">
-                    <h6 class="m-0 font-weight-bold">
-                        <i class="fas fa-cogs me-2"></i>
-                        Advanced Analytics Actions
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <button class="btn btn-outline-primary w-100" onclick="generateAnalyticsReport()">
-                                <i class="fas fa-file-alt me-2"></i>
-                                Generate Report
-                            </button>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <button class="btn btn-outline-success w-100" onclick="exportAnalyticsData()">
-                                <i class="fas fa-download me-2"></i>
-                                Export Data
-                            </button>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <button class="btn btn-outline-info w-100" onclick="compareTwinAnalytics()">
-                                <i class="fas fa-balance-scale me-2"></i>
-                                Compare Twins
-                            </button>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <button class="btn btn-outline-warning w-100" onclick="predictiveAnalytics()">
-                                <i class="fas fa-crystal-ball me-2"></i>
-                                Predictive Analysis
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Advanced Analytics Actions Component -->
+    {% include 'qi_analytics/components/advanced_actions.html' %}
 </div>
 {% endblock %}
 
@@ -440,6 +196,12 @@
 console.log('🔍 Debug: Extra scripts block loaded');
 console.log('🔍 Debug: Chart.js loaded:', typeof Chart !== 'undefined');
 </script>
+<!-- Advanced Filters JavaScript -->
+<script src="{{ url_for('static', path='/js/advanced_filters.js') }}?v={{ range(1, 1000) | random }}"></script>
+<!-- Dashboard Builder JavaScript -->
+<script src="{{ url_for('static', path='/js/dashboard_builder.js') }}?v={{ range(1, 1000) | random }}"></script>
+<!-- Analytics Integration JavaScript -->
+<script src="{{ url_for('static', path='/js/analytics_integration.js') }}?v={{ range(1, 1000) | random }}"></script>
 <!-- QI Analytics JavaScript with cache busting -->
 <script src="{{ url_for('static', path='/js/qi_analytics.js') }}?v={{ range(1, 1000) | random }}"></script>
 <script>
@@ -449,6 +211,7 @@ setTimeout(() => {
     console.log('🔍 Debug: Checking if QI Analytics functions are available...');
     console.log('🔍 Debug: initializeQIAnalytics available:', typeof initializeQIAnalytics !== 'undefined');
     console.log('🔍 Debug: setupEventListeners available:', typeof setupEventListeners !== 'undefined');
+    console.log('🔍 Debug: setupAdvancedChartInteractions available:', typeof setupAdvancedChartInteractions !== 'undefined');
 }, 1000);
 </script>
 {% endblock %} 

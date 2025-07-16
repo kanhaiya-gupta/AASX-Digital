@@ -1,6 +1,7 @@
 /**
  * QI Analytics Dashboard JavaScript
  * Handles all analytics visualization, data loading, and interactive features
+ * Enhanced with Advanced Chart Interactions (Week 1-2)
  */
 
 console.log('🔧 QI Analytics JavaScript file loaded successfully');
@@ -10,6 +11,17 @@ let qualityTrendsChart, performanceChart, twinPerformanceChart, twinHealthChart;
 let performanceTrendsChart, uptimeChart;
 let analyticsData = {};
 let updateInterval;
+let drillDownStack = []; // Track drill-down navigation
+let currentFilters = {}; // Track active filters
+let chartData = {}; // Store original chart data for filtering
+
+// Chart interaction states
+let chartInteractionState = {
+    qualityTrends: { level: 'overview', filters: {} },
+    performance: { level: 'overview', filters: {} },
+    twinPerformance: { level: 'overview', filters: {} },
+    twinHealth: { level: 'overview', filters: {} }
+};
 
 // Initialize the QI analytics dashboard
 document.addEventListener('DOMContentLoaded', function() {
@@ -41,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeQIAnalytics();
     setupEventListeners();
+    setupAdvancedChartInteractions();
     startRealTimeUpdates();
 });
 
@@ -48,7 +61,7 @@ function initializeQIAnalytics() {
     console.log('📊 Setting up analytics charts...');
     
     try {
-        // Initialize all charts
+        // Initialize all charts with enhanced interactions
         initializeQualityTrendsChart();
         initializePerformanceChart();
         initializeTwinPerformanceChart();
@@ -100,39 +113,66 @@ function setupEventListeners() {
     console.log('✅ Event listeners setup completed');
 }
 
-function setupTwinRegistryActions() {
-    // Sync all twins
-    window.syncAllTwins = function() {
-        showNotification('Syncing all twins...', 'info');
-        // Simulate sync process
-        setTimeout(() => {
-            loadTwinRegistryData();
-            showNotification('All twins synchronized successfully', 'success');
-        }, 2000);
-    };
+function setupAdvancedChartInteractions() {
+    console.log('🔧 Setting up advanced chart interactions...');
     
-    // View twin health
-    window.viewTwinHealth = function() {
-        window.location.href = '/twin-registry#health';
-    };
+    // Add chart control panels
+    addChartControlPanels();
     
-    // Export twin data
-    window.exportTwinData = function() {
-        showNotification('Exporting twin data...', 'info');
-        // Simulate export process
-        setTimeout(() => {
-            showNotification('Twin data exported successfully', 'success');
-        }, 1500);
-    };
+    // Setup global chart interaction functions
+    window.resetChartView = resetChartView;
+    window.applyChartFilter = applyChartFilter;
+    window.exportChartData = exportChartData;
+    window.drillDownChart = drillDownChart;
+    
+    console.log('✅ Advanced chart interactions setup completed');
+}
+
+function addChartControlPanels() {
+    // Add control panels to each chart container
+    const chartContainers = document.querySelectorAll('.chart-container');
+    
+    chartContainers.forEach(container => {
+        const chartId = container.querySelector('canvas').id;
+        const controlPanel = createChartControlPanel(chartId);
+        container.parentNode.insertBefore(controlPanel, container);
+    });
+}
+
+function createChartControlPanel(chartId) {
+    const panel = document.createElement('div');
+    panel.className = 'chart-control-panel mb-2';
+    panel.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex gap-1">
+                <button class="btn btn-sm btn-outline-primary" onclick="drillDownChart('${chartId}')" title="Drill Down">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="resetChartView('${chartId}')" title="Reset View">
+                    <i class="fas fa-home"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="applyChartFilter('${chartId}')" title="Filter">
+                    <i class="fas fa-filter"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="exportChartData('${chartId}')" title="Export">
+                    <i class="fas fa-download"></i>
+                </button>
+            </div>
+            <div class="chart-status small text-muted" id="${chartId}-status">
+                Overview Level
+            </div>
+        </div>
+    `;
+    return panel;
 }
 
 function initializeQualityTrendsChart() {
     const ctx = document.getElementById('qualityTrendsChart');
     if (!ctx) return;
     
-    qualityTrendsChart = new Chart(ctx.getContext('2d'), {
-        type: 'line',
-        data: {
+    // Enhanced data structure for drill-down
+    chartData.qualityTrends = {
+        overview: {
             labels: generateDateLabels(30),
             datasets: [{
                 label: 'Quality Score',
@@ -157,6 +197,30 @@ function initializeQualityTrendsChart() {
                 fill: true
             }]
         },
+        facility: {
+            labels: ['Additive Manufacturing', 'Hydrogen Filling Station', 'Servo DC Motor Assembly'],
+            datasets: [{
+                label: 'Quality Score',
+                data: [96.2, 94.8, 91.6],
+                backgroundColor: ['rgba(75, 192, 192, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 159, 64, 0.8)']
+            }]
+        },
+        daily: {
+            labels: generateDateLabels(7),
+            datasets: [{
+                label: 'Daily Quality Metrics',
+                data: generateRandomData(7, 88, 97),
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        }
+    };
+    
+    qualityTrendsChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: chartData.qualityTrends.overview,
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -171,7 +235,15 @@ function initializeQualityTrendsChart() {
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: 'white',
-                    bodyColor: 'white'
+                    bodyColor: 'white',
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                        },
+                        afterLabel: function(context) {
+                            return getEnhancedTooltipInfo(context);
+                        }
+                    }
                 }
             },
             scales: {
@@ -191,6 +263,9 @@ function initializeQualityTrendsChart() {
                     min: 80,
                     max: 100
                 }
+            },
+            onClick: function(event, elements) {
+                handleChartClick(event, elements, 'qualityTrendsChart');
             }
         }
     });
@@ -200,22 +275,38 @@ function initializePerformanceChart() {
     const ctx = document.getElementById('performanceChart');
     if (!ctx) return;
     
-    performanceChart = new Chart(ctx.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Excellent', 'Good', 'Average', 'Needs Improvement'],
+    // Enhanced data structure for drill-down
+    chartData.performance = {
+        overview: {
+            labels: ['Excellent', 'Good', 'Average', 'Poor'],
             datasets: [{
-                data: [45, 35, 15, 5],
+                data: [45, 30, 20, 5],
                 backgroundColor: [
                     'rgba(75, 192, 192, 0.8)',
                     'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
                     'rgba(255, 99, 132, 0.8)'
                 ],
                 borderWidth: 2,
                 borderColor: '#fff'
             }]
         },
+        facility: {
+            labels: ['Additive Manufacturing', 'Hydrogen Filling Station', 'Servo DC Motor Assembly'],
+            datasets: [{
+                data: [35, 40, 25],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ]
+            }]
+        }
+    };
+    
+    performanceChart = new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: chartData.performance.overview,
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -224,6 +315,9 @@ function initializePerformanceChart() {
                     position: 'bottom'
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
                     callbacks: {
                         label: function(context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -232,6 +326,9 @@ function initializePerformanceChart() {
                         }
                     }
                 }
+            },
+            onClick: function(event, elements) {
+                handleChartClick(event, elements, 'performanceChart');
             }
         }
     });
@@ -241,124 +338,39 @@ function initializeTwinPerformanceChart() {
     const ctx = document.getElementById('twinPerformanceChart');
     if (!ctx) return;
     
-    twinPerformanceChart = new Chart(ctx.getContext('2d'), {
-        type: 'bar',
-        data: {
-            labels: ['Additive Manufacturing', 'Hydrogen Station', 'Servo Motor'],
+    // Enhanced data structure for drill-down
+    chartData.twinPerformance = {
+        overview: {
+            labels: generateDateLabels(14),
             datasets: [{
-                label: 'Health Score',
-                data: [96.2, 94.8, 91.6],
-                backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
+                label: 'Active Twins',
+                data: generateRandomData(14, 15, 25),
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
             }, {
-                label: 'CPU Usage',
-                data: [25, 35, 45],
-                backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }, {
-                label: 'Memory Usage',
-                data: [30, 40, 35],
-                backgroundColor: 'rgba(255, 159, 64, 0.8)',
-                borderColor: 'rgba(255, 159, 64, 1)',
-                borderWidth: 1
+                label: 'Performance Score',
+                data: generateRandomData(14, 85, 95),
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                tension: 0.4,
+                fill: true
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top'
-                }
-            },
-            scales: {
-                x: {
-                    stacked: false
-                },
-                y: {
-                    stacked: false,
-                    beginAtZero: true,
-                    max: 100
-                }
-            }
-        }
-    });
-}
-
-function initializeTwinHealthChart() {
-    const ctx = document.getElementById('twinHealthChart');
-    if (!ctx) return;
-    
-    twinHealthChart = new Chart(ctx.getContext('2d'), {
-        type: 'pie',
-        data: {
-            labels: ['Healthy', 'Warning', 'Critical'],
+        facility: {
+            labels: ['Additive Manufacturing', 'Hydrogen Filling Station', 'Servo DC Motor Assembly'],
             datasets: [{
-                data: [2, 1, 0],
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(255, 99, 132, 0.8)'
-                ],
-                borderWidth: 2,
-                borderColor: '#fff'
+                label: 'Twin Performance by Facility',
+                data: [92.5, 88.7, 85.3],
+                backgroundColor: ['rgba(75, 192, 192, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 159, 64, 0.8)']
             }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.parsed / total) * 100).toFixed(1);
-                            return `${context.label}: ${context.parsed} (${percentage}%)`;
-                        }
-                    }
-                }
-            }
         }
-    });
-}
-
-function initializePerformanceTrendsChart() {
-    const ctx = document.getElementById('performanceTrendsChart');
-    if (!ctx) return;
-    
-    // Create moving window data for performance trends
-    const maxDataPoints = 50;
-    const performanceData = {
-        labels: [],
-        data: []
     };
     
-    // Initialize with some data points
-    for (let i = 0; i < maxDataPoints; i++) {
-        performanceData.labels.push(`T${i}`);
-        performanceData.data.push(Math.random() * 20 + 80); // 80-100 range
-    }
-    
-    performanceTrendsChart = new Chart(ctx.getContext('2d'), {
+    twinPerformanceChart = new Chart(ctx.getContext('2d'), {
         type: 'line',
-        data: {
-            labels: performanceData.labels,
-            datasets: [{
-                label: 'Performance Score',
-                data: performanceData.data,
-                borderColor: 'rgb(255, 99, 132)',
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                tension: 0.4,
-                fill: true,
-                pointRadius: 0,
-                pointHoverRadius: 4
-            }]
-        },
+        data: chartData.twinPerformance.overview,
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -368,30 +380,183 @@ function initializePerformanceTrendsChart() {
             },
             plugins: {
                 legend: {
-                    display: false
+                    position: 'top'
                 },
                 tooltip: {
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
                     titleColor: 'white',
-                    bodyColor: 'white'
+                    bodyColor: 'white',
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}`;
+                        },
+                        afterLabel: function(context) {
+                            return getEnhancedTooltipInfo(context);
+                        }
+                    }
                 }
             },
             scales: {
                 x: {
-                    display: false
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
                 },
                 y: {
                     display: true,
-                    min: 70,
-                    max: 100,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
+                    title: {
+                        display: true,
+                        text: 'Count / Score'
                     }
                 }
             },
-            animation: {
-                duration: 750,
-                easing: 'easeInOutQuart'
+            onClick: function(event, elements) {
+                handleChartClick(event, elements, 'twinPerformanceChart');
+            }
+        }
+    });
+}
+
+function initializeTwinHealthChart() {
+    const ctx = document.getElementById('twinHealthChart');
+    if (!ctx) return;
+    
+    // Enhanced data structure for drill-down
+    chartData.twinHealth = {
+        overview: {
+            labels: ['Healthy', 'Warning', 'Critical', 'Offline'],
+            datasets: [{
+                data: [65, 20, 10, 5],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(201, 203, 207, 0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        facility: {
+            labels: ['Additive Manufacturing', 'Hydrogen Filling Station', 'Servo DC Motor Assembly'],
+            datasets: [{
+                data: [8, 6, 4],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ]
+            }]
+        }
+    };
+    
+    twinHealthChart = new Chart(ctx.getContext('2d'), {
+        type: 'doughnut',
+        data: chartData.twinHealth.overview,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            onClick: function(event, elements) {
+                handleChartClick(event, elements, 'twinHealthChart');
+            }
+        }
+    });
+}
+
+function initializePerformanceTrendsChart() {
+    const ctx = document.getElementById('performanceTrendsChart');
+    if (!ctx) return;
+    
+    // Enhanced data structure for drill-down
+    chartData.performanceTrends = {
+        overview: {
+            labels: generateDateLabels(20),
+            datasets: [{
+                label: 'Performance Score',
+                data: generateRandomData(20, 85, 95),
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        facility: {
+            labels: ['Additive Manufacturing', 'Hydrogen Filling Station', 'Servo DC Motor Assembly'],
+            datasets: [{
+                label: 'Performance by Facility',
+                data: [92.5, 88.7, 85.3],
+                backgroundColor: ['rgba(75, 192, 192, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 159, 64, 0.8)']
+            }]
+        }
+    };
+    
+    performanceTrendsChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: chartData.performanceTrends.overview,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                        },
+                        afterLabel: function(context) {
+                            return getEnhancedTooltipInfo(context);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Performance Score (%)'
+                    },
+                    min: 80,
+                    max: 100
+                }
+            },
+            onClick: function(event, elements) {
+                handleChartClick(event, elements, 'performanceTrendsChart');
             }
         }
     });
@@ -401,34 +566,77 @@ function initializeUptimeChart() {
     const ctx = document.getElementById('uptimeChart');
     if (!ctx) return;
     
-    uptimeChart = new Chart(ctx.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-            labels: ['Uptime', 'Downtime'],
+    // Enhanced data structure for drill-down
+    chartData.uptime = {
+        overview: {
+            labels: generateDateLabels(20),
             datasets: [{
-                data: [98.5, 1.5],
-                backgroundColor: [
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(255, 99, 132, 0.8)'
-                ],
-                borderWidth: 2,
-                borderColor: '#fff'
+                label: 'Uptime Percentage',
+                data: generateRandomData(20, 95, 99.5),
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                tension: 0.4,
+                fill: true
             }]
         },
+        facility: {
+            labels: ['Additive Manufacturing', 'Hydrogen Filling Station', 'Servo DC Motor Assembly'],
+            datasets: [{
+                label: 'Uptime by Facility',
+                data: [98.5, 97.2, 95.8],
+                backgroundColor: ['rgba(54, 162, 235, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(255, 159, 64, 0.8)']
+            }]
+        }
+    };
+    
+    uptimeChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: chartData.uptime.overview,
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'top'
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
                     callbacks: {
                         label: function(context) {
-                            return `${context.label}: ${context.parsed}%`;
+                            return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
+                        },
+                        afterLabel: function(context) {
+                            return getEnhancedTooltipInfo(context);
                         }
                     }
                 }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Uptime (%)'
+                    },
+                    min: 90,
+                    max: 100
+                }
+            },
+            onClick: function(event, elements) {
+                handleChartClick(event, elements, 'uptimeChart');
             }
         }
     });
@@ -917,3 +1125,424 @@ function cleanup() {
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', cleanup); 
+
+// Advanced Chart Interaction Functions
+
+function handleChartClick(event, elements, chartId) {
+    if (elements.length > 0) {
+        const element = elements[0];
+        const chart = getChartInstance(chartId);
+        if (!chart) return;
+        
+        console.log(`🔍 Chart click detected on ${chartId}:`, element);
+        
+        // Determine drill-down level based on current state
+        const currentState = chartInteractionState[getChartKey(chartId)];
+        if (currentState.level === 'overview') {
+            drillDownToDetail(chartId, element);
+        } else if (currentState.level === 'facility') {
+            drillDownToDaily(chartId, element);
+        }
+    }
+}
+
+function drillDownChart(chartId) {
+    console.log(`🔍 Drilling down chart: ${chartId}`);
+    const chart = getChartInstance(chartId);
+    if (!chart) return;
+    
+    const currentState = chartInteractionState[getChartKey(chartId)];
+    
+    if (currentState.level === 'overview') {
+        drillDownToFacility(chartId);
+    } else if (currentState.level === 'facility') {
+        drillDownToDaily(chartId);
+    } else {
+        showNotification('Maximum drill-down level reached', 'info');
+    }
+}
+
+function drillDownToFacility(chartId) {
+    const chart = getChartInstance(chartId);
+    const chartKey = getChartKey(chartId);
+    
+    if (chartData[chartKey] && chartData[chartKey].facility) {
+        chart.data = chartData[chartKey].facility;
+        chart.update();
+        
+        chartInteractionState[chartKey].level = 'facility';
+        updateChartStatus(chartId, 'Facility Level');
+        
+        showNotification(`Drilled down to facility level for ${chartId}`, 'success');
+    }
+}
+
+function drillDownToDaily(chartId) {
+    const chart = getChartInstance(chartId);
+    const chartKey = getChartKey(chartId);
+    
+    if (chartData[chartKey] && chartData[chartKey].daily) {
+        chart.data = chartData[chartKey].daily;
+        chart.update();
+        
+        chartInteractionState[chartKey].level = 'daily';
+        updateChartStatus(chartId, 'Daily Level');
+        
+        showNotification(`Drilled down to daily level for ${chartId}`, 'success');
+    }
+}
+
+function drillDownToDetail(chartId, element) {
+    const chart = getChartInstance(chartId);
+    const chartKey = getChartKey(chartId);
+    
+    // Create detailed view based on clicked element
+    const detailedData = createDetailedView(chartKey, element);
+    if (detailedData) {
+        chart.data = detailedData;
+        chart.update();
+        
+        chartInteractionState[chartKey].level = 'detail';
+        updateChartStatus(chartId, 'Detail Level');
+        
+        showNotification(`Showing detailed view for ${element.label || 'selected item'}`, 'success');
+    }
+}
+
+function resetChartView(chartId) {
+    console.log(`🔄 Resetting chart view: ${chartId}`);
+    const chart = getChartInstance(chartId);
+    const chartKey = getChartKey(chartId);
+    
+    if (chart && chartData[chartKey] && chartData[chartKey].overview) {
+        chart.data = chartData[chartKey].overview;
+        chart.update();
+        
+        chartInteractionState[chartKey].level = 'overview';
+        chartInteractionState[chartKey].filters = {};
+        updateChartStatus(chartId, 'Overview Level');
+        
+        showNotification(`Reset ${chartId} to overview level`, 'success');
+    }
+}
+
+function applyChartFilter(chartId) {
+    console.log(`🔧 Applying filter to chart: ${chartId}`);
+    
+    // Create filter modal
+    const filterModal = createFilterModal(chartId);
+    document.body.appendChild(filterModal);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(filterModal);
+    modal.show();
+}
+
+function createFilterModal(chartId) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = `filterModal-${chartId}`;
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filter Chart Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Date Range</label>
+                        <select class="form-select" id="dateRange-${chartId}">
+                            <option value="7">Last 7 days</option>
+                            <option value="14">Last 14 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Facility</label>
+                        <select class="form-select" id="facilityFilter-${chartId}">
+                            <option value="">All Facilities</option>
+                            <option value="additive">Additive Manufacturing</option>
+                            <option value="hydrogen">Hydrogen Filling Station</option>
+                            <option value="servo">Servo DC Motor Assembly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Performance Threshold</label>
+                        <input type="range" class="form-range" id="threshold-${chartId}" min="0" max="100" value="80">
+                        <div class="text-center" id="thresholdValue-${chartId}">80%</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="applyFilterToChart('${chartId}')">Apply Filter</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add event listeners
+    modal.addEventListener('shown.bs.modal', function() {
+        const thresholdSlider = modal.querySelector(`#threshold-${chartId}`);
+        const thresholdValue = modal.querySelector(`#thresholdValue-${chartId}`);
+        
+        thresholdSlider.addEventListener('input', function() {
+            thresholdValue.textContent = this.value + '%';
+        });
+    });
+    
+    return modal;
+}
+
+function applyFilterToChart(chartId) {
+    const modal = document.getElementById(`filterModal-${chartId}`);
+    const dateRange = modal.querySelector(`#dateRange-${chartId}`).value;
+    const facility = modal.querySelector(`#facilityFilter-${chartId}`).value;
+    const threshold = modal.querySelector(`#threshold-${chartId}`).value;
+    
+    console.log(`🔧 Applying filters to ${chartId}:`, { dateRange, facility, threshold });
+    
+    // Apply filters to chart data
+    const filteredData = filterChartData(chartId, { dateRange, facility, threshold });
+    
+    if (filteredData) {
+        const chart = getChartInstance(chartId);
+        chart.data = filteredData;
+        chart.update();
+        
+        // Update interaction state
+        const chartKey = getChartKey(chartId);
+        chartInteractionState[chartKey].filters = { dateRange, facility, threshold };
+        updateChartStatus(chartId, 'Filtered View');
+        
+        showNotification(`Applied filters to ${chartId}`, 'success');
+    }
+    
+    // Close modal
+    const bootstrapModal = bootstrap.Modal.getInstance(modal);
+    bootstrapModal.hide();
+    modal.remove();
+}
+
+function exportChartData(chartId) {
+    console.log(`📊 Exporting chart data: ${chartId}`);
+    const chart = getChartInstance(chartId);
+    if (!chart) return;
+    
+    // Prepare export data
+    const exportData = prepareChartExportData(chartId, chart);
+    
+    // Create and download file
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${chartId}_data_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification(`Exported ${chartId} data successfully`, 'success');
+}
+
+function getEnhancedTooltipInfo(context) {
+    const chartId = context.chart.canvas.id;
+    const chartKey = getChartKey(chartId);
+    const currentState = chartInteractionState[chartKey];
+    
+    let additionalInfo = [];
+    
+    // Add context-specific information
+    if (currentState.level === 'overview') {
+        additionalInfo.push('Click to drill down');
+        additionalInfo.push('Use filter button for custom views');
+    } else if (currentState.level === 'facility') {
+        additionalInfo.push('Click for daily breakdown');
+        additionalInfo.push('Use reset button to return to overview');
+    } else if (currentState.level === 'detail') {
+        additionalInfo.push('Use reset button to return to overview');
+    }
+    
+    // Add performance insights
+    if (context.parsed.y > 90) {
+        additionalInfo.push('Performance: Excellent');
+    } else if (context.parsed.y > 80) {
+        additionalInfo.push('Performance: Good');
+    } else if (context.parsed.y > 70) {
+        additionalInfo.push('Performance: Average');
+    } else {
+        additionalInfo.push('Performance: Needs Improvement');
+    }
+    
+    return additionalInfo;
+}
+
+// Helper functions
+
+function getChartInstance(chartId) {
+    const chartMap = {
+        'qualityTrendsChart': qualityTrendsChart,
+        'performanceChart': performanceChart,
+        'twinPerformanceChart': twinPerformanceChart,
+        'twinHealthChart': twinHealthChart,
+        'performanceTrendsChart': performanceTrendsChart,
+        'uptimeChart': uptimeChart
+    };
+    return chartMap[chartId];
+}
+
+function getChartKey(chartId) {
+    const keyMap = {
+        'qualityTrendsChart': 'qualityTrends',
+        'performanceChart': 'performance',
+        'twinPerformanceChart': 'twinPerformance',
+        'twinHealthChart': 'twinHealth'
+    };
+    return keyMap[chartId];
+}
+
+function updateChartStatus(chartId, status) {
+    const statusElement = document.getElementById(`${chartId}-status`);
+    if (statusElement) {
+        statusElement.textContent = status;
+    }
+}
+
+function createDetailedView(chartKey, element) {
+    // Create detailed view based on chart type and clicked element
+    switch (chartKey) {
+        case 'qualityTrends':
+            return {
+                labels: generateDateLabels(7),
+                datasets: [{
+                    label: `Detailed ${element.dataset.label}`,
+                    data: generateRandomData(7, 85, 98),
+                    borderColor: element.dataset.borderColor,
+                    backgroundColor: element.dataset.backgroundColor,
+                    tension: 0.4,
+                    fill: true
+                }]
+            };
+        case 'performance':
+            return {
+                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                datasets: [{
+                    label: `Performance for ${element.label}`,
+                    data: generateRandomData(4, 70, 95),
+                    backgroundColor: element.dataset.backgroundColor
+                }]
+            };
+        default:
+            return null;
+    }
+}
+
+function filterChartData(chartId, filters) {
+    const chartKey = getChartKey(chartId);
+    const originalData = chartData[chartKey]?.overview;
+    
+    if (!originalData) return null;
+    
+    // Apply filters to create filtered dataset
+    let filteredData = JSON.parse(JSON.stringify(originalData));
+    
+    // Apply date range filter
+    if (filters.dateRange) {
+        const days = parseInt(filters.dateRange);
+        filteredData.labels = generateDateLabels(days);
+        filteredData.datasets.forEach(dataset => {
+            dataset.data = generateRandomData(days, 80, 95);
+        });
+    }
+    
+    // Apply facility filter (simplified)
+    if (filters.facility) {
+        // In a real implementation, this would filter actual facility data
+        console.log(`Filtering for facility: ${filters.facility}`);
+    }
+    
+    // Apply threshold filter
+    if (filters.threshold) {
+        const threshold = parseInt(filters.threshold);
+        filteredData.datasets.forEach(dataset => {
+            dataset.data = dataset.data.map(value => 
+                value < threshold ? value * 0.8 : value
+            );
+        });
+    }
+    
+    return filteredData;
+}
+
+function prepareChartExportData(chartId, chart) {
+    const chartKey = getChartKey(chartId);
+    const currentState = chartInteractionState[chartKey];
+    
+    return {
+        chartId: chartId,
+        exportDate: new Date().toISOString(),
+        currentLevel: currentState.level,
+        filters: currentState.filters,
+        data: {
+            labels: chart.data.labels,
+            datasets: chart.data.datasets.map(dataset => ({
+                label: dataset.label,
+                data: dataset.data,
+                type: dataset.type || 'default'
+            }))
+        },
+        metadata: {
+            totalDataPoints: chart.data.labels.length,
+            datasets: chart.data.datasets.length,
+            chartType: chart.config.type
+        }
+    };
+} 
+
+function setupTwinRegistryActions() {
+    // Sync all twins
+    window.syncAllTwins = function() {
+        showNotification('Syncing all twins...', 'info');
+        // Simulate sync process
+        setTimeout(() => {
+            loadTwinRegistryData();
+            showNotification('All twins synchronized successfully', 'success');
+        }, 2000);
+    };
+    
+    // View twin health
+    window.viewTwinHealth = function() {
+        window.location.href = '/twin-registry#health';
+    };
+    
+    // Export twin data
+    window.exportTwinData = function() {
+        showNotification('Exporting twin data...', 'info');
+        // Simulate export process
+        setTimeout(() => {
+            showNotification('Twin data exported successfully', 'success');
+        }, 1500);
+    };
+} 
+
+// Export functions to global scope for cross-module access
+window.initializeQIAnalytics = initializeQIAnalytics;
+window.setupEventListeners = setupEventListeners;
+window.setupAdvancedChartInteractions = setupAdvancedChartInteractions;
+window.loadAnalyticsData = loadAnalyticsData;
+window.loadTwinRegistryData = loadTwinRegistryData;
+window.generateAnalyticsReport = generateAnalyticsReport;
+window.exportAnalyticsData = exportAnalyticsData;
+window.compareTwinAnalytics = compareTwinAnalytics;
+window.refreshTwinData = refreshTwinData;
+window.drillDownChart = drillDownChart;
+window.resetChartView = resetChartView;
+window.applyChartFilter = applyChartFilter;
+window.exportChartData = exportChartData;
+
+// Cleanup function
+window.cleanup = cleanup;
+
+console.log('✅ QI Analytics functions exported to global scope'); 
