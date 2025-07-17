@@ -94,6 +94,7 @@ qi_analytics_router = None
 aasx_router = None
 kg_neo4j_router = None
 aasx_explorer_router = None
+federated_learning_router = None
 
 try:
     from webapp.ai_rag.routes import router as ai_rag_router
@@ -145,6 +146,14 @@ try:
     print("✅ AASX Explorer router loaded successfully")
 except Exception as e:
     print(f"⚠️  AASX Explorer router failed to load: {e}")
+
+# Import federated learning router
+try:
+    from webapp.federated_learning.routes import router as federated_learning_router
+    app.include_router(federated_learning_router, prefix="/federated-learning", tags=["federated-learning"])
+    print("✅ Federated Learning router loaded successfully")
+except Exception as e:
+    print(f"⚠️  Federated Learning router failed to load: {e}")
 
 # Main dashboard route
 @app.get("/", response_class=HTMLResponse)
@@ -198,11 +207,19 @@ async def dashboard(request: Request):
                 },
                 {
                     "id": "analytics",
-                    "name": "Analytics Dashboard",
-                    "description": "Comprehensive analytics with quality trends, performance monitoring, predictive analysis, and cross-module integration",
+                    "name": "QI Analytics",
+                    "description": "Quality Intelligence analytics with comprehensive data analysis, visualization, and reporting capabilities",
                     "url": "/analytics",
                     "icon": "📊",
                     "available": qi_analytics_router is not None
+                },
+                {
+                    "id": "federated-learning",
+                    "name": "Federated Learning",
+                    "description": "Privacy-preserving collaborative AI across digital twins with cross-domain knowledge sharing and performance optimization",
+                    "url": "/federated-learning",
+                    "icon": "🧠",
+                    "available": federated_learning_router is not None
                 }
             ]
         }
@@ -223,7 +240,8 @@ async def health_check():
             "twin_registry": twin_registry_router is not None,
             "certificate_manager": certificate_manager_router is not None,
             "qi_analytics": qi_analytics_router is not None,
-            "aasx": aasx_router is not None
+            "aasx": aasx_router is not None,
+            "federated_learning": federated_learning_router is not None
         }
     }
 
@@ -244,7 +262,8 @@ async def api_status():
             "ai_rag": "/ai-rag",
             "twin_registry": "/twin-registry",
             "certificates": "/certificates",
-            "analytics": "/analytics"
+            "analytics": "/analytics",
+            "federated_learning": "/federated-learning"
         }
     }
 
@@ -285,7 +304,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     "twin_registry": twin_registry_router is not None,
                     "certificate_manager": certificate_manager_router is not None,
                     "qi_analytics": qi_analytics_router is not None,
-                    "aasx": aasx_router is not None
+                    "aasx": aasx_router is not None,
+                    "federated_learning": federated_learning_router is not None
                 }
             }
             await websocket.send_text(json.dumps(status_data))

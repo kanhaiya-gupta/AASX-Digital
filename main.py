@@ -175,6 +175,7 @@ class AASXDigitalTwinFramework:
             logger.info(f"   • Twin Registry: http://localhost:{port}/twin-registry")
             logger.info(f"   • Certificates: http://localhost:{port}/certificates")
             logger.info(f"   • Analytics: http://localhost:{port}/analytics")
+            logger.info(f"   • Federated Learning: http://localhost:{port}/federated-learning")
             logger.info(f"   • API Docs: http://localhost:{port}/docs")
             logger.info(f"   • Health: http://localhost:{port}/health")
             logger.info("")
@@ -185,8 +186,7 @@ class AASXDigitalTwinFramework:
             logger.info("   4. Use AI/RAG for intelligent analysis")
             logger.info("   5. Manage digital twins in the registry")
             logger.info("   6. View analytics and insights")
-            logger.info("")
-            logger.info("🛑 Press Ctrl+C to stop the server")
+            logger.info("   7. Explore federated learning capabilities")
             logger.info("")
             
             # Set up signal handlers
