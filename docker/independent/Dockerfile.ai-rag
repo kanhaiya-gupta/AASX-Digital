@@ -16,82 +16,22 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code and scripts
-COPY backend/ ./backend/
-COPY webapp/ ./webapp/
-COPY scripts/ ./scripts/
-COPY config_enhanced_rag.yaml .
-COPY config/ ./config/
+# Copy AI/RAG code
+COPY src/ ./src/
 
-# Create necessary directories with proper permissions
-RUN mkdir -p /app/output /app/logs /app/data/processed /app/data/raw && \
-    chmod -R 755 /app/output /app/logs /app/data
+# Create necessary directories
+RUN mkdir -p data output logs
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-ENV QDRANT_URL=http://qdrant:6333
-ENV NEO4J_URI=neo4j://neo4j:7687
-ENV NEO4J_USER=neo4j
-ENV NEO4J_PASSWORD=Neo4j123
-ENV ETL_OUTPUT_DIR=/app/output/etl_results
-ENV RAG_QUERY=""
-ENV RAG_QUERY_NAME=""
-ENV RAG_CATEGORY=""
-ENV RAG_ANALYSIS_TYPE="general"
-ENV RAG_COLLECTION="aasx_assets"
-ENV RAG_LIMIT=5
 
-# Create non-root user for security
-RUN useradd -m -u 1000 raguser && \
-    chown -R raguser:raguser /app && \
-    chmod -R 755 /app
+# Expose port
+EXPOSE 8002
 
-USER raguser
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
-echo "Waiting for services to be ready..."\n\
-echo "Checking Qdrant..."\n\
-until curl -f http://qdrant:6333/collections; do\n\
-    echo "Waiting for Qdrant..."\n\
-    sleep 5\n\
-done\n\
-echo "Qdrant is ready!"\n\
-echo "Checking Neo4j..."\n\
-python scripts/wait_for_neo4j.py\n\
-if [ $? -eq 0 ]; then\n\
-    echo "Neo4j is ready!"\n\
-    echo "Running AI/RAG system..."\n\
-    if [ -n "$RAG_QUERY" ]; then\n\
-        echo "Processing custom query: $RAG_QUERY"\n\
-        python scripts/run_ai_rag.py --custom-query "$RAG_QUERY" --analysis-type "$RAG_ANALYSIS_TYPE" --collection "$RAG_COLLECTION" --limit "$RAG_LIMIT"\n\
-    elif [ -n "$RAG_QUERY_NAME" ]; then\n\
-        echo "Processing predefined query: $RAG_QUERY_NAME"\n\
-        python scripts/run_ai_rag.py --query-name "$RAG_QUERY_NAME"\n\
-    elif [ -n "$RAG_CATEGORY" ]; then\n\
-        echo "Processing category: $RAG_CATEGORY"\n\
-        python scripts/run_ai_rag.py --category "$RAG_CATEGORY"\n\
-    else\n\
-        echo "No query provided, running demo mode..."\n\
-        python scripts/run_ai_rag.py --stats --demo\n\
-    fi\n\
-else\n\
-    echo "Neo4j not available, running without graph features..."\n\
-    if [ -n "$RAG_QUERY" ]; then\n\
-        echo "Processing custom query: $RAG_QUERY"\n\
-        python scripts/run_ai_rag.py --custom-query "$RAG_QUERY" --analysis-type "$RAG_ANALYSIS_TYPE" --collection "$RAG_COLLECTION" --limit "$RAG_LIMIT"\n\
-    elif [ -n "$RAG_QUERY_NAME" ]; then\n\
-        echo "Processing predefined query: $RAG_QUERY_NAME"\n\
-        python scripts/run_ai_rag.py --query-name "$RAG_QUERY_NAME"\n\
-    elif [ -n "$RAG_CATEGORY" ]; then\n\
-        echo "Processing category: $RAG_CATEGORY"\n\
-        python scripts/run_ai_rag.py --category "$RAG_CATEGORY"\n\
-    else\n\
-        echo "No query provided, running demo mode..."\n\
-        python scripts/run_ai_rag.py --stats --demo\n\
-    fi\n\
-fi' > /app/startup.sh && chmod +x /app/startup.sh
-
-# Default command - run startup script
-CMD ["/app/startup.sh"] 
+# Run the AI/RAG system
+CMD ["python", "-m", "uvicorn", "src.ai_rag.ai_rag:app", "--host", "0.0.0.0", "--port", "8002", "--reload"] 

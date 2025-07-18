@@ -1,22 +1,29 @@
-FROM node:18-alpine
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN npm install
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY certificate-manager/ ./certificate-manager/
+COPY src/certificate_manager/ ./certificate_manager/
 
 # Create necessary directories
 RUN mkdir -p certificates
 
 # Set environment variables
-ENV NODE_ENV=development
+ENV PYTHONPATH=/app
 ENV PORT=3001
 
 # Expose port
@@ -27,4 +34,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3001/health || exit 1
 
 # Run the certificate manager
-CMD ["npm", "start"] 
+CMD ["python", "-m", "uvicorn", "certificate_manager.main:app", "--host", "0.0.0.0", "--port", "3001"] 

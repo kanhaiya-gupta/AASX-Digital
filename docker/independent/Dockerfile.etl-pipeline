@@ -3,24 +3,12 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies including .NET 6.0
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
-    libxml2-dev \
-    libxslt-dev \
-    wget \
-    gnupg \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install .NET 6.0 SDK
-RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg \
-    && mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/ \
-    && wget -q https://packages.microsoft.com/config/debian/11/prod.list \
-    && mv prod.list /etc/apt/sources.list.d/microsoft-prod.list \
-    && apt-get update \
-    && apt-get install -y dotnet-sdk-6.0 \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -29,34 +17,22 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy ETL pipeline code
-COPY backend/aasx/ ./backend/aasx/
-COPY scripts/ ./scripts/
-COPY config_enhanced_rag.yaml .
-COPY scripts/config_etl.yaml .
+# Copy AASX ETL code
+COPY src/aasx/ ./src/aasx/
 
-# Copy and build AAS Processor (.NET component)
-COPY aas-processor/ ./aas-processor/
-WORKDIR /app/aas-processor
-RUN dotnet restore && dotnet build -c Release
-WORKDIR /app
-
-# Create non-root user first
-RUN useradd -m -u 1000 etluser
-
-# Create necessary directories with proper permissions
-RUN mkdir -p output/etl_results logs data/aasx-examples && \
-    chown -R etluser:etluser /app
+# Create necessary directories
+RUN mkdir -p data output logs
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-ENV ETL_CONFIG_PATH=/app/scripts/config_etl.yaml
-ENV AAS_PROCESSOR_PATH=/app/aas-processor/bin/Release/net6.0/AasProcessor
-ENV DOTNET_ROOT=/usr/share/dotnet
 
-# Switch to non-root user
-USER etluser
+# Expose port
+EXPOSE 8003
 
-# Default command - run ETL pipeline script
-CMD ["python", "scripts/run_etl.py", "--verbose"] 
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8003/health || exit 1
+
+# Run the ETL pipeline
+CMD ["python", "-m", "uvicorn", "src.aasx.aasx_etl_pipeline:app", "--host", "0.0.0.0", "--port", "8003", "--reload"] 

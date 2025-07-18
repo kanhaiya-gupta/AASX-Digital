@@ -10,28 +10,28 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY src/qi_analytics/ ./qi_analytics/
+# Copy federated learning code
+COPY src/federated_learning/ ./src/federated_learning/
 
 # Create necessary directories
-RUN mkdir -p output
+RUN mkdir -p data output logs models
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV PORT=3002
+ENV PYTHONUNBUFFERED=1
 
 # Expose port
-EXPOSE 3002
+EXPOSE 8005
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3002/health || exit 1
+    CMD curl -f http://localhost:8005/health || exit 1
 
-# Run the analytics service
-CMD ["python", "-m", "uvicorn", "qi_analytics.main:app", "--host", "0.0.0.0", "--port", "3002"] 
+# Run the federated learning service
+CMD ["python", "-m", "uvicorn", "src.federated_learning.federated_engine:app", "--host", "0.0.0.0", "--port", "8005", "--reload"] 

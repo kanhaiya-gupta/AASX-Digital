@@ -16,41 +16,22 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend code and scripts
-COPY backend/ ./backend/
-COPY webapp/ ./webapp/
-COPY scripts/ ./scripts/
-COPY config_enhanced_rag.yaml .
+# Copy Knowledge Graph code
+COPY src/ ./src/
 
-# Create necessary directories with proper permissions
-RUN mkdir -p /app/output /app/logs /app/data/processed /app/data/raw /app/data/graph_data && \
-    chmod -R 755 /app/output /app/logs /app/data
+# Create necessary directories
+RUN mkdir -p data output logs
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-ENV DATA_SOURCE=neo4j
-ENV GRAPH_DATA_DIR=/app/data/graph_data
-ENV PROCESSED_DATA_DIR=/app/data/processed
 
-# Create non-root user for security
-RUN useradd -m -u 1000 kguser && \
-    chown -R kguser:kguser /app && \
-    chmod -R 755 /app
+# Expose port
+EXPOSE 8004
 
-USER kguser
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8004/health || exit 1
 
-# Create startup script
-RUN echo '#!/bin/bash\n\
-echo "Waiting for Neo4j to be ready..."\n\
-python scripts/wait_for_neo4j.py\n\
-if [ $? -eq 0 ]; then\n\
-    echo "Neo4j is ready, running analysis..."\n\
-    python scripts/integrate_neo4j.py --analyze\n\
-else\n\
-    echo "Failed to connect to Neo4j"\n\
-    exit 1\n\
-fi' > /app/startup.sh && chmod +x /app/startup.sh
-
-# Default command - run startup script
-CMD ["/app/startup.sh"] 
+# Run the Knowledge Graph
+CMD ["python", "-m", "uvicorn", "src.kg_neo4j.graph_analyzer:app", "--host", "0.0.0.0", "--port", "8004", "--reload"] 

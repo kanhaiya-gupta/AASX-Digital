@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy twin registry code
-COPY backend/twin-registry/ ./backend/twin-registry/
+COPY src/twin_registry/ ./src/twin_registry/
 
 # Create necessary directories
 RUN mkdir -p digital-twins
@@ -34,4 +34,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8001/health || exit 1
 
 # Run the twin registry
-CMD ["python", "-m", "uvicorn", "backend.twin-registry.twin_registry:app", "--host", "0.0.0.0", "--port", "8001", "--reload"] 
+CMD ["python", "-m", "uvicorn", "src.twin_registry.twin_registry:app", "--host", "0.0.0.0", "--port", "8001", "--reload"] 

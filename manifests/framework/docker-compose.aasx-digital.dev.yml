@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # Neo4j Database (Development)
+  neo4j:
+    image: neo4j:5.15
+    container_name: aasx-digital-neo4j-dev
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
+      NEO4J_dbms_memory_heap_initial__size: 1G
+      NEO4J_dbms_memory_heap_max__size: 2G
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
+    volumes:
+      - neo4j_data_dev:/data
+      - neo4j_logs_dev:/logs
+      - neo4j_import_dev:/var/lib/neo4j/import
+      - neo4j_plugins_dev:/plugins
+    networks:
+      - aasx-digital-dev-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Qdrant Vector Database (Development)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: aasx-digital-qdrant-dev
+    ports:
+      - "6333:6333"  # REST API
+      - "6334:6334"  # GRPC
+    volumes:
+      - qdrant_data_dev:/qdrant/storage
+    networks:
+      - aasx-digital-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache (Development)
+  redis:
+    image: redis:7-alpine
+    container_name: aasx-digital-redis-dev
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - aasx-digital-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AASX Digital Twin Analytics Framework Webapp (Development)
+  webapp:
+    build:
+      context: ../..
+      dockerfile: docker/framework/Dockerfile.aasx-digital
+    container_name: aasx-digital-webapp-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - NEO4J_URI=neo4j://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DEBUG=true
+      - HOST=0.0.0.0
+      - PORT=8000
+      - WORKERS=1
+      - RELOAD=true
+      - ACCESS_LOG=true
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ../../data:/app/data
+      - ../../output:/app/output
+      - ../../logs:/app/logs
+      - ../../src:/app/src
+      - ../../webapp:/app/webapp
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aasx-digital-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  neo4j_data_dev:
+    driver: local
+  neo4j_logs_dev:
+    driver: local
+  neo4j_import_dev:
+    driver: local
+  neo4j_plugins_dev:
+    driver: local
+  qdrant_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+
+networks:
+  aasx-digital-dev-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16 

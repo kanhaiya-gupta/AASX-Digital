@@ -1,4 +1,13 @@
+# AASX Digital Twin Analytics Framework - Production Dockerfile
+# For domain: www.aasx-digital.de
+# Framework: FastAPI
+
 FROM python:3.11-slim
+
+# Set metadata
+LABEL maintainer="AASX Framework Team"
+LABEL version="1.0.0"
+LABEL description="AASX Digital Twin Analytics Framework - Production Build"
 
 # Set working directory
 WORKDIR /app
@@ -8,19 +17,27 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash aasx && \
+    chown -R aasx:aasx /app
 
 # Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY webapp/ ./webapp/
 COPY src/ ./src/
 COPY main.py .
-COPY config_enhanced_rag.yaml .
+
+# Copy config file from correct location
+COPY src/config/config_enhanced_rag.yaml ./src/config/config_enhanced_rag.yaml
 
 # Create necessary directories
 RUN mkdir -p output logs data digital-twins certificates
@@ -29,6 +46,10 @@ RUN mkdir -p output logs data digital-twins certificates
 ENV PYTHONPATH=/app
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=8000
+ENV PYTHONUNBUFFERED=1
+
+# Switch to non-root user
+USER aasx
 
 # Expose port
 EXPOSE 8000
