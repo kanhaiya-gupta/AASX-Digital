@@ -106,7 +106,7 @@ class FileInfo(BaseModel):
 
 # Configuration
 AASX_EXPLORER_PATH = os.path.join(os.getcwd(), "AasxPackageExplorer", "AasxPackageExplorer.exe")
-AASX_LAUNCHER_SCRIPT = os.path.join(os.getcwd(), "scripts", "launch_explorer.py")
+AASX_LAUNCHER_SCRIPT = os.path.join(os.getcwd(), "src", "aasx", "launch_explorer.py")
 AASX_CONTENT_PATH = os.path.join(os.getcwd(), "data", "aasx-examples")
 ETL_CONFIG_PATH = os.path.join(os.getcwd(), "webapp", "config", "config_etl.yaml")
 
@@ -994,18 +994,19 @@ async def reset_etl_pipeline_endpoint():
 async def get_explorer_status():
     """Get AASX Package Explorer status"""
     try:
-        explorer_available = os.path.exists(AASX_LAUNCHER_SCRIPT)
+        # Import the launcher module
+        from src.aasx.launch_explorer import check_explorer_status
         
-        status = {
-            "available": explorer_available,
-            "path": AASX_LAUNCHER_SCRIPT,
-            "platform": platform.system(),
-            "content_path": AASX_CONTENT_PATH,
-            "content_available": os.path.exists(AASX_CONTENT_PATH)
-        }
+        # Get status using the module
+        status = check_explorer_status()
         
-        if explorer_available:
-            # Get file size and modification time
+        # Add additional information
+        status["available"] = status["explorer_found"]
+        status["path"] = AASX_LAUNCHER_SCRIPT
+        status["content_available"] = status["content_found"]
+        
+        # Get file size and modification time for the launcher script
+        if os.path.exists(AASX_LAUNCHER_SCRIPT):
             stat = os.stat(AASX_LAUNCHER_SCRIPT)
             status.update({
                 "file_size": stat.st_size,
@@ -1014,27 +1015,36 @@ async def get_explorer_status():
         
         return status
         
+    except ImportError as e:
+        raise HTTPException(status_code=404, detail=f"AASX Package Explorer launcher module not found: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/api/explorer/launch")
 async def launch_explorer():
-    """Launch AASX Package Explorer using the Python launcher script"""
+    """Launch AASX Package Explorer using the Python launcher module"""
     try:
-        # Use the Python launcher script
-        if not os.path.exists(AASX_LAUNCHER_SCRIPT):
-            raise HTTPException(status_code=404, detail="AASX Package Explorer launcher script not found")
+        # Import the launcher module
+        from src.aasx.launch_explorer import launch_explorer as launch_aasx_explorer
         
-        # Launch using Python script
-        subprocess.Popen([sys.executable, AASX_LAUNCHER_SCRIPT])
+        # Launch the explorer using the module
+        result = launch_aasx_explorer(silent=True)
         
-        return {
-            "success": True,
-            "message": "AASX Package Explorer launcher started successfully",
-            "timestamp": datetime.now().isoformat(),
-            "method": "python_script"
-        }
+        if result["success"]:
+            return {
+                "success": True,
+                "message": result["message"],
+                "timestamp": datetime.now().isoformat(),
+                "method": "python_module",
+                "explorer_path": result["explorer_path"],
+                "content_path": result["content_path"],
+                "pid": result.get("pid")
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result["message"])
         
+    except ImportError as e:
+        raise HTTPException(status_code=404, detail=f"AASX Package Explorer launcher module not found: {str(e)}")
     except HTTPException:
         raise
     except Exception as e:
@@ -1044,7 +1054,7 @@ async def launch_explorer():
 async def launch_explorer_script():
     """Get Python launcher script for AASX Package Explorer"""
     try:
-        launcher_script = os.path.join(os.getcwd(), "scripts", "launch_explorer.py")
+        launcher_script = os.path.join(os.getcwd(), "src", "aasx", "launch_explorer.py")
         
         if not os.path.exists(launcher_script):
             raise HTTPException(status_code=404, detail="AASX Package Explorer launcher script not found")
