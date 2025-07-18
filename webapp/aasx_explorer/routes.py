@@ -56,29 +56,26 @@ async def download_aasx_explorer_zip():
 async def launch_aasx_explorer():
     """Launch the AASX Package Explorer application"""
     try:
-        import subprocess
-        import platform
+        # Import the launcher module
+        from src.aasx.launch_explorer import launch_explorer as launch_aasx_explorer
         
-        # Check platform
-        if platform.system() != "Windows":
-            raise HTTPException(status_code=400, detail="AASX Package Explorer is a Windows application only")
+        # Launch the explorer using the module
+        result = launch_aasx_explorer(silent=True)
         
-        # Find the executable
-        explorer_path = Path("AasxPackageExplorer/AasxPackageExplorer.exe")
-        
-        if not explorer_path.exists():
-            raise HTTPException(status_code=404, detail="AASX Package Explorer executable not found")
-        
-        # Launch the application directly
-        process = subprocess.Popen([str(explorer_path)])
-        
-        return {
-            "success": True,
-            "message": "AASX Package Explorer launched successfully",
-            "pid": process.pid,
-            "executable_path": str(explorer_path)
-        }
+        if result["success"]:
+            return {
+                "success": True,
+                "message": result["message"],
+                "pid": result.get("pid"),
+                "executable_path": result["explorer_path"],
+                "method": result.get("method", "unknown"),
+                "platform": result.get("platform", "unknown")
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result["message"])
             
+    except ImportError as e:
+        raise HTTPException(status_code=404, detail=f"AASX Package Explorer launcher module not found: {str(e)}")
     except HTTPException:
         raise
     except Exception as e:
@@ -88,40 +85,38 @@ async def launch_aasx_explorer():
 async def get_aasx_explorer_status():
     """Get the status of AASX Package Explorer"""
     try:
-        import platform
+        # Import the launcher module for status checking
+        from src.aasx.launch_explorer import check_explorer_status
         import psutil
         
-        # Check if executable exists
-        explorer_path = Path("AasxPackageExplorer/AasxPackageExplorer.exe")
-        executable_found = explorer_path.exists()
+        # Get comprehensive status from launcher module
+        status = check_explorer_status()
         
-        # Check if running
+        # Check if running (additional process check)
         running = False
         pid = None
         for proc in psutil.process_iter(['pid', 'name']):
             try:
                 proc_info = proc.info
                 proc_name = proc_info['name'].lower() if proc_info['name'] else ''
-                if 'aasxpackageexplorer' in proc_name:
+                if 'aasxpackageexplorer' in proc_name or 'wine' in proc_name:
                     running = True
                     pid = proc_info['pid']
                     break
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
         
-        return {
-            "success": True,
-            "executable_found": executable_found,
-            "executable_path": str(explorer_path) if executable_found else None,
-            "running": running,
-            "pid": pid,
-            "platform": platform.system()
-        }
+        # Add process status to the result
+        status["running"] = running
+        status["pid"] = pid
+        status["success"] = True
         
-    except ImportError:
+        return status
+        
+    except ImportError as e:
         return {
             "success": False,
-            "error": "psutil not available for process checking"
+            "error": f"Launcher module not available: {str(e)}"
         }
     except Exception as e:
         return {

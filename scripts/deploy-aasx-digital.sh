@@ -2,14 +2,14 @@
 
 # AASX Digital Twin Analytics Framework - Production Deployment Script
 # For domain: www.aasx-digital.de
-# Framework: FastAPI
+# Framework: FastAPI with .NET AAS Processor
 # Docker Compose: manifests/framework/docker-compose.aasx-digital.yml
 
 set -e
 
 echo "🚀 Starting AASX Digital Twin Analytics Framework Deployment..."
 echo "🌐 Domain: www.aasx-digital.de"
-echo "⚡ Framework: FastAPI"
+echo "⚡ Framework: FastAPI with .NET AAS Processor"
 echo "🐳 Docker Compose: manifests/framework/docker-compose.aasx-digital.yml"
 
 # Colors for output
@@ -58,6 +58,51 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 print_status "Prerequisites check passed!"
+
+# .NET AAS Processor Setup
+print_header "Setting up .NET AAS Processor..."
+
+# Check if .NET SDK is available locally for testing
+if command -v dotnet &> /dev/null; then
+    print_status "Local .NET SDK found. Testing .NET processor build..."
+    
+    # Check if aas-processor directory exists
+    if [ -d "aas-processor" ]; then
+        print_status "Building .NET AAS Processor locally for validation..."
+        cd aas-processor
+        
+        # Restore packages
+        if dotnet restore; then
+            print_status "✅ .NET packages restored successfully"
+        else
+            print_error "❌ Failed to restore .NET packages"
+            exit 1
+        fi
+        
+        # Build the processor
+        if dotnet build -c Release; then
+            print_status "✅ .NET AAS Processor built successfully"
+        else
+            print_error "❌ Failed to build .NET AAS Processor"
+            exit 1
+        fi
+        
+        # Test the processor
+        if [ -f "bin/Release/net6.0/AasProcessor.exe" ]; then
+            print_status "✅ .NET AAS Processor executable found"
+        else
+            print_error "❌ .NET AAS Processor executable not found"
+            exit 1
+        fi
+        
+        cd ..
+    else
+        print_error "❌ aas-processor directory not found"
+        exit 1
+    fi
+else
+    print_warning "Local .NET SDK not found. .NET processor will be built in Docker."
+fi
 
 # Create necessary directories
 print_header "Creating necessary directories..."
@@ -141,12 +186,52 @@ print_header "Stopping existing containers..."
 docker-compose -f manifests/framework/docker-compose.aasx-digital.yml down --remove-orphans
 
 # Build and start services
-print_header "Building and starting FastAPI services..."
+print_header "Building and starting FastAPI services with .NET AAS Processor..."
+print_status "Building Docker images (this may take several minutes for .NET build)..."
 docker-compose -f manifests/framework/docker-compose.aasx-digital.yml up -d --build
 
 # Wait for services to be ready
 print_status "Waiting for FastAPI services to be ready..."
 sleep 30
+
+# Test .NET processor in container
+print_header "Testing .NET AAS Processor in container..."
+if docker exec aasx-digital-webapp ls -la /app/aas-processor/AasProcessor.exe > /dev/null 2>&1; then
+    print_status "✅ .NET AAS Processor found in container"
+    
+    # Test processor execution
+    if docker exec aasx-digital-webapp /app/aas-processor/AasProcessor.exe --help > /dev/null 2>&1; then
+        print_status "✅ .NET AAS Processor is executable"
+    else
+        print_warning "⚠️  .NET AAS Processor executable test failed"
+    fi
+else
+    print_error "❌ .NET AAS Processor not found in container"
+    docker-compose -f manifests/framework/docker-compose.aasx-digital.yml logs webapp
+    exit 1
+fi
+
+# Test Wine integration for AASX Package Explorer
+print_header "Testing Wine integration for AASX Package Explorer..."
+if docker exec aasx-digital-webapp wine --version > /dev/null 2>&1; then
+    print_status "✅ Wine is available in container"
+    
+    # Test AASX Package Explorer files
+    if docker exec aasx-digital-webapp ls -la /app/AasxPackageExplorer/AasxPackageExplorer.exe > /dev/null 2>&1; then
+        print_status "✅ AASX Package Explorer found in container"
+        
+        # Test Wine integration
+        if docker exec aasx-digital-webapp python scripts/test_wine_integration.py > /dev/null 2>&1; then
+            print_status "✅ Wine integration test passed"
+        else
+            print_warning "⚠️  Wine integration test failed (GUI may not be visible in container)"
+        fi
+    else
+        print_warning "⚠️  AASX Package Explorer not found in container"
+    fi
+else
+    print_warning "⚠️  Wine not available in container"
+fi
 
 # Check service health
 print_header "Checking service health..."
@@ -189,6 +274,22 @@ fi
 
 print_status "🎉 All FastAPI services are healthy!"
 
+# Test AASX processing functionality
+print_header "Testing AASX processing functionality..."
+if curl -f http://localhost:8000/aasx/health > /dev/null 2>&1; then
+    print_status "✅ AASX processing module is accessible"
+else
+    print_warning "⚠️  AASX processing module health check failed"
+fi
+
+# Run integration tests
+print_header "Running AASX integration tests..."
+if python scripts/test_aasx_integration.py; then
+    print_status "✅ All AASX integration tests passed"
+else
+    print_warning "⚠️  Some AASX integration tests failed"
+fi
+
 # Test HTTPS if SSL certificates exist
 if [ -f "nginx/ssl/cert.pem" ] && [ -f "nginx/ssl/key.pem" ]; then
     print_header "Testing HTTPS access..."
@@ -205,7 +306,7 @@ fi
 echo ""
 echo "🌐 AASX Digital Twin Analytics Framework"
 echo "========================================"
-echo "Framework: FastAPI"
+echo "Framework: FastAPI with .NET AAS Processor"
 if [ -f "nginx/ssl/cert.pem" ] && [ -f "nginx/ssl/key.pem" ]; then
     echo "Domain: https://www.aasx-digital.de (SSL Enabled)"
 else
@@ -217,7 +318,7 @@ echo "ReDoc Documentation: http://localhost:8000/redoc"
 echo "Health Check: http://localhost:8000/health"
 echo ""
 echo "📊 Available Services:"
-echo "  • AASX ETL Pipeline: /aasx"
+echo "  • AASX ETL Pipeline: /aasx (with .NET Processor)"
 echo "  • Knowledge Graph: /kg-neo4j"
 echo "  • AI/RAG System: /ai-rag"
 echo "  • Twin Registry: /twin-registry"
@@ -232,12 +333,14 @@ echo "  • Restart services: docker-compose -f manifests/framework/docker-compo
 echo "  • Update services: ./scripts/deploy-aasx-digital.sh"
 echo "  • Backup data: docker-compose -f manifests/framework/docker-compose.aasx-digital.yml run backup"
 echo "  • Renew SSL: ./scripts/renew_ssl_docker.sh"
+echo "  • Test .NET processor: docker exec aasx-digital-webapp /app/aas-processor/AasProcessor.exe --help"
 echo ""
 echo "📝 Next Steps:"
 echo "  1. Configure your domain DNS to point to this server"
 echo "  2. Set up SSL certificates if not already done"
 echo "  3. Configure backup schedules"
 echo "  4. Set up monitoring and alerts"
+echo "  5. Upload AASX files to test the processing pipeline"
 echo ""
 
-print_status "FastAPI deployment completed successfully! 🚀" 
+print_status "FastAPI deployment with .NET AAS Processor completed successfully! 🚀" 

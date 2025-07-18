@@ -1,28 +1,67 @@
 # AASX Digital Twin Analytics Framework - Production Dockerfile
 # For domain: www.aasx-digital.de
-# Framework: FastAPI
+# Framework: FastAPI with .NET AAS Processor and Wine for AASX Package Explorer
 
+# Stage 1: Build .NET AAS Processor
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS dotnet-builder
+
+WORKDIR /build
+
+# Copy .NET project files
+COPY aas-processor/AasProcessor.csproj ./aas-processor/
+COPY aas-processor/AasProcessor.cs ./aas-processor/
+COPY aas-processor/Program.cs ./aas-processor/
+
+# Restore and build .NET processor
+WORKDIR /build/aas-processor
+RUN dotnet restore && \
+    dotnet publish -c Release -o /build/output
+
+# Stage 2: Final Python image with .NET runtime and Wine
 FROM python:3.11-slim
 
 # Set metadata
 LABEL maintainer="AASX Framework Team"
 LABEL version="1.0.0"
-LABEL description="AASX Digital Twin Analytics Framework - Production Build"
+LABEL description="AASX Digital Twin Analytics Framework - Production Build with .NET AAS Processor and Wine for AASX Package Explorer"
+
+# Install system dependencies, Wine, Xvfb, and wget
+RUN dpkg --add-architecture i386 && \
+    apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    wget \
+    git \
+    wine64 \
+    wine32 \
+    winbind \
+    cabextract \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash aasx
+
+# Copy .NET runtime from the SDK image
+COPY --from=dotnet-builder /usr/share/dotnet /usr/share/dotnet
+COPY --from=dotnet-builder /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
+COPY --from=dotnet-builder /usr/bin/dotnet /usr/bin/dotnet
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user for security
-RUN useradd --create-home --shell /bin/bash aasx && \
-    chown -R aasx:aasx /app
+# Install Wine Mono and Gecko with Xvfb running to avoid X server errors
+RUN mkdir -p /app/.wine && \
+    chown aasx:aasx /app/.wine && \
+    Xvfb :99 -screen 0 1024x768x16 & \
+    sleep 1 && \
+    su - aasx -c "DISPLAY=:99 wineboot --init" || true && \
+    wget -q -O /tmp/wine-mono.msi https://dl.winehq.org/wine/wine-mono/7.4.0/wine-mono-7.4.0-x86.msi && \
+    su - aasx -c "DISPLAY=:99 wine msiexec /i /tmp/wine-mono.msi /quiet" && \
+    rm /tmp/wine-mono.msi && \
+    wget -q -O /tmp/wine-gecko.msi https://dl.winehq.org/wine/wine-gecko/2.47.3/wine-gecko-2.47.3-x86.msi && \
+    su - aasx -c "DISPLAY=:99 wine msiexec /i /tmp/wine-gecko.msi /quiet" && \
+    rm /tmp/wine-gecko.msi
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -30,6 +69,12 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
+
+# Copy .NET processor from build stage
+COPY --from=dotnet-builder /build/output /app/aas-processor/
+
+# Copy AASX Package Explorer Windows application
+COPY AasxPackageExplorer/ /app/AasxPackageExplorer/
 
 # Copy application code
 COPY webapp/ ./webapp/
@@ -40,13 +85,17 @@ COPY main.py .
 COPY src/config/config_enhanced_rag.yaml ./src/config/config_enhanced_rag.yaml
 
 # Create necessary directories
-RUN mkdir -p output logs data digital-twins certificates
+RUN mkdir -p output logs data digital-twins certificates && \
+    chown -R aasx:aasx output logs data digital-twins certificates /app/AasxPackageExplorer /app/.wine
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=8000
 ENV PYTHONUNBUFFERED=1
+ENV WINEARCH=win64
+ENV WINEPREFIX=/app/.wine
+ENV DISPLAY=:99
 
 # Switch to non-root user
 USER aasx
@@ -58,5 +107,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the FastAPI application
-CMD ["python", "main.py"] 
+# Start Xvfb and run the FastAPI application
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1024x768x16 & python main.py"]

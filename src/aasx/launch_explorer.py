@@ -13,6 +13,8 @@ The AASX Package Explorer is a desktop application that allows you to:
 
 This launcher provides an easy way to start the AASX Package Explorer
 and access sample files for learning and development.
+
+Supports both native Windows and Wine (Linux/macOS) environments.
 """
 
 import os
@@ -52,6 +54,14 @@ def get_content_path() -> Path:
     project_root = get_project_root()
     return project_root / "data" / "aasx-examples"
 
+def check_wine_availability() -> bool:
+    """Check if Wine is available for running Windows applications"""
+    try:
+        result = subprocess.run(["wine", "--version"], capture_output=True, text=True, timeout=10)
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
 def check_explorer_status() -> Dict[str, Any]:
     """Check the status of the AASX Package Explorer installation"""
     explorer_path = get_explorer_path()
@@ -63,7 +73,8 @@ def check_explorer_status() -> Dict[str, Any]:
         "content_found": content_path.exists(),
         "content_path": str(content_path),
         "platform": platform.system(),
-        "is_windows": platform.system() == "Windows"
+        "is_windows": platform.system() == "Windows",
+        "wine_available": check_wine_availability()
     }
     
     # Check for sample files
@@ -92,7 +103,8 @@ def launch_explorer(silent: bool = False) -> Dict[str, Any]:
         "message": "",
         "explorer_path": "",
         "content_path": "",
-        "error": None
+        "error": None,
+        "method": None
     }
     
     # Get paths
@@ -137,7 +149,8 @@ def launch_explorer(silent: bool = False) -> Dict[str, Any]:
             print("💡 Please ensure:")
             print("   1. The AasxPackageExplorer folder exists in the project root")
             print("   2. AasxPackageExplorer.exe is present in the folder")
-            print("   3. Windows Desktop Runtime 3.1 is installed")
+            print("   3. Windows Desktop Runtime 3.1 is installed (for Windows)")
+            print("   4. Wine is installed (for Linux/macOS)")
             print()
             print("🔗 Download AASX Package Explorer:")
             print("   https://github.com/admin-shell-io/aasx-package-explorer")
@@ -169,23 +182,23 @@ def launch_explorer(silent: bool = False) -> Dict[str, Any]:
     if not silent:
         print()
     
-    # Check platform
-    if platform.system() != "Windows":
-        error_msg = "AASX Package Explorer is a Windows application only"
-        result["message"] = error_msg
-        result["error"] = "platform_not_supported"
-        
-        if not silent:
-            print("⚠️  Warning: This launcher is designed for Windows")
-            print("   The AASX Package Explorer is a Windows application")
-            print("   For other platforms, please use the web-based version")
-        
-        return result
+    # Determine launch method based on platform
+    current_platform = platform.system()
     
-    # Launch the explorer
+    if current_platform == "Windows":
+        # Native Windows launch
+        result["method"] = "native_windows"
+        return launch_native_windows(explorer_path, silent, result)
+    else:
+        # Linux/macOS with Wine
+        result["method"] = "wine"
+        return launch_with_wine(explorer_path, silent, result)
+
+def launch_native_windows(explorer_path: Path, silent: bool, result: Dict[str, Any]) -> Dict[str, Any]:
+    """Launch AASX Package Explorer natively on Windows"""
     try:
         if not silent:
-            print("🚀 Launching AASX Package Explorer...")
+            print("🚀 Launching AASX Package Explorer (Native Windows)...")
         
         process = subprocess.Popen([str(explorer_path)])
         
@@ -205,7 +218,7 @@ def launch_explorer(silent: bool = False) -> Dict[str, Any]:
             print("   5. Use the files in the AASX Digital Twin Analytics Framework")
             print()
             print("📂 Sample files location:")
-            print(f"   {content_path}")
+            print(f"   {get_content_path()}")
             print()
             print("🔄 Integration with Framework:")
             print("   • Place your AASX files in the data/aasx-examples directory")
@@ -237,6 +250,102 @@ def launch_explorer(silent: bool = False) -> Dict[str, Any]:
         
         return result
 
+def launch_with_wine(explorer_path: Path, silent: bool, result: Dict[str, Any]) -> Dict[str, Any]:
+    """Launch AASX Package Explorer using Wine on Linux/macOS"""
+    
+    # Check if Wine is available
+    if not check_wine_availability():
+        error_msg = "Wine is not available for running Windows applications"
+        result["message"] = error_msg
+        result["error"] = "wine_not_available"
+        
+        if not silent:
+            print("❌ Error: Wine is not available!")
+            print()
+            print("💡 To run AASX Package Explorer on Linux/macOS:")
+            print("   1. Install Wine: sudo apt-get install wine64 (Ubuntu/Debian)")
+            print("   2. Install Wine: brew install wine (macOS)")
+            print("   3. Or use the Docker container with Wine pre-installed")
+            print()
+            print("🔗 Alternative: Use the web-based AASX processing interface")
+            print("   Available at: http://localhost:8000/aasx")
+        
+        return result
+    
+    try:
+        if not silent:
+            print("🚀 Launching AASX Package Explorer (Wine)...")
+            print("   This may take a moment to initialize Wine...")
+        
+        # Set Wine environment variables
+        env = os.environ.copy()
+        env['WINEARCH'] = 'win64'
+        env['WINEPREFIX'] = str(get_project_root() / '.wine')
+        env['DISPLAY'] = ':99'
+        
+        # Launch with Wine
+        process = subprocess.Popen(
+            ["wine", str(explorer_path)],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        success_msg = "AASX Package Explorer launched successfully with Wine!"
+        result["success"] = True
+        result["message"] = success_msg
+        result["pid"] = process.pid
+        
+        if not silent:
+            print("✅ AASX Package Explorer launched successfully with Wine!")
+            print()
+            print("💡 Wine Integration Notes:")
+            print("   • First launch may take longer as Wine initializes")
+            print("   • GUI may appear in a separate window")
+            print("   • Performance may be slower than native Windows")
+            print("   • Some advanced features may have limitations")
+            print()
+            print("💡 How to use AASX Package Explorer:")
+            print("   1. File > Open: Load existing AASX files")
+            print("   2. File > New: Create new AASX packages")
+            print("   3. Add assets, submodels, and properties")
+            print("   4. Save your work as .aasx files")
+            print("   5. Use the files in the AASX Digital Twin Analytics Framework")
+            print()
+            print("📂 Sample files location:")
+            print(f"   {get_content_path()}")
+            print()
+            print("🔄 Integration with Framework:")
+            print("   • Place your AASX files in the data/aasx-examples directory")
+            print("   • Use the web interface at http://localhost:8000/aasx")
+            print("   • Process files through the ETL pipeline")
+            print("   • Analyze data in the Knowledge Graph")
+            print()
+            print("⏹️  Press Ctrl+C to close this launcher")
+        
+        return result
+        
+    except Exception as e:
+        error_msg = f"Error launching explorer with Wine: {e}"
+        result["message"] = error_msg
+        result["error"] = "wine_launch_failed"
+        result["exception"] = str(e)
+        
+        if not silent:
+            print(f"❌ Error launching explorer with Wine: {e}")
+            print()
+            print("💡 Troubleshooting Wine:")
+            print("   1. Ensure Wine is properly installed")
+            print("   2. Check Wine configuration: winecfg")
+            print("   3. Verify Wine can run other Windows applications")
+            print("   4. Check system display settings")
+            print("   5. Try running with: WINEDEBUG=+all wine AasxPackageExplorer.exe")
+            print()
+            print("🔗 Alternative: Use the web-based AASX processing interface")
+            print("   Available at: http://localhost:8000/aasx")
+        
+        return result
+
 def main():
     """Main launcher function for command-line use"""
     result = launch_explorer(silent=False)
@@ -248,13 +357,10 @@ if __name__ == "__main__":
         if exit_code == 0:
             # Keep the script running to show the help information
             try:
-                input("\nPress Enter to close this launcher...")
+                input("\nPress Enter to exit...")
             except KeyboardInterrupt:
-                pass
+                print("\n👋 Goodbye!")
         sys.exit(exit_code)
     except KeyboardInterrupt:
-        print("\n👋 Launcher closed by user")
-        sys.exit(0)
-    except Exception as e:
-        print(f"❌ Unexpected error: {e}")
-        sys.exit(1) 
+        print("\n👋 Goodbye!")
+        sys.exit(0) 
