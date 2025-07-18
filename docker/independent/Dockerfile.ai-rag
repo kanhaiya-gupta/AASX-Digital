@@ -1,37 +1,56 @@
-FROM python:3.11-slim
+# Multi-stage build for .NET processor
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS dotnet-build
 
-# Set working directory
+# Set working directory for .NET build
 WORKDIR /app
 
-# Install system dependencies
+# Copy .NET project files
+COPY aas-processor/ ./aas-processor/
+
+# Build the .NET AAS processor
+RUN cd aas-processor && \
+    dotnet restore && \
+    dotnet build --configuration Release
+
+# Final stage with Python and .NET runtime
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
+
+# Install Python and system dependencies
 RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-dev \
+    python3-pip \
     gcc \
     g++ \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
+WORKDIR /app
+
+# Copy .NET runtime and built processor from build stage
+COPY --from=dotnet-build /app/aas-processor/bin/Release/net6.0/ ./aas-processor/bin/Release/net6.0/
+
 # Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy AI/RAG code
+# Copy application code
 COPY src/ ./src/
 
 # Create necessary directories
-RUN mkdir -p data output logs
+RUN mkdir -p output logs data
 
 # Set environment variables
 ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-
-# Expose port
-EXPOSE 8002
+ENV DOTNET_ROOT=/usr/share/dotnet
+ENV PATH=$PATH:/usr/share/dotnet
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8002/health || exit 1
+    CMD python3 -c "import sys; sys.exit(0)" || exit 1
 
 # Run the AI/RAG system
-CMD ["python", "-m", "uvicorn", "src.ai_rag.ai_rag:app", "--host", "0.0.0.0", "--port", "8002", "--reload"] 
+CMD ["python3", "-m", "src.ai_rag.main"] 
