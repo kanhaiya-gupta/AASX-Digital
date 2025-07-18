@@ -26,7 +26,7 @@ class DotNetAasBridge:
             dotnet_project_path: Path to the .NET AAS processor project
         """
         # Get the absolute path to the .NET project
-        current_dir = Path(__file__).parent.parent.parent  # Go up from backend/aasx/dotnet_bridge.py
+        current_dir = Path(__file__).parent.parent.parent  # Go up from src/aasx/dotnet_bridge.py
         self.dotnet_project_path = current_dir / dotnet_project_path
         
         # Check for environment variable override
@@ -36,6 +36,13 @@ class DotNetAasBridge:
             if self.processor_exe.exists():
                 logger.info(f"Using .NET processor from environment: {self.processor_exe}")
                 return
+        
+        # Check for pre-built processor in container
+        container_processor = Path("/app/aas-processor/AasProcessor.dll")
+        if container_processor.exists():
+            self.processor_exe = container_processor
+            logger.info(f"Using pre-built .NET processor: {self.processor_exe}")
+            return
         
         self.processor_exe = None
         self._build_processor()
@@ -98,8 +105,15 @@ class DotNetAasBridge:
                 temp_output = temp_file.name
             
             # Call the .NET processor
+            if str(self.processor_exe).endswith('.dll'):
+                # Use dotnet to run the DLL
+                cmd = ["dotnet", str(self.processor_exe), aasx_file_path, temp_output]
+            else:
+                # Direct executable
+                cmd = [str(self.processor_exe), aasx_file_path, temp_output]
+            
             result = subprocess.run(
-                [str(self.processor_exe), aasx_file_path, temp_output],
+                cmd,
                 capture_output=True,
                 text=True
             )

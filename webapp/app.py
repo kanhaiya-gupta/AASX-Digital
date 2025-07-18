@@ -11,7 +11,7 @@ if not os.environ.get('SECRET_KEY'):
     os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 
 from fastapi import FastAPI, Request, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
@@ -20,10 +20,6 @@ import time
 import json
 from pathlib import Path
 from datetime import datetime
-import asyncio
-from typing import List, Dict, Any
-import sqlite3
-import random
 
 # Create FastAPI app
 app = FastAPI(
@@ -48,44 +44,6 @@ app.mount("/static", StaticFiles(directory=os.path.join(current_dir, "static")),
 # Setup templates
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
 
-# WebSocket connection manager
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-        self.analytics_subscribers: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket, connection_type: str = "general"):
-        await websocket.accept()
-        if connection_type == "analytics":
-            self.analytics_subscribers.append(websocket)
-        else:
-            self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket, connection_type: str = "general"):
-        if connection_type == "analytics":
-            if websocket in self.analytics_subscribers:
-                self.analytics_subscribers.remove(websocket)
-        else:
-            if websocket in self.active_connections:
-                self.active_connections.remove(websocket)
-
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    async def broadcast(self, message: str, connection_type: str = "general"):
-        connections = self.analytics_subscribers if connection_type == "analytics" else self.active_connections
-        for connection in connections:
-            try:
-                await connection.send_text(message)
-            except:
-                # Remove disconnected connections
-                if connection_type == "analytics":
-                    self.analytics_subscribers.remove(connection)
-                else:
-                    self.active_connections.remove(connection)
-
-manager = ConnectionManager()
-
 # Import routers from individual modules (with error handling)
 ai_rag_router = None
 twin_registry_router = None
@@ -94,7 +52,6 @@ qi_analytics_router = None
 aasx_router = None
 kg_neo4j_router = None
 aasx_explorer_router = None
-federated_learning_router = None
 
 try:
     from webapp.ai_rag.routes import router as ai_rag_router
@@ -146,14 +103,6 @@ try:
     print("✅ AASX Explorer router loaded successfully")
 except Exception as e:
     print(f"⚠️  AASX Explorer router failed to load: {e}")
-
-# Import federated learning router
-try:
-    from webapp.federated_learning.routes import router as federated_learning_router
-    app.include_router(federated_learning_router, prefix="/federated-learning", tags=["federated-learning"])
-    print("✅ Federated Learning router loaded successfully")
-except Exception as e:
-    print(f"⚠️  Federated Learning router failed to load: {e}")
 
 # Main dashboard route
 @app.get("/", response_class=HTMLResponse)
@@ -207,19 +156,11 @@ async def dashboard(request: Request):
                 },
                 {
                     "id": "analytics",
-                    "name": "QI Analytics",
-                    "description": "Quality Intelligence analytics with comprehensive data analysis, visualization, and reporting capabilities",
+                    "name": "Analytics Dashboard",
+                    "description": "Comprehensive analytics with quality trends, performance monitoring, predictive analysis, and cross-module integration",
                     "url": "/analytics",
                     "icon": "📊",
                     "available": qi_analytics_router is not None
-                },
-                {
-                    "id": "federated-learning",
-                    "name": "Federated Learning",
-                    "description": "Privacy-preserving collaborative AI across digital twins with cross-domain knowledge sharing and performance optimization",
-                    "url": "/federated-learning",
-                    "icon": "🧠",
-                    "available": federated_learning_router is not None
                 }
             ]
         }
@@ -240,8 +181,7 @@ async def health_check():
             "twin_registry": twin_registry_router is not None,
             "certificate_manager": certificate_manager_router is not None,
             "qi_analytics": qi_analytics_router is not None,
-            "aasx": aasx_router is not None,
-            "federated_learning": federated_learning_router is not None
+            "aasx": aasx_router is not None
         }
     }
 
@@ -262,8 +202,7 @@ async def api_status():
             "ai_rag": "/ai-rag",
             "twin_registry": "/twin-registry",
             "certificates": "/certificates",
-            "analytics": "/analytics",
-            "federated_learning": "/federated-learning"
+            "analytics": "/analytics"
         }
     }
 
@@ -304,13 +243,13 @@ async def websocket_endpoint(websocket: WebSocket):
                     "twin_registry": twin_registry_router is not None,
                     "certificate_manager": certificate_manager_router is not None,
                     "qi_analytics": qi_analytics_router is not None,
-                    "aasx": aasx_router is not None,
-                    "federated_learning": federated_learning_router is not None
+                    "aasx": aasx_router is not None
                 }
             }
             await websocket.send_text(json.dumps(status_data))
             
             # Wait for 30 seconds before next update
+            import asyncio
             await asyncio.sleep(30)
             
     except WebSocketDisconnect:
@@ -321,125 +260,6 @@ async def websocket_endpoint(websocket: WebSocket):
             await websocket.close()
         except:
             pass
-
-# WebSocket endpoint for analytics
-@app.websocket("/ws/analytics")
-async def websocket_analytics_endpoint(websocket: WebSocket):
-    await manager.connect(websocket, "analytics")
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message = json.loads(data)
-            
-            # Handle different message types
-            if message.get("type") == "subscribe":
-                # Send initial analytics data
-                analytics_data = {
-                    "type": "analytics_update",
-                    "data": {
-                        "timestamp": datetime.now().isoformat(),
-                        "quality_score": 94.2 + random.uniform(-2, 2),
-                        "performance_score": 87.3 + random.uniform(-3, 3),
-                        "compliance_rate": 98.7 + random.uniform(-1, 1),
-                        "efficiency_index": 89.1 + random.uniform(-2, 2)
-                    }
-                }
-                await manager.send_personal_message(json.dumps(analytics_data), websocket)
-            
-            elif message.get("type") == "request_update":
-                # Send real-time update
-                update_data = {
-                    "type": "analytics_update",
-                    "data": {
-                        "timestamp": datetime.now().isoformat(),
-                        "subscriber_count": len(manager.analytics_subscribers),
-                        "connected_twins": random.randint(5, 15),
-                        "data_rate": random.randint(10, 50),
-                        "quality_score": 94.2 + random.uniform(-2, 2),
-                        "performance_score": 87.3 + random.uniform(-3, 3)
-                    }
-                }
-                await manager.send_personal_message(json.dumps(update_data), websocket)
-                
-    except WebSocketDisconnect:
-        manager.disconnect(websocket, "analytics")
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-        manager.disconnect(websocket, "analytics")
-
-# WebSocket endpoint for twin registry
-@app.websocket("/ws/twin-registry")
-async def websocket_twin_registry_endpoint(websocket: WebSocket):
-    await manager.connect(websocket, "twin-registry")
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message = json.loads(data)
-            
-            # Handle twin registry messages
-            if message.get("type") == "subscribe":
-                # Send initial twin data
-                twin_data = {
-                    "type": "twin_status_update",
-                    "data": {
-                        "timestamp": datetime.now().isoformat(),
-                        "total_twins": 12,
-                        "active_twins": 8,
-                        "connected_twins": 6,
-                        "subscriber_count": len(manager.active_connections)
-                    }
-                }
-                await manager.send_personal_message(json.dumps(twin_data), websocket)
-                
-    except WebSocketDisconnect:
-        manager.disconnect(websocket, "twin-registry")
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-        manager.disconnect(websocket, "twin-registry")
-
-# Background task to send periodic updates
-async def send_periodic_updates():
-    while True:
-        try:
-            # Send analytics updates
-            if manager.analytics_subscribers:
-                analytics_update = {
-                    "type": "analytics_update",
-                    "data": {
-                        "timestamp": datetime.now().isoformat(),
-                        "quality_score": 94.2 + random.uniform(-2, 2),
-                        "performance_score": 87.3 + random.uniform(-3, 3),
-                        "compliance_rate": 98.7 + random.uniform(-1, 1),
-                        "efficiency_index": 89.1 + random.uniform(-2, 2),
-                        "subscriber_count": len(manager.analytics_subscribers)
-                    }
-                }
-                await manager.broadcast(json.dumps(analytics_update), "analytics")
-            
-            # Send twin registry updates
-            if manager.active_connections:
-                twin_update = {
-                    "type": "twin_status_update",
-                    "data": {
-                        "timestamp": datetime.now().isoformat(),
-                        "total_twins": 12,
-                        "active_twins": 8 + random.randint(-1, 1),
-                        "connected_twins": 6 + random.randint(-1, 1),
-                        "data_points": 1500 + random.randint(-50, 50),
-                        "alerts": random.randint(0, 3)
-                    }
-                }
-                await manager.broadcast(json.dumps(twin_update), "twin-registry")
-                
-        except Exception as e:
-            print(f"Error in periodic updates: {e}")
-        
-        await asyncio.sleep(5)  # Send updates every 5 seconds
-
-# Start background task
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(send_periodic_updates())
 
 # ETL status endpoint (for frontend compatibility)
 @app.get("/etl/status")

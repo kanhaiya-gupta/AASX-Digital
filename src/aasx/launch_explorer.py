@@ -62,6 +62,82 @@ def check_wine_availability() -> bool:
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
 
+def check_x11_setup() -> Dict[str, Any]:
+    """Check X11 setup for GUI applications on Windows"""
+    x11_status = {
+        "vcxsrv_installed": False,
+        "vcxsrv_running": False,
+        "display_set": False,
+        "xauthority_set": False,
+        "setup_needed": True
+    }
+    
+    # Check if VcXsrv is installed
+    vcxsrv_path = Path("C:/Program Files/VcXsrv/vcxsrv.exe")
+    x11_status["vcxsrv_installed"] = vcxsrv_path.exists()
+    
+    # Check if VcXsrv is running
+    try:
+        result = subprocess.run(["tasklist", "/FI", "IMAGENAME eq vcxsrv.exe"], 
+                              capture_output=True, text=True, timeout=10)
+        x11_status["vcxsrv_running"] = "vcxsrv.exe" in result.stdout
+    except:
+        x11_status["vcxsrv_running"] = False
+    
+    # Check environment variables
+    x11_status["display_set"] = bool(os.environ.get('DISPLAY'))
+    x11_status["xauthority_set"] = bool(os.environ.get('XAUTHORITY'))
+    
+    # Determine if setup is needed
+    x11_status["setup_needed"] = not (x11_status["vcxsrv_installed"] and 
+                                     x11_status["vcxsrv_running"] and 
+                                     x11_status["display_set"])
+    
+    return x11_status
+
+def setup_x11_windows() -> Dict[str, Any]:
+    """Set up X11 forwarding for Windows GUI applications"""
+    setup_result = {
+        "success": False,
+        "message": "",
+        "vcxsrv_started": False,
+        "environment_set": False
+    }
+    
+    # Check if VcXsrv is installed
+    vcxsrv_path = Path("C:/Program Files/VcXsrv/vcxsrv.exe")
+    if not vcxsrv_path.exists():
+        setup_result["message"] = "VcXsrv not installed. Please install from https://sourceforge.net/projects/vcxsrv/"
+        return setup_result
+    
+    # Set environment variables
+    os.environ['DISPLAY'] = 'localhost:0.0'
+    os.environ['XAUTHORITY'] = str(Path.home() / '.Xauthority')
+    setup_result["environment_set"] = True
+    
+    # Create .Xauthority file if it doesn't exist
+    xauthority_path = Path.home() / '.Xauthority'
+    if not xauthority_path.exists():
+        xauthority_path.touch()
+    
+    # Start VcXsrv if not running
+    try:
+        result = subprocess.run(["tasklist", "/FI", "IMAGENAME eq vcxsrv.exe"], 
+                              capture_output=True, text=True, timeout=10)
+        if "vcxsrv.exe" not in result.stdout:
+            subprocess.Popen([str(vcxsrv_path), ":0", "-multiwindow", "-clipboard", "-wgl", "-ac"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            setup_result["vcxsrv_started"] = True
+        else:
+            setup_result["vcxsrv_started"] = True  # Already running
+    except Exception as e:
+        setup_result["message"] = f"Failed to start VcXsrv: {e}"
+        return setup_result
+    
+    setup_result["success"] = True
+    setup_result["message"] = "X11 setup completed successfully"
+    return setup_result
+
 def check_explorer_status() -> Dict[str, Any]:
     """Check the status of the AASX Package Explorer installation"""
     explorer_path = get_explorer_path()
@@ -251,7 +327,7 @@ def launch_native_windows(explorer_path: Path, silent: bool, result: Dict[str, A
         return result
 
 def launch_with_wine(explorer_path: Path, silent: bool, result: Dict[str, Any]) -> Dict[str, Any]:
-    """Launch AASX Package Explorer using Wine on Linux/macOS"""
+    """Launch AASX Package Explorer using Wine on Linux/macOS or Windows with X11"""
     
     # Check if Wine is available
     if not check_wine_availability():
@@ -272,6 +348,22 @@ def launch_with_wine(explorer_path: Path, silent: bool, result: Dict[str, Any]) 
         
         return result
     
+    # Check if we're on Windows and need X11 setup
+    if platform.system() == "Windows":
+        x11_status = check_x11_setup()
+        if x11_status["setup_needed"]:
+            if not silent:
+                print("🔧 Setting up X11 forwarding for GUI...")
+            
+            setup_result = setup_x11_windows()
+            if not setup_result["success"]:
+                result["message"] = f"X11 setup failed: {setup_result['message']}"
+                result["error"] = "x11_setup_failed"
+                return result
+            
+            if not silent:
+                print("✅ X11 setup completed!")
+    
     try:
         if not silent:
             print("🚀 Launching AASX Package Explorer (Wine)...")
@@ -281,7 +373,13 @@ def launch_with_wine(explorer_path: Path, silent: bool, result: Dict[str, Any]) 
         env = os.environ.copy()
         env['WINEARCH'] = 'win64'
         env['WINEPREFIX'] = str(get_project_root() / '.wine')
-        env['DISPLAY'] = ':99'
+        
+        # Use proper display for X11 forwarding
+        if platform.system() == "Windows":
+            env['DISPLAY'] = 'localhost:0.0'
+            env['XAUTHORITY'] = str(Path.home() / '.Xauthority')
+        else:
+            env['DISPLAY'] = ':99'
         
         # Launch with Wine
         process = subprocess.Popen(
