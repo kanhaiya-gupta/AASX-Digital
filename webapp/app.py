@@ -11,10 +11,12 @@ if not os.environ.get('SECRET_KEY'):
     os.environ['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 
 from fastapi import FastAPI, Request, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 import time
 import json
@@ -36,6 +38,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add TrustedHost middleware to trust forwarded headers
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*"]  # In production, specify your actual domain
+)
+
+# Custom middleware to handle forwarded headers for HTTPS
+class ForwardedHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Set the scheme to https if X-Forwarded-Proto is https
+        if request.headers.get("x-forwarded-proto") == "https":
+            request.scope["scheme"] = "https"
+        
+        # Set the host if X-Forwarded-Host is provided
+        if request.headers.get("x-forwarded-host"):
+            request.scope["headers"] = [
+                (b"host", request.headers["x-forwarded-host"].encode())
+            ] + [(k, v) for k, v in request.scope["headers"] if k != b"host"]
+        
+        response = await call_next(request)
+        return response
+
+app.add_middleware(ForwardedHeadersMiddleware)
+
+
 
 # Mount static files
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -185,6 +213,20 @@ async def health_check():
         }
     }
 
+# Debug endpoint to check all registered routes
+@app.get("/debug/routes")
+async def debug_routes():
+    """Debug endpoint to list all registered routes"""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            routes.append({
+                "path": route.path,
+                "methods": list(route.methods),
+                "name": getattr(route, 'name', 'Unknown')
+            })
+    return {"routes": routes, "total": len(routes)}
+
 # API status endpoint (for frontend compatibility)
 @app.get("/api/status")
 async def api_status():
@@ -325,6 +367,151 @@ async def get_twin_registry_status():
         
         return await get_status()
         
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": time.time()
+        }
+
+# API endpoints for frontend compatibility (with /api prefix)
+@app.get("/api/etl/status")
+async def api_etl_status():
+    """API endpoint for ETL status (frontend compatibility)"""
+    return await get_etl_status()
+
+@app.get("/api/vector-db-info")
+async def api_vector_db_info():
+    """API endpoint for vector database info (frontend compatibility)"""
+    try:
+        if ai_rag_router is None:
+            return {
+                "success": False,
+                "error": "AI/RAG router not loaded",
+                "collections": [],
+                "total_collections": 0,
+                "total_points": 0,
+                "qdrant_status": "unavailable"
+            }
+        
+        # Import the function from ai_rag routes
+        from webapp.ai_rag.routes import get_vector_db_info
+        
+        return await get_vector_db_info()
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "collections": [],
+            "total_collections": 0,
+            "total_points": 0,
+            "qdrant_status": "error"
+        }
+
+@app.get("/api/neo4j/status")
+async def api_neo4j_status():
+    """API endpoint for Neo4j status (frontend compatibility)"""
+    try:
+        if kg_neo4j_router is None:
+            return {
+                "success": False,
+                "error": "Knowledge Graph router not loaded",
+                "docker_running": False,
+                "browser_accessible": False,
+                "active_connections": 0
+            }
+        
+        # Import the function from kg_neo4j routes
+        from webapp.kg_neo4j.routes import get_status
+        
+        return await get_status()
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "docker_running": False,
+            "browser_accessible": False,
+            "active_connections": 0
+        }
+
+@app.get("/api/system/status")
+async def api_system_status():
+    """API endpoint for system status (frontend compatibility)"""
+    return {
+        "status": "available",
+        "service": "aasx-digital-twin-analytics-framework",
+        "version": "1.0.0",
+        "timestamp": time.time(),
+        "modules": {
+            "ai_rag": ai_rag_router is not None,
+            "kg_neo4j": kg_neo4j_router is not None,
+            "twin_registry": twin_registry_router is not None,
+            "certificate_manager": certificate_manager_router is not None,
+            "qi_analytics": qi_analytics_router is not None,
+            "aasx": aasx_router is not None
+        }
+    }
+
+@app.get("/api/storage/status")
+async def api_storage_status():
+    """API endpoint for storage status (frontend compatibility)"""
+    try:
+        # Check if data directory exists and is writable
+        data_dir = Path("data")
+        output_dir = Path("output")
+        
+        return {
+            "status": "available",
+            "data_directory": {
+                "exists": data_dir.exists(),
+                "writable": os.access(data_dir, os.W_OK) if data_dir.exists() else False,
+                "path": str(data_dir.absolute())
+            },
+            "output_directory": {
+                "exists": output_dir.exists(),
+                "writable": os.access(output_dir, os.W_OK) if output_dir.exists() else False,
+                "path": str(output_dir.absolute())
+            },
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "timestamp": time.time()
+        }
+
+@app.get("/api/processing/status")
+async def api_processing_status():
+    """API endpoint for processing status (frontend compatibility)"""
+    try:
+        # Check if ETL pipeline is available
+        etl_available = aasx_router is not None
+        
+        # Check if vector database is available
+        vector_db_available = ai_rag_router is not None
+        
+        # Check if knowledge graph is available
+        kg_available = kg_neo4j_router is not None
+        
+        return {
+            "status": "available",
+            "etl_pipeline": {
+                "available": etl_available,
+                "status": "ready" if etl_available else "unavailable"
+            },
+            "vector_database": {
+                "available": vector_db_available,
+                "status": "ready" if vector_db_available else "unavailable"
+            },
+            "knowledge_graph": {
+                "available": kg_available,
+                "status": "ready" if kg_available else "unavailable"
+            },
+            "timestamp": time.time()
+        }
     except Exception as e:
         return {
             "status": "error",

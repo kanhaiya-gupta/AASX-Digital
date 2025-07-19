@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.aasx-digital.de; style-src 'self' https://www.aasx-digital.de https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' https://www.aasx-digital.de https://cdn.jsdelivr.net https://code.jquery.com 'unsafe-inline'; img-src 'self' https://www.aasx-digital.de data: https:; font-src 'self' https://www.aasx-digital.de https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/favicon.ico') }}">
     <title>{% block title %}AASX Digital Twin Analytics Framework{% endblock %}</title>
     
     <!-- Bootstrap CSS -->

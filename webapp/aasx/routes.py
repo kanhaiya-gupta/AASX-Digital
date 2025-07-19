@@ -37,6 +37,16 @@ from ..config.etl_config import get_etl_config, ETLConfig
 # Create router
 router = APIRouter(tags=["aasx"])
 
+# Debug logging to confirm routes.py is loaded
+print("🔍 DEBUG: webapp/aasx/routes.py loaded successfully")
+
+# Test route to verify router is working
+@router.get("/api/test-route")
+async def test_route():
+    """Test route to verify router is working"""
+    print("🔍 DEBUG: test_route called!")
+    return {"message": "Test route working", "status": "success"}
+
 # Setup templates
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
@@ -1069,6 +1079,45 @@ async def launch_explorer_script():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/api/project-packages/{project_path:path}")
+async def get_package_by_project_path(project_path: str):
+    """Get AASX package by project path (project_id/filename)"""
+    print(f"🔍 DEBUG: get_package_by_project_path called with project_path: {project_path}")
+    print(f"🔍 DEBUG: Route function is being called!")
+    try:
+        # Split the project path into project_id and filename
+        path_parts = project_path.split('/')
+        print(f"🔍 DEBUG: path_parts: {path_parts}")
+        if len(path_parts) != 2:
+            raise HTTPException(status_code=400, detail="Invalid project path format. Expected: project_id/filename")
+        
+        project_id, filename = path_parts
+        print(f"🔍 DEBUG: project_id: {project_id}, filename: {filename}")
+        
+        # Construct the full file path
+        data_path = os.getenv("AASX_DATA_PATH", "/app/data")
+        project_path_full = os.path.join(data_path, "projects", project_id, filename)
+        print(f"🔍 DEBUG: project_path_full: {project_path_full}")
+        
+        # Check if file exists
+        if not os.path.exists(project_path_full):
+            print(f"❌ DEBUG: File not found: {project_path_full}")
+            raise HTTPException(status_code=404, detail=f"AASX file not found: {project_path}")
+        
+        print(f"✅ DEBUG: File found, returning FileResponse")
+        # Return the file
+        return FileResponse(
+            path=project_path_full,
+            filename=filename,
+            media_type="application/octet-stream"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ DEBUG: Exception: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/api/packages/{filename}")
 async def get_package_info(filename: str):
     """Get information about an AASX package"""
@@ -1735,6 +1784,27 @@ async def list_project_files(project_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/api/projects/{project_id}/files/{file_id}")
+async def get_project_file(project_id: str, file_id: str):
+    """Get a specific file in a project"""
+    try:
+        if project_id not in PROJECTS_DB:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        if file_id not in FILES_DB:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        file_info = FILES_DB[file_id]
+        if file_info["project_id"] != project_id:
+            raise HTTPException(status_code=404, detail="File not found in this project")
+        
+        return file_info
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/api/projects/{project_id}/files/{file_id}/process")
 async def process_project_file(project_id: str, file_id: str):
     """Process a file in a project through ETL pipeline"""
@@ -1806,6 +1876,38 @@ async def delete_project_file(project_id: str, file_id: str):
         del FILES_DB[file_id]
         
         return {"message": "File deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/projects/{project_id}/files/{file_id}/view")
+async def prepare_file_for_blazor_view(project_id: str, file_id: str):
+    """Prepare a file for viewing in Blazor by providing file information"""
+    try:
+        if project_id not in PROJECTS_DB:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        if file_id not in FILES_DB:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        file_info = FILES_DB[file_id]
+        if file_info["project_id"] != project_id:
+            raise HTTPException(status_code=404, detail="File not found in this project")
+        
+        # Check if file exists on disk
+        if not os.path.exists(file_info["filepath"]):
+            raise HTTPException(status_code=404, detail="File not found on disk")
+        
+        # Return file information for Blazor viewer
+        # The file is accessible via the mounted /app/data volume
+        return {
+            "success": True,
+            "message": f"File {file_info['original_filename']} ready for Blazor viewing",
+            "filename": f"projects/{project_id}/{file_info['original_filename']}",
+            "timestamp": datetime.now().isoformat()
+        }
         
     except HTTPException:
         raise

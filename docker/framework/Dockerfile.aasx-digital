@@ -1,20 +1,19 @@
 # AASX Digital Twin Analytics Framework - Production Dockerfile
 # For domain: www.aasx-digital.de
-# Framework: FastAPI with .NET AAS Processor and Wine for AASX Package Explorer
+# Framework: FastAPI with .NET AAS Processor and Blazor Web Viewer
 
 FROM python:3.11-slim
 
 # Set metadata
 LABEL maintainer="AASX Framework Team"
 LABEL version="1.0.0"
-LABEL description="AASX Digital Twin Analytics Framework - Production Build with .NET AAS Processor and Wine for AASX Package Explorer"
+LABEL description="AASX Digital Twin Analytics Framework - Production Build with .NET AAS Processor and Blazor Web Viewer"
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies including .NET 6.0, Wine, and unzip
-RUN dpkg --add-architecture i386 && \
-    apt-get update && apt-get install -y \
+# Install system dependencies including .NET 6.0
+RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     curl \
@@ -23,17 +22,7 @@ RUN dpkg --add-architecture i386 && \
     wget \
     gnupg \
     git \
-    wine64 \
-    wine32 \
-    winbind \
-    cabextract \
-    xvfb \
-    unzip \
     && rm -rf /var/lib/apt/lists/*
-
-# Install winetricks manually
-RUN wget -q -O /usr/local/bin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks && \
-    chmod +x /usr/local/bin/winetricks
 
 # Install .NET 6.0 SDK
 RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg \
@@ -46,22 +35,6 @@ RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor 
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash aasx
-
-# Install Wine Mono, Gecko, and .NET Framework 4.8 with Xvfb running
-RUN mkdir -p /app/.wine && \
-    chown aasx:aasx /app/.wine && \
-    rm -f /tmp/.X99-lock && \
-    Xvfb :99 -screen 0 1024x768x16 & \
-    sleep 2 && \
-    su - aasx -c "DISPLAY=:99 wineboot --init" || true && \
-    wget -q -O /tmp/wine-mono.msi https://dl.winehq.org/wine/wine-mono/7.4.0/wine-mono-7.4.0-x86.msi && \
-    su - aasx -c "DISPLAY=:99 wine msiexec /i /tmp/wine-mono.msi /quiet" && \
-    rm /tmp/wine-mono.msi && \
-    wget -q -O /tmp/wine-gecko.msi https://dl.winehq.org/wine/wine-gecko/2.47.3/wine-gecko-2.47.3-x86.msi && \
-    su - aasx -c "DISPLAY=:99 wine msiexec /i /tmp/wine-gecko.msi /quiet" && \
-    rm /tmp/wine-gecko.msi && \
-    su - aasx -c "DISPLAY=:99 winetricks -q dotnet48" && \
-    pkill Xvfb || true
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -76,14 +49,7 @@ WORKDIR /app/aas-processor
 RUN dotnet restore && dotnet build -c Release
 WORKDIR /app
 
-# Copy and extract AASX Package Explorer (zipped version) to /app/AasxPackageExplorer
-COPY aasx-package-explorer.2025-03-25.alpha.zip /tmp/
-RUN unzip -v /tmp/aasx-package-explorer.2025-03-25.alpha.zip > /app/unzip_verbose.log && \
-    unzip -q /tmp/aasx-package-explorer.2025-03-25.alpha.zip -d /app/ || { echo "Unzip failed for /tmp/aasx-package-explorer.2025-03-25.alpha.zip"; exit 1; } && \
-    chown -R aasx:aasx /app/AasxPackageExplorer && \
-    rm /tmp/aasx-package-explorer.2025-03-25.alpha.zip && \
-    test -f /app/AasxPackageExplorer/AasxPackageExplorer.exe || { echo "AasxPackageExplorer.exe not found in /app/AasxPackageExplorer"; exit 1; } && \
-    ls -la /app/AasxPackageExplorer > /app/aasx_extraction.log
+# Note: AASX Package Explorer removed - replaced with Blazor Web Viewer
 
 # Copy application code
 COPY webapp/ ./webapp/
@@ -95,20 +61,15 @@ COPY src/config/config_enhanced_rag.yaml ./src/config/config_enhanced_rag.yaml
 
 # Create necessary directories
 RUN mkdir -p output logs data digital-twins certificates && \
-    chown -R aasx:aasx output logs data digital-twins certificates /app/AasxPackageExplorer /app/.wine
+    chown -R aasx:aasx output logs data digital-twins certificates
 
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV APP_HOST=0.0.0.0
 ENV APP_PORT=8000
 ENV PYTHONUNBUFFERED=1
-ENV WINEARCH=win64
-ENV WINEPREFIX=/app/.wine
-ENV DISPLAY=${DISPLAY:-:99}
 ENV AAS_PROCESSOR_PATH=/app/aas-processor/bin/Release/net6.0/AasProcessor
 ENV DOTNET_ROOT=/usr/share/dotnet
-# Prevent Wine from mapping Linux paths to Windows paths
-ENV WINEPATH=""
 
 # Switch to non-root user
 USER aasx
@@ -120,5 +81,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:80/health || exit 1
 
-# Start Xvfb and run the FastAPI application
-CMD ["sh", "-c", "if [ -S /tmp/.X11-unix/X0 ]; then export DISPLAY=:0; else Xvfb :99 -screen 0 1024x768x16 & export DISPLAY=:99; fi && sleep 2 && python main.py"]
+# Start the FastAPI application
+CMD ["python", "main.py"]

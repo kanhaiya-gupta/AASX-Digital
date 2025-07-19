@@ -1680,12 +1680,17 @@ class ProjectManager {
                     <span class="badge bg-${this.getStatusBadgeColor(file.status)}">${file.status}</span>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="projectManager.processFile('${project.id}', '${file.id}')">
-                        <i class="fas fa-cogs"></i> Process
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="projectManager.deleteFile('${project.id}', '${file.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-info" onclick="projectManager.viewFileInBlazor('${file.original_filename}', '${project.id}', '${file.id}')" title="View in Blazor">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="projectManager.processFile('${project.id}', '${file.id}')" title="Process File">
+                            <i class="fas fa-cogs"></i> Process
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="projectManager.deleteFile('${project.id}', '${file.id}')" title="Delete File">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -2943,6 +2948,39 @@ class ProjectManager {
         } catch (error) {
             console.error('Error processing file:', error);
             alert('Error processing file: ' + error.message);
+        }
+    }
+
+    async viewFileInBlazor(filename, projectId = null, fileId = null) {
+        try {
+            console.log(`👁️ Opening file ${filename} in Blazor viewer`);
+            console.log(`📁 Project ID: ${projectId}`);
+            console.log(`📄 File ID: ${fileId}`);
+            console.log(`🔍 Project ID type: ${typeof projectId}`);
+            console.log(`🔍 Project ID value: "${projectId}"`);
+            
+            // If projectId is provided, construct the hierarchical path
+            let blazorFilename = filename;
+            if (projectId && projectId !== 'null' && projectId !== 'undefined' && projectId.trim() !== '') {
+                blazorFilename = `${projectId}/${filename}`;
+                console.log(`🔗 Constructed path: ${blazorFilename}`);
+            } else {
+                console.log(`⚠️ No valid project ID provided, using filename only: ${filename}`);
+            }
+            
+            // Construct the Blazor viewer URL - integrated into framework
+            const blazorUrl = `/aasx-viewer/?file=${encodeURIComponent(blazorFilename)}`;
+            console.log(`🌐 Blazor URL: ${blazorUrl}`);
+            
+            // Open in a new tab/window
+            window.open(blazorUrl, '_blank');
+            
+            // Show success message
+            this.showSuccessMessage(`Opening ${filename} in Blazor viewer...`);
+            
+        } catch (error) {
+            console.error('❌ Error opening file in Blazor:', error);
+            this.showErrorMessage(`Error opening file in Blazor: ${error.message}`);
         }
     }
 }

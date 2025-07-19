@@ -95,16 +95,10 @@ services:
       - RELOAD=false
       - ACCESS_LOG=true
       - LOG_LEVEL=INFO
-      - WINEARCH=win64
-      - WINEPREFIX=/app/.wine
-      - DISPLAY=host.docker.internal:0.0
-      - XAUTHORITY=/tmp/.Xauthority
     volumes:
       - ../../data:/app/data
       - ../../output:/app/output
       - ../../logs:/app/logs
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw  # X11 socket forwarding for GUI
-      - ${XAUTHORITY:-$HOME/.Xauthority}:/tmp/.Xauthority:rw  # X11 authority for GUI
       # Consider removing these mounts if Dockerfile COPY steps are sufficient
       # - ../../src:/app/src
       # - ../../webapp:/app/webapp
@@ -126,28 +120,27 @@ services:
       timeout: 10s
       retries: 3
 
-  # AASX Package Explorer (Blazor Web Application)
-  aasx-explorer:
+  # AASX Server Blazor UI - Web-based AASX Viewer
+  aasx-blazor:
     build:
       context: ../..
-      dockerfile: docker/independent/Dockerfile.aasx-explorer
-    container_name: aasx-digital-aasx-explorer
+      dockerfile: docker/independent/Dockerfile.aasx-server-blazor
+    container_name: aasx-digital-aasx-blazor
     environment:
+      - ASPNETCORE_URLS=http://+:5001
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:5000
     volumes:
-      - ../../data/aasx-examples:/app/aasx-files:ro
-      - ../../data/projects:/app/projects:ro
+      - ../../data:/app/data
     ports:
-      - "5001:5000"
+      - "5001:5001"
     networks:
       - aasx-digital-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
 
   # Backup Service
   backup:

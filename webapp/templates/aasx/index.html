@@ -744,6 +744,33 @@
     </div>
 </div>
 
+<!-- Project Details Modal -->
+<div class="modal fade" id="projectDetailsModal" tabindex="-1" aria-labelledby="projectDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="projectDetailsModalLabel">
+                    <i class="fas fa-folder-open me-2"></i>
+                    Project Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="projectDetailsContent">
+                    <!-- Project details content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="projectManager.uploadToProject()">
+                    <i class="fas fa-upload me-2"></i>
+                    Upload File
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ETL Results Modal -->
 <div class="modal fade" id="etlResultsModal" tabindex="-1" aria-labelledby="etlResultsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">

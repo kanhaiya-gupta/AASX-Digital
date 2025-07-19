@@ -2,14 +2,14 @@
 
 # AASX Digital Twin Analytics Framework - Production Deployment Script
 # For domain: www.aasx-digital.de
-# Framework: FastAPI with .NET AAS Processor
+# Framework: FastAPI with .NET AAS Processor and Blazor Web Viewer
 # Docker Compose: manifests/framework/docker-compose.aasx-digital.yml
 
 set -e
 
 echo "🚀 Starting AASX Digital Twin Analytics Framework Deployment..."
 echo "🌐 Domain: www.aasx-digital.de"
-echo "⚡ Framework: FastAPI with .NET AAS Processor"
+echo "⚡ Framework: FastAPI with .NET AAS Processor and Blazor Web Viewer"
 echo "🐳 Docker Compose: manifests/framework/docker-compose.aasx-digital.yml"
 
 # Colors for output
@@ -196,8 +196,8 @@ sleep 30
 
 
 
-# Note: Wine and AASX Package Explorer are installed in the container
-print_status "✅ Wine and AASX Package Explorer setup completed"
+# Note: Blazor Web Viewer is included in the container
+print_status "✅ Blazor Web Viewer setup completed"
 
 # Check service health
 print_header "Checking service health..."
@@ -240,8 +240,8 @@ fi
 
 print_status "🎉 All FastAPI services are healthy!"
 
-# Note: AASX processing functionality is available through the web interface
-print_status "✅ AASX processing functionality is ready"
+# Note: AASX processing and viewing functionality is available through the web interface
+print_status "✅ AASX processing and viewing functionality is ready"
 
 # Note: HTTPS is configured if SSL certificates are present
 if [ -f "nginx/ssl/cert.pem" ] && [ -f "nginx/ssl/key.pem" ]; then
