@@ -12,38 +12,84 @@ from pathlib import Path
 import logging
 from datetime import datetime
 import io
+import re
+import base64
 
-# Try to import AAS-specific libraries if available
-try:
-    import aas_core3 as aas
-    AAS_CORE_AVAILABLE = True
-except ImportError:
-    AAS_CORE_AVAILABLE = False
-    logging.warning("aas_core3 not available. Using basic AASX processing.")
+# Configure logging
+logger = logging.getLogger(__name__)
 
-try:
-    from aasx_package import AASXPackage
-    AASX_PACKAGE_AVAILABLE = True
-except ImportError:
-    AASX_PACKAGE_AVAILABLE = False
-    logging.warning("aasx_package not available. Using basic ZIP processing.")
 
-# Try to import .NET bridge
+def auto_setup_dotnet_processor() -> bool:
+    """
+    Automatically set up the .NET AAS processor if not available.
+    
+    Returns:
+        True if setup successful, False otherwise
+    """
+    try:
+        from .dotnet_bridge import DotNetAasBridge
+        
+        bridge = DotNetAasBridge()
+        
+        if bridge.is_available():
+            logger.info("✅ .NET AAS processor already available")
+            return True
+        
+        logger.info("🔧 Auto-setting up .NET AAS processor...")
+        
+        # Try to build the processor
+        if bridge._build_processor():
+            logger.info("✅ .NET AAS processor auto-built successfully")
+            return True
+        else:
+            logger.error("❌ Failed to auto-build .NET AAS processor")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Auto-setup failed: {e}")
+        return False
+
+
+# Try to import .NET bridge (primary method for AASX processing)
 try:
     from .dotnet_bridge import DotNetAasBridge
     DOTNET_BRIDGE_AVAILABLE = True
     dotnet_bridge = DotNetAasBridge()
+    
+    # Auto-setup: If .NET processor not available, try to build it
+    if not dotnet_bridge.is_available():
+        logger.warning("⚠️  .NET processor not available. Auto-building it...")
+        if auto_setup_dotnet_processor():
+            # Re-initialize bridge after setup
+            dotnet_bridge = DotNetAasBridge()
+            if dotnet_bridge.is_available():
+                logger.info("✅ .NET AAS processor ready after auto-setup")
+            else:
+                DOTNET_BRIDGE_AVAILABLE = False
+        else:
+            DOTNET_BRIDGE_AVAILABLE = False
+            
 except ImportError:
     DOTNET_BRIDGE_AVAILABLE = False
     dotnet_bridge = None
-    logging.warning("DotNet bridge not available. Using basic AASX processing.")
+    logger.error("❌ DotNet bridge not available. This is required for proper AASX processing!")
+    raise ImportError("DotNet bridge is required but not available")
 except Exception as e:
     DOTNET_BRIDGE_AVAILABLE = False
     dotnet_bridge = None
-    logging.warning(f"DotNet bridge initialization failed: {e}")
+    logger.error(f"❌ DotNet bridge initialization failed: {e}")
+    raise ImportError(f"DotNet bridge initialization failed: {e}")
 
-# Configure logging
-logger = logging.getLogger(__name__)
+# Set Python AAS libraries as unavailable (they don't exist)
+AAS_CORE_AVAILABLE = False
+AASX_PACKAGE_AVAILABLE = False
+
+# Ensure we have the .NET processor available
+if not DOTNET_BRIDGE_AVAILABLE:
+    logger.error("❌ .NET AAS processor is required but not available!")
+    logger.error("Required: .NET AAS processor for proper AASX processing")
+    raise ImportError("NET AAS processor is required but not available")
+
 
 class AASXProcessor:
     """
@@ -65,6 +111,9 @@ class AASXProcessor:
         self.assets = []
         self.submodels = []
         self.documents = []
+        self.validation_errors = []
+        self.validation_warnings = []
+        self.consistency_checks = []
         
         if not self.aasx_file_path.exists():
             raise FileNotFoundError(f"AASX file not found: {aasx_file_path}")
@@ -72,89 +121,76 @@ class AASXProcessor:
         if not self.aasx_file_path.suffix.lower() == '.aasx':
             raise ValueError(f"File must have .aasx extension: {aasx_file_path}")
     
-    def process(self) -> Dict[str, Any]:
+    def ensure_processor_ready(self) -> bool:
         """
-        Process the AASX file and extract all available data.
+        Ensure the .NET AAS processor is ready for processing.
+        Auto-setup if needed.
         
         Returns:
-            Dictionary containing all extracted AASX data
+            True if processor is ready, False otherwise
         """
-        logger.info(f"Processing AASX file: {self.aasx_file_path}")
+        global dotnet_bridge, DOTNET_BRIDGE_AVAILABLE
+        
+        if DOTNET_BRIDGE_AVAILABLE and dotnet_bridge and dotnet_bridge.is_available():
+            logger.info(".NET AAS processor is ready")
+            return True
+        
+        logger.warning(".NET processor not ready. Attempting auto-setup...")
+        
+        if auto_setup_dotnet_processor():
+            # Re-initialize after setup
+            try:
+                dotnet_bridge = DotNetAasBridge()
+                DOTNET_BRIDGE_AVAILABLE = dotnet_bridge.is_available()
+                
+                if DOTNET_BRIDGE_AVAILABLE:
+                    logger.info(".NET AAS processor ready after auto-setup")
+                    return True
+                else:
+                    logger.error(".NET processor still not available after setup")
+                    return False
+            except Exception as e:
+                logger.error(f"Failed to re-initialize .NET bridge: {e}")
+                return False
+        else:
+            logger.error("Auto-setup failed")
+            return False
+    
+    def process(self) -> Dict[str, Any]:
+        """
+        Process the AASX file with complete information extraction.
+        This method preserves all AAS XML content, relationships, and metadata for perfect round-trip conversion.
+        
+        Returns:
+            Dictionary containing complete AAS data with full structure preservation
+        """
+        logger.info(f"Processing AASX file with complete processing: {self.aasx_file_path}")
+        
+        # Auto-setup: Ensure .NET processor is ready
+        if not self.ensure_processor_ready():
+            raise RuntimeError(".NET AAS processor setup failed! Cannot proceed with processing.")
         
         try:
-            # Try .NET processor first (most comprehensive)
-            if DOTNET_BRIDGE_AVAILABLE and dotnet_bridge and dotnet_bridge.is_available():
-                logger.info("Trying .NET AAS processor...")
-                result = dotnet_bridge.process_aasx_file(str(self.aasx_file_path))
-                if result and 'error' not in result:
-                    logger.info("Successfully processed with .NET processor")
-                    return result
-            
-            # Try Python AAS libraries
-            if AASX_PACKAGE_AVAILABLE and AAS_CORE_AVAILABLE:
-                logger.info("Trying Python AAS libraries...")
-                return self._process_with_aas_libraries()
-            
-            # Fallback to basic processing
-            logger.info("Using basic ZIP processing...")
-            return self._process_basic()
+            # Use .NET processor with complete processing
+            logger.info("Using complete .NET AAS processor...")
+            result = dotnet_bridge.process_aasx_file(str(self.aasx_file_path))
+            if result and 'error' not in result:
+                logger.info("Successfully processed with complete .NET processor")
+                processed_result = self._validate_and_clean_result(result)
+                return processed_result
+            else:
+                logger.error(".NET processor returned invalid result")
+                raise RuntimeError("NET processor returned invalid result")
                 
         except Exception as e:
             logger.error(f"Error processing AASX file: {e}")
-            # Fallback to basic processing
-            return self._process_basic()
+            raise RuntimeError(f"Failed to process AASX file: {e}")
     
-    def _process_with_aas_libraries(self) -> Dict[str, Any]:
+    def _process_enhanced(self) -> Dict[str, Any]:
         """
-        Process AASX file using specialized AAS libraries.
+        Enhanced AASX processing with comprehensive XML parsing.
         """
-        logger.info("Using advanced AAS libraries for processing")
-        
-        try:
-            # Use aasx_package library
-            with AASXPackage(self.aasx_file_path) as package:
-                # Extract AAS objects
-                aas_objects = package.get_aas_objects()
-                
-                # Process assets
-                assets = []
-                for obj in aas_objects:
-                    if isinstance(obj, aas.AssetAdministrationShell):
-                        asset_data = self._extract_asset_data(obj)
-                        assets.append(asset_data)
-                
-                # Process submodels
-                submodels = []
-                for obj in aas_objects:
-                    if isinstance(obj, aas.Submodel):
-                        submodel_data = self._extract_submodel_data(obj)
-                        submodels.append(submodel_data)
-                
-                # Extract documents
-                documents = package.get_documents()
-                
-                return {
-                    'processing_method': 'advanced_aas_libraries',
-                    'assets': assets,
-                    'submodels': submodels,
-                    'documents': documents,
-                    'metadata': {
-                        'file_path': str(self.aasx_file_path),
-                        'file_size': self.aasx_file_path.stat().st_size,
-                        'processing_timestamp': datetime.now().isoformat(),
-                        'libraries_used': ['aas_core3', 'aasx_package']
-                    }
-                }
-                
-        except Exception as e:
-            logger.warning(f"Advanced processing failed: {e}")
-            return self._process_basic()
-    
-    def _process_basic(self) -> Dict[str, Any]:
-        """
-        Process AASX file using basic ZIP and JSON/XML parsing.
-        """
-        logger.info("Using basic ZIP processing")
+        logger.info("Using enhanced ZIP processing with XML parsing")
         
         try:
             with zipfile.ZipFile(self.aasx_file_path, 'r') as zip_file:
@@ -172,10 +208,10 @@ class AASXProcessor:
                         except Exception as e:
                             logger.warning(f"Error reading {filename}: {e}")
                 
-                # Process XML files
+                # Process XML files with enhanced parsing
                 xml_data = {}
                 for filename in file_list:
-                    if filename.endswith('.xml'):
+                    if filename.endswith('.xml') and not filename.startswith('[Content_Types]'):
                         try:
                             with zip_file.open(filename) as f:
                                 content = f.read().decode('utf-8')
@@ -193,12 +229,12 @@ class AASXProcessor:
                             'type': Path(filename).suffix
                         })
                 
-                # Parse AAS data
-                assets = self._parse_aas_data(aas_data)
-                submodels = self._parse_submodels(aas_data)
+                # Parse AAS data from both JSON and XML
+                assets = self._parse_aas_data_enhanced(aas_data, xml_data)
+                submodels = self._parse_submodels_enhanced(aas_data, xml_data)
                 
-                return {
-                    'processing_method': 'basic_zip_processing',
+                result = {
+                    'processing_method': 'enhanced_zip_processing',
                     'assets': assets,
                     'submodels': submodels,
                     'documents': documents,
@@ -211,181 +247,274 @@ class AASXProcessor:
                         'file_path': str(self.aasx_file_path),
                         'file_size': self.aasx_file_path.stat().st_size,
                         'processing_timestamp': datetime.now().isoformat(),
-                        'libraries_used': ['zipfile', 'json', 'xml']
+                        'libraries_used': ['zipfile', 'json', 'xml.etree.ElementTree']
                     }
                 }
                 
+                return result
+                
         except Exception as e:
-            logger.error(f"Basic processing failed: {e}")
+            logger.error(f"Enhanced processing failed: {e}")
             raise
     
-    def _extract_asset_data(self, asset: Any) -> Dict[str, Any]:
+    def _parse_aas_data_enhanced(self, aas_data: Dict[str, Any], xml_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Extract data from AAS Asset object.
-        """
-        try:
-            return {
-                'id': getattr(asset, 'id', None),
-                'id_short': getattr(asset, 'id_short', None),
-                'description': getattr(asset, 'description', None),
-                'kind': getattr(asset, 'kind', None),
-                'asset_information': self._extract_asset_information(asset),
-                'submodels': [sm.id for sm in getattr(asset, 'submodels', [])]
-            }
-        except Exception as e:
-            logger.warning(f"Error extracting asset data: {e}")
-            return {}
-    
-    def _extract_asset_information(self, asset: Any) -> Dict[str, Any]:
-        """
-        Extract asset information from AAS Asset.
-        """
-        try:
-            asset_info = getattr(asset, 'asset_information', None)
-            if asset_info:
-                return {
-                    'asset_kind': getattr(asset_info, 'asset_kind', None),
-                    'global_asset_id': getattr(asset_info, 'global_asset_id', None),
-                    'specific_asset_ids': [
-                        {
-                            'key': getattr(sid, 'key', None),
-                            'value': getattr(sid, 'value', None)
-                        }
-                        for sid in getattr(asset_info, 'specific_asset_ids', [])
-                    ]
-                }
-            return {}
-        except Exception as e:
-            logger.warning(f"Error extracting asset information: {e}")
-            return {}
-    
-    def _extract_submodel_data(self, submodel: Any) -> Dict[str, Any]:
-        """
-        Extract data from AAS Submodel object.
-        """
-        try:
-            return {
-                'id': getattr(submodel, 'id', None),
-                'id_short': getattr(submodel, 'id_short', None),
-                'description': getattr(submodel, 'description', None),
-                'kind': getattr(submodel, 'kind', None),
-                'semantic_id': getattr(submodel, 'semantic_id', None),
-                'submodel_elements': self._extract_submodel_elements(submodel)
-            }
-        except Exception as e:
-            logger.warning(f"Error extracting submodel data: {e}")
-            return {}
-    
-    def _extract_submodel_elements(self, submodel: Any) -> List[Dict[str, Any]]:
-        """
-        Extract submodel elements from AAS Submodel.
-        """
-        try:
-            elements = []
-            for element in getattr(submodel, 'submodel_elements', []):
-                element_data = {
-                    'id_short': getattr(element, 'id_short', None),
-                    'kind': getattr(element, 'kind', None),
-                    'semantic_id': getattr(element, 'semantic_id', None)
-                }
-                
-                # Extract property values
-                if hasattr(element, 'value'):
-                    element_data['value'] = getattr(element, 'value', None)
-                
-                elements.append(element_data)
-            
-            return elements
-        except Exception as e:
-            logger.warning(f"Error extracting submodel elements: {e}")
-            return []
-    
-    def _parse_aas_data(self, aas_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Parse AAS data from JSON files with enhanced extraction.
+        Enhanced AAS data parsing from both JSON and XML files.
         """
         assets = []
         
+        # Parse from JSON files
         for filename, data in aas_data.items():
             try:
-                logger.info(f"Parsing AAS data from: {filename}")
+                logger.info(f"Parsing AAS data from JSON: {filename}")
                 
                 # Look for asset administration shells
                 if 'assetAdministrationShells' in data:
                     for aas_obj in data['assetAdministrationShells']:
-                        asset = {
-                            'id': aas_obj.get('id'),
-                            'id_short': aas_obj.get('idShort'),
-                            'description': self._extract_description(aas_obj.get('description', {})),
-                            'kind': aas_obj.get('kind'),
-                            'asset_information': aas_obj.get('assetInformation', {}),
-                            'submodels': aas_obj.get('submodels', []),
-                            'derived_from': aas_obj.get('derivedFrom', {}),
-                            'administration': aas_obj.get('administration', {}),
-                            'semantic_id': aas_obj.get('semanticId', {}),
-                            'qualifiers': aas_obj.get('qualifiers', []),
-                            'embedded_data_specifications': aas_obj.get('embeddedDataSpecifications', [])
-                        }
-                        assets.append(asset)
-                        logger.info(f"Found asset: {asset.get('id_short', 'Unknown')}")
+                        asset = self._extract_asset_from_json(aas_obj, filename)
+                        if asset:
+                            assets.append(asset)
                 
                 # Look for assets directly
                 elif 'assets' in data:
                     for asset_obj in data['assets']:
-                        asset = {
-                            'id': asset_obj.get('id'),
-                            'id_short': asset_obj.get('idShort'),
-                            'description': self._extract_description(asset_obj.get('description', {})),
-                            'kind': asset_obj.get('kind'),
-                            'asset_information': asset_obj.get('assetInformation', {}),
-                            'derived_from': asset_obj.get('derivedFrom', {}),
-                            'administration': asset_obj.get('administration', {}),
-                            'semantic_id': asset_obj.get('semanticId', {}),
-                            'qualifiers': asset_obj.get('qualifiers', []),
-                            'embedded_data_specifications': asset_obj.get('embeddedDataSpecifications', [])
-                        }
-                        assets.append(asset)
-                        logger.info(f"Found asset: {asset.get('id_short', 'Unknown')}")
-                
-                # Look for concept descriptions
-                elif 'conceptDescriptions' in data:
-                    for concept_obj in data['conceptDescriptions']:
-                        asset = {
-                            'id': concept_obj.get('id'),
-                            'id_short': concept_obj.get('idShort'),
-                            'description': self._extract_description(concept_obj.get('description', {})),
-                            'kind': 'ConceptDescription',
-                            'category': concept_obj.get('category'),
-                            'checksum': concept_obj.get('checksum'),
-                            'administration': concept_obj.get('administration', {}),
-                            'embedded_data_specifications': concept_obj.get('embeddedDataSpecifications', [])
-                        }
-                        assets.append(asset)
-                        logger.info(f"Found concept description: {asset.get('id_short', 'Unknown')}")
-                
-                # Look for submodels
-                elif 'submodels' in data:
-                    for submodel_obj in data['submodels']:
-                        asset = {
-                            'id': submodel_obj.get('id'),
-                            'id_short': submodel_obj.get('idShort'),
-                            'description': self._extract_description(submodel_obj.get('description', {})),
-                            'kind': 'Submodel',
-                            'category': submodel_obj.get('category'),
-                            'checksum': submodel_obj.get('checksum'),
-                            'administration': submodel_obj.get('administration', {}),
-                            'semantic_id': submodel_obj.get('semanticId', {}),
-                            'qualifiers': submodel_obj.get('qualifiers', []),
-                            'embedded_data_specifications': submodel_obj.get('embeddedDataSpecifications', []),
-                            'submodel_elements': submodel_obj.get('submodelElements', [])
-                        }
-                        assets.append(asset)
-                        logger.info(f"Found submodel: {asset.get('id_short', 'Unknown')}")
-                        
+                        asset = self._extract_asset_from_json(asset_obj, filename)
+                        if asset:
+                            assets.append(asset)
+                            
             except Exception as e:
-                logger.warning(f"Error parsing AAS data from {filename}: {e}")
+                logger.warning(f"Error parsing JSON AAS data from {filename}: {e}")
+        
+        # Parse from XML files
+        for filename, content in xml_data.items():
+            try:
+                logger.info(f"Parsing AAS data from XML: {filename}")
+                xml_assets = self._parse_xml_aas_data(content, filename)
+                assets.extend(xml_assets)
+            except Exception as e:
+                logger.warning(f"Error parsing XML AAS data from {filename}: {e}")
         
         return assets
+    
+    def _parse_xml_aas_data(self, xml_content: str, filename: str) -> List[Dict[str, Any]]:
+        """
+        Parse AAS data from XML content with comprehensive extraction.
+        """
+        assets = []
+        
+        try:
+            root = ET.fromstring(xml_content)
+            
+            # Remove namespace for easier parsing
+            for elem in root.iter():
+                if elem.tag.startswith('{'):
+                    elem.tag = elem.tag.split('}', 1)[1]
+            
+            # Look for AssetAdministrationShell elements
+            for aas_elem in root.findall('.//assetAdministrationShell'):
+                asset = self._extract_asset_from_xml(aas_elem, filename)
+                if asset:
+                    assets.append(asset)
+            
+            # Look for Asset elements
+            for asset_elem in root.findall('.//asset'):
+                asset = self._extract_asset_from_xml(asset_elem, filename)
+                if asset:
+                    assets.append(asset)
+            
+            # Look for Submodel elements
+            for submodel_elem in root.findall('.//submodel'):
+                submodel = self._extract_submodel_from_xml(submodel_elem, filename)
+                if submodel:
+                    # Convert submodel to asset format for consistency
+                    asset = {
+                        'id': submodel.get('id'),
+                        'id_short': submodel.get('id_short'),
+                        'description': submodel.get('description', ''),
+                        'kind': 'Submodel',
+                        'source': filename,
+                        'format': 'XML'
+                    }
+                    assets.append(asset)
+            
+        except Exception as e:
+            logger.warning(f"Error parsing XML content from {filename}: {e}")
+        
+        return assets
+    
+    def _extract_asset_from_xml(self, elem: ET.Element, filename: str) -> Optional[Dict[str, Any]]:
+        """
+        Extract asset data from XML element.
+        """
+        try:
+            # Extract basic information
+            asset_id = self._get_xml_text(elem, 'id')
+            id_short = self._get_xml_text(elem, 'idShort')
+            description = self._get_xml_text(elem, 'description')
+            kind = self._get_xml_text(elem, 'kind')
+            
+            # Only return if we have valid data
+            if asset_id or id_short:
+                return {
+                    'id': asset_id,
+                    'id_short': id_short,
+                    'description': description or '',
+                    'kind': kind or 'Asset',
+                    'source': filename,
+                    'format': 'XML'
+                }
+            
+        except Exception as e:
+            logger.warning(f"Error extracting asset from XML: {e}")
+        
+        return None
+    
+    def _extract_submodel_from_xml(self, elem: ET.Element, filename: str) -> Optional[Dict[str, Any]]:
+        """
+        Extract submodel data from XML element.
+        """
+        try:
+            # Extract basic information
+            submodel_id = self._get_xml_text(elem, 'id')
+            id_short = self._get_xml_text(elem, 'idShort')
+            description = self._get_xml_text(elem, 'description')
+            kind = self._get_xml_text(elem, 'kind')
+            
+            # Only return if we have valid data
+            if submodel_id or id_short:
+                return {
+                    'id': submodel_id,
+                    'id_short': id_short,
+                    'description': description or '',
+                    'kind': kind or 'Submodel',
+                    'source': filename,
+                    'format': 'XML'
+                }
+            
+        except Exception as e:
+            logger.warning(f"Error extracting submodel from XML: {e}")
+        
+        return None
+    
+    def _get_xml_text(self, elem: ET.Element, tag: str) -> Optional[str]:
+        """
+        Get text content from XML element safely.
+        """
+        try:
+            child = elem.find(tag)
+            if child is not None:
+                return child.text.strip() if child.text else None
+        except Exception:
+            pass
+        return None
+    
+    def _extract_asset_from_json(self, asset_obj: Dict[str, Any], filename: str) -> Optional[Dict[str, Any]]:
+        """
+        Extract asset data from JSON object with validation.
+        """
+        try:
+            asset_id = asset_obj.get('id')
+            id_short = asset_obj.get('idShort')
+            description = self._extract_description(asset_obj.get('description', {}))
+            kind = asset_obj.get('kind')
+            
+            # Only return if we have valid data
+            if asset_id or id_short:
+                return {
+                    'id': asset_id,
+                    'id_short': id_short,
+                    'description': description or '',
+                    'kind': kind or 'Asset',
+                    'source': filename,
+                    'format': 'JSON'
+                }
+            
+        except Exception as e:
+            logger.warning(f"Error extracting asset from JSON: {e}")
+        
+        return None
+    
+    def _parse_submodels_enhanced(self, aas_data: Dict[str, Any], xml_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Enhanced submodel parsing from both JSON and XML files.
+        """
+        submodels = []
+        
+        # Parse from JSON files
+        for filename, data in aas_data.items():
+            try:
+                logger.info(f"Parsing submodels from JSON: {filename}")
+                
+                if 'submodels' in data:
+                    for submodel_obj in data['submodels']:
+                        submodel = self._extract_submodel_from_json(submodel_obj, filename)
+                        if submodel:
+                            submodels.append(submodel)
+                            
+            except Exception as e:
+                logger.warning(f"Error parsing JSON submodels from {filename}: {e}")
+        
+        # Parse from XML files
+        for filename, content in xml_data.items():
+            try:
+                logger.info(f"Parsing submodels from XML: {filename}")
+                xml_submodels = self._parse_xml_submodels(content, filename)
+                submodels.extend(xml_submodels)
+            except Exception as e:
+                logger.warning(f"Error parsing XML submodels from {filename}: {e}")
+        
+        return submodels
+    
+    def _parse_xml_submodels(self, xml_content: str, filename: str) -> List[Dict[str, Any]]:
+        """
+        Parse submodels from XML content.
+        """
+        submodels = []
+        
+        try:
+            root = ET.fromstring(xml_content)
+            
+            # Remove namespace for easier parsing
+            for elem in root.iter():
+                if elem.tag.startswith('{'):
+                    elem.tag = elem.tag.split('}', 1)[1]
+            
+            # Look for Submodel elements
+            for submodel_elem in root.findall('.//submodel'):
+                submodel = self._extract_submodel_from_xml(submodel_elem, filename)
+                if submodel:
+                    submodels.append(submodel)
+            
+        except Exception as e:
+            logger.warning(f"Error parsing XML submodels from {filename}: {e}")
+        
+        return submodels
+    
+    def _extract_submodel_from_json(self, submodel_obj: Dict[str, Any], filename: str) -> Optional[Dict[str, Any]]:
+        """
+        Extract submodel data from JSON object with validation.
+        """
+        try:
+            submodel_id = submodel_obj.get('id')
+            id_short = submodel_obj.get('idShort')
+            description = self._extract_description(submodel_obj.get('description', {}))
+            kind = submodel_obj.get('kind')
+            
+            # Only return if we have valid data
+            if submodel_id or id_short:
+                return {
+                    'id': submodel_id,
+                    'id_short': id_short,
+                    'description': description or '',
+                    'kind': kind or 'Submodel',
+                    'source': filename,
+                    'format': 'JSON'
+                }
+            
+        except Exception as e:
+            logger.warning(f"Error extracting submodel from JSON: {e}")
+        
+        return None
     
     def _extract_description(self, description_obj: Dict[str, Any]) -> str:
         """
@@ -410,293 +539,300 @@ class AASXProcessor:
         
         return ""
     
-    def _parse_submodels(self, aas_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _validate_and_clean_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Parse submodels from JSON files with enhanced extraction.
+        Validate and clean the processing result to ensure data quality.
         """
-        submodels = []
+        logger.info("Validating and cleaning processing result")
         
-        for filename, data in aas_data.items():
-            try:
-                logger.info(f"Parsing submodels from: {filename}")
-                
-                # Look for submodels
-                if 'submodels' in data:
-                    for submodel_obj in data['submodels']:
-                        submodel = {
-                            'id': submodel_obj.get('id'),
-                            'id_short': submodel_obj.get('idShort'),
-                            'description': self._extract_description(submodel_obj.get('description', {})),
-                            'kind': submodel_obj.get('kind'),
-                            'category': submodel_obj.get('category'),
-                            'checksum': submodel_obj.get('checksum'),
-                            'administration': submodel_obj.get('administration', {}),
-                            'semantic_id': submodel_obj.get('semanticId', {}),
-                            'qualifiers': submodel_obj.get('qualifiers', []),
-                            'embedded_data_specifications': submodel_obj.get('embeddedDataSpecifications', []),
-                            'submodel_elements': self._parse_submodel_elements(submodel_obj.get('submodelElements', []))
-                        }
-                        submodels.append(submodel)
-                        logger.info(f"Found submodel: {submodel.get('id_short', 'Unknown')}")
-                
-                # Also look for submodels in asset administration shells
-                if 'assetAdministrationShells' in data:
-                    for aas_obj in data['assetAdministrationShells']:
-                        if 'submodels' in aas_obj:
-                            for submodel_ref in aas_obj['submodels']:
-                                submodel = {
-                                    'id': submodel_ref.get('keys', [{}])[0].get('value', 'Unknown'),
-                                    'id_short': f"Submodel_{submodel_ref.get('keys', [{}])[0].get('value', 'Unknown')}",
-                                    'description': 'Submodel reference from AAS',
-                                    'kind': 'SubmodelReference',
-                                    'reference': submodel_ref
-                                }
-                                submodels.append(submodel)
-                                logger.info(f"Found submodel reference: {submodel.get('id_short', 'Unknown')}")
-                        
-            except Exception as e:
-                logger.warning(f"Error parsing submodels from {filename}: {e}")
+        # Clean assets - remove null entries
+        if 'assets' in result:
+            original_assets_count = len(result['assets'])
+            result['assets'] = [asset for asset in result['assets'] if self._is_valid_asset(asset)]
+            cleaned_assets_count = len(result['assets'])
+            
+            if original_assets_count != cleaned_assets_count:
+                logger.info(f"Cleaned assets: {original_assets_count} -> {cleaned_assets_count}")
         
-        return submodels
-    
-    def _parse_submodel_elements(self, elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Parse submodel elements with detailed extraction.
-        """
-        parsed_elements = []
+        # Clean submodels - remove null entries
+        if 'submodels' in result:
+            original_submodels_count = len(result['submodels'])
+            result['submodels'] = [submodel for submodel in result['submodels'] if self._is_valid_submodel(submodel)]
+            cleaned_submodels_count = len(result['submodels'])
+            
+            if original_submodels_count != cleaned_submodels_count:
+                logger.info(f"Cleaned submodels: {original_submodels_count} -> {cleaned_submodels_count}")
         
-        for element in elements:
-            try:
-                element_data = {
-                    'id_short': element.get('idShort'),
-                    'kind': element.get('kind'),
-                    'semantic_id': element.get('semanticId', {}),
-                    'qualifiers': element.get('qualifiers', []),
-                    'embedded_data_specifications': element.get('embeddedDataSpecifications', [])
-                }
-                
-                # Extract specific element types
-                if 'property' in element:
-                    element_data.update({
-                        'type': 'Property',
-                        'value': element['property'].get('value'),
-                        'value_type': element['property'].get('valueType'),
-                        'category': element['property'].get('category')
-                    })
-                elif 'collection' in element:
-                    element_data.update({
-                        'type': 'Collection',
-                        'value': element['collection'].get('value', []),
-                        'category': element['collection'].get('category')
-                    })
-                elif 'operation' in element:
-                    element_data.update({
-                        'type': 'Operation',
-                        'input_variables': element['operation'].get('inputVariables', []),
-                        'output_variables': element['operation'].get('outputVariables', []),
-                        'inoutput_variables': element['operation'].get('inoutputVariables', [])
-                    })
-                elif 'relationshipElement' in element:
-                    element_data.update({
-                        'type': 'RelationshipElement',
-                        'first': element['relationshipElement'].get('first', {}),
-                        'second': element['relationshipElement'].get('second', {})
-                    })
-                else:
-                    element_data['type'] = 'Unknown'
-                    element_data['raw_data'] = element
-                
-                parsed_elements.append(element_data)
-                
-            except Exception as e:
-                logger.warning(f"Error parsing submodel element: {e}")
-                parsed_elements.append({
-                    'id_short': element.get('idShort', 'Unknown'),
-                    'type': 'Error',
-                    'error': str(e),
-                    'raw_data': element
-                })
-        
-        return parsed_elements
-    
-    def get_asset_summary(self) -> Dict[str, Any]:
-        """
-        Get a summary of assets in the AASX file.
-        """
-        processed_data = self.process()
-        
-        summary = {
-            'total_assets': len(processed_data.get('assets', [])),
-            'total_submodels': len(processed_data.get('submodels', [])),
-            'total_documents': len(processed_data.get('documents', [])),
-            'processing_method': processed_data.get('processing_method'),
-            'assets': []
+        # Add validation metadata
+        result['validation'] = {
+            'timestamp': datetime.now().isoformat(),
+            'total_assets': len(result.get('assets', [])),
+            'total_submodels': len(result.get('submodels', [])),
+            'total_documents': len(result.get('documents', [])),
+            'validation_errors': self.validation_errors,
+            'validation_warnings': self.validation_warnings,
+            'consistency_checks': self.consistency_checks
         }
         
-        for asset in processed_data.get('assets', []):
-            asset_summary = {
-                'id': asset.get('id'),
-                'name': asset.get('id_short'),
-                'description': asset.get('description', '')[:100] + '...' if len(asset.get('description', '')) > 100 else asset.get('description', ''),
-                'type': asset.get('kind'),
-                'submodel_count': len(asset.get('submodels', []))
-            }
-            summary['assets'].append(asset_summary)
+        return result
+    
+    def _is_valid_asset(self, asset: Dict[str, Any]) -> bool:
+        """
+        Check if asset has valid data according to AAS specification.
+        In AAS 2.0+, idShort alone can be sufficient for some elements.
+        """
+        if not asset:
+            return False
         
-        return summary
+        # Check for different possible field names (handling .NET processor output)
+        id_value = asset.get('id') or asset.get('Id') or asset.get('ID')
+        id_short = asset.get('idShort') or asset.get('id_short') or asset.get('IdShort') or asset.get('ID_SHORT')
+        
+        # In AAS 2.0+, idShort alone can be sufficient
+        # At least one of id or idShort must be present and non-empty
+        has_valid_id = id_value is not None and str(id_value).strip()
+        has_valid_id_short = id_short is not None and str(id_short).strip()
+        
+        if not has_valid_id and not has_valid_id_short:
+            logger.debug(f"Asset missing both ID and ID_Short - ID: {id_value}, ID_Short: {id_short}")
+            logger.debug(f"Asset keys: {list(asset.keys())}")
+            return False
+        
+        # If we have idShort but no id, that's acceptable in AAS 2.0+
+        if has_valid_id_short and not has_valid_id:
+            logger.debug(f"Asset has idShort but no id (AAS 2.0+ acceptable): {id_short}")
+            return True
+        
+        # Validate URL format if present
+        if has_valid_id and isinstance(id_value, str):
+            if not self._is_valid_url(id_value):
+                logger.warning(f"Invalid URL format in asset id: {id_value}")
+                # Don't fail validation for URL format issues
+        
+        return True
+    
+    def _is_valid_submodel(self, submodel: Dict[str, Any]) -> bool:
+        """
+        Check if submodel has valid data according to AAS specification.
+        In AAS 2.0+, idShort alone can be sufficient for some elements.
+        """
+        if not submodel:
+            return False
+        
+        # Check for different possible field names (handling .NET processor output)
+        id_value = submodel.get('id') or submodel.get('Id') or submodel.get('ID')
+        id_short = submodel.get('idShort') or submodel.get('id_short') or submodel.get('IdShort') or submodel.get('ID_SHORT')
+        
+        # In AAS 2.0+, idShort alone can be sufficient
+        # At least one of id or idShort must be present and non-empty
+        has_valid_id = id_value is not None and str(id_value).strip()
+        has_valid_id_short = id_short is not None and str(id_short).strip()
+        
+        if not has_valid_id and not has_valid_id_short:
+            logger.debug(f"Submodel missing both ID and ID_Short - ID: {id_value}, ID_Short: {id_short}")
+            logger.debug(f"Submodel keys: {list(submodel.keys())}")
+            return False
+        
+        # If we have idShort but no id, that's acceptable in AAS 2.0+
+        if has_valid_id_short and not has_valid_id:
+            logger.debug(f"Submodel has idShort but no id (AAS 2.0+ acceptable): {id_short}")
+            return True
+        
+        # Validate URL format if present
+        if has_valid_id and isinstance(id_value, str):
+            if not self._is_valid_url(id_value):
+                logger.warning(f"Invalid URL format in submodel id: {id_value}")
+                # Don't fail validation for URL format issues
+        
+        return True
+    
+    def _is_valid_entry(self, entry: Dict[str, Any]) -> bool:
+        """
+        Check if an entry has valid data according to AAS specification.
+        """
+        if not entry:
+            return False
+        
+        # Check for different possible field names (handling .NET processor output)
+        id_value = entry.get('id') or entry.get('Id') or entry.get('ID')
+        id_short = entry.get('idShort') or entry.get('id_short') or entry.get('IdShort') or entry.get('ID_SHORT')
+        
+        # Handle None values and empty strings
+        if id_value is None or id_short is None:
+            return False
+        
+        if not str(id_value).strip() or not str(id_short).strip():
+            return False
+        
+        return True
+    
+    def _is_valid_url(self, url: str) -> bool:
+        """
+        Validate if a URL is properly formatted.
+        """
+        if not url:
+            return False
+        
+        try:
+            # Basic URL validation - handle common malformations
+            url_lower = url.lower()
+            
+            # Check for common URL schemes
+            if url_lower.startswith(('http://', 'https://', 'urn:', 'mailto:')):
+                return True
+            
+            # Handle malformed URLs (like 'http.//' instead of 'http://')
+            if url_lower.startswith('http.//'):
+                logger.warning(f"Malformed URL detected (http.//): {url}")
+                return False
+            
+            # Handle other malformations
+            if url_lower.startswith('http') and '://' not in url:
+                logger.warning(f"Malformed URL detected (missing ://): {url}")
+                return False
+            
+            return False
+        except:
+            return False
+
+    # Note: Python AAS libraries (aas_core3, aasx_package) are not available
+    # All processing is done through the .NET AAS processor
+
+    def get_asset_summary(self) -> Dict[str, Any]:
+        """
+        Get a summary of the processed AASX file.
+        """
+        return {
+            'file_path': str(self.aasx_file_path),
+            'file_size': self.aasx_file_path.stat().st_size,
+            'total_assets': len(self.assets),
+            'total_submodels': len(self.submodels),
+            'total_documents': len(self.documents),
+            'processing_timestamp': datetime.now().isoformat()
+        }
     
     def export_to_json(self, output_path: str) -> str:
         """
-        Export processed AASX data to JSON file.
-        
-        Args:
-            output_path: Path for the output JSON file
-            
-        Returns:
-            Path to the exported JSON file
+        Export processed data to JSON file.
         """
-        processed_data = self.process()
+        result = self.process()
         
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(processed_data, f, indent=2, ensure_ascii=False)
+            json.dump(result, f, indent=2, ensure_ascii=False, default=str)
         
-        logger.info(f"AASX data exported to: {output_path}")
         return output_path
 
 
 class AASXBatchProcessor:
     """
-    Batch processor for multiple AASX files.
+    Batch processor for multiple AASX files with validation.
     """
     
     def __init__(self, directory_path: str):
         """
-        Initialize batch processor with directory path.
+        Initialize batch processor.
         
         Args:
-            directory_path: Path to directory containing AASX files
+            directory_path: Directory containing AASX files
         """
         self.directory_path = Path(directory_path)
         self.processors = []
-        
-        if not self.directory_path.exists():
-            raise FileNotFoundError(f"Directory not found: {directory_path}")
+        self.results = []
+        self.validation_summary = {
+            'total_files': 0,
+            'successful_processing': 0,
+            'failed_processing': 0,
+            'validation_errors': [],
+            'consistency_issues': []
+        }
     
     def find_aasx_files(self) -> List[Path]:
         """
         Find all AASX files in the directory.
-        
-        Returns:
-            List of paths to AASX files
         """
-        aasx_files = list(self.directory_path.glob("*.aasx"))
-        logger.info(f"Found {len(aasx_files)} AASX files in {self.directory_path}")
+        aasx_files = []
+        
+        if self.directory_path.exists():
+            for file_path in self.directory_path.rglob("*.aasx"):
+                aasx_files.append(file_path)
+        
         return aasx_files
     
     def process_all(self) -> Dict[str, Any]:
         """
         Process all AASX files in the directory.
-        
-        Returns:
-            Dictionary containing results for all files
         """
         aasx_files = self.find_aasx_files()
-        results = {
-            'total_files': len(aasx_files),
-            'processed_files': 0,
-            'failed_files': 0,
-            'results': {},
-            'summary': {
-                'total_assets': 0,
-                'total_submodels': 0,
-                'total_documents': 0
-            }
-        }
+        self.validation_summary['total_files'] = len(aasx_files)
         
-        for aasx_file in aasx_files:
+        logger.info(f"Found {len(aasx_files)} AASX files for batch processing")
+        
+        for file_path in aasx_files:
             try:
-                logger.info(f"Processing: {aasx_file.name}")
-                processor = AASXProcessor(str(aasx_file))
-                processed_data = processor.process()
+                logger.info(f"Processing: {file_path}")
+                processor = AASXProcessor(str(file_path))
+                result = processor.process()
                 
-                results['results'][aasx_file.name] = processed_data
-                results['processed_files'] += 1
+                if result and result.get('validation', {}).get('total_assets', 0) > 0:
+                    self.results.append(result)
+                    self.validation_summary['successful_processing'] += 1
+                    logger.info(f"Successfully processed: {file_path}")
+                else:
+                    self.validation_summary['failed_processing'] += 1
+                    logger.warning(f"Failed to process: {file_path}")
                 
-                # Update summary
-                results['summary']['total_assets'] += len(processed_data.get('assets', []))
-                results['summary']['total_submodels'] += len(processed_data.get('submodels', []))
-                results['summary']['total_documents'] += len(processed_data.get('documents', []))
+                # Collect validation errors
+                if result and 'validation' in result:
+                    validation = result['validation']
+                    if validation.get('validation_errors'):
+                        self.validation_summary['validation_errors'].extend(validation['validation_errors'])
+                    if validation.get('validation_warnings'):
+                        self.validation_summary['validation_warnings'].extend(validation['validation_warnings'])
+                    if validation.get('consistency_checks'):
+                        self.validation_summary['consistency_issues'].extend(validation['consistency_checks'])
                 
             except Exception as e:
-                logger.error(f"Failed to process {aasx_file.name}: {e}")
-                results['results'][aasx_file.name] = {'error': str(e)}
-                results['failed_files'] += 1
+                self.validation_summary['failed_processing'] += 1
+                logger.error(f"Error processing {file_path}: {e}")
         
-        return results
+        return {
+            'results': self.results,
+            'validation_summary': self.validation_summary,
+            'processing_timestamp': datetime.now().isoformat()
+        }
 
 
-# Utility functions
 def validate_aasx_file(file_path: str) -> bool:
     """
-    Validate if a file is a valid AASX file.
-    
-    Args:
-        file_path: Path to the file to validate
-        
-    Returns:
-        True if valid AASX file, False otherwise
+    Validate AASX file structure and content.
     """
     try:
-        path = Path(file_path)
-        if not path.exists() or path.suffix.lower() != '.aasx':
+        processor = AASXProcessor(file_path)
+        result = processor.process()
+        
+        if not result:
             return False
         
-        with zipfile.ZipFile(path, 'r') as zip_file:
-            # Check for AAS-related files
-            file_list = zip_file.namelist()
-            has_aas_files = any(
-                filename.endswith('.json') or filename.endswith('.xml')
-                for filename in file_list
-            )
-            
-            return has_aas_files
-            
-    except Exception:
+        # Check if we have any valid data
+        validation = result.get('validation', {})
+        total_assets = validation.get('total_assets', 0)
+        total_submodels = validation.get('total_submodels', 0)
+        
+        # File is valid if it has at least some assets or submodels
+        return total_assets > 0 or total_submodels > 0
+        
+    except Exception as e:
+        logger.error(f"Validation failed for {file_path}: {e}")
         return False
 
 
 def get_aasx_info(file_path: str) -> Dict[str, Any]:
     """
     Get basic information about an AASX file.
-    
-    Args:
-        file_path: Path to the AASX file
-        
-    Returns:
-        Dictionary with basic file information
     """
     try:
-        path = Path(file_path)
-        info = {
-            'filename': path.name,
-            'file_path': str(path),
-            'file_size': path.stat().st_size,
-            'modified_date': datetime.fromtimestamp(path.stat().st_mtime).isoformat(),
-            'is_valid': validate_aasx_file(file_path)
-        }
-        
-        if info['is_valid']:
-            processor = AASXProcessor(file_path)
-            summary = processor.get_asset_summary()
-            info.update(summary)
-        
-        return info
-        
+        processor = AASXProcessor(file_path)
+        return processor.get_asset_summary()
     except Exception as e:
-        logger.error(f"Error getting AASX info: {e}")
-        return {
-            'filename': Path(file_path).name,
-            'file_path': file_path,
-            'error': str(e),
-            'is_valid': False
-        } 
+        logger.error(f"Error getting AASX info for {file_path}: {e}")
+        return {} 

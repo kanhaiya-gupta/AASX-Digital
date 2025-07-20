@@ -13,3 +13,7 @@ C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\obj\Release\
 C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\obj\Release\net6.0\AasProcessor.pdb
 C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\obj\Release\net6.0\AasProcessor.genruntimeconfig.cache
 C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\obj\Release\net6.0\ref\AasProcessor.dll
+C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\bin\Release\net6.0\AasCore.Aas3.Package.dll
+C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\bin\Release\net6.0\AasCore.Aas3_0.dll
+C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\bin\Release\net6.0\System.IO.Packaging.dll
+C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\obj\Release\net6.0\AasProcessor.csproj.CopyComplete

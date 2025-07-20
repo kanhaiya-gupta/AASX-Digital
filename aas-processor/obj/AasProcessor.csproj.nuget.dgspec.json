@@ -42,6 +42,14 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "dependencies": {
+            "AasCore.Aas3.Package": {
+              "target": "Package",
+              "version": "[1.0.2, )"
+            },
+            "AasCore.Aas3_0": {
+              "target": "Package",
+              "version": "[1.0.4, )"
+            },
             "System.Text.Json": {
               "target": "Package",
               "version": "[6.0.0, )"

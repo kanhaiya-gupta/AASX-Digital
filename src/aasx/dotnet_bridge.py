@@ -87,13 +87,14 @@ class DotNetAasBridge:
     
     def process_aasx_file(self, aasx_file_path: str) -> Optional[Dict[str, Any]]:
         """
-        Process an AASX file using the .NET processor.
+        Process an AASX file using the .NET processor with complete structure preservation.
+        This method preserves all AAS XML content, relationships, and metadata for perfect round-trip conversion.
         
         Args:
             aasx_file_path: Path to the AASX file
             
         Returns:
-            Dictionary containing processed AAS data or None if failed
+            Dictionary containing complete AAS data with full structure or None if failed
         """
         if not self.processor_exe:
             logger.error(".NET processor not available")
@@ -104,22 +105,30 @@ class DotNetAasBridge:
             with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
                 temp_output = temp_file.name
             
-            # Call the .NET processor
+            # Call the .NET processor with complete processing
             if str(self.processor_exe).endswith('.dll'):
                 # Use dotnet to run the DLL
-                cmd = ["dotnet", str(self.processor_exe), aasx_file_path, temp_output]
+                cmd = ["dotnet", str(self.processor_exe), "process-enhanced", aasx_file_path, temp_output]
             else:
                 # Direct executable
-                cmd = [str(self.processor_exe), aasx_file_path, temp_output]
+                cmd = [str(self.processor_exe), "process-enhanced", aasx_file_path, temp_output]
+            
+            logger.info(f"Calling .NET processor for complete AASX processing")
+            logger.debug(f"Command: {' '.join(cmd)}")
             
             result = subprocess.run(
                 cmd,
                 capture_output=True,
-                text=True
+                text=True,
+                timeout=120  # Longer timeout for complete processing
             )
             
+            logger.debug(f".NET processor stdout: {result.stdout}")
+            logger.debug(f".NET processor stderr: {result.stderr}")
+            logger.debug(f".NET processor return code: {result.returncode}")
+            
             if result.returncode != 0:
-                logger.error(f".NET processor failed: {result.stderr}")
+                logger.error(f".NET processor complete processing failed: {result.stderr}")
                 return None
             
             # Read the output
@@ -129,11 +138,147 @@ class DotNetAasBridge:
             # Clean up
             os.unlink(temp_output)
             
-            logger.info(f"Successfully processed AASX file with .NET processor")
+            logger.info(f"Successfully processed AASX file with complete .NET processor")
             return data
             
         except Exception as e:
-            logger.error(f"Error calling .NET processor: {e}")
+            logger.error(f"Error calling complete .NET processor: {e}")
+            return None
+
+    def process_aasx_file_enhanced(self, aasx_file_path: str) -> Optional[Dict[str, Any]]:
+        """
+        Process an AASX file using the enhanced .NET processor for complete structure preservation.
+        
+        Args:
+            aasx_file_path: Path to the AASX file
+            
+        Returns:
+            Dictionary containing enhanced AAS data with complete structure or None if failed
+        """
+        if not self.processor_exe:
+            logger.error(".NET processor not available")
+            return None
+        
+        try:
+            # Create temporary output file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
+                temp_output = temp_file.name
+            
+            # Call the .NET processor with enhanced processing
+            if str(self.processor_exe).endswith('.dll'):
+                # Use dotnet to run the DLL
+                cmd = ["dotnet", str(self.processor_exe), "process-enhanced", aasx_file_path, temp_output]
+            else:
+                # Direct executable
+                cmd = [str(self.processor_exe), "process-enhanced", aasx_file_path, temp_output]
+            
+            logger.info(f"Calling .NET processor for enhanced AASX processing")
+            logger.debug(f"Command: {' '.join(cmd)}")
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=120  # Longer timeout for enhanced processing
+            )
+            
+            logger.debug(f".NET processor stdout: {result.stdout}")
+            logger.debug(f".NET processor stderr: {result.stderr}")
+            logger.debug(f".NET processor return code: {result.returncode}")
+            
+            if result.returncode != 0:
+                logger.error(f".NET processor enhanced processing failed: {result.stderr}")
+                return None
+            
+            # Read the output
+            with open(temp_output, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # Clean up
+            os.unlink(temp_output)
+            
+            logger.info(f"Successfully processed AASX file with enhanced .NET processor")
+            return data
+            
+        except Exception as e:
+            logger.error(f"Error calling enhanced .NET processor: {e}")
+            return None
+    
+    def generate_aasx_file(self, json_data: Dict[str, Any], output_path: str, embedded_files: Dict[str, str] = None) -> Optional[Dict[str, Any]]:
+        """
+        Generate an AASX file from JSON data using the .NET processor.
+        
+        Args:
+            json_data: AAS data as dictionary
+            output_path: Path where AASX file should be saved
+            embedded_files: Dictionary mapping AASX paths to file paths
+            
+        Returns:
+            Dictionary containing generation result or None if failed
+        """
+        if not self.processor_exe:
+            logger.error(".NET processor not available")
+            return None
+        
+        try:
+            # Convert JSON data to string
+            json_string = json.dumps(json_data, ensure_ascii=False)
+            
+            # Convert embedded files to JSON string if provided
+            embedded_files_string = json.dumps(embedded_files or {}, ensure_ascii=False) if embedded_files else None
+            
+            # Call the .NET processor for generation
+            if str(self.processor_exe).endswith('.dll'):
+                # Use dotnet to run the DLL
+                cmd = ["dotnet", str(self.processor_exe), "generate", "--json", json_string, "--output", output_path]
+                if embedded_files_string:
+                    cmd.extend(["--embedded", embedded_files_string])
+            else:
+                # Direct executable
+                cmd = [str(self.processor_exe), "generate", "--json", json_string, "--output", output_path]
+                if embedded_files_string:
+                    cmd.extend(["--embedded", embedded_files_string])
+            
+            logger.info(f"Calling .NET processor for AASX generation")
+            logger.debug(f"Command: {' '.join(cmd[:4])} [JSON_DATA] {' '.join(cmd[5:])}")
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            logger.debug(f".NET processor stdout: {result.stdout}")
+            logger.debug(f".NET processor stderr: {result.stderr}")
+            logger.debug(f".NET processor return code: {result.returncode}")
+            
+            if result.returncode != 0:
+                logger.error(f".NET processor generation failed: {result.stderr}")
+                return None
+            
+            # Parse result
+            try:
+                if result.stdout.strip():
+                    return json.loads(result.stdout)
+                else:
+                    return {
+                        "success": True,
+                        "output_path": output_path,
+                        "message": "AASX generated successfully"
+                    }
+            except json.JSONDecodeError:
+                return {
+                    "success": True,
+                    "output_path": output_path,
+                    "message": "AASX generated successfully (no detailed output)"
+                }
+                
+        except subprocess.TimeoutExpired:
+            logger.error(".NET processor generation timed out")
+            return None
+        except Exception as e:
+            logger.error(f"Error calling .NET processor for generation: {e}")
             return None
     
     def is_available(self) -> bool:

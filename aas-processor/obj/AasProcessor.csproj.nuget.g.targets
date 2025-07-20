@@ -2,5 +2,6 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <Import Project="$(NuGetPackageRoot)system.text.json\6.0.0\build\System.Text.Json.targets" Condition="Exists('$(NuGetPackageRoot)system.text.json\6.0.0\build\System.Text.Json.targets')" />
+    <Import Project="$(NuGetPackageRoot)system.io.packaging\9.0.5\buildTransitive\netcoreapp2.0\System.IO.Packaging.targets" Condition="Exists('$(NuGetPackageRoot)system.io.packaging\9.0.5\buildTransitive\netcoreapp2.0\System.IO.Packaging.targets')" />
   </ImportGroup>
 </Project>

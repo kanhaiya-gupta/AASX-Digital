@@ -8,12 +8,45 @@
     ".NETCoreApp,Version=v6.0": {
       "AasProcessor/1.0.0": {
         "dependencies": {
+          "AasCore.Aas3.Package": "1.0.2",
+          "AasCore.Aas3_0": "1.0.4",
           "System.Text.Json": "6.0.0"
         },
         "runtime": {
           "AasProcessor.dll": {}
         }
       },
+      "AasCore.Aas3.Package/1.0.2": {
+        "dependencies": {
+          "System.IO.Packaging": "9.0.5"
+        },
+        "runtime": {
+          "lib/netstandard2.1/AasCore.Aas3.Package.dll": {
+            "assemblyVersion": "1.0.2.0",
+            "fileVersion": "1.0.2.0"
+          }
+        }
+      },
+      "AasCore.Aas3_0/1.0.4": {
+        "runtime": {
+          "lib/net6.0/AasCore.Aas3_0.dll": {
+            "assemblyVersion": "1.0.4.0",
+            "fileVersion": "1.0.4.0"
+          }
+        }
+      },
+      "System.IO.Packaging/9.0.5": {
+        "dependencies": {
+          "System.Memory": "4.5.5"
+        },
+        "runtime": {
+          "lib/netstandard2.0/System.IO.Packaging.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.525.21509"
+          }
+        }
+      },
+      "System.Memory/4.5.5": {},
       "System.Runtime.CompilerServices.Unsafe/6.0.0": {},
       "System.Text.Encodings.Web/6.0.0": {
         "dependencies": {
@@ -33,6 +66,34 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "AasCore.Aas3.Package/1.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zbUJ4/n71AhTqKbmQbPtB9CPqS/bkv/49dQNhknLs3tQN12i64VMnbXmXmqGwQSWbFzmBnu9yRCCbi+gGPpdCg==",
+      "path": "aascore.aas3.package/1.0.2",
+      "hashPath": "aascore.aas3.package.1.0.2.nupkg.sha512"
+    },
+    "AasCore.Aas3_0/1.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-RzumyrcYGmr9qsAQBRgqeDXJaPQofQZb0shonNtXnHXBZvTQNhQ+0vuYARcCK4v/6p1F7IpHRNpGwn4vHZNa1g==",
+      "path": "aascore.aas3_0/1.0.4",
+      "hashPath": "aascore.aas3_0.1.0.4.nupkg.sha512"
+    },
+    "System.IO.Packaging/9.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GeqX4i9ZCtPQaGnZF2UDjYHJchoEfkvBMcQZKkPFor/VbdwI76YjkLFJv9pogpTEPFH5N3GrtyKYgOwZc3nJXw==",
+      "path": "system.io.packaging/9.0.5",
+      "hashPath": "system.io.packaging.9.0.5.nupkg.sha512"
+    },
+    "System.Memory/4.5.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-XIWiDvKPXaTveaB7HVganDlOCRoj03l+jrwNvcge/t8vhGYKvqV+dMv6G4SAX2NoNmN0wZfVPTAlFwZcZvVOUw==",
+      "path": "system.memory/4.5.5",
+      "hashPath": "system.memory.4.5.5.nupkg.sha512"
     },
     "System.Runtime.CompilerServices.Unsafe/6.0.0": {
       "type": "package",

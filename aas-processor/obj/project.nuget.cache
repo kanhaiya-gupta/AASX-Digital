@@ -1,9 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "wU0xQx7gTsBsY2se4dQRWqwHm0Gkob2Ayumxy6EKMh61pspc7/OQcc3lNf9WIvvf3vK9LL2hVM6wApy8kbWKMw==",
+  "dgSpecHash": "XJy1KHqFQYzGUA++0neUcMpjQV2Wm9nJK0/H647+knSwq9c8M/7IL3FHeFylR4hh8FyULMkW9vhGA8FFWoIaJg==",
   "success": true,
   "projectFilePath": "C:\\Users\\kanha\\Independent_Research\\aas-data-modeling\\aas-processor\\AasProcessor.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\kanha\\.nuget\\packages\\aascore.aas3.package\\1.0.2\\aascore.aas3.package.1.0.2.nupkg.sha512",
+    "C:\\Users\\kanha\\.nuget\\packages\\aascore.aas3_0\\1.0.4\\aascore.aas3_0.1.0.4.nupkg.sha512",
+    "C:\\Users\\kanha\\.nuget\\packages\\system.io.packaging\\9.0.5\\system.io.packaging.9.0.5.nupkg.sha512",
+    "C:\\Users\\kanha\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
     "C:\\Users\\kanha\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
     "C:\\Users\\kanha\\.nuget\\packages\\system.text.encodings.web\\6.0.0\\system.text.encodings.web.6.0.0.nupkg.sha512",
     "C:\\Users\\kanha\\.nuget\\packages\\system.text.json\\6.0.0\\system.text.json.6.0.0.nupkg.sha512"
