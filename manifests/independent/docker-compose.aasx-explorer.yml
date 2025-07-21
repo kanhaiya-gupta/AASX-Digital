@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  aasx-explorer:
+    build:
+      context: ../..
+      dockerfile: docker/independent/Dockerfile.aasx-explorer
+    container_name: aasx-explorer
+    ports:
+      - "5001:5000"
+    volumes:
+      # Mount AASX files directory for testing
+      - ../../data/aasx-examples:/app/aasx-files:ro
+      # Mount current directory for development
+      - ../../package-explorer:/src/package-explorer:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+    networks:
+      - aasx-network
+    restart: unless-stopped
+
+networks:
+  aasx-network:
+    driver: bridge 
