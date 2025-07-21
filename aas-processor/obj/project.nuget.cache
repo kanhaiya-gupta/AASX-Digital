@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "XJy1KHqFQYzGUA++0neUcMpjQV2Wm9nJK0/H647+knSwq9c8M/7IL3FHeFylR4hh8FyULMkW9vhGA8FFWoIaJg==",
+  "dgSpecHash": "iha5B6XFx3x+fNvCQzs3UcDZoXsNGVqgny0bea8E2sXFPmXIrbKJ0NbzpI+JVauz+vhSEhT/fLWwlWyrqVRZ/g==",
   "success": true,
   "projectFilePath": "C:\\Users\\kanha\\Independent_Research\\aas-data-modeling\\aas-processor\\AasProcessor.csproj",
   "expectedPackageFiles": [
@@ -10,7 +10,8 @@
     "C:\\Users\\kanha\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
     "C:\\Users\\kanha\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
     "C:\\Users\\kanha\\.nuget\\packages\\system.text.encodings.web\\6.0.0\\system.text.encodings.web.6.0.0.nupkg.sha512",
-    "C:\\Users\\kanha\\.nuget\\packages\\system.text.json\\6.0.0\\system.text.json.6.0.0.nupkg.sha512"
+    "C:\\Users\\kanha\\.nuget\\packages\\system.text.json\\6.0.0\\system.text.json.6.0.0.nupkg.sha512",
+    "C:\\Users\\kanha\\.nuget\\packages\\yamldotnet\\16.3.0\\yamldotnet.16.3.0.nupkg.sha512"
   ],
   "logs": []
 }

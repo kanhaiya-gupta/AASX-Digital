@@ -17,3 +17,4 @@ C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\bin\Release\
 C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\bin\Release\net6.0\AasCore.Aas3_0.dll
 C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\bin\Release\net6.0\System.IO.Packaging.dll
 C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\obj\Release\net6.0\AasProcessor.csproj.CopyComplete
+C:\Users\kanha\Independent_Research\aas-data-modeling\aas-processor\bin\Release\net6.0\YamlDotNet.dll

@@ -1,6 +1,11 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json.Nodes;
 
 namespace AasProcessor
 {
@@ -28,8 +33,39 @@ namespace AasProcessor
                             ShowUsage();
                             return;
                         }
-                        string result = processor.ProcessAasxFile(args[1]);
-                        Console.WriteLine(result);
+                        string aasxFilePath = args[1];
+                        string? outputPath = args.Length > 2 ? args[2] : null;
+                        try
+                        {
+                            string result = processor.ProcessAasxFile(aasxFilePath);
+                            if (!string.IsNullOrEmpty(outputPath))
+                            {
+                                File.WriteAllText(outputPath, result);
+                                Console.WriteLine($"AASX data exported to: {outputPath}");
+                                // Also write YAML if output is .json
+                                if (outputPath.EndsWith(".json"))
+                                {
+                                    var jsonDoc = System.Text.Json.JsonDocument.Parse(result);
+                                    var dotNetObj = ConvertJsonElement(jsonDoc.RootElement);
+                                    var yamlSerializer = new SerializerBuilder()
+                                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                        .Build();
+                                    var yaml = yamlSerializer.Serialize(dotNetObj);
+                                    var yamlPath = outputPath.Substring(0, outputPath.Length - 5) + ".yaml";
+                                    File.WriteAllText(yamlPath, yaml);
+                                    Console.WriteLine($"AASX data also exported to: {yamlPath}");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine(result);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
+                        }
                         break;
 
                     case "process-enhanced":
@@ -39,27 +75,25 @@ namespace AasProcessor
                             ShowUsage();
                             return;
                         }
-                        string outputPath = args.Length > 2 ? args[2] : null;
-                        string enhancedResult = processor.ProcessAasxFileEnhanced(args[1], outputPath);
-                        
-                        // Save JSON output to file if output path is provided
-                        if (!string.IsNullOrEmpty(outputPath))
+                        string enhancedAasxFilePath = args[1];
+                        string? enhancedOutputPath = args.Length > 2 ? args[2] : null;
+                        try
                         {
-                            try
+                            string enhancedResult = processor.ProcessAasxFileEnhanced(enhancedAasxFilePath, enhancedOutputPath);
+                            if (!string.IsNullOrEmpty(enhancedOutputPath))
                             {
-                                File.WriteAllText(outputPath, enhancedResult);
-                                Console.WriteLine($"JSON output saved to: {outputPath}");
+                                File.WriteAllText(enhancedOutputPath, enhancedResult);
+                                Console.WriteLine($"Enhanced AASX data exported to: {enhancedOutputPath}");
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                Console.WriteLine($"Warning: Could not save JSON to {outputPath}: {ex.Message}");
-                                Console.WriteLine("Output:");
                                 Console.WriteLine(enhancedResult);
                             }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            Console.WriteLine(enhancedResult);
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
                         }
                         break;
 
@@ -297,9 +331,23 @@ namespace AasProcessor
 
             try
             {
-                // Read JSON file
-                string jsonData = File.ReadAllText(jsonFilePath);
-                
+                string jsonData;
+                if (jsonFilePath.EndsWith(".yaml") || jsonFilePath.EndsWith(".yml"))
+                {
+                    // Parse YAML and convert to JSON
+                    var yamlText = File.ReadAllText(jsonFilePath);
+                    var deserializer = new DeserializerBuilder()
+                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                        .Build();
+                    var yamlObject = deserializer.Deserialize<object>(yamlText);
+                    jsonData = System.Text.Json.JsonSerializer.Serialize(yamlObject, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                }
+                else
+                {
+                    // Read JSON file
+                    jsonData = File.ReadAllText(jsonFilePath);
+                }
+
                 var processor = new AasProcessor();
                 string result = processor.GenerateAasxFileFromStructured(jsonData, jsonFilePath, outputPath);
                 Console.WriteLine($"Generated AASX file: {result}");
@@ -324,6 +372,32 @@ namespace AasProcessor
             {
                 Console.WriteLine("Warning: Could not parse embedded files JSON");
                 return null;
+            }
+        }
+
+        // Helper function to convert JsonElement to .NET object for YAML serialization
+        static object? ConvertJsonElement(System.Text.Json.JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case System.Text.Json.JsonValueKind.Object:
+                    var dict = new Dictionary<string, object?>();
+                    foreach (var prop in element.EnumerateObject())
+                        dict[prop.Name] = ConvertJsonElement(prop.Value);
+                    return dict;
+                case System.Text.Json.JsonValueKind.Array:
+                    return element.EnumerateArray().Select(ConvertJsonElement).ToList();
+                case System.Text.Json.JsonValueKind.String:
+                    return element.GetString();
+                case System.Text.Json.JsonValueKind.Number:
+                    if (element.TryGetInt64(out long l)) return l;
+                    if (element.TryGetDouble(out double d)) return d;
+                    return element.GetRawText();
+                case System.Text.Json.JsonValueKind.True:
+                case System.Text.Json.JsonValueKind.False:
+                    return element.GetBoolean();
+                default:
+                    return null;
             }
         }
     }

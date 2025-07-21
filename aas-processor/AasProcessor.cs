@@ -54,104 +54,69 @@ namespace AasProcessor
         }
 
         /// <summary>
-        /// Basic AASX processing using ZIP file operations
+        /// Basic AASX processing using ZIP file operations (MINIMAL extraction for AASX reconstruction)
         /// </summary>
         private object ProcessAasxBasic(string aasxFilePath)
         {
             var fileInfo = new FileInfo(aasxFilePath);
-            var documents = new List<object>();
-            var images = new List<object>();
-            var otherFiles = new List<object>();
             var assets = new List<object>();
             var submodels = new List<object>();
-            var jsonFiles = new List<string>();
-            var xmlFiles = new List<string>();
-            
+            var assetSubmodelRelationships = new List<object>();
+            var fileRelationships = new List<object>();
+            var embeddedFiles = new Dictionary<string, object>();
+            var namespaces = new Dictionary<string, string>();
+            var aasVersion = "UNKNOWN";
+
             try
             {
                 using (var zip = System.IO.Compression.ZipFile.OpenRead(aasxFilePath))
                 {
-                    // Extract all embedded files (documents, images, etc.)
                     foreach (var entry in zip.Entries)
                     {
-                        Console.WriteLine($"Found entry: {entry.Name}");
-                        
                         var extension = Path.GetExtension(entry.Name).ToLowerInvariant();
-                        var entryInfo = new
+                        // Extract embedded file metadata
+                        if (!entry.FullName.StartsWith("[Content_Types]") && !entry.FullName.Contains("_rels") && extension != ".xml" && extension != ".json")
                         {
-                            filename = entry.FullName,
-                            size = entry.Length,
-                            type = extension
-                        };
-                        
-                        // Categorize files
-                        if (extension == ".pdf" || extension == ".doc" || extension == ".docx" || extension == ".txt")
-                        {
-                            documents.Add(entryInfo);
-                            Console.WriteLine($"Added document: {entry.Name}");
-                        }
-                        else if (extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".gif" || extension == ".bmp")
-                        {
-                            images.Add(entryInfo);
-                            Console.WriteLine($"Added image: {entry.Name}");
-                        }
-                        else if (!entry.FullName.StartsWith("[Content_Types]") && !entry.FullName.Contains("_rels") && extension != ".xml" && extension != ".json")
-                        {
-                            otherFiles.Add(entryInfo);
-                            Console.WriteLine($"Added other file: {entry.Name}");
-                        }
-                        
-                        // Process JSON files for AAS data
-                        if (entry.Name.EndsWith(".json"))
-                        {
-                            jsonFiles.Add(entry.Name);
-                            Console.WriteLine($"Processing JSON file: {entry.Name}");
-                            try
+                            var fileMetadata = new Dictionary<string, object>
                             {
-                                using (var stream = entry.Open())
-                                using (var reader = new StreamReader(stream))
+                                ["filename"] = entry.FullName,
+                                ["size"] = entry.Length,
+                                ["type"] = extension,
+                                ["compression_method"] = "DEFLATE",
+                                ["last_modified"] = entry.LastWriteTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                                ["crc32"] = entry.Crc32.ToString("X8")
+                            };
+                            embeddedFiles[entry.FullName] = fileMetadata;
+                        }
+                        // Extract AAS data from XML
+                        if (entry.Name.EndsWith(".xml") && !entry.Name.StartsWith("[Content_Types]"))
+                        {
+                            using (var stream = entry.Open())
+                            using (var reader = new StreamReader(stream))
+                            {
+                                var content = reader.ReadToEnd();
+                                // Extract version and namespaces
+                                var doc = new System.Xml.XmlDocument();
+                                doc.LoadXml(content);
+                                aasVersion = DetectAasVersion(doc);
+                                ExtractAllNamespaces(doc, namespaces);
+                                // Extract assets, submodels, relationships
+                                var nsManager = CreateNamespaceManager(doc);
+                                switch (aasVersion)
                                 {
-                                    var content = reader.ReadToEnd();
-                                    var jsonData = JsonSerializer.Deserialize<JsonElement>(content);
-                                    
-                                    // Extract AAS data from JSON
-                                    ExtractAasFromJson(jsonData, assets, submodels, entry.Name);
+                                    case "3.0":
+                                        ExtractAas30DataEnhanced(doc, nsManager, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        break;
+                                    case "2.0":
+                                        ExtractAas20DataEnhanced(doc, nsManager, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        break;
+                                    case "1.0":
+                                        ExtractAas10DataEnhanced(doc, nsManager, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        break;
+                                    default:
+                                        ExtractGenericAasDataEnhanced(doc, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        break;
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error processing JSON {entry.Name}: {ex.Message}");
-                            }
-                        }
-                        // Process XML files (AAS data)
-                        else if (entry.Name.EndsWith(".xml") && !entry.Name.StartsWith("[Content_Types]"))
-                        {
-                            Console.WriteLine($"Found XML file: {entry.Name}");
-                            // Check if it's an AAS XML file
-                            if (entry.Name.Contains(".aas.xml") || entry.Name.Contains("/aas.xml") || entry.Name.Contains("\\aas.xml") || entry.Name.Contains("aas.xml"))
-                            {
-                                xmlFiles.Add(entry.Name);
-                                Console.WriteLine($"Processing AAS XML file: {entry.Name}");
-                                try
-                                {
-                                    using (var stream = entry.Open())
-                                    using (var reader = new StreamReader(stream))
-                                    {
-                                        var content = reader.ReadToEnd();
-                                        Console.WriteLine($"Processing XML file: {entry.Name}");
-                                        
-                                        // Extract AAS data from XML
-                                        ExtractAasFromXml(content, assets, submodels, entry.Name);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine($"Error processing XML {entry.Name}: {ex.Message}");
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Skipping non-AAS XML file: {entry.Name}");
                             }
                         }
                     }
@@ -165,21 +130,14 @@ namespace AasProcessor
 
             return new
             {
-                processing_method = "enhanced_zip_processing",
-                file_path = aasxFilePath,
-                file_size = fileInfo.Length,
-                processing_timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                libraries_used = new[] { "System.IO.Compression", "System.Text.Json", "System.Xml" },
+                aasVersion = aasVersion,
+                namespaces = namespaces,
                 assets = assets,
                 submodels = submodels,
-                documents = documents,
-                images = images,
-                other_files = otherFiles,
-                raw_data = new
-                {
-                    json_files = jsonFiles,
-                    xml_files = xmlFiles
-                }
+                assetSubmodelRelationships = assetSubmodelRelationships,
+                fileRelationships = fileRelationships,
+                embeddedFiles = embeddedFiles
+                // conceptDescriptions intentionally omitted from minimal output
             };
         }
 
@@ -238,7 +196,6 @@ namespace AasProcessor
             var submodels = new List<object>();
             var jsonFiles = new List<string>();
             var xmlFiles = new List<string>();
-            
             // NEW: Enhanced data structures for complete preservation
             var aasXmlContent = new Dictionary<string, object>();
             var assetSubmodelRelationships = new List<object>();
@@ -247,200 +204,47 @@ namespace AasProcessor
             var embeddedFiles = new Dictionary<string, object>();
             var namespaces = new Dictionary<string, string>();
             var aasVersion = "UNKNOWN";
-            
+            var conceptDescriptions = new List<object>();
+
             try
             {
                 using (var zip = System.IO.Compression.ZipFile.OpenRead(aasxFilePath))
                 {
-                    // Extract AASX structure information
-                    aasxStructure["total_entries"] = zip.Entries.Count;
-                    aasxStructure["compression_method"] = "DEFLATE";
-                    
-                    // Find AASX origin and relationships
-                    var aasxOriginEntry = zip.Entries.FirstOrDefault(e => e.Name == "aasx-origin");
-                    if (aasxOriginEntry != null)
-                    {
-                        using (var stream = aasxOriginEntry.Open())
-                        using (var reader = new StreamReader(stream))
-                        {
-                            var originContent = reader.ReadToEnd();
-                            aasxStructure["aasx_origin"] = originContent.Trim();
-                        }
-                    }
-                    
-                    var aasxOriginRelsEntry = zip.Entries.FirstOrDefault(e => e.Name == "aasx-origin.rels");
-                    if (aasxOriginRelsEntry != null)
-                    {
-                        using (var stream = aasxOriginRelsEntry.Open())
-                        using (var reader = new StreamReader(stream))
-                        {
-                            var relsContent = reader.ReadToEnd();
-                            aasxStructure["aasx_origin_rels"] = relsContent;
-                        }
-                    }
-                    
-                    // Extract all embedded files with enhanced metadata
                     foreach (var entry in zip.Entries)
                     {
-                        Console.WriteLine($"Found entry: {entry.Name}");
-                        
                         var extension = Path.GetExtension(entry.Name).ToLowerInvariant();
-                        var entryInfo = new
+                        // ... existing code ...
+                        // Extract AAS data from XML
+                        if (entry.Name.EndsWith(".xml") && !entry.Name.StartsWith("[Content_Types]"))
                         {
-                            filename = entry.FullName,
-                            size = entry.Length,
-                            type = extension,
-                            compression_method = "DEFLATE", // Default compression method
-                            last_modified = entry.LastWriteTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                            crc32 = entry.Crc32.ToString("X8")
-                        };
-                        
-                        // Store embedded file metadata and extract to documents directory
-                        var fileMetadata = new
-                        {
-                            filename = entry.FullName,
-                            size = entry.Length,
-                            type = extension,
-                            compression_method = "DEFLATE",
-                            last_modified = entry.LastWriteTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                            crc32 = entry.Crc32.ToString("X8"),
-                            is_directory = entry.FullName.EndsWith("/")
-                        };
-                        
-                        embeddedFiles[entry.FullName] = fileMetadata;
-                        
-                        // Extract file to documents directory if output path is provided
-                        if (!string.IsNullOrEmpty(outputPath) && !entry.FullName.EndsWith("/"))
-                        {
-                            try
+                            using (var stream = entry.Open())
+                            using (var reader = new StreamReader(stream))
                             {
-                                var documentsDir = Path.Combine(Path.GetDirectoryName(outputPath) ?? ".", 
-                                    Path.GetFileNameWithoutExtension(outputPath) + "_documents");
-                                Directory.CreateDirectory(documentsDir);
-                                
-                                var targetPath = Path.Combine(documentsDir, entry.FullName);
-                                var targetDir = Path.GetDirectoryName(targetPath);
-                                if (!string.IsNullOrEmpty(targetDir))
+                                var content = reader.ReadToEnd();
+                                var doc = new System.Xml.XmlDocument();
+                                doc.LoadXml(content);
+                                aasVersion = DetectAasVersion(doc);
+                                ExtractAllNamespaces(doc, namespaces);
+                                var nsManager = CreateNamespaceManager(doc);
+                                switch (aasVersion)
                                 {
-                                    Directory.CreateDirectory(targetDir);
+                                    case "3.0":
+                                        ExtractAas30DataEnhanced(doc, nsManager, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        ExtractConceptDescriptions(doc, nsManager, conceptDescriptions);
+                                        break;
+                                    case "2.0":
+                                        ExtractAas20DataEnhanced(doc, nsManager, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        ExtractConceptDescriptions(doc, nsManager, conceptDescriptions);
+                                        break;
+                                    case "1.0":
+                                        ExtractAas10DataEnhanced(doc, nsManager, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        ExtractConceptDescriptions(doc, nsManager, conceptDescriptions);
+                                        break;
+                                    default:
+                                        ExtractGenericAasDataEnhanced(doc, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships);
+                                        ExtractConceptDescriptions(doc, nsManager, conceptDescriptions);
+                                        break;
                                 }
-                                
-                                using (var entryStream = entry.Open())
-                                using (var fileStream = File.Create(targetPath))
-                                {
-                                    entryStream.CopyTo(fileStream);
-                                }
-                                
-                                Console.WriteLine($"Extracted file: {entry.FullName} -> {targetPath}");
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Warning: Could not extract {entry.FullName}: {ex.Message}");
-                            }
-                        }
-                        
-                        // Categorize files
-                        if (extension == ".pdf" || extension == ".doc" || extension == ".docx" || extension == ".txt")
-                        {
-                            documents.Add(entryInfo);
-                            Console.WriteLine($"Added document: {entry.Name}");
-                        }
-                        else if (extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".gif" || extension == ".bmp")
-                        {
-                            images.Add(entryInfo);
-                            Console.WriteLine($"Added image: {entry.Name}");
-                        }
-                        else if (!entry.FullName.StartsWith("[Content_Types]") && !entry.FullName.Contains("_rels") && extension != ".xml" && extension != ".json")
-                        {
-                            otherFiles.Add(entryInfo);
-                            Console.WriteLine($"Added other file: {entry.Name}");
-                        }
-                        
-                        // Process JSON files for AAS data
-                        if (entry.Name.EndsWith(".json"))
-                        {
-                            jsonFiles.Add(entry.Name);
-                            Console.WriteLine($"Processing JSON file: {entry.Name}");
-                            try
-                            {
-                                using (var stream = entry.Open())
-                                using (var reader = new StreamReader(stream))
-                                {
-                                    var content = reader.ReadToEnd();
-                                    var jsonData = JsonSerializer.Deserialize<JsonElement>(content);
-                                    
-                                    // Store complete JSON content
-                                    aasXmlContent[entry.Name] = new
-                                    {
-                                        format = "JSON",
-                                        content = content,
-                                        source_file = entry.Name
-                                    };
-                                    
-                                    // Extract AAS data from JSON
-                                    ExtractAasFromJsonEnhanced(jsonData, assets, submodels, entry.Name, assetSubmodelRelationships);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error processing JSON {entry.Name}: {ex.Message}");
-                            }
-                        }
-                        // Process XML files (AAS data)
-                        else if (entry.Name.EndsWith(".xml") && !entry.Name.StartsWith("[Content_Types]"))
-                        {
-                            Console.WriteLine($"Found XML file: {entry.Name}");
-                            // Check if it's an AAS XML file
-                            if (entry.Name.Contains(".aas.xml") || entry.Name.Contains("/aas.xml") || entry.Name.Contains("\\aas.xml") || entry.Name.Contains("aas.xml"))
-                            {
-                                xmlFiles.Add(entry.Name);
-                                Console.WriteLine($"Processing AAS XML file: {entry.Name}");
-                                try
-                                {
-                                    using (var stream = entry.Open())
-                                    using (var reader = new StreamReader(stream))
-                                    {
-                                        var content = reader.ReadToEnd();
-                                        Console.WriteLine($"Processing XML file: {entry.Name}");
-                                        
-                                        // Store complete XML content
-                                        aasXmlContent[entry.Name] = new
-                                        {
-                                            format = "XML",
-                                            content = content,
-                                            source_file = entry.Name
-                                        };
-                                        
-                                        // Extract AAS data from XML with enhanced processing
-                                        ExtractAasFromXmlEnhanced(content, assets, submodels, entry.Name, assetSubmodelRelationships, fileRelationships, ref aasVersion, namespaces);
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine($"Error processing XML {entry.Name}: {ex.Message}");
-                                }
-                            }
-                            else
-                            {
-                                Console.WriteLine($"Skipping non-AAS XML file: {entry.Name}");
-                            }
-                        }
-                        
-                        // Process relationship files
-                        if (entry.Name.EndsWith(".rels"))
-                        {
-                            try
-                            {
-                                using (var stream = entry.Open())
-                                using (var reader = new StreamReader(stream))
-                                {
-                                    var relsContent = reader.ReadToEnd();
-                                    aasxStructure[$"rels_{entry.Name.Replace(".rels", "")}"] = relsContent;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error processing relationship file {entry.Name}: {ex.Message}");
                             }
                         }
                     }
@@ -454,31 +258,19 @@ namespace AasProcessor
 
             return new
             {
-                // Enhanced metadata
                 aasVersion = aasVersion,
                 namespaces = namespaces,
-                
-                // Complete AAS XML content
                 aasXmlContent = aasXmlContent,
-                
-                // Enhanced structure information
                 aasxStructure = aasxStructure,
-                
-                // Relationships
                 assetSubmodelRelationships = assetSubmodelRelationships,
                 fileRelationships = fileRelationships,
-                
-                // Embedded files with complete metadata
                 embeddedFiles = embeddedFiles,
-                
-                // Processing metadata
+                conceptDescriptions = conceptDescriptions.Count > 0 ? conceptDescriptions : null,
                 processing_method = "enhanced_forward_processing",
                 file_path = aasxFilePath,
                 file_size = fileInfo.Length,
                 processing_timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                 libraries_used = new[] { "System.IO.Compression", "System.Text.Json", "System.Xml" },
-                
-                // Legacy structure for compatibility
                 assets = assets,
                 submodels = submodels,
                 documents = documents,
@@ -2903,6 +2695,27 @@ namespace AasProcessor
             catch (Exception ex)
             {
                 Console.WriteLine($"Warning: Could not add package relationships: {ex.Message}");
+            }
+        }
+
+        // Minimal extraction of concept descriptions from XML
+        private void ExtractConceptDescriptions(System.Xml.XmlDocument doc, System.Xml.XmlNamespaceManager nsManager, List<object> conceptDescriptions)
+        {
+            // Find all conceptDescription elements (AAS 2.0/3.0)
+            var nodes = doc.SelectNodes("//*[local-name()='conceptDescriptions']/*[local-name()='conceptDescription']", nsManager);
+            if (nodes != null)
+            {
+                foreach (System.Xml.XmlNode node in nodes)
+                {
+                    var id = node.SelectSingleNode("*[local-name()='id']", nsManager)?.InnerText ?? "";
+                    var idShort = node.SelectSingleNode("*[local-name()='idShort']", nsManager)?.InnerText ?? "";
+                    var cd = new Dictionary<string, object>
+                    {
+                        ["id"] = id,
+                        ["idShort"] = idShort
+                    };
+                    conceptDescriptions.Add(cd);
+                }
             }
         }
     }
