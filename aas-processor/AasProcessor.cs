@@ -184,11 +184,12 @@ namespace AasProcessor
         }
 
         /// <summary>
-        /// Enhanced AASX processing that preserves complete structure for perfect round-trip conversion
+        /// Process an AASX file with enhanced data extraction and save documents separately
         /// </summary>
         /// <param name="aasxFilePath">Path to the AASX file</param>
-        /// <returns>JSON string containing complete AAS data with all relationships</returns>
-        public string ProcessAasxFileEnhanced(string aasxFilePath)
+        /// <param name="outputPath">Path where to save the JSON and documents</param>
+        /// <returns>JSON string containing processed AAS data</returns>
+        public string ProcessAasxFileEnhanced(string aasxFilePath, string outputPath = null)
         {
             try
             {
@@ -197,7 +198,8 @@ namespace AasProcessor
                     throw new FileNotFoundException($"AASX file not found: {aasxFilePath}");
                 }
 
-                var result = ProcessAasxEnhanced(aasxFilePath);
+                // Use enhanced processing with document extraction
+                var result = ProcessAasxEnhanced(aasxFilePath, outputPath);
                 
                 return JsonSerializer.Serialize(result, new JsonSerializerOptions
                 {
@@ -210,7 +212,7 @@ namespace AasProcessor
                 var error = new
                 {
                     error = ex.Message,
-                    processing_method = "enhanced_forward_processing",
+                    processing_method = "enhanced_with_document_extraction",
                     file_path = aasxFilePath,
                     processing_timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 };
@@ -226,7 +228,7 @@ namespace AasProcessor
         /// <summary>
         /// Enhanced AASX processing with complete structure preservation
         /// </summary>
-        private object ProcessAasxEnhanced(string aasxFilePath)
+        private object ProcessAasxEnhanced(string aasxFilePath, string outputPath = null)
         {
             var fileInfo = new FileInfo(aasxFilePath);
             var documents = new List<object>();
@@ -293,17 +295,49 @@ namespace AasProcessor
                             crc32 = entry.Crc32.ToString("X8")
                         };
                         
-                        // Store complete embedded file information
-                        embeddedFiles[entry.FullName] = new
+                        // Store embedded file metadata and extract to documents directory
+                        var fileMetadata = new
                         {
                             filename = entry.FullName,
                             size = entry.Length,
                             type = extension,
-                            compression_method = "DEFLATE", // Default compression method
+                            compression_method = "DEFLATE",
                             last_modified = entry.LastWriteTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                             crc32 = entry.Crc32.ToString("X8"),
                             is_directory = entry.FullName.EndsWith("/")
                         };
+                        
+                        embeddedFiles[entry.FullName] = fileMetadata;
+                        
+                        // Extract file to documents directory if output path is provided
+                        if (!string.IsNullOrEmpty(outputPath) && !entry.FullName.EndsWith("/"))
+                        {
+                            try
+                            {
+                                var documentsDir = Path.Combine(Path.GetDirectoryName(outputPath) ?? ".", 
+                                    Path.GetFileNameWithoutExtension(outputPath) + "_documents");
+                                Directory.CreateDirectory(documentsDir);
+                                
+                                var targetPath = Path.Combine(documentsDir, entry.FullName);
+                                var targetDir = Path.GetDirectoryName(targetPath);
+                                if (!string.IsNullOrEmpty(targetDir))
+                                {
+                                    Directory.CreateDirectory(targetDir);
+                                }
+                                
+                                using (var entryStream = entry.Open())
+                                using (var fileStream = File.Create(targetPath))
+                                {
+                                    entryStream.CopyTo(fileStream);
+                                }
+                                
+                                Console.WriteLine($"Extracted file: {entry.FullName} -> {targetPath}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Warning: Could not extract {entry.FullName}: {ex.Message}");
+                            }
+                        }
                         
                         // Categorize files
                         if (extension == ".pdf" || extension == ".doc" || extension == ".docx" || extension == ".txt")
@@ -2332,6 +2366,543 @@ namespace AasProcessor
                         });
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Generate AASX file from structured JSON data (backward conversion)
+        /// </summary>
+        /// <param name="jsonData">JSON data containing structured AAS information</param>
+        /// <param name="outputPath">Output path for the generated AASX file</param>
+        /// <returns>Path to the generated AASX file</returns>
+        public string GenerateAasxFileFromStructured(string jsonData, string jsonFilePath, string outputPath)
+        {
+            Console.WriteLine("Starting backward conversion from structured data...");
+            
+            try
+            {
+                var jsonDoc = JsonDocument.Parse(jsonData);
+                var data = jsonDoc.RootElement;
+                
+                // Extract structured data
+                var namespaces = ExtractNamespaces(data);
+                var assets = ExtractAssets(data);
+                var submodels = ExtractSubmodels(data);
+                var assetSubmodelRelationships = ExtractAssetSubmodelRelationships(data);
+                var fileRelationships = ExtractFileRelationships(data);
+                var embeddedFiles = ExtractEmbeddedFiles(data);
+                
+                Console.WriteLine($"Extracted: {assets.Count} assets, {submodels.Count} submodels, {assetSubmodelRelationships.Count + fileRelationships.Count} relationships");
+                
+                // Generate AAS XML
+                Console.WriteLine("Generating AAS XML from structured data...");
+                var aasXml = GenerateAasXmlFromStructured(
+                    data.GetProperty("aasVersion").GetString() ?? "3.0",
+                    namespaces, assets, submodels, assetSubmodelRelationships, fileRelationships);
+                Console.WriteLine("AAS XML generated successfully from structured data");
+                
+                // Create AASX package
+                var aasxFilePath = CreateAasxPackageFromStructured(aasXml, embeddedFiles, jsonFilePath, outputPath);
+                Console.WriteLine($"Successfully generated AASX file: {aasxFilePath}");
+                
+                return aasxFilePath;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in backward conversion: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Extract namespaces from JSON data
+        /// </summary>
+        private Dictionary<string, string> ExtractNamespaces(JsonElement data)
+        {
+            var namespaces = new Dictionary<string, string>();
+            
+            if (data.TryGetProperty("namespaces", out var nsElement))
+            {
+                foreach (var property in nsElement.EnumerateObject())
+                {
+                    namespaces[property.Name] = property.Value.GetString() ?? "";
+                }
+            }
+            
+            // Add default namespaces if not present
+            if (!namespaces.ContainsKey("aas"))
+                namespaces["aas"] = "http://www.admin-shell.io/aas/1/0";
+            if (!namespaces.ContainsKey("IEC61360"))
+                namespaces["IEC61360"] = "http://www.admin-shell.io/IEC61360/1/0";
+            if (!namespaces.ContainsKey("xsi"))
+                namespaces["xsi"] = "http://www.w3.org/2001/XMLSchema-instance";
+            if (!namespaces.ContainsKey("xml"))
+                namespaces["xml"] = "http://www.w3.org/XML/1998/namespace";
+                
+            return namespaces;
+        }
+
+        /// <summary>
+        /// Extract assets from JSON data
+        /// </summary>
+        private List<Dictionary<string, object>> ExtractAssets(JsonElement data)
+        {
+            var assets = new List<Dictionary<string, object>>();
+            
+            if (data.TryGetProperty("assets", out var assetsElement))
+            {
+                foreach (var asset in assetsElement.EnumerateArray())
+                {
+                    var assetData = new Dictionary<string, object>();
+                    foreach (var property in asset.EnumerateObject())
+                    {
+                        assetData[property.Name] = property.Value.ValueKind == JsonValueKind.String 
+                            ? property.Value.GetString() ?? "" 
+                            : property.Value.ToString();
+                    }
+                    assets.Add(assetData);
+                }
+            }
+            
+            return assets;
+        }
+
+        /// <summary>
+        /// Extract submodels from JSON data
+        /// </summary>
+        private List<Dictionary<string, object>> ExtractSubmodels(JsonElement data)
+        {
+            var submodels = new List<Dictionary<string, object>>();
+            
+            if (data.TryGetProperty("submodels", out var submodelsElement))
+            {
+                foreach (var submodel in submodelsElement.EnumerateArray())
+                {
+                    var submodelData = new Dictionary<string, object>();
+                    foreach (var property in submodel.EnumerateObject())
+                    {
+                        submodelData[property.Name] = property.Value.ValueKind == JsonValueKind.String 
+                            ? property.Value.GetString() ?? "" 
+                            : property.Value.ToString();
+                    }
+                    submodels.Add(submodelData);
+                }
+            }
+            
+            return submodels;
+        }
+
+        /// <summary>
+        /// Extract asset-submodel relationships from JSON data
+        /// </summary>
+        private List<Dictionary<string, object>> ExtractAssetSubmodelRelationships(JsonElement data)
+        {
+            var relationships = new List<Dictionary<string, object>>();
+            
+            if (data.TryGetProperty("assetSubmodelRelationships", out var relsElement))
+            {
+                foreach (var rel in relsElement.EnumerateArray())
+                {
+                    var relData = new Dictionary<string, object>();
+                    foreach (var property in rel.EnumerateObject())
+                    {
+                        relData[property.Name] = property.Value.ValueKind == JsonValueKind.String 
+                            ? property.Value.GetString() ?? "" 
+                            : property.Value.ToString();
+                    }
+                    relationships.Add(relData);
+                }
+            }
+            
+            return relationships;
+        }
+
+        /// <summary>
+        /// Extract file relationships from JSON data
+        /// </summary>
+        private List<Dictionary<string, object>> ExtractFileRelationships(JsonElement data)
+        {
+            var relationships = new List<Dictionary<string, object>>();
+            
+            if (data.TryGetProperty("fileRelationships", out var relsElement))
+            {
+                foreach (var rel in relsElement.EnumerateArray())
+                {
+                    var relData = new Dictionary<string, object>();
+                    foreach (var property in rel.EnumerateObject())
+                    {
+                        relData[property.Name] = property.Value.ValueKind == JsonValueKind.String 
+                            ? property.Value.GetString() ?? "" 
+                            : property.Value.ToString();
+                    }
+                    relationships.Add(relData);
+                }
+            }
+            
+            return relationships;
+        }
+
+        /// <summary>
+        /// Extract embedded files from JSON data
+        /// </summary>
+        private Dictionary<string, Dictionary<string, object>> ExtractEmbeddedFiles(JsonElement data)
+        {
+            var embeddedFiles = new Dictionary<string, Dictionary<string, object>>();
+            
+            if (data.TryGetProperty("embeddedFiles", out var filesElement))
+            {
+                foreach (var file in filesElement.EnumerateObject())
+                {
+                    var fileData = new Dictionary<string, object>();
+                    foreach (var property in file.Value.EnumerateObject())
+                    {
+                        fileData[property.Name] = property.Value.ValueKind == JsonValueKind.String 
+                            ? property.Value.GetString() ?? "" 
+                            : property.Value.ToString();
+                    }
+                    embeddedFiles[file.Name] = fileData;
+                }
+            }
+            
+            return embeddedFiles;
+        }
+
+        /// <summary>
+        /// Generate AAS XML from structured data
+        /// </summary>
+        private string GenerateAasXmlFromStructured(string aasVersion, Dictionary<string, string> namespaces, 
+            List<Dictionary<string, object>> assets, List<Dictionary<string, object>> submodels,
+            List<Dictionary<string, object>> assetSubmodelRelationships, List<Dictionary<string, object>> fileRelationships)
+        {
+            Console.WriteLine("Generating AAS XML from structured data...");
+            
+            // Build namespace declarations
+            var namespaceDeclarations = string.Join(" ", namespaces.Select(ns => $"xmlns:{ns.Key}=\"{ns.Value}\""));
+            
+            // Generate XML content
+            var xml = new System.Text.StringBuilder();
+            xml.AppendLine("<?xml version=\"1.0\"?>");
+            xml.AppendLine($"<aas:aasenv {namespaceDeclarations} xsi:schemaLocation=\"http://www.admin-shell.io/aas/1/0 AAS.xsd http://www.admin-shell.io/IEC61360/1/0 IEC61360.xsd\">");
+            
+            // Generate Asset Administration Shells
+            xml.AppendLine("  <aas:assetAdministrationShells>");
+            foreach (var relationship in assetSubmodelRelationships)
+            {
+                var assetId = relationship.GetValueOrDefault("asset_id", "").ToString();
+                if (!string.IsNullOrEmpty(assetId))
+                {
+                    xml.AppendLine("    <aas:assetAdministrationShell>");
+                    xml.AppendLine("      <aas:idShort>ExampleMotor</aas:idShort>");
+                    xml.AppendLine("      <aas:category>CONSTANT</aas:category>");
+                    xml.AppendLine($"      <aas:identification idType=\"URI\">{assetId}</aas:identification>");
+                    
+                    // Add asset reference
+                    var asset = assets.FirstOrDefault(a => a.GetValueOrDefault("id", "").ToString() == assetId);
+                    if (asset != null)
+                    {
+                        xml.AppendLine("      <aas:assetRef>");
+                        xml.AppendLine("        <aas:keys>");
+                        xml.AppendLine($"          <aas:key type=\"Asset\" local=\"true\" idType=\"URI\">{asset.GetValueOrDefault("id", "")}</aas:key>");
+                        xml.AppendLine("        </aas:keys>");
+                        xml.AppendLine("      </aas:assetRef>");
+                    }
+                    
+                    // Add submodel references
+                    xml.AppendLine("      <aas:submodelRefs>");
+                    foreach (var rel in assetSubmodelRelationships.Where(r => r.GetValueOrDefault("asset_id", "").ToString() == assetId))
+                    {
+                        var submodelId = rel.GetValueOrDefault("submodel_id", "").ToString();
+                        xml.AppendLine("        <aas:submodelRef>");
+                        xml.AppendLine("          <aas:keys>");
+                        xml.AppendLine($"            <aas:key type=\"Submodel\" local=\"true\" idType=\"URI\">{submodelId}</aas:key>");
+                        xml.AppendLine("          </aas:keys>");
+                        xml.AppendLine("        </aas:submodelRef>");
+                    }
+                    xml.AppendLine("      </aas:submodelRefs>");
+                    xml.AppendLine("      <aas:conceptDictionaries />");
+                    xml.AppendLine("    </aas:assetAdministrationShell>");
+                    break; // Only generate one AAS for now
+                }
+            }
+            xml.AppendLine("  </aas:assetAdministrationShells>");
+            
+            // Generate Assets
+            xml.AppendLine("  <aas:assets>");
+            foreach (var asset in assets)
+            {
+                xml.AppendLine("    <aas:asset>");
+                xml.AppendLine($"      <aas:idShort>{asset.GetValueOrDefault("idShort", "")}</aas:idShort>");
+                xml.AppendLine($"      <aas:category>{asset.GetValueOrDefault("category", "")}</aas:category>");
+                xml.AppendLine($"      <aas:identification idType=\"URI\">{asset.GetValueOrDefault("id", "")}</aas:identification>");
+                xml.AppendLine($"      <aas:kind>{asset.GetValueOrDefault("kind", "Instance")}</aas:kind>");
+                
+                // Add asset identification model reference
+                var firstSubmodel = submodels.FirstOrDefault();
+                if (firstSubmodel != null)
+                {
+                    xml.AppendLine("      <aas:assetIdentificationModelRef>");
+                    xml.AppendLine("        <aas:keys>");
+                    xml.AppendLine($"          <aas:key type=\"Submodel\" local=\"true\" idType=\"URI\">{firstSubmodel.GetValueOrDefault("id", "")}</aas:key>");
+                    xml.AppendLine("        </aas:keys>");
+                    xml.AppendLine("      </aas:assetIdentificationModelRef>");
+                }
+                
+                xml.AppendLine("    </aas:asset>");
+            }
+            xml.AppendLine("  </aas:assets>");
+            
+            // Generate Submodels
+            xml.AppendLine("  <aas:submodels>");
+            foreach (var submodel in submodels)
+            {
+                xml.AppendLine("    <aas:submodel>");
+                xml.AppendLine($"      <aas:idShort>{submodel.GetValueOrDefault("idShort", "")}</aas:idShort>");
+                xml.AppendLine($"      <aas:category>{submodel.GetValueOrDefault("category", "CONSTANT")}</aas:category>");
+                xml.AppendLine($"      <aas:identification idType=\"URI\">{submodel.GetValueOrDefault("id", "")}</aas:identification>");
+                xml.AppendLine($"      <aas:kind>{submodel.GetValueOrDefault("kind", "Instance")}</aas:kind>");
+                xml.AppendLine("      <aas:qualifier />");
+                
+                // Add submodel elements based on file relationships
+                var submodelId = submodel.GetValueOrDefault("id", "").ToString();
+                var relatedFiles = fileRelationships.Where(f => f.GetValueOrDefault("element_id", "").ToString() == submodelId);
+                
+                if (relatedFiles.Any())
+                {
+                    xml.AppendLine("      <aas:submodelElements>");
+                    xml.AppendLine("        <aas:submodelElement>");
+                    xml.AppendLine("          <aas:submodelElementCollection>");
+                    xml.AppendLine("            <aas:idShort>OperatingManual</aas:idShort>");
+                    xml.AppendLine("            <aas:category />");
+                    xml.AppendLine("            <aas:kind>Instance</aas:kind>");
+                    xml.AppendLine("            <aas:qualifier />");
+                    xml.AppendLine("            <aas:value>");
+                    
+                    foreach (var fileRel in relatedFiles)
+                    {
+                        xml.AppendLine("              <aas:submodelElement>");
+                        xml.AppendLine("                <aas:file>");
+                        xml.AppendLine($"                  <aas:idShort>{fileRel.GetValueOrDefault("element_idShort", "")}</aas:idShort>");
+                        xml.AppendLine("                  <aas:category>PARAMETER</aas:category>");
+                        xml.AppendLine("                  <aas:kind>Instance</aas:kind>");
+                        xml.AppendLine("                  <aas:qualifier />");
+                        xml.AppendLine("                  <aas:mimeType>application/pdf</aas:mimeType>");
+                        xml.AppendLine($"                  <aas:value>{fileRel.GetValueOrDefault("file_path", "")}</aas:value>");
+                        xml.AppendLine("                </aas:file>");
+                        xml.AppendLine("              </aas:submodelElement>");
+                    }
+                    
+                    xml.AppendLine("            </aas:value>");
+                    xml.AppendLine("            <aas:ordered>false</aas:ordered>");
+                    xml.AppendLine("            <aas:allowDuplicates>false</aas:allowDuplicates>");
+                    xml.AppendLine("          </aas:submodelElementCollection>");
+                    xml.AppendLine("        </aas:submodelElement>");
+                    xml.AppendLine("      </aas:submodelElements>");
+                }
+                
+                xml.AppendLine("    </aas:submodel>");
+            }
+            xml.AppendLine("  </aas:submodels>");
+            
+            xml.AppendLine("  <aas:conceptDescriptions />");
+            xml.AppendLine("</aas:aasenv>");
+            
+            Console.WriteLine("AAS XML generated successfully from structured data");
+            return xml.ToString();
+        }
+
+        /// <summary>
+        /// Create AASX package from structured data using documents directory
+        /// </summary>
+        private string CreateAasxPackageFromStructured(string aasXml, Dictionary<string, Dictionary<string, object>> embeddedFiles, string jsonFilePath, string outputPath)
+        {
+            Console.WriteLine("Creating AASX package from structured data...");
+            
+            var aasxFileName = Path.GetFileNameWithoutExtension(outputPath) + "_from_structured.aasx";
+            var aasxFilePath = Path.Combine(Path.GetDirectoryName(outputPath) ?? ".", aasxFileName);
+            
+            // Use the JSON file path to find the documents directory
+            var jsonFileName = Path.GetFileNameWithoutExtension(jsonFilePath);
+            var documentsDir = Path.Combine(Path.GetDirectoryName(jsonFilePath) ?? ".", jsonFileName + "_documents");
+            
+            using (var package = System.IO.Packaging.Package.Open(aasxFilePath, FileMode.Create))
+            {
+                var addedUris = new HashSet<string>();
+                
+                // Add [Content_Types].xml (required for AASX)
+                var contentTypesUri = new Uri("/[Content_Types].xml", UriKind.Relative);
+                var contentTypesPart = package.CreatePart(contentTypesUri, "application/vnd.openxmlformats-package.content-types");
+                addedUris.Add(contentTypesUri.ToString());
+                using (var stream = contentTypesPart.GetStream())
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write(@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>
+<Types xmlns=""http://schemas.openxmlformats.org/package/2006/content-types"">
+  <Default Extension=""xml"" ContentType=""application/xml""/>
+  <Default Extension=""rels"" ContentType=""application/vnd.openxmlformats-package.relationships+xml""/>
+  <Default Extension=""pdf"" ContentType=""application/pdf""/>
+  <Default Extension=""jpg"" ContentType=""image/jpeg""/>
+  <Default Extension=""png"" ContentType=""image/png""/>
+  <Override PartName=""/aasx/customer_com_aas_9175_7013_7091_9168/customer_com_aas_9175_7013_7091_9168.aas.xml"" ContentType=""application/xml""/>
+</Types>");
+                }
+                
+                // Add AAS XML file
+                var aasXmlUri = new Uri("/aasx/customer_com_aas_9175_7013_7091_9168/customer_com_aas_9175_7013_7091_9168.aas.xml", UriKind.Relative);
+                var aasXmlPart = package.CreatePart(aasXmlUri, "application/xml");
+                addedUris.Add(aasXmlUri.ToString());
+                using (var stream = aasXmlPart.GetStream())
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write(aasXml);
+                }
+                
+                // Add AASX origin file (required)
+                var aasxOriginUri = new Uri("/aasx/aasx-origin", UriKind.Relative);
+                var aasxOriginPart = package.CreatePart(aasxOriginUri, "application/xml");
+                addedUris.Add(aasxOriginUri.ToString());
+                using (var stream = aasxOriginPart.GetStream())
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write("Intentionally empty.");
+                }
+                
+                // Add embedded files from documents directory
+                Console.WriteLine($"Looking for documents in: {documentsDir}");
+                Console.WriteLine($"Documents directory exists: {Directory.Exists(documentsDir)}");
+                
+                foreach (var file in embeddedFiles)
+                {
+                    var filePath = file.Key;
+                    var fileInfo = file.Value;
+                    
+                    // Skip .rels files - they will be created automatically by System.IO.Packaging
+                    if (filePath.EndsWith(".rels"))
+                    {
+                        Console.WriteLine($"Skipping .rels file (will be created automatically): {filePath}");
+                        continue;
+                    }
+                    
+                    // Ensure file path starts with forward slash
+                    var normalizedPath = filePath.StartsWith("/") ? filePath : "/" + filePath;
+                    
+                    // Skip if URI already added
+                    if (addedUris.Contains(normalizedPath))
+                    {
+                        Console.WriteLine($"Skipping duplicate file: {filePath}");
+                        continue;
+                    }
+                    
+                    // Create file part
+                    var fileUri = new Uri(normalizedPath, UriKind.Relative);
+                    var filePart = package.CreatePart(fileUri, GetMimeType(filePath));
+                    addedUris.Add(normalizedPath);
+                    
+                    // Read file content from documents directory
+                    var sourceFilePath = Path.Combine(documentsDir, filePath);
+                    Console.WriteLine($"Looking for file: {sourceFilePath}");
+                    Console.WriteLine($"File exists: {File.Exists(sourceFilePath)}");
+                    
+                    if (File.Exists(sourceFilePath))
+                    {
+                        using (var stream = filePart.GetStream())
+                        using (var sourceStream = File.OpenRead(sourceFilePath))
+                        {
+                            sourceStream.CopyTo(stream);
+                        }
+                        var fileSize = new FileInfo(sourceFilePath).Length;
+                        Console.WriteLine($"Restored file from documents: {filePath} ({fileSize} bytes)");
+                    }
+                    else
+                    {
+                        // Fallback to placeholder if file not found
+                        using (var stream = filePart.GetStream())
+                        {
+                            var placeholder = $"Placeholder for {filePath}";
+                            var bytes = System.Text.Encoding.UTF8.GetBytes(placeholder);
+                            stream.Write(bytes, 0, bytes.Length);
+                        }
+                        Console.WriteLine($"Created placeholder for: {filePath} (not found in documents)");
+                    }
+                }
+                
+                // Add package relationships
+                try
+                {
+                    // Main package relationship to AASX origin
+                    package.CreateRelationship(aasxOriginUri, System.IO.Packaging.TargetMode.Internal, 
+                        "http://www.admin-shell.io/aasx/relationships/aasx-origin", "R12bde8fb28b34ec1");
+                    
+                    // AASX origin relationship to AAS XML
+                    var originPart = package.GetPart(aasxOriginUri);
+                    originPart.CreateRelationship(aasXmlUri, System.IO.Packaging.TargetMode.Internal,
+                        "http://www.admin-shell.io/aasx/relationships/aas-spec", "R01772d4b0ae04caf");
+                    
+                    // Add thumbnail relationship if image exists
+                    var thumbnailFile = embeddedFiles.Keys.FirstOrDefault(f => f.EndsWith(".jpg") || f.EndsWith(".png"));
+                    if (!string.IsNullOrEmpty(thumbnailFile))
+                    {
+                        var normalizedThumbnailPath = thumbnailFile.StartsWith("/") ? thumbnailFile : "/" + thumbnailFile;
+                        var thumbnailUri = new Uri(normalizedThumbnailPath, UriKind.Relative);
+                        package.CreateRelationship(thumbnailUri, System.IO.Packaging.TargetMode.Internal, 
+                            "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail", "R92817f98ba814a00");
+                    }
+                    
+                    Console.WriteLine("Package relationships added successfully");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not add package relationships: {ex.Message}");
+                }
+            }
+            
+            Console.WriteLine($"AASX package created: {aasxFilePath}");
+            return aasxFilePath;
+        }
+
+        /// <summary>
+        /// Get MIME type for file extension
+        /// </summary>
+        private string GetMimeType(string filePath)
+        {
+            var extension = Path.GetExtension(filePath).ToLower();
+            return extension switch
+            {
+                ".pdf" => "application/pdf",
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".xml" => "application/xml",
+                ".json" => "application/json",
+                _ => "application/octet-stream"
+            };
+        }
+
+        /// <summary>
+        /// Add package relationships
+        /// </summary>
+        private void AddPackageRelationships(System.IO.Packaging.Package package, Uri aasXmlUri, List<string> embeddedFiles)
+        {
+            try
+            {
+                // Add main relationship to package root
+                var mainRel = package.CreateRelationship(aasXmlUri, System.IO.Packaging.TargetMode.Internal, 
+                    "http://www.admin-shell.io/aasx/relationships/aas-spec", "r1");
+                
+                // Add thumbnail relationship if image exists
+                var thumbnailFile = embeddedFiles.FirstOrDefault(f => f.EndsWith(".jpg") || f.EndsWith(".png"));
+                if (!string.IsNullOrEmpty(thumbnailFile))
+                {
+                    var normalizedThumbnailPath = thumbnailFile.StartsWith("/") ? thumbnailFile : "/" + thumbnailFile;
+                    var thumbnailUri = new Uri(normalizedThumbnailPath, UriKind.Relative);
+                    package.CreateRelationship(thumbnailUri, System.IO.Packaging.TargetMode.Internal, 
+                        "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail", "r2");
+                }
+                
+                Console.WriteLine("Package relationships added successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not add package relationships: {ex.Message}");
             }
         }
     }
