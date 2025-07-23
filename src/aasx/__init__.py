@@ -2,25 +2,20 @@
 AASX Backend Processing Package
 
 This package contains the core AASX processing logic including:
-- ETL pipeline for AASX data processing
-- AASX file loading and parsing
+- ETL pipeline for AASX data processing using external .NET processor
+- AASX file extraction and generation orchestration
 - Data transformation and validation
-- .NET bridge for AASX package exploration
 """
 
-from .aasx_loader import AASXLoader
-from .aasx_processor import AASXProcessor
-from .aasx_transformer import AASXTransformer, TransformationConfig
-from .aasx_etl_pipeline import AASXETLPipeline
-from .dotnet_bridge import DotNetAasBridge
+# New modular backend imports
+from .aasx_extraction import extract_aasx, batch_extract
+from .aasx_generator import generate_aasx, batch_generate
 
 __all__ = [
-    'AASXLoader',
-    'AASXProcessor', 
-    'AASXTransformer',
-    'TransformationConfig',
-    'AASXETLPipeline',
-    'DotNetAasBridge'
+    'extract_aasx',
+    'batch_extract', 
+    'generate_aasx',
+    'batch_generate'
 ]
 
 __version__ = '1.0.0' 

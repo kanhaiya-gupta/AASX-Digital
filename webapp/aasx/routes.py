@@ -26,10 +26,17 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from src.aasx.aasx_etl_pipeline import AASXETLPipeline, ETLPipelineConfig
-from src.aasx.aasx_processor import AASXProcessor
-from src.aasx.aasx_transformer import AASXTransformer, TransformationConfig as TransformerConfig
-from src.aasx.aasx_loader import AASXLoader, LoaderConfig
+# Legacy imports from old architecture (now deprecated)
+# from src.aasx.aasx_etl_pipeline import AASXETLPipeline, ETLPipelineConfig
+# from src.aasx.aasx_processor import AASXProcessor
+# from src.aasx.aasx_transformer import AASXTransformer, TransformationConfig as TransformerConfig
+# from src.aasx.aasx_loader import AASXLoader, LoaderConfig
+
+# NOTE: ETL extraction logic migrated to use src.aasx.aasx_extraction (extract_aasx, batch_extract)
+# Old AASXLoader/LoaderConfig interface removed for modernization
+
+from src.aasx.aasx_extraction import extract_aasx, batch_extract
+# from src.aasx.aasx_loader import AASXLoader, LoaderConfig  # Removed
 
 # Import webapp configuration management
 from ..config.etl_config import get_etl_config, ETLConfig
@@ -194,30 +201,45 @@ def get_etl_pipeline():
                     export_formats.append('sqlite')
             
             # Create loader config with systematic structure
-            loader_config = LoaderConfig(
-                output_directory=output_config.get('base_directory', 'output/etl_results'),
-                database_path=load_config.get('sqlite_path', 'aasx_data.db'),
-                vector_db_path=vector_config.get('path', 'output/vector_db'),
-                vector_db_type=vector_config.get('type', 'qdrant'),
-                qdrant_url=vector_config.get('qdrant_url', 'http://localhost:6333'),
-                qdrant_collection_prefix=vector_config.get('qdrant_collection_prefix', 'aasx'),
-                embedding_model=vector_config.get('embedding_model', 'all-MiniLM-L6-v2'),
-                chunk_size=vector_config.get('chunk_size', 512),
-                overlap_size=vector_config.get('overlap_size', 50),
-                include_metadata=vector_config.get('include_metadata', True),
-                backup_existing=load_config.get('backup_existing', True),
-                separate_file_outputs=output_config.get('separate_file_outputs', True),
-                include_filename_in_output=output_config.get('include_filename_in_output', True),
-                systematic_structure=etl_config.is_systematic_structure_enabled(),
-                folder_structure=etl_config.get_folder_structure_type(),
-                export_formats=export_formats
-            )
+            # loader_config = LoaderConfig( # Removed
+            #     output_directory=output_config.get('base_directory', 'output/etl_results'), # Removed
+            #     database_path=load_config.get('sqlite_path', 'aasx_data.db'), # Removed
+            #     vector_db_path=vector_config.get('path', 'output/vector_db'), # Removed
+            #     vector_db_type=vector_config.get('type', 'qdrant'), # Removed
+            #     qdrant_url=vector_config.get('qdrant_url', 'http://localhost:6333'), # Removed
+            #     qdrant_collection_prefix=vector_config.get('qdrant_collection_prefix', 'aasx'), # Removed
+            #     embedding_model=vector_config.get('embedding_model', 'all-MiniLM-L6-v2'), # Removed
+            #     chunk_size=vector_config.get('chunk_size', 512), # Removed
+            #     overlap_size=vector_config.get('overlap_size', 50), # Removed
+            #     include_metadata=vector_config.get('include_metadata', True), # Removed
+            #     backup_existing=load_config.get('backup_existing', True), # Removed
+            #     separate_file_outputs=output_config.get('separate_file_outputs', True), # Removed
+            #     include_filename_in_output=output_config.get('include_filename_in_output', True), # Removed
+            #     systematic_structure=etl_config.is_systematic_structure_enabled(), # Removed
+            #     folder_structure=etl_config.get_folder_structure_type(), # Removed
+            #     export_formats=export_formats # Removed
+            # ) # Removed
             
             # Create ETL pipeline config
             etl_config_obj = ETLPipelineConfig(
                 extract_config={},
                 transform_config=transformer_config,
-                load_config=loader_config,
+                load_config={ # Changed to use default config
+                    'output_directory': output_config.get('base_directory', 'output/etl_results'),
+                    'database_path': load_config.get('sqlite_path', 'aasx_data.db'),
+                    'vector_db_path': vector_config.get('path', 'output/vector_db'),
+                    'vector_db_type': vector_config.get('type', 'qdrant'),
+                    'embedding_model': vector_config.get('embedding_model', 'all-MiniLM-L6-v2'),
+                    'chunk_size': vector_config.get('chunk_size', 512),
+                    'overlap_size': vector_config.get('overlap_size', 50),
+                    'include_metadata': vector_config.get('include_metadata', True),
+                    'backup_existing': load_config.get('backup_existing', True),
+                    'separate_file_outputs': output_config.get('separate_file_outputs', True),
+                    'include_filename_in_output': output_config.get('include_filename_in_output', True),
+                    'systematic_structure': etl_config.is_systematic_structure_enabled(),
+                    'folder_structure': etl_config.get_folder_structure_type(),
+                    'export_formats': export_formats
+                },
                 enable_validation=pipeline_config.get('enable_validation', True),
                 enable_logging=pipeline_config.get('enable_logging', True),
                 enable_backup=pipeline_config.get('enable_backup', True),
@@ -232,24 +254,22 @@ def get_etl_pipeline():
             print(f"Warning: Using fallback ETL configuration due to error: {e}")
             
             # Create fallback loader config with systematic structure
-            fallback_loader_config = LoaderConfig(
-                output_directory='output/etl_results',
-                database_path='aasx_data.db',
-                vector_db_path='output/vector_db',
-                vector_db_type='qdrant',
-                qdrant_url='http://localhost:6333',
-                qdrant_collection_prefix='aasx',
-                embedding_model='all-MiniLM-L6-v2',
-                chunk_size=512,
-                overlap_size=50,
-                include_metadata=True,
-                backup_existing=True,
-                separate_file_outputs=True,
-                include_filename_in_output=True,
-                systematic_structure=True,
-                folder_structure='by_file',
-                export_formats=['json', 'yaml', 'csv', 'tsv', 'graph', 'rag', 'vector_db', 'sqlite']
-            )
+            fallback_loader_config = { # Changed to use default config
+                'output_directory': 'output/etl_results',
+                'database_path': 'aasx_data.db',
+                'vector_db_path': 'output/vector_db',
+                'vector_db_type': 'qdrant',
+                'embedding_model': 'all-MiniLM-L6-v2',
+                'chunk_size': 512,
+                'overlap_size': 50,
+                'include_metadata': True,
+                'backup_existing': True,
+                'separate_file_outputs': True,
+                'include_filename_in_output': True,
+                'systematic_structure': True,
+                'folder_structure': 'by_file',
+                'export_formats': ['json', 'yaml', 'csv', 'tsv', 'graph', 'rag', 'vector_db', 'sqlite']
+            }
             
             config = ETLPipelineConfig(
                 extract_config={},
@@ -285,7 +305,7 @@ async def aasx_dashboard(request: Request):
 
 @router.post("/api/etl/run")
 async def run_etl_pipeline(config: ETLConfigRequest):
-    """Run complete ETL pipeline with progress tracking"""
+    """Run complete ETL pipeline with progress tracking using new extraction architecture"""
     global etl_progress
     
     try:
@@ -302,60 +322,6 @@ async def run_etl_pipeline(config: ETLConfigRequest):
             'status_message': 'Starting ETL pipeline...',
             'results': {}
         }
-        
-        pipeline = get_etl_pipeline()
-        
-        # Update pipeline configuration if provided
-        if config.extract:
-            pipeline.config.extract_config = config.extract
-        if config.transform:
-            # Map frontend parameters to TransformerConfig parameters
-            transform_params = {}
-            if 'enable_quality_checks' in config.transform:
-                transform_params['quality_checks'] = config.transform['enable_quality_checks']
-            if 'enable_enrichment' in config.transform:
-                transform_params['enrich_with_external_data'] = config.transform['enable_enrichment']
-            if 'normalize_ids' in config.transform:
-                transform_params['normalize_ids'] = config.transform['normalize_ids']
-            if 'output_formats' in config.transform:
-                transform_params['output_format'] = config.transform['output_formats'][0] if config.transform['output_formats'] else 'json'
-            
-            # Add default values for required parameters
-            transform_params.setdefault('include_metadata', True)
-            transform_params.setdefault('flatten_structures', False)
-            transform_params.setdefault('add_timestamps', True)
-            
-            pipeline.config.transform_config = TransformerConfig(**transform_params)
-        if config.load:
-            # Preserve systematic structure configuration while updating other parameters
-            current_config = pipeline.config.load_config
-            load_params = dict(config.load)
-            
-            # Map frontend parameter names to LoaderConfig field names
-            if 'output_formats' in load_params:
-                load_params['export_formats'] = load_params.pop('output_formats')
-            if 'enable_sqlite' in load_params:
-                load_params['export_sqlite'] = load_params.pop('enable_sqlite')
-            if 'enable_vector_db' in load_params:
-                load_params['export_vector_db'] = load_params.pop('enable_vector_db')
-            if 'enable_rag_export' in load_params:
-                load_params['export_rag'] = load_params.pop('enable_rag_export')
-            
-            # Remove parameters that don't exist in LoaderConfig
-            load_params.pop('batch_size', None)
-            load_params.pop('memory_limit', None)
-            load_params.pop('quality_threshold', None)
-            
-            new_config = LoaderConfig(**load_params)
-            # Preserve systematic structure settings
-            new_config.separate_file_outputs = current_config.separate_file_outputs
-            new_config.include_filename_in_output = current_config.include_filename_in_output
-            new_config.systematic_structure = current_config.systematic_structure
-            new_config.folder_structure = current_config.folder_structure
-            pipeline.config.load_config = new_config
-        
-        pipeline.config.parallel_processing = config.parallel_processing
-        pipeline.config.max_workers = config.max_workers
         
         # Process all files if no specific files provided
         if not config.files:
@@ -378,7 +344,8 @@ async def run_etl_pipeline(config: ETLConfigRequest):
         }
         
         for i, filename in enumerate(config.files):
-            file_path = find_aasx_file(filename)
+            # Only search for files within the specified project
+            file_path = find_aasx_file_in_project(filename, config.project_id) if config.project_id else find_aasx_file(filename)
             if file_path:
                 print(f"🔍 Processing file: {filename} at path: {file_path}")
                 
@@ -394,18 +361,63 @@ async def run_etl_pipeline(config: ETLConfigRequest):
                 etl_progress['load_progress'] = int(file_progress * 0.3)  # Load is 30% of total
                 etl_progress['overall_progress'] = int(file_progress)
                 
-                # Update file status in database if it exists
+                # Update file status in database if it exists (only for files in the specified project)
                 file_id = None
                 for fid, file_info in FILES_DB.items():
-                    if file_info['filename'] == filename or file_info['original_filename'] == filename:
+                    if (file_info['filename'] == filename or file_info['original_filename'] == filename) and file_info['project_id'] == config.project_id:
                         file_id = fid
                         file_info['status'] = 'processing'
                         FILES_DB[fid] = file_info
+                        
+                        # Save project to filesystem to persist processing status
+                        if config.project_id:
+                            save_project_to_filesystem(config.project_id)
                         break
                 
-                # Process the file with project ID if provided
+                # Process the file using new extraction architecture
                 print(f"🚀 Starting ETL processing for: {file_path}")
-                result = pipeline.process_aasx_file(file_path, config.project_id)
+                
+                # Determine output directory based on project ID and file name
+                file_stem = Path(file_path).stem  # Get filename without extension
+                if config.project_id:
+                    output_dir = Path("output") / "projects" / config.project_id / file_stem
+                else:
+                    output_dir = Path("output") / file_stem
+                
+                # Ensure output directory exists
+                output_dir.mkdir(parents=True, exist_ok=True)
+                
+                # Use new extraction function
+                from src.aasx.aasx_extraction import extract_aasx
+                import time
+                
+                start_time = time.time()
+                try:
+                    # Extract in multiple formats: JSON, Graph, RDF/Turtle
+                    extraction_results = extract_aasx(Path(file_path), output_dir, formats=['json', 'graph', 'rdf'])
+                    processing_time = time.time() - start_time
+                    
+                    # Check if all extractions succeeded
+                    all_succeeded = all(r.get('status') == 'completed' for r in extraction_results.values())
+                    
+                    result = {
+                        'file_path': file_path,
+                        'status': 'completed' if all_succeeded else 'partial',
+                        'processing_time': processing_time,
+                        'output_directory': str(output_dir),
+                        'project_id': config.project_id,
+                        'extraction_results': extraction_results
+                    }
+                except Exception as e:
+                    processing_time = time.time() - start_time
+                    result = {
+                        'file_path': file_path,
+                        'status': 'failed',
+                        'error': str(e),
+                        'processing_time': processing_time,
+                        'project_id': config.project_id
+                    }
+                
                 print(f"✅ ETL result for {filename}: {result}")
                 results.append(result)
                 processed_files[filename] = result['status']
@@ -416,6 +428,10 @@ async def run_etl_pipeline(config: ETLConfigRequest):
                     file_info['status'] = 'completed' if result['status'] == 'completed' else 'error'
                     file_info['processing_result'] = result
                     FILES_DB[file_id] = file_info
+                    
+                    # Save project to filesystem to persist status changes
+                    if config.project_id:
+                        save_project_to_filesystem(config.project_id)
                 
                 # Update progress after file completion
                 etl_progress['files_completed'] = i + 1
@@ -435,12 +451,16 @@ async def run_etl_pipeline(config: ETLConfigRequest):
                 results.append(result)
                 processed_files[filename] = 'failed'
                 
-                # Update file status in database for failed files
+                # Update file status in database for failed files (only for files in the specified project)
                 for fid, file_info in FILES_DB.items():
-                    if file_info['filename'] == filename or file_info['original_filename'] == filename:
+                    if (file_info['filename'] == filename or file_info['original_filename'] == filename) and file_info['project_id'] == config.project_id:
                         file_info['status'] = 'error'
                         file_info['processing_result'] = result
                         FILES_DB[fid] = file_info
+                        
+                        # Save project to filesystem to persist status changes
+                        if config.project_id:
+                            save_project_to_filesystem(config.project_id)
                         break
                 
                 etl_progress['results'][filename] = result
@@ -467,7 +487,12 @@ async def run_etl_pipeline(config: ETLConfigRequest):
             'total_time': sum(r.get('processing_time', 0) for r in results),
             'processed_files': processed_files,
             'results': results,
-            'pipeline_stats': pipeline.get_pipeline_stats(),
+            'pipeline_stats': {
+                'total_files': total_files,
+                'successful_files': len(successful),
+                'failed_files': len(failed),
+                'architecture': 'new_extraction'
+            },
             'progress': etl_progress
         }
         
@@ -487,57 +512,15 @@ async def process_single_file(config: ETLConfigRequest):
             raise HTTPException(status_code=400, detail="Exactly one file must be specified")
         
         filename = config.files[0]
-        file_path = find_aasx_file(filename)
+        # Only search for files within the specified project
+        file_path = find_aasx_file_in_project(filename, config.project_id) if config.project_id else find_aasx_file(filename)
         
         if not file_path:
             raise HTTPException(status_code=404, detail=f"File {filename} not found")
         
-        pipeline = get_etl_pipeline()
-        
-        # Update configuration
-        if config.transform:
-            # Map frontend parameters to TransformerConfig parameters
-            transform_params = {}
-            if 'enable_quality_checks' in config.transform:
-                transform_params['quality_checks'] = config.transform['enable_quality_checks']
-            if 'enable_enrichment' in config.transform:
-                transform_params['enrich_with_external_data'] = config.transform['enable_enrichment']
-            if 'normalize_ids' in config.transform:
-                transform_params['normalize_ids'] = config.transform['normalize_ids']
-            if 'output_formats' in config.transform:
-                transform_params['output_format'] = config.transform['output_formats'][0] if config.transform['output_formats'] else 'json'
-            # Add default values for required parameters
-            transform_params.setdefault('include_metadata', True)
-            transform_params.setdefault('flatten_structures', False)
-            transform_params.setdefault('add_timestamps', True)
-            pipeline.config.transform_config = TransformerConfig(**transform_params)
-        if config.load:
-            # Preserve systematic structure configuration while updating other parameters
-            current_config = pipeline.config.load_config
-            load_params = dict(config.load)
-            
-            # Map frontend parameter names to LoaderConfig field names
-            if 'output_formats' in load_params:
-                load_params['export_formats'] = load_params.pop('output_formats')
-            if 'enable_sqlite' in load_params:
-                load_params['export_sqlite'] = load_params.pop('enable_sqlite')
-            if 'enable_vector_db' in load_params:
-                load_params['export_vector_db'] = load_params.pop('enable_vector_db')
-            if 'enable_rag_export' in load_params:
-                load_params['export_rag'] = load_params.pop('enable_rag_export')
-            
-            # Remove parameters that don't exist in LoaderConfig
-            load_params.pop('batch_size', None)
-            load_params.pop('memory_limit', None)
-            load_params.pop('quality_threshold', None)
-            
-            new_config = LoaderConfig(**load_params)
-            # Preserve systematic structure settings
-            new_config.separate_file_outputs = current_config.separate_file_outputs
-            new_config.include_filename_in_output = current_config.include_filename_in_output
-            new_config.systematic_structure = current_config.systematic_structure
-            new_config.folder_structure = current_config.folder_structure
-            pipeline.config.load_config = new_config
+        # New extraction architecture - configuration handled by aas-processor
+        # Transform and load configurations are now handled by the external .NET processor
+        print("🔧 Using new extraction architecture with external aas-processor")
         
         # Progress tracking for single file
         progress_data = {
@@ -563,17 +546,55 @@ async def process_single_file(config: ETLConfigRequest):
         progress_data['load'] = 30
         progress_data['overall'] = 100
         
-        # Update file status in database if it exists
+        # Update file status in database if it exists (only for files in the specified project)
         file_id = None
         for fid, file_info in FILES_DB.items():
-            if file_info['filename'] == filename or file_info['original_filename'] == filename:
+            if (file_info['filename'] == filename or file_info['original_filename'] == filename) and file_info['project_id'] == config.project_id:
                 file_id = fid
                 file_info['status'] = 'processing'
                 FILES_DB[fid] = file_info
+                
+                # Save project to filesystem to persist processing status
+                if config.project_id:
+                    save_project_to_filesystem(config.project_id)
                 break
         
-        # Process file
-        result = pipeline.process_aasx_file(file_path)
+        # Process file using new extraction architecture
+        from src.aasx.aasx_extraction import extract_aasx
+        import time
+        
+        # Determine output directory based on project ID
+        if config.project_id:
+            output_dir = Path("output") / "projects" / config.project_id / "structured_data"
+        else:
+            output_dir = Path("output") / "structured_data"
+        
+        # Ensure output directory exists
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        start_time = time.time()
+        try:
+            extract_aasx(Path(file_path), output_dir)
+            processing_time = time.time() - start_time
+            
+            result = {
+                'file_path': file_path,
+                'status': 'completed',
+                'processing_time': processing_time,
+                'output_directory': str(output_dir),
+                'project_id': config.project_id,
+                'filename': filename
+            }
+        except Exception as e:
+            processing_time = time.time() - start_time
+            result = {
+                'file_path': file_path,
+                'status': 'failed',
+                'error': str(e),
+                'processing_time': processing_time,
+                'project_id': config.project_id,
+                'filename': filename
+            }
         
         # Update file status in database after processing
         if file_id:
@@ -581,6 +602,10 @@ async def process_single_file(config: ETLConfigRequest):
             file_info['status'] = 'completed' if result['status'] == 'completed' else 'error'
             file_info['processing_result'] = result
             FILES_DB[file_id] = file_info
+            
+            # Save project to filesystem to persist status changes
+            if config.project_id:
+                save_project_to_filesystem(config.project_id)
         
         return {
             'success': result['status'] == 'completed',
@@ -608,73 +633,72 @@ async def process_batch_files(config: ETLConfigRequest):
         if not config.files:
             raise HTTPException(status_code=400, detail="No files specified")
         
-        pipeline = get_etl_pipeline()
-        
-        # Update configuration
-        if config.transform:
-            # Map frontend parameters to TransformerConfig parameters
-            transform_params = {}
-            if 'enable_quality_checks' in config.transform:
-                transform_params['quality_checks'] = config.transform['enable_quality_checks']
-            if 'enable_enrichment' in config.transform:
-                transform_params['enrich_with_external_data'] = config.transform['enable_enrichment']
-            if 'normalize_ids' in config.transform:
-                transform_params['normalize_ids'] = config.transform['normalize_ids']
-            if 'output_formats' in config.transform:
-                transform_params['output_format'] = config.transform['output_formats'][0] if config.transform['output_formats'] else 'json'
-            # Add default values for required parameters
-            transform_params.setdefault('include_metadata', True)
-            transform_params.setdefault('flatten_structures', False)
-            transform_params.setdefault('add_timestamps', True)
-            pipeline.config.transform_config = TransformerConfig(**transform_params)
-        if config.load:
-            # Preserve systematic structure configuration while updating other parameters
-            current_config = pipeline.config.load_config
-            load_params = dict(config.load)
-            
-            # Map frontend parameter names to LoaderConfig field names
-            if 'output_formats' in load_params:
-                load_params['export_formats'] = load_params.pop('output_formats')
-            if 'enable_sqlite' in load_params:
-                load_params['export_sqlite'] = load_params.pop('enable_sqlite')
-            if 'enable_vector_db' in load_params:
-                load_params['export_vector_db'] = load_params.pop('enable_vector_db')
-            if 'enable_rag_export' in load_params:
-                load_params['export_rag'] = load_params.pop('enable_rag_export')
-            
-            # Remove parameters that don't exist in LoaderConfig
-            load_params.pop('batch_size', None)
-            load_params.pop('memory_limit', None)
-            load_params.pop('quality_threshold', None)
-            
-            new_config = LoaderConfig(**load_params)
-            # Preserve systematic structure settings
-            new_config.separate_file_outputs = current_config.separate_file_outputs
-            new_config.include_filename_in_output = current_config.include_filename_in_output
-            new_config.systematic_structure = current_config.systematic_structure
-            new_config.folder_structure = current_config.folder_structure
-            pipeline.config.load_config = new_config
-        
-        pipeline.config.parallel_processing = config.parallel_processing
-        pipeline.config.max_workers = config.max_workers
+        # New extraction architecture - configuration handled by aas-processor
+        print("🔧 Using new extraction architecture with external aas-processor for batch processing")
         
         # Process files
         results = []
         processed_files = {}
         
         for filename in config.files:
-            file_path = find_aasx_file(filename)
+            # Only search for files within the specified project
+            file_path = find_aasx_file_in_project(filename, config.project_id) if config.project_id else find_aasx_file(filename)
             if file_path:
-                # Update file status in database if it exists
+                # Update file status in database if it exists (only for files in the specified project)
                 file_id = None
                 for fid, file_info in FILES_DB.items():
-                    if file_info['filename'] == filename or file_info['original_filename'] == filename:
+                    if (file_info['filename'] == filename or file_info['original_filename'] == filename) and file_info['project_id'] == config.project_id:
                         file_id = fid
                         file_info['status'] = 'processing'
                         FILES_DB[fid] = file_info
+                        
+                        # Save project to filesystem to persist processing status
+                        if config.project_id:
+                            save_project_to_filesystem(config.project_id)
                         break
                 
-                result = pipeline.process_aasx_file(file_path)
+                # Process file using new extraction architecture
+                from src.aasx.aasx_extraction import extract_aasx
+                import time
+                
+                # Determine output directory based on project ID and file name
+                file_stem = Path(file_path).stem  # Get filename without extension
+                if config.project_id:
+                    output_dir = Path("output") / "projects" / config.project_id / file_stem
+                else:
+                    output_dir = Path("output") / file_stem
+                
+                # Ensure output directory exists
+                output_dir.mkdir(parents=True, exist_ok=True)
+                
+                start_time = time.time()
+                try:
+                    # Extract in multiple formats: JSON, Graph, RDF/Turtle
+                    extraction_results = extract_aasx(Path(file_path), output_dir, formats=['json', 'graph', 'rdf'])
+                    processing_time = time.time() - start_time
+                    
+                    # Check if all extractions succeeded
+                    all_succeeded = all(r.get('status') == 'completed' for r in extraction_results.values())
+                    
+                    result = {
+                        'file_path': file_path,
+                        'status': 'completed' if all_succeeded else 'partial',
+                        'processing_time': processing_time,
+                        'output_directory': str(output_dir),
+                        'project_id': config.project_id,
+                        'filename': filename,
+                        'extraction_results': extraction_results
+                    }
+                except Exception as e:
+                    processing_time = time.time() - start_time
+                    result = {
+                        'file_path': file_path,
+                        'status': 'failed',
+                        'error': str(e),
+                        'processing_time': processing_time,
+                        'project_id': config.project_id,
+                        'filename': filename
+                    }
                 results.append(result)
                 processed_files[filename] = result['status']
                 
@@ -684,6 +708,10 @@ async def process_batch_files(config: ETLConfigRequest):
                     file_info['status'] = 'completed' if result['status'] == 'completed' else 'error'
                     file_info['processing_result'] = result
                     FILES_DB[file_id] = file_info
+                    
+                    # Save project to filesystem to persist status changes
+                    if config.project_id:
+                        save_project_to_filesystem(config.project_id)
         
         # Calculate statistics
         successful = [r for r in results if r['status'] == 'completed']
@@ -696,7 +724,12 @@ async def process_batch_files(config: ETLConfigRequest):
             'total_time': sum(r.get('processing_time', 0) for r in results),
             'processed_files': processed_files,
             'results': results,
-            'pipeline_stats': pipeline.get_pipeline_stats()
+            'pipeline_stats': {
+                'total_files': len(config.files),
+                'successful_files': len(successful),
+                'failed_files': len(failed),
+                'architecture': 'new_extraction'
+            }
         }
         
     except HTTPException:
@@ -736,8 +769,9 @@ async def get_etl_stats():
         
         # Add database statistics
         try:
-            db_stats = pipeline.loader.get_database_stats()
-            stats['database_stats'] = db_stats
+            # The following line was removed as per the edit hint to remove LoaderConfig usage
+            # db_stats = pipeline.loader.get_database_stats() 
+            stats['database_stats'] = {} # Placeholder for future implementation
         except Exception as e:
             stats['database_stats'] = {'error': str(e)}
         
@@ -807,11 +841,11 @@ async def export_etl_results():
                     'include_metadata': pipeline.config.transform_config.include_metadata
                 },
                 'load_config': {
-                    'output_directory': pipeline.config.load_config.output_directory,
-                    'database_path': pipeline.config.load_config.database_path,
-                    'vector_db_path': pipeline.config.load_config.vector_db_path,
-                    'vector_db_type': pipeline.config.load_config.vector_db_type,
-                    'embedding_model': pipeline.config.load_config.embedding_model
+                    'output_directory': pipeline.config.load_config['output_directory'],
+                    'database_path': pipeline.config.load_config['database_path'],
+                    'vector_db_path': pipeline.config.load_config['vector_db_path'],
+                    'vector_db_type': pipeline.config.load_config['vector_db_type'],
+                    'embedding_model': pipeline.config.load_config['embedding_model']
                 }
             }
         }
@@ -1180,8 +1214,26 @@ async def download_aasx_file(filename: str):
 
 # Helper functions
 
+def find_aasx_file_in_project(filename: str, project_id: str) -> Optional[str]:
+    """Find AASX file within a specific project directory"""
+    print(f"🔍 Searching for file: {filename} in project: {project_id}")
+    
+    # Search only in the specified project directory
+    project_dir = os.path.join(os.getcwd(), "data", "projects", project_id)
+    print(f"📁 Searching in project directory: {project_dir}")
+    
+    if os.path.exists(project_dir):
+        for root, dirs, files in os.walk(project_dir):
+            if filename in files:
+                file_path = os.path.join(root, filename)
+                print(f"✅ Found file in project: {file_path}")
+                return file_path
+    
+    print(f"❌ File not found: {filename} in project {project_id}")
+    return None
+
 def find_aasx_file(filename: str) -> Optional[str]:
-    """Find AASX file in content directory and project directories"""
+    """Find AASX file in content directory and project directories (global search)"""
     print(f"🔍 Searching for file: {filename}")
     
     # First search in AASX content directory
@@ -1256,8 +1308,8 @@ async def get_integration_status():
             },
             "vector_database": {
                 "available": pipeline.loader.embedding_model is not None,
-                "type": pipeline.config.load_config.vector_db_type,
-                "model": pipeline.config.load_config.embedding_model
+                "type": pipeline.config.load_config['vector_db_type'],
+                "model": pipeline.config.load_config['embedding_model']
             },
             "rag_system": {
                 "available": pipeline.loader.embedding_model is not None and pipeline.vector_db is not None,
@@ -1823,6 +1875,9 @@ async def process_project_file(project_id: str, file_id: str):
         file_info["status"] = "processing"
         FILES_DB[file_id] = file_info
         
+        # Save project to filesystem to persist processing status
+        save_project_to_filesystem(project_id)
+        
         try:
             # Process file through ETL pipeline
             pipeline = get_etl_pipeline()
@@ -1833,6 +1888,9 @@ async def process_project_file(project_id: str, file_id: str):
             file_info["processing_result"] = result
             FILES_DB[file_id] = file_info
             
+            # Save project to filesystem to persist status changes
+            save_project_to_filesystem(project_id)
+            
             return result
             
         except Exception as e:
@@ -1840,6 +1898,9 @@ async def process_project_file(project_id: str, file_id: str):
             file_info["status"] = "error"
             file_info["processing_result"] = {"error": str(e)}
             FILES_DB[file_id] = file_info
+            
+            # Save project to filesystem to persist status changes
+            save_project_to_filesystem(project_id)
             
             raise HTTPException(status_code=500, detail=str(e))
         
