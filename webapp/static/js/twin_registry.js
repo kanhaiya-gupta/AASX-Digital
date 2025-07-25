@@ -222,7 +222,10 @@ $(document).ready(function() {
                 $('#projectsList').show();
                 $('#projectSelection').show();
                 $('#aasxFilesList').hide(); // Hide files list when showing projects
-                showNotification(`Loaded ${data.total_count} projects`, 'success');
+                // After loading projects, do not show a notification for success
+                // Remove or comment out any line like:
+                // showNotification(`Loaded ${projects.length} projects`, 'success');
+                // Only show notifications for errors.
             })
             .catch(error => {
                 console.error('Error loading projects:', error);
@@ -352,8 +355,9 @@ $(document).ready(function() {
     function displayProjects(projects) {
         const tbody = $('#projectsTable tbody');
         tbody.empty();
-        
-        projects.forEach(project => {
+        // Filter out projects with missing, empty, or undefined project_id
+        const validProjects = projects.filter(p => p.project_id && p.project_id !== 'undefined' && p.project_id !== '');
+        validProjects.forEach(project => {
             const legacyBadge = project.legacy ? '<span class="badge bg-warning ms-2">Legacy</span>' : '';
             tbody.append(`
                 <tr>

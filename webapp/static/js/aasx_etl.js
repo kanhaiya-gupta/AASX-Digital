@@ -639,72 +639,59 @@ class AASXETLPipeline {
     }
 
     getETLConfiguration() {
-        // Check if we're using pipeline-specific configuration
-        const usePipelineConfig = document.getElementById('pipelineHybridProcessing') !== null;
+        const formats = [];
+        if ($('#formatJson').is(':checked')) formats.push('json');
+        if ($('#formatYaml').is(':checked')) formats.push('yaml');
+        if ($('#formatCsv').is(':checked')) formats.push('csv');
+        if ($('#formatGraph').is(':checked')) formats.push('graph');
+        if ($('#formatRag').is(':checked')) formats.push('rag');
+        if ($('#formatVectorDb').is(':checked')) formats.push('vector_db');
+
+        // Get selected project and files for output path calculation
+        const projectId = $('#etlProjectSelect').val();
+        const selectedFiles = $('.pipeline-file-checkbox:checked');
         
-        if (usePipelineConfig) {
-            return {
-                extract: {
-                    enable_hybrid_processing: document.getElementById('pipelineHybridProcessing')?.checked || false,
-                    enable_validation: document.getElementById('pipelineEnableValidation')?.checked || false,
-                    enable_backup: document.getElementById('pipelineEnableBackup')?.checked || false,
-                    parallel_processing: document.getElementById('pipelineParallelProcessing')?.checked || false
-                },
-                transform: {
-                    enable_quality_checks: document.getElementById('pipelineEnableQualityChecks')?.checked || false,
-                    enable_enrichment: document.getElementById('pipelineEnableEnrichment')?.checked || false,
-                    normalize_ids: document.getElementById('pipelineNormalizeIds')?.checked || false,
-                    output_formats: this.getSelectedPipelineOutputFormats(),
-                    include_metadata: true
-                },
-                load: {
-                    enable_sqlite: document.getElementById('pipelineEnableSQLite')?.checked || false,
-                    enable_vector_db: document.getElementById('pipelineEnableVectorDB')?.checked || false,
-                    enable_rag_export: document.getElementById('pipelineEnableRAGExport')?.checked || false,
-                    vector_db_type: document.getElementById('pipelineVectorDBType')?.value || 'qdrant',
-                    embedding_model: document.getElementById('pipelineEmbeddingModel')?.value || 'all-MiniLM-L6-v2',
-                    qdrant_url: 'http://localhost:6333',
-                    qdrant_collection_prefix: 'aasx',
-                    output_directory: 'output/etl_results',
-                    database_path: 'aasx_data.db',
-                    vector_db_path: 'vector_db',
-                    export_formats: this.getSelectedPipelineExportFormats()
-                },
-                advanced: {
-                    max_workers: parseInt(document.getElementById('pipelineMaxWorkers')?.value || '4'),
-                    memory_limit: parseInt(document.getElementById('pipelineMemoryLimit')?.value || '0'),
-                    quality_threshold: parseFloat(document.getElementById('pipelineQualityThreshold')?.value || '0.8'),
-                    chunk_size: parseInt(document.getElementById('pipelineChunkSize')?.value || '512')
-                }
-            };
+        // Calculate output directory based on project and files
+        let outputDir = null;
+        if (projectId) {
+            if (selectedFiles.length > 0) {
+                // For selected files, show the specific output path
+                const fileIds = selectedFiles.map((i, el) => $(el).val()).get();
+                // We'll get the actual filenames from the backend, but show the pattern
+                outputDir = `output/projects/${projectId}/{filename}`;
+            } else {
+                // For all files, show the project output path
+                outputDir = `output/projects/${projectId}`;
+            }
         } else {
-            // Fallback to original configuration for backward compatibility
-            return {
-                extract: {
-                    enable_hybrid_processing: document.getElementById('enableHybridProcessing')?.checked || false,
-                    enable_validation: document.getElementById('enableValidation')?.checked || false
-                },
-                transform: {
-                    enable_quality_checks: document.getElementById('enableQualityChecks')?.checked || false,
-                    enable_enrichment: document.getElementById('enableEnrichment')?.checked || false,
-                    output_formats: this.getSelectedOutputFormats(),
-                    include_metadata: true
-                },
-                load: {
-                    enable_vector_db: document.getElementById('enableVectorDB')?.checked || false,
-                    enable_rag_export: document.getElementById('enableRAGExport')?.checked || false,
-                    vector_db_type: document.getElementById('vectorDBType')?.value || 'qdrant',
-                    qdrant_url: 'http://localhost:6333',
-                    qdrant_collection_prefix: 'aasx',
-                    output_directory: 'output/etl_results',
-                    database_path: 'aasx_data.db',
-                    vector_db_path: 'vector_db',
-                    export_formats: this.getSelectedExportFormats()
-                },
-                parallel_processing: false,
-                max_workers: 4
-            };
+            // Fallback to default
+            outputDir = 'output/etl_results';
         }
+
+        const options = {
+            hybrid_processing: $('#hybridProcessing').is(':checked'),
+            enable_validation: $('#enableValidation').is(':checked'),
+            enable_backup: $('#enableBackup').is(':checked'),
+            parallel_processing: $('#parallelProcessing').is(':checked'),
+            enable_quality_checks: $('#enableQualityChecks').is(':checked'),
+            enable_enrichment: $('#enableEnrichment').is(':checked'),
+            normalize_ids: $('#normalizeIds').is(':checked'),
+            enable_sqlite: $('#enableSQLite').is(':checked'),
+            enable_vector_db: $('#enableVectorDB').is(':checked'),
+            enable_rag_export: $('#enableRAGExport').is(':checked'),
+            vector_db_type: $('#vectorDBType').val(),
+            embedding_model: $('#embeddingModel').val(),
+            batch_size: parseInt($('#batchSize').val()) || 10,
+            max_workers: parseInt($('#maxWorkers').val()) || 4,
+            memory_limit: parseInt($('#memoryLimit').val()) || 0,
+            quality_threshold: parseFloat($('#qualityThreshold').val()) || 0.8,
+            chunk_size: parseInt($('#chunkSize').val()) || 512,
+            output_formats: formats,
+            output_dir: outputDir // Add the calculated output directory
+        };
+
+        console.log('ETL configuration:', options);
+        return options;
     }
 
     getSelectedOutputFormats() {
@@ -1271,6 +1258,33 @@ class AASXETLPipeline {
         
         this.showAlert('All export formats deselected', 'warning', 2000);
     }
+
+    updatePipelineFileSelection() {
+        const selectedFiles = $('.pipeline-file-checkbox:checked');
+        const totalFiles = $('.pipeline-file-checkbox').length;
+        
+        $('#selectedFileCount').text(selectedFiles.length);
+        $('#totalFileCount').text(totalFiles);
+    }
+
+    updateOutputPathDisplay() {
+        const projectId = $('#etlProjectSelect').val();
+        const selectedFiles = $('.pipeline-file-checkbox:checked');
+        const outputPathDisplay = $('#outputPathDisplay');
+        
+        if (!projectId) {
+            outputPathDisplay.text('Select project to see output path');
+            return;
+        }
+        
+        if (selectedFiles.length > 0) {
+            // For selected files, show the specific output path pattern
+            outputPathDisplay.text(`output/projects/${projectId}/{filename}`);
+        } else {
+            // For all files, show the project output path
+            outputPathDisplay.text(`output/projects/${projectId}`);
+        }
+    }
 }
 
 // Project Management and File Upload functionality
@@ -1284,7 +1298,10 @@ class ProjectManager {
     async init() {
         await this.loadProjects();
         this.setupEventListeners();
-        this.updateStats();
+        await this.updateStats();
+        
+        // Automatically reset file statuses if outputs are missing
+        await this.autoResetFileStatuses();
     }
 
     setupEventListeners() {
@@ -1335,6 +1352,11 @@ class ProjectManager {
             this.refreshAndSync();
         });
         
+        // Reset file statuses button
+        $('#resetFileStatuses').on('click', () => {
+            this.resetFileStatuses();
+        });
+        
         // Project & File Management Event Listeners
         $('#manageProjectSelect').on('change', () => this.onManageProjectChange());
         $('#manageFileSelect').on('change', () => this.onManageFileChange());
@@ -1359,7 +1381,7 @@ class ProjectManager {
                 this.projects = result.projects || [];
                 this.renderProjects();
                 this.updateProjectSelects();
-                this.updateStats();
+                await this.updateStats();
                 this.showSuccessMessage(`Loaded ${result.projects_count} projects with ${result.files_count} files!`);
             } else {
                 console.error('Failed to load projects');
@@ -1380,7 +1402,7 @@ class ProjectManager {
                 console.log('📦 Loaded projects:', this.projects);
                 this.renderProjects();
                 this.updateProjectSelects();
-                this.updateStats();
+                await this.updateStats();
                 
                 // Debug: Check if stats elements exist
                 console.log('🔍 Checking stats elements:');
@@ -1440,14 +1462,14 @@ class ProjectManager {
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" onclick="projectManager.viewProject('${project.id}')">
+                                <li><a class="dropdown-item" href="#" onclick="projectManager.viewProject('${project.project_id}')">
                                     <i class="fas fa-eye text-primary"></i> View Details
                                 </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="projectManager.uploadToProject('${project.id}')">
+                                <li><a class="dropdown-item" href="#" onclick="projectManager.uploadToProject('${project.project_id}')">
                                     <i class="fas fa-upload text-info"></i> Upload File
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#" onclick="projectManager.deleteProject('${project.id}')">
+                                <li><a class="dropdown-item text-danger" href="#" onclick="projectManager.deleteProject('${project.project_id}')">
                                     <i class="fas fa-trash"></i> Delete Project
                                 </a></li>
                             </ul>
@@ -1483,8 +1505,8 @@ class ProjectManager {
     updateProjectSelects() {
         console.log('🔍 Updating project selects with projects:', this.projects);
         const options = this.projects.map(project => {
-            console.log('🔍 Project option:', project.id, project.name);
-            return `<option value="${project.id}">${project.name}</option>`;
+            console.log('🔍 Project option:', project.project_id, project.name);
+            return `<option value="${project.project_id}">${project.name}</option>`;
         }).join('');
         
         $('#uploadProjectSelect, #urlProjectSelect, #etlProjectSelect, #manageProjectSelect').html(`
@@ -1493,22 +1515,28 @@ class ProjectManager {
         `);
     }
 
-    updateStats() {
+    async updateStats() {
         console.log('🔍 Updating stats with projects:', this.projects);
         
         const totalProjects = this.projects.length;
         const totalFiles = this.projects.reduce((sum, p) => sum + (p.file_count || 0), 0);
         const totalSize = this.projects.reduce((sum, p) => sum + (p.total_size || 0), 0);
         
-        // Calculate processed files based on file status
+        // Calculate processed files by loading files for each project
         let processedFiles = 0;
-        this.projects.forEach(project => {
-            if (project.files) {
-                processedFiles += project.files.filter(file => 
-                    file.status === 'completed'
-                ).length;
+        try {
+            for (const project of this.projects) {
+                const response = await fetch(`/aasx/api/projects/${project.project_id}/files`);
+                if (response.ok) {
+                    const files = await response.json();
+                    processedFiles += files.filter(file => 
+                        file.status === 'completed'
+                    ).length;
+                }
             }
-        });
+        } catch (error) {
+            console.error('❌ Error loading files for stats calculation:', error);
+        }
 
         console.log('📊 Stats calculated:', {
             totalProjects,
@@ -1613,7 +1641,7 @@ class ProjectManager {
                 this.projects.push(newProject);
                 this.renderProjects();
                 this.updateProjectSelects();
-                this.updateStats();
+                await this.updateStats();
                 $('#projectModal').modal('hide');
                 this.showSuccessMessage('Project created successfully!');
             } else {
@@ -1640,7 +1668,7 @@ class ProjectManager {
                 this.projects = this.projects.filter(p => p.id !== projectId);
                 this.renderProjects();
                 this.updateProjectSelects();
-                this.updateStats();
+                await this.updateStats();
                 this.showSuccessMessage('Project deleted successfully!');
             } else {
                 const error = await response.json();
@@ -1653,6 +1681,7 @@ class ProjectManager {
     }
 
     async viewProject(projectId) {
+        console.log('🔍 [DEBUG] viewProject called with projectId:', projectId);
         try {
             const response = await fetch(`/aasx/api/projects/${projectId}`);
             if (response.ok) {
@@ -1681,13 +1710,13 @@ class ProjectManager {
                 </td>
                 <td>
                     <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-info" onclick="projectManager.viewFileInBlazor('${file.original_filename}', '${project.id}', '${file.id}')" title="View in Blazor">
+                        <button class="btn btn-sm btn-info" onclick="projectManager.viewFileInBlazor('${file.original_filename}', '${project.project_id}', '${file.id}')" title="View in Blazor">
                             <i class="fas fa-eye"></i> View
                         </button>
-                        <button class="btn btn-sm btn-primary" onclick="projectManager.processFile('${project.id}', '${file.id}')" title="Process File">
+                        <button class="btn btn-sm btn-primary" onclick="projectManager.processFile('${project.project_id}', '${file.id}')" title="Process File">
                             <i class="fas fa-cogs"></i> Process
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="projectManager.deleteFile('${project.id}', '${file.id}')" title="Delete File">
+                        <button class="btn btn-sm btn-danger" onclick="projectManager.deleteFile('${project.project_id}', '${file.id}')" title="Delete File">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -1925,34 +1954,39 @@ class ProjectManager {
 
     async refreshAndSync() {
         try {
-            console.log('🔄 Starting refresh and sync...');
+            console.log('🔄 Starting comprehensive refresh and sync...');
             
             // Show loading state
             const refreshButton = $('#refreshFiles');
             const originalText = refreshButton.html();
-            refreshButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Syncing...');
+            refreshButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Refreshing...');
             
-            // First, sync memory with disk
-            const syncResponse = await fetch('/aasx/api/projects/sync', {
+            // Use the centralized refresh endpoint that includes status reset
+            const refreshResponse = await fetch('/aasx/api/refresh', {
                 method: 'POST'
             });
             
-            if (syncResponse.ok) {
-                const syncResult = await syncResponse.json();
-                console.log('✅ Sync completed:', syncResult);
+            if (refreshResponse.ok) {
+                const refreshResult = await refreshResponse.json();
+                console.log('✅ Refresh completed:', refreshResult);
                 
-                if (syncResult.files_removed > 0) {
-                    this.showSuccessMessage(`Sync completed! Removed ${syncResult.files_removed} orphaned files.`);
-                } else {
-                    this.showSuccessMessage('Sync completed! All files are up to date.');
+                // Show success message with reset information
+                let message = 'Refresh completed successfully!';
+                if (refreshResult.refresh_result && refreshResult.refresh_result.reset_result) {
+                    const resetCount = refreshResult.refresh_result.reset_result.reset_count;
+                    if (resetCount > 0) {
+                        message += ` Reset ${resetCount} file statuses due to missing output.`;
+                    }
                 }
+                this.showSuccessMessage(message);
             } else {
-                console.error('❌ Sync failed:', syncResponse.status);
-                this.showErrorMessage('Failed to sync projects with disk');
+                console.error('❌ Refresh failed:', refreshResponse.status);
+                this.showErrorMessage('Failed to refresh files');
             }
             
             // Then, refresh the projects data
             await this.loadProjects();
+            await this.updateStats();
             
             // Refresh all file lists for currently selected projects
             const etlProjectId = $('#etlProjectSelect').val();
@@ -1965,7 +1999,7 @@ class ProjectManager {
                 await this.onManageProjectChange();
             }
             
-            console.log('✅ Refresh and sync completed successfully');
+            console.log('✅ Comprehensive refresh and sync completed successfully');
             
         } catch (error) {
             console.error('❌ Error during refresh and sync:', error);
@@ -2099,10 +2133,10 @@ class ProjectManager {
             return `
                 <div class="form-check mb-4 p-3 border rounded">
                     <input class="form-check-input pipeline-file-checkbox" type="checkbox" 
-                           id="pipeline-file-${file.id}" value="${file.id}" 
+                           id="pipeline-file-${file.file_id}" value="${file.file_id}" 
                            data-filename="${file.original_filename}"
                            ${status === 'completed' ? 'disabled' : ''}>
-                    <label class="form-check-label w-100" for="pipeline-file-${file.id}">
+                    <label class="form-check-label w-100" for="pipeline-file-${file.file_id}">
                         <div class="row align-items-center">
                             <div class="col-md-8">
                                 <div class="d-flex align-items-center mb-2">
@@ -2188,53 +2222,22 @@ class ProjectManager {
         const selectedFiles = $('.pipeline-file-checkbox:checked');
         const totalFiles = $('.pipeline-file-checkbox').length;
         
-        // Update any counters or UI elements
-        console.log(`Selected ${selectedFiles.length} of ${totalFiles} files for pipeline processing`);
+        $('#selectedFileCount').text(selectedFiles.length);
+        $('#totalFileCount').text(totalFiles);
+        
+        // Update output path display
+        this.updateOutputPathDisplay();
     }
 
     updatePipelineProjectSelects() {
         const options = this.projects.map(project => 
-            `<option value="${project.id}">${project.name}</option>`
+            `<option value="${project.project_id}">${project.name}</option>`
         ).join('');
         
         $('#etlProjectSelect').html(`
             <option value="">Choose a project...</option>
             ${options}
         `);
-    }
-
-    getETLConfiguration() {
-        const formats = [];
-        if ($('#formatJson').is(':checked')) formats.push('json');
-        if ($('#formatYaml').is(':checked')) formats.push('yaml');
-        if ($('#formatCsv').is(':checked')) formats.push('csv');
-        if ($('#formatGraph').is(':checked')) formats.push('graph');
-        if ($('#formatRag').is(':checked')) formats.push('rag');
-        if ($('#formatVectorDb').is(':checked')) formats.push('vector_db');
-
-        const options = {
-            hybrid_processing: $('#hybridProcessing').is(':checked'),
-            enable_validation: $('#enableValidation').is(':checked'),
-            enable_backup: $('#enableBackup').is(':checked'),
-            parallel_processing: $('#parallelProcessing').is(':checked'),
-            enable_quality_checks: $('#enableQualityChecks').is(':checked'),
-            enable_enrichment: $('#enableEnrichment').is(':checked'),
-            normalize_ids: $('#normalizeIds').is(':checked'),
-            enable_sqlite: $('#enableSQLite').is(':checked'),
-            enable_vector_db: $('#enableVectorDB').is(':checked'),
-            enable_rag_export: $('#enableRAGExport').is(':checked'),
-            vector_db_type: $('#vectorDBType').val(),
-            embedding_model: $('#embeddingModel').val(),
-            batch_size: parseInt($('#batchSize').val()) || 10,
-            max_workers: parseInt($('#maxWorkers').val()) || 4,
-            memory_limit: parseInt($('#memoryLimit').val()) || 0,
-            quality_threshold: parseFloat($('#qualityThreshold').val()) || 0.8,
-            chunk_size: parseInt($('#chunkSize').val()) || 512,
-            output_formats: formats
-        };
-
-        console.log('ETL configuration:', options);
-        return options;
     }
 
     async refreshPipelineStatus() {
@@ -2275,6 +2278,7 @@ class ProjectManager {
 
     async runSelectedPipeline() {
         const projectId = $('#etlProjectSelect').val();
+        const projectName = $('#etlProjectSelect option:selected').text();
         const selectedFiles = $('.pipeline-file-checkbox:checked');
         const config = this.getETLConfiguration();
 
@@ -2298,7 +2302,9 @@ class ProjectManager {
             }
             
             const allFiles = await filesResponse.json();
-            const selectedFileInfo = allFiles.filter(file => fileIds.includes(file.id));
+            
+            // Use file_id for matching
+            const selectedFileInfo = allFiles.filter(file => fileIds.includes(file.file_id));
             const filenames = selectedFileInfo.map(file => file.original_filename);
 
             // Prepare ETL configuration in the format expected by the backend
@@ -2327,16 +2333,15 @@ class ProjectManager {
                 },
                 files: filenames,
                 project_id: projectId, // Pass project ID for project-based output
+                project_name: projectName, // Add project name for clarity
+                output_dir: config.output_dir, // Include the calculated output directory
                 parallel_processing: config.parallel_processing,
                 max_workers: config.max_workers
             };
 
             console.log('Running ETL pipeline with config:', etlConfig);
 
-            // Show success message immediately when button is clicked
-            this.showSuccessMessage(`ETL pipeline started successfully! Processing ${filenames.length} files.`);
-            
-            // Show progress immediately when button is clicked
+            // Show progress immediately when button is clicked (no notification)
             this.startPipelineStatusPolling();
             
             // Show processing indicator
@@ -2372,6 +2377,7 @@ class ProjectManager {
 
     async runAllDataPipeline() {
         const projectId = $('#etlProjectSelect').val();
+        const projectName = $('#etlProjectSelect option:selected').text();
         const config = this.getETLConfiguration();
 
         if (!projectId) {
@@ -2386,20 +2392,6 @@ class ProjectManager {
         }
 
         try {
-            // Get all files in the project
-            const filesResponse = await fetch(`/aasx/api/projects/${projectId}/files`);
-            if (!filesResponse.ok) {
-                throw new Error('Failed to load project files');
-            }
-            
-            const allFiles = await filesResponse.json();
-            const filenames = allFiles.map(file => file.original_filename);
-
-            if (filenames.length === 0) {
-                alert('No files found in the selected project');
-                return;
-            }
-
             // Prepare ETL configuration in the format expected by the backend
             const etlConfig = {
                 extract: {
@@ -2424,18 +2416,17 @@ class ProjectManager {
                     quality_threshold: config.quality_threshold,
                     chunk_size: config.chunk_size
                 },
-                files: filenames,
+                // Do NOT include 'files' field for all data
                 project_id: projectId, // Pass project ID for project-based output
+                project_name: projectName, // Add project name for clarity
+                output_dir: config.output_dir, // Include the calculated output directory
                 parallel_processing: config.parallel_processing,
                 max_workers: config.max_workers
             };
 
             console.log('Running ETL on all data with config:', etlConfig);
 
-            // Show success message immediately when button is clicked
-            this.showSuccessMessage(`ETL pipeline started successfully! Processing all ${filenames.length} files in the project.`);
-            
-            // Show progress immediately when button is clicked
+            // Show progress immediately when button is clicked (no notification)
             this.startPipelineStatusPolling();
             
             // Show processing indicator
@@ -2452,11 +2443,7 @@ class ProjectManager {
 
             if (response.ok) {
                 const result = await response.json();
-                
-                // Update all file statuses to processing
-                allFiles.forEach(file => {
-                    this.updateFileStatusInList(file.original_filename, 'processing');
-                });
+                // Optionally update all file statuses to processing here if needed
             } else {
                 const error = await response.json();
                 alert('Failed to start pipeline: ' + error.detail);
@@ -2477,6 +2464,11 @@ class ProjectManager {
         console.log('🔍 Progress section element:', progressSection.length);
         progressSection.show();
         console.log('✅ Progress section shown');
+        
+        // Scroll to progress section to ensure user sees it
+        $('html, body').animate({
+            scrollTop: progressSection.offset().top - 100
+        }, 500);
         
         this.updateETLStatus('ETL pipeline is starting...', 'info');
         
@@ -2560,7 +2552,7 @@ class ProjectManager {
                         this.updateETLStatus(`Processing: ${progress.current_file || 'Files'}...`, 'info');
                     } else {
                         // Backend is not running, check completion status
-                        if (progress.overall_progress >= 100) {
+                        if (progress.progress >= 100) {
                             // Backend completed successfully
                             backendCompleted = true;
                             console.log('✅ Backend completed successfully with 100% progress');
@@ -2843,7 +2835,7 @@ class ProjectManager {
 
     updateManageProjectSelect() {
         const options = this.projects.map(project => 
-            `<option value="${project.id}">${project.name}</option>`
+            `<option value="${project.project_id}">${project.name}</option>`
         ).join('');
         
         $('#manageProjectSelect').html(`
@@ -2981,6 +2973,106 @@ class ProjectManager {
         } catch (error) {
             console.error('❌ Error opening file in Blazor:', error);
             this.showErrorMessage(`Error opening file in Blazor: ${error.message}`);
+        }
+    }
+
+    async resetFileStatuses() {
+        try {
+            console.log('🔄 Resetting file statuses...');
+            
+            // Show loading state
+            const button = $('#resetFileStatuses');
+            const originalText = button.html();
+            button.html('<i class="fas fa-spinner fa-spin me-1"></i>Resetting...');
+            button.prop('disabled', true);
+            
+            // Call the dedicated reset-statuses endpoint
+            const response = await fetch('/aasx/api/files/reset-statuses', {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    const resetCount = result.reset_count !== undefined ? result.reset_count : (result.reset_result ? result.reset_result.reset_count : 0);
+                    this.showSuccessMessage(`Reset ${resetCount} files with missing outputs`);
+                    console.log(`✅ Reset ${resetCount} files with missing outputs`);
+                    
+                    // Reload projects and update stats
+                    await this.loadProjects();
+                    await this.updateStats();
+                    
+                    // Refresh file lists if any project is currently selected
+                    const currentProjectId = $('#manageProjectSelect').val();
+                    if (currentProjectId) {
+                        await this.refreshFileLists(currentProjectId);
+                    }
+                    
+                    // Also refresh ETL file lists if any project is selected
+                    const etlProjectId = $('#etlProjectSelect').val();
+                    if (etlProjectId) {
+                        await this.loadProjectFiles(etlProjectId);
+                    }
+                } else {
+                    this.showErrorMessage(result.error || 'Failed to reset file statuses');
+                    console.error('Reset error:', result.error);
+                }
+            } else {
+                const error = await response.json();
+                this.showErrorMessage(error.detail || 'Failed to reset file statuses');
+                console.error('Reset error:', error.detail);
+            }
+        } catch (error) {
+            console.error('Error resetting file statuses:', error);
+            this.showErrorMessage('Error resetting file statuses');
+        } finally {
+            // Restore button state
+            const button = $('#resetFileStatuses');
+            button.html('<i class="fas fa-sync-alt me-1"></i>Reset Statuses');
+            button.prop('disabled', false);
+        }
+    }
+
+    async autoResetFileStatuses() {
+        try {
+            console.log('🔄 Auto-checking file statuses for missing outputs...');
+            
+            // Use the centralized refresh endpoint for auto-reset/page load
+            const response = await fetch('/aasx/api/refresh', {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success && result.reset_result && result.reset_result.reset_count > 0) {
+                    console.log(`✅ Auto-reset ${result.reset_result.reset_count} files from completed to not_processed`);
+                    
+                    // Reload projects and update stats
+                    await this.loadProjects();
+                    await this.updateStats();
+                    
+                    // Refresh file lists if any project is currently selected
+                    const currentProjectId = $('#manageProjectSelect').val();
+                    if (currentProjectId) {
+                        await this.refreshFileLists(currentProjectId);
+                    }
+                    
+                    // Also refresh ETL file lists if any project is selected
+                    const etlProjectId = $('#etlProjectSelect').val();
+                    if (etlProjectId) {
+                        await this.loadProjectFiles(etlProjectId);
+                    }
+                    
+                    // Show a subtle notification
+                    this.showSuccessMessage(`Auto-reset ${result.reset_result.reset_count} files with missing outputs`);
+                } else if (result.success) {
+                    console.log('ℹ️ No files needed auto-reset');
+                }
+            } else {
+                console.warn('⚠️ Could not auto-reset file statuses');
+            }
+        } catch (error) {
+            console.error('Error in auto-reset file statuses:', error);
         }
     }
 }

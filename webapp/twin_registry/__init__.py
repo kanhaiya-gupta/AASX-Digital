@@ -1,1 +1,0 @@
-# Twin Registry module for AASX Digital Twin Analytics Framework 

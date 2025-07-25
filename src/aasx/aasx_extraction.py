@@ -1,5 +1,6 @@
 import argparse
 import subprocess
+import shutil
 from pathlib import Path
 import sys
 from src.shared.utils import ensure_dir, log_info, log_error
@@ -19,6 +20,14 @@ def extract_aasx(aasx_path: Path, output_dir: Path, formats: list = None):
     
     ensure_dir(output_dir)
     file_stem = aasx_path.stem
+    
+    # Save a copy of the original AASX file
+    original_copy_path = output_dir / f"{file_stem}_original.aasx"
+    try:
+        shutil.copy2(aasx_path, original_copy_path)
+        log_info(f"Saved original AASX file copy to {original_copy_path}")
+    except Exception as e:
+        log_error(f"Failed to save original AASX file copy: {e}")
     
     results = {}
     
@@ -93,6 +102,9 @@ def extract_aasx(aasx_path: Path, output_dir: Path, formats: list = None):
         else:
             log_info(f"YAML export succeeded for {aasx_path}")
             results['yaml'] = {'status': 'completed', 'output': str(yaml_output)}
+    
+    # Add original file info to results
+    results['original'] = {'status': 'completed', 'output': str(original_copy_path)}
     
     return results
 

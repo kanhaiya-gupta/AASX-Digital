@@ -373,13 +373,16 @@ async function loadProjects() {
             // Add project options
             data.projects.forEach(project => {
                 const option = document.createElement('option');
-                option.value = project.id;
-                option.textContent = project.name || project.id;
+                option.value = project.project_id;
+                option.textContent = project.name || project.project_id;
                 projectSelect.appendChild(option);
             });
             
             console.log(`✅ Loaded ${data.projects.length} projects`);
-            showNotification(`✅ Loaded ${data.projects.length} projects`, 'success');
+            // After loading projects, do not show a notification for success
+            // Remove or comment out any line like:
+            // showNotification(`✅ Loaded ${projects.length} projects`, 'success');
+            // Only show notifications for errors.
         } else {
             console.error('Failed to load projects:', data.error);
             showNotification('❌ Failed to load projects: ' + data.error, 'error');
@@ -423,7 +426,7 @@ async function loadFiles(projectId) {
             fileSelect.disabled = false;
             
             console.log(`✅ Loaded ${data.files.length} files for project ${projectId}`);
-            showNotification(`✅ Loaded ${data.files.length} files`, 'success');
+            // showNotification(`✅ Loaded ${data.files.length} files`, 'success'); // Removed notification
         } else {
             console.error('Failed to load files:', data.error);
             showNotification('❌ Failed to load files: ' + data.error, 'error');

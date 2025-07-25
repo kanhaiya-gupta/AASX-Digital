@@ -80,16 +80,17 @@ qi_analytics_router = None
 aasx_router = None
 kg_neo4j_router = None
 aasx_explorer_router = None
+auth_router = None
 
 try:
-    from webapp.ai_rag.routes import router as ai_rag_router
+    from webapp.modules.ai_rag.routes import router as ai_rag_router
     app.include_router(ai_rag_router, prefix="/ai-rag", tags=["ai-rag"])
     print("✅ AI/RAG router loaded successfully")
 except Exception as e:
     print(f"⚠️  AI/RAG router failed to load: {e}")
 
 try:
-    from webapp.kg_neo4j.routes import router as kg_neo4j_router
+    from webapp.modules.kg_neo4j.routes import router as kg_neo4j_router
     app.include_router(kg_neo4j_router, prefix="/kg-neo4j", tags=["kg-neo4j"])
     print("✅ Knowledge Graph router loaded successfully")
 except Exception as e:
@@ -97,7 +98,7 @@ except Exception as e:
 
 # Import twin registry router
 try:
-    from webapp.twin_registry.routes import router as twin_registry_router
+    from webapp.modules.twin_registry.routes import router as twin_registry_router
     print("✅ Twin Registry router imported successfully")
     app.include_router(twin_registry_router, prefix="/twin-registry", tags=["twin-registry"])
 except Exception as e:
@@ -105,32 +106,39 @@ except Exception as e:
     twin_registry_router = None
 
 try:
-    from webapp.certificate_manager.routes import router as certificate_manager_router
+    from webapp.modules.certificate_manager.routes import router as certificate_manager_router
     app.include_router(certificate_manager_router, prefix="/certificates", tags=["certificates"])
     print("✅ Certificate Manager router loaded successfully")
 except Exception as e:
     print(f"⚠️  Certificate Manager router failed to load: {e}")
 
 try:
-    from webapp.qi_analytics.routes import router as qi_analytics_router
+    from webapp.modules.qi_analytics.routes import router as qi_analytics_router
     app.include_router(qi_analytics_router, prefix="/analytics", tags=["analytics"])
     print("✅ QI Analytics router loaded successfully")
 except Exception as e:
     print(f"⚠️  QI Analytics router failed to load: {e}")
 
 try:
-    from webapp.aasx.routes import router as aasx_router
+    from webapp.modules.aasx.routes import router as aasx_router
     app.include_router(aasx_router, prefix="/aasx", tags=["aasx"])
     print("✅ AASX router loaded successfully")
 except Exception as e:
     print(f"⚠️  AASX router failed to load: {e}")
 
 try:
-    from webapp.aasx_explorer.routes import router as aasx_explorer_router
+    from webapp.modules.aasx_explorer.routes import router as aasx_explorer_router
     app.include_router(aasx_explorer_router, prefix="/aasx-explorer", tags=["aasx-explorer"])
     print("✅ AASX Explorer router loaded successfully")
 except Exception as e:
     print(f"⚠️  AASX Explorer router failed to load: {e}")
+
+try:
+    from webapp.modules.auth.routes import router as auth_router
+    app.include_router(auth_router, prefix="/auth", tags=["auth"])
+    print("✅ Authentication router loaded successfully")
+except Exception as e:
+    print(f"⚠️  Authentication router failed to load: {e}")
 
 # Main dashboard route
 @app.get("/", response_class=HTMLResponse)
@@ -316,9 +324,9 @@ async def get_etl_status():
             }
         
         # Import the function from aasx routes
-        from webapp.aasx.routes import get_etl_pipeline
+        #from webapp.aasx.routes import get_etl_pipeline
         
-        pipeline = get_etl_pipeline()
+        #pipeline = get_etl_pipeline()
         
         # Get pipeline validation status
         validation_status = "unknown"
@@ -363,7 +371,7 @@ async def get_twin_registry_status():
             }
         
         # Import the function from twin registry routes
-        from webapp.twin_registry.routes import get_twin_registry_status as get_status
+        from webapp.modules.twin_registry.routes import get_twin_registry_status as get_status
         
         return await get_status()
         
