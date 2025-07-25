@@ -654,15 +654,8 @@ class AASXETLPipeline {
         // Calculate output directory based on project and files
         let outputDir = null;
         if (projectId) {
-            if (selectedFiles.length > 0) {
-                // For selected files, show the specific output path
-                const fileIds = selectedFiles.map((i, el) => $(el).val()).get();
-                // We'll get the actual filenames from the backend, but show the pattern
-                outputDir = `output/projects/${projectId}/{filename}`;
-            } else {
-                // For all files, show the project output path
-                outputDir = `output/projects/${projectId}`;
-            }
+            // Use a simpler output directory structure without {filename} placeholder
+            outputDir = `output/projects/${projectId}`;
         } else {
             // Fallback to default
             outputDir = 'output/etl_results';
@@ -1267,24 +1260,7 @@ class AASXETLPipeline {
         $('#totalFileCount').text(totalFiles);
     }
 
-    updateOutputPathDisplay() {
-        const projectId = $('#etlProjectSelect').val();
-        const selectedFiles = $('.pipeline-file-checkbox:checked');
-        const outputPathDisplay = $('#outputPathDisplay');
-        
-        if (!projectId) {
-            outputPathDisplay.text('Select project to see output path');
-            return;
-        }
-        
-        if (selectedFiles.length > 0) {
-            // For selected files, show the specific output path pattern
-            outputPathDisplay.text(`output/projects/${projectId}/{filename}`);
-        } else {
-            // For all files, show the project output path
-            outputPathDisplay.text(`output/projects/${projectId}`);
-        }
-    }
+
 }
 
 // Project Management and File Upload functionality
@@ -2224,9 +2200,6 @@ class ProjectManager {
         
         $('#selectedFileCount').text(selectedFiles.length);
         $('#totalFileCount').text(totalFiles);
-        
-        // Update output path display
-        this.updateOutputPathDisplay();
     }
 
     updatePipelineProjectSelects() {
@@ -3074,6 +3047,55 @@ class ProjectManager {
         } catch (error) {
             console.error('Error in auto-reset file statuses:', error);
         }
+    }
+
+    getETLConfiguration() {
+        const formats = [];
+        if ($('#pipelineFormatJson').is(':checked')) formats.push('json');
+        if ($('#pipelineFormatYaml').is(':checked')) formats.push('yaml');
+        if ($('#pipelineFormatCsv').is(':checked')) formats.push('csv');
+        if ($('#pipelineFormatGraph').is(':checked')) formats.push('graph');
+        if ($('#pipelineFormatRag').is(':checked')) formats.push('rag');
+        if ($('#pipelineFormatVectorDb').is(':checked')) formats.push('vector_db');
+
+        // Get selected project and files for output path calculation
+        const projectId = $('#etlProjectSelect').val();
+        const selectedFiles = $('.pipeline-file-checkbox:checked');
+        
+        // Calculate output directory based on project and files
+        let outputDir = null;
+        if (projectId) {
+            // Use a simpler output directory structure without {filename} placeholder
+            outputDir = `output/projects/${projectId}`;
+        } else {
+            // Fallback to default
+            outputDir = 'output/etl_results';
+        }
+
+        const options = {
+            hybrid_processing: $('#pipelineHybridProcessing').is(':checked'),
+            enable_validation: $('#pipelineEnableValidation').is(':checked'),
+            enable_backup: $('#pipelineEnableBackup').is(':checked'),
+            parallel_processing: $('#pipelineParallelProcessing').is(':checked'),
+            enable_quality_checks: $('#pipelineEnableQualityChecks').is(':checked'),
+            enable_enrichment: $('#pipelineEnableEnrichment').is(':checked'),
+            normalize_ids: $('#pipelineNormalizeIds').is(':checked'),
+            enable_sqlite: $('#pipelineEnableSQLite').is(':checked'),
+            enable_vector_db: $('#pipelineEnableVectorDB').is(':checked'),
+            enable_rag_export: $('#pipelineEnableRAGExport').is(':checked'),
+            vector_db_type: $('#pipelineVectorDBType').val(),
+            embedding_model: $('#pipelineEmbeddingModel').val(),
+            batch_size: parseInt($('#pipelineBatchSize').val()) || 10,
+            max_workers: parseInt($('#pipelineMaxWorkers').val()) || 4,
+            memory_limit: parseInt($('#pipelineMemoryLimit').val()) || 0,
+            quality_threshold: parseFloat($('#pipelineQualityThreshold').val()) || 0.8,
+            chunk_size: parseInt($('#pipelineChunkSize').val()) || 512,
+            output_formats: formats,
+            output_dir: outputDir // Add the calculated output directory
+        };
+
+        console.log('ETL configuration:', options);
+        return options;
     }
 }
 
