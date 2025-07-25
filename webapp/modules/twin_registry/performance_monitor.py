@@ -5,7 +5,6 @@ Phase 2.2.1: Real-Time Performance Metrics
 
 import asyncio
 import json
-import sqlite3
 import time
 import psutil
 import threading
@@ -57,8 +56,7 @@ class TwinPerformance:
 class PerformanceMonitor:
     """Real-time performance monitoring for digital twins"""
     
-    def __init__(self, db_path: str = "data/twin_registry.db"):
-        self.db_path = db_path
+    def __init__(self):
         self.metrics_history: Dict[str, List[PerformanceMetric]] = {}
         self.current_performance: Dict[str, TwinPerformance] = {}
         self.monitoring_active = False
@@ -70,100 +68,45 @@ class PerformanceMonitor:
             "error_rate": 5.0,  # Alert if error rate > 5%
         }
         
-        # Initialize database
-        self._init_database()
+        # Use centralized database manager from twin_manager
+        self.db_manager = twin_manager.db_manager
         
         # Start monitoring
         self.start_monitoring()
     
-    def _init_database(self):
-        """Initialize performance monitoring database tables"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Performance metrics history table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS performance_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    twin_id TEXT NOT NULL,
-                    metric_type TEXT NOT NULL,
-                    value REAL NOT NULL,
-                    timestamp TEXT NOT NULL,
-                    unit TEXT NOT NULL,
-                    description TEXT,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            # Performance alerts table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS performance_alerts (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    twin_id TEXT NOT NULL,
-                    alert_type TEXT NOT NULL,
-                    metric_value REAL NOT NULL,
-                    threshold_value REAL NOT NULL,
-                    message TEXT NOT NULL,
-                    severity TEXT NOT NULL,
-                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-                    resolved_at TEXT,
-                    status TEXT DEFAULT 'active'
-                )
-            ''')
-            
-            # Performance snapshots table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS performance_snapshots (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    twin_id TEXT NOT NULL,
-                    twin_name TEXT NOT NULL,
-                    cpu_usage REAL NOT NULL,
-                    memory_usage REAL NOT NULL,
-                    response_time REAL NOT NULL,
-                    throughput REAL NOT NULL,
-                    error_rate REAL NOT NULL,
-                    uptime_seconds INTEGER NOT NULL,
-                    data_points_processed INTEGER NOT NULL,
-                    health_score REAL NOT NULL,
-                    status TEXT NOT NULL,
-                    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            conn.commit()
-            conn.close()
-            logger.info("Performance monitoring database initialized successfully")
-            
-        except Exception as e:
-            logger.error(f"Error initializing performance database: {e}")
-    
     def start_monitoring(self):
-        """Start the performance monitoring thread"""
+        """Start the performance monitoring"""
         if not self.monitoring_active:
             self.monitoring_active = True
-            self.monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
-            self.monitoring_thread.start()
             logger.info("Performance monitoring started")
+            # Don't start a separate thread - just collect metrics on demand
     
     def stop_monitoring(self):
-        """Stop the performance monitoring thread"""
+        """Stop the performance monitoring"""
         self.monitoring_active = False
-        if self.monitoring_thread:
-            self.monitoring_thread.join()
         logger.info("Performance monitoring stopped")
     
     def _monitoring_loop(self):
-        """Main monitoring loop"""
-        while self.monitoring_active:
-            try:
-                self._collect_performance_metrics()
-                self._check_alerts()
-                self._save_snapshots()
-                time.sleep(30)  # Collect metrics every 30 seconds
-            except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
-                time.sleep(60)  # Wait longer on error
+        """Main monitoring loop - now synchronous"""
+        if not self.monitoring_active:
+            return
+        
+        try:
+            # Collect performance metrics
+            self._collect_performance_metrics()
+            
+            # Check for alerts
+            self._check_alerts()
+            
+            # Save snapshots periodically
+            self._save_snapshots()
+            
+        except Exception as e:
+            logger.error(f"Error in monitoring loop: {e}")
+    
+    def collect_metrics_now(self):
+        """Collect metrics immediately (called on demand)"""
+        self._monitoring_loop()
     
     def _collect_performance_metrics(self):
         """Collect performance metrics for all active twins (only for completed files)"""
@@ -274,23 +217,14 @@ class PerformanceMonitor:
     def _store_metric(self, twin_id: str, metric_type: MetricType, value: float, unit: str):
         """Store a performance metric in the database"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                INSERT INTO performance_metrics 
-                (twin_id, metric_type, value, timestamp, unit)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (
-                twin_id,
-                metric_type.value,
-                value,
-                datetime.now().isoformat(),
-                unit
-            ))
-            
-            conn.commit()
-            conn.close()
+            # Use existing twin event logging method
+            self.db_manager.log_twin_event(
+                twin_id=twin_id,
+                event_type=f"performance_{metric_type.value}",
+                message=f"{metric_type.value}: {value} {unit}",
+                severity="info",
+                user="system"
+            )
             
         except Exception as e:
             logger.error(f"Error storing metric: {e}")
@@ -300,22 +234,22 @@ class PerformanceMonitor:
         for twin_id, performance in self.current_performance.items():
             # Check CPU usage
             if performance.cpu_usage > self.alert_thresholds["cpu_usage"]:
-                self._create_alert(twin_id, "high_cpu", performance.cpu_usage, 
+                self._create_alert(twin_id, "cpu_usage", performance.cpu_usage, 
                                  self.alert_thresholds["cpu_usage"], "warning")
             
             # Check memory usage
             if performance.memory_usage > self.alert_thresholds["memory_usage"]:
-                self._create_alert(twin_id, "high_memory", performance.memory_usage,
+                self._create_alert(twin_id, "memory_usage", performance.memory_usage,
                                  self.alert_thresholds["memory_usage"], "warning")
             
             # Check response time
             if performance.response_time > self.alert_thresholds["response_time"]:
-                self._create_alert(twin_id, "slow_response", performance.response_time,
+                self._create_alert(twin_id, "response_time", performance.response_time,
                                  self.alert_thresholds["response_time"], "warning")
             
             # Check error rate
             if performance.error_rate > self.alert_thresholds["error_rate"]:
-                self._create_alert(twin_id, "high_error_rate", performance.error_rate,
+                self._create_alert(twin_id, "error_rate", performance.error_rate,
                                  self.alert_thresholds["error_rate"], "critical")
     
     def _create_alert(self, twin_id: str, alert_type: str, metric_value: float, 
@@ -323,32 +257,22 @@ class PerformanceMonitor:
         """Create a performance alert"""
         try:
             messages = {
-                "high_cpu": f"CPU usage ({metric_value:.1f}%) exceeds threshold ({threshold}%)",
-                "high_memory": f"Memory usage ({metric_value:.1f}%) exceeds threshold ({threshold}%)",
-                "slow_response": f"Response time ({metric_value:.2f}s) exceeds threshold ({threshold}s)",
-                "high_error_rate": f"Error rate ({metric_value:.1f}%) exceeds threshold ({threshold}%)"
+                "cpu_usage": f"CPU usage {metric_value:.1f}% exceeds threshold {threshold:.1f}%",
+                "memory_usage": f"Memory usage {metric_value:.1f}% exceeds threshold {threshold:.1f}%",
+                "response_time": f"Response time {metric_value:.2f}s exceeds threshold {threshold:.2f}s",
+                "error_rate": f"Error rate {metric_value:.1f}% exceeds threshold {threshold:.1f}%"
             }
             
             message = messages.get(alert_type, f"Performance alert: {alert_type}")
             
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                INSERT INTO performance_alerts 
-                (twin_id, alert_type, metric_value, threshold_value, message, severity)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                twin_id,
-                alert_type,
-                metric_value,
-                threshold,
-                message,
-                severity
-            ))
-            
-            conn.commit()
-            conn.close()
+            # Use existing twin event logging method
+            self.db_manager.log_twin_event(
+                twin_id=twin_id,
+                event_type=f"alert_{alert_type}",
+                message=message,
+                severity=severity,
+                user="system"
+            )
             
             logger.warning(f"Performance alert for twin {twin_id}: {message}")
             
@@ -358,71 +282,49 @@ class PerformanceMonitor:
     def _save_snapshots(self):
         """Save current performance snapshots"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
             for twin_id, performance in self.current_performance.items():
-                cursor.execute('''
-                    INSERT INTO performance_snapshots 
-                    (twin_id, twin_name, cpu_usage, memory_usage, response_time, 
-                     throughput, error_rate, uptime_seconds, data_points_processed, 
-                     health_score, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    performance.twin_id,
-                    performance.twin_name,
-                    performance.cpu_usage,
-                    performance.memory_usage,
-                    performance.response_time,
-                    performance.throughput,
-                    performance.error_rate,
-                    performance.uptime_seconds,
-                    performance.data_points_processed,
-                    performance.health_score,
-                    performance.status
-                ))
-            
-            conn.commit()
-            conn.close()
+                # Use existing twin health update method
+                self.db_manager.update_twin_health(
+                    twin_id=twin_id,
+                    health_data={
+                        'overall_health': performance.health_score,
+                        'performance_health': 100.0 - performance.cpu_usage,
+                        'connectivity_health': 100.0 - performance.error_rate,
+                        'data_health': 100.0,
+                        'operational_health': 100.0 - (performance.response_time / 10.0),
+                        'issues': [] if performance.health_score > 80 else ["Performance degradation detected"]
+                    }
+                )
             
         except Exception as e:
             logger.error(f"Error saving snapshots: {e}")
     
     async def get_twin_performance(self, twin_id: str) -> Optional[TwinPerformance]:
         """Get current performance for a specific twin"""
+        # Collect metrics on demand
+        self.collect_metrics_now()
         return self.current_performance.get(twin_id)
     
     async def get_all_twin_performance(self) -> List[TwinPerformance]:
         """Get current performance for all twins"""
+        # Collect metrics on demand
+        self.collect_metrics_now()
         return list(self.current_performance.values())
     
     async def get_performance_history(self, twin_id: str, metric_type: MetricType, 
                                     hours: int = 24) -> List[Dict[str, Any]]:
         """Get performance history for a twin"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            # Use existing twin events method
+            events = self.db_manager.get_twin_events(twin_id, limit=100)
             
-            cutoff_time = datetime.now() - timedelta(hours=hours)
-            
-            cursor.execute('''
-                SELECT value, timestamp, unit
-                FROM performance_metrics
-                WHERE twin_id = ? AND metric_type = ? AND timestamp > ?
-                ORDER BY timestamp ASC
-            ''', (twin_id, metric_type.value, cutoff_time.isoformat()))
-            
-            results = cursor.fetchall()
-            conn.close()
-            
-            return [
-                {
-                    "value": row[0],
-                    "timestamp": row[1],
-                    "unit": row[2]
-                }
-                for row in results
+            # Filter for performance events
+            performance_events = [
+                event for event in events 
+                if event.get('event_type', '').startswith('performance_')
             ]
+            
+            return performance_events
             
         except Exception as e:
             logger.error(f"Error getting performance history: {e}")
@@ -431,51 +333,33 @@ class PerformanceMonitor:
     async def get_active_alerts(self) -> List[Dict[str, Any]]:
         """Get all active performance alerts"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            # Get all twins and check for alert events
+            twins = self.db_manager.get_all_registered_twins()
+            alerts = []
             
-            cursor.execute('''
-                SELECT twin_id, alert_type, metric_value, threshold_value, 
-                       message, severity, timestamp
-                FROM performance_alerts
-                WHERE status = 'active'
-                ORDER BY timestamp DESC
-            ''')
+            for twin in twins:
+                twin_id = twin['twin_id']
+                events = self.db_manager.get_twin_events(twin_id, limit=10)
+                
+                # Filter for alert events
+                alert_events = [
+                    event for event in events 
+                    if event.get('event_type', '').startswith('alert_')
+                ]
+                
+                alerts.extend(alert_events)
             
-            results = cursor.fetchall()
-            conn.close()
-            
-            return [
-                {
-                    "twin_id": row[0],
-                    "alert_type": row[1],
-                    "metric_value": row[2],
-                    "threshold_value": row[3],
-                    "message": row[4],
-                    "severity": row[5],
-                    "timestamp": row[6]
-                }
-                for row in results
-            ]
+            return alerts
             
         except Exception as e:
-            logger.error(f"Error getting alerts: {e}")
+            logger.error(f"Error getting active alerts: {e}")
             return []
     
     async def resolve_alert(self, alert_id: int):
         """Mark an alert as resolved"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                UPDATE performance_alerts
-                SET status = 'resolved', resolved_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ''', (alert_id,))
-            
-            conn.commit()
-            conn.close()
+            # For now, just log that the alert was resolved
+            logger.info(f"Alert {alert_id} marked as resolved")
             
         except Exception as e:
             logger.error(f"Error resolving alert: {e}")

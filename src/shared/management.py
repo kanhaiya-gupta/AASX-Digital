@@ -480,62 +480,13 @@ class ProjectManager:
             return False
     
     def update_twin_status_to_orphaned(self, filename: str, project_id: str):
-        """Update twin status to orphaned directly in the database when file output is missing."""
-        import sqlite3
-        import json
-        import traceback
-        from pathlib import Path
-        
-        try:
-            # Database path - same as used in twin registry
-            db_path = Path("data/aasx_digital.db")
-            
-            print(f"[TwinReg] Updating twin status to orphaned for file: {filename}, project: {project_id}")
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            
-            # Check if twin exists for this file
-            cursor.execute('''
-                SELECT twin_id, status FROM twin_aasx_relationships 
-                WHERE aasx_filename = ? AND project_id = ?
-            ''', (filename, project_id))
-            row = cursor.fetchone()
-            
-            if not row:
-                print(f"[TwinReg] No twin found for {filename} in project {project_id}")
-                conn.close()
-                return {"success": False, "error": "No twin found for this file"}
-            
-            twin_id, current_status = row
-            
-            if current_status == 'orphaned':
-                print(f"[TwinReg] Twin {twin_id} is already orphaned")
-                conn.close()
-                return {"success": True, "message": "Twin already orphaned"}
-            
-            # Update twin status to orphaned
-            cursor.execute('''
-                UPDATE twin_aasx_relationships 
-                SET status = 'orphaned', last_sync = CURRENT_TIMESTAMP
-                WHERE twin_id = ?
-            ''', (twin_id,))
-            
-            conn.commit()
-            conn.close()
-            
-            print(f"[TwinReg] Successfully updated twin {twin_id} status to orphaned")
-            return {
-                "success": True,
-                "twin_id": twin_id,
-                "old_status": current_status,
-                "new_status": "orphaned",
-                "message": f"Twin {twin_id} status updated from {current_status} to orphaned"
-            }
-            
-        except Exception as e:
-            tb = traceback.format_exc()
-            print(f"[TwinReg] Error updating twin status for {filename}: {e}\n{tb}")
-            return {"success": False, "error": f"{e}\n{tb}"}
+        """Update twin status to orphaned when file output is missing"""
+        if self.use_database:
+            return self.db_manager.update_twin_status_to_orphaned(filename, project_id)
+        else:
+            # Fallback for JSON-based system - just log the event
+            print(f"⚠️ Twin orphaned: {filename} in project {project_id} (JSON mode)")
+            return {'success': True, 'message': 'Twin orphaned (JSON mode)'}
 
     def reset_file_statuses_if_output_missing(self, project_id: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -785,126 +736,23 @@ class ProjectManager:
 
     def register_digital_twin(self, project_id: str, file_id: str):
         """Register a digital twin for the given file_id in the given project."""
-        import sqlite3
-        import json
-        import traceback
-        from pathlib import Path
-        
-        try:
-            # Database path - same as used in twin registry
-            db_path = Path("data/aasx_digital.db")
-            
-            print(f"[TwinReg] Attempting to register twin for file_id: {file_id}, project: {project_id}")
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            
-            # Verify file status is completed
-            cursor.execute('''
-                SELECT status FROM project_files
-                WHERE project_id = ? AND file_id = ?
-            ''', (project_id, file_id))
-            row = cursor.fetchone()
-            if not row or row[0] != 'completed':
-                print(f"❌ Cannot register twin for file_id {file_id}: file not completed (status={row[0] if row else 'N/A'})")
-                conn.close()
-                return {"success": False, "error": f"File not completed (status={row[0] if row else 'N/A'})"}
-            
-            # Get file information
-            cursor.execute('''
-                SELECT file_id, filename, project_id, status, upload_date, size, description
-                FROM project_files
-                WHERE file_id = ? AND project_id = ?
-            ''', (file_id, project_id))
-            file_row = cursor.fetchone()
-            if not file_row:
-                error_msg = f"File with file_id {file_id} not found in project_files for project {project_id}"
-                print(f"[TwinReg] {error_msg}")
-                return {"success": False, "error": error_msg}
-            
-            file_id, filename, project_id, status, upload_date, size, description = file_row
-            print(f"[TwinReg] Found file: {filename}, status: {status}")
-            
-            if status != 'completed':
-                error_msg = f"File {filename} status is {status}, not completed"
-                print(f"[TwinReg] {error_msg}")
-                return {"success": False, "error": error_msg}
-            
-            # Generate twin_id
-            file_stem = Path(filename).stem
-            safe_project_name = str(project_id).replace(" ", "_").replace("-", "_").upper()
-            twin_id = f"DT-{safe_project_name}-{file_stem.upper()}"
-            if len(twin_id) > 100:
-                twin_id = f"DT-{str(project_id)[:20].upper()}-{file_stem[:20].upper()}"
-            
-            twin_name = file_stem.replace("_", " ").title()
-            twin_type = "unknown"
-            aas_id = f"aas_{project_id}_{file_stem}"
-            metadata = {
-                "file_id": file_id,
-                "filename": filename,
-                "project_id": project_id,
-                "status": status,
-                "upload_date": upload_date,
-                "size": size,
-                "description": description
+        if self.use_database:
+            # Use centralized DatabaseManager
+            twin_data = {
+                'twin_name': f'Twin_{file_id}',
+                'twin_type': 'aasx_digital_twin',
+                'description': f'Digital twin for file {file_id}',
+                'version': '1.0.0',
+                'owner': 'system',
+                'tags': ['aasx', 'digital_twin'],
+                'settings': {},
+                'metadata': {}
             }
-            
-            print(f"[TwinReg] Ensuring twin is active: {twin_id}")
-            
-            # Ensure twin_aasx_relationships table exists
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS twin_aasx_relationships (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    twin_id TEXT UNIQUE NOT NULL,
-                    aasx_filename TEXT NOT NULL,
-                    project_id TEXT,
-                    aas_id TEXT,
-                    twin_name TEXT,
-                    twin_type TEXT,
-                    status TEXT DEFAULT 'active',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    last_sync TIMESTAMP,
-                    data_points INTEGER DEFAULT 0,
-                    metadata TEXT,
-                    UNIQUE(twin_id, aasx_filename)
-                )
-            ''')
-            
-            # Always ensure twin is active when ETL succeeds (insert or update)
-            cursor.execute('''
-                INSERT OR REPLACE INTO twin_aasx_relationships (
-                    twin_id, aasx_filename, project_id, aas_id, twin_name, twin_type, status, metadata, last_sync
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (
-                twin_id,
-                filename,
-                project_id,
-                aas_id,
-                twin_name,
-                twin_type,
-                "active",  # Always set to active when ETL succeeds
-                json.dumps(metadata)
-            ))
-            
-            conn.commit()
-            conn.close()
-            
-            print(f"[TwinReg] Ensured twin {twin_id} is active (ETL success)")
-            return {
-                "success": True,
-                "twin_id": twin_id,
-                "twin_name": twin_name,
-                "twin_type": twin_type,
-                "aasx_filename": filename,
-                "project_id": project_id,
-                "status": "active",
-                "message": "Twin is active (ETL success)"
-            }
-            
-        except Exception as e:
-            tb = traceback.format_exc()
-            print(f"[TwinReg] Error registering twin for file_id {file_id}: {e}\n{tb}")
-            return {"success": False, "error": f"{e}\n{tb}"}
+            return self.db_manager.register_digital_twin(project_id, file_id, twin_data)
+        else:
+            # Fallback for JSON-based system
+            print(f"⚠️ Twin registration not supported in JSON mode for file {file_id}")
+            return {'success': False, 'error': 'Twin registration not supported in JSON mode'}
 
 # ==================== BACKWARD COMPATIBILITY FUNCTIONS ====================
 

@@ -72,19 +72,171 @@ class DatabaseProjectManager:
                 SELECT name FROM sqlite_master 
                 WHERE type='table' AND name IN (
                     'users', 'organizations', 'projects', 'project_files', 
-                    'processing_results'
+                    'processing_results', 'twin_relationships', 'twin_configurations',
+                    'twin_events', 'twin_health', 'sync_history'
                 )
             """)
             tables = [row[0] for row in self.cursor.fetchall()]
             
-            required_tables = ['users', 'organizations', 'projects', 'project_files', 'processing_results']
+            required_tables = [
+                'users', 'organizations', 'projects', 'project_files', 
+                'processing_results', 'twin_relationships', 'twin_configurations',
+                'twin_events', 'twin_health', 'sync_history'
+            ]
             missing_tables = [table for table in required_tables if table not in tables]
             
             if missing_tables:
-                raise DatabaseManagerError(f"Database missing required tables: {missing_tables}")
+                # Create missing tables
+                self._create_missing_tables(missing_tables)
                 
         except Exception as e:
             raise DatabaseManagerError(f"Failed to verify database schema: {e}")
+    
+    def _create_missing_tables(self, missing_tables: List[str]):
+        """Create missing database tables"""
+        try:
+            for table in missing_tables:
+                if table == 'users':
+                    self.cursor.execute('''
+                        CREATE TABLE users (
+                            user_id TEXT PRIMARY KEY,
+                            username TEXT UNIQUE NOT NULL,
+                            email TEXT UNIQUE,
+                            full_name TEXT,
+                            organization_id TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (organization_id) REFERENCES organizations (org_id)
+                        )
+                    ''')
+                elif table == 'organizations':
+                    self.cursor.execute('''
+                        CREATE TABLE organizations (
+                            org_id TEXT PRIMARY KEY,
+                            name TEXT NOT NULL,
+                            description TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    ''')
+                elif table == 'projects':
+                    self.cursor.execute('''
+                        CREATE TABLE projects (
+                            project_id TEXT PRIMARY KEY,
+                            name TEXT NOT NULL,
+                            description TEXT,
+                            owner_id TEXT,
+                            organization_id TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            metadata TEXT,
+                            FOREIGN KEY (owner_id) REFERENCES users (user_id),
+                            FOREIGN KEY (organization_id) REFERENCES organizations (org_id)
+                        )
+                    ''')
+                elif table == 'project_files':
+                    self.cursor.execute('''
+                        CREATE TABLE project_files (
+                            file_id TEXT PRIMARY KEY,
+                            project_id TEXT NOT NULL,
+                            filename TEXT NOT NULL,
+                            filepath TEXT NOT NULL,
+                            file_type TEXT,
+                            size INTEGER,
+                            upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            status TEXT DEFAULT 'not_processed',
+                            processing_result TEXT,
+                            metadata TEXT,
+                            FOREIGN KEY (project_id) REFERENCES projects (project_id)
+                        )
+                    ''')
+                elif table == 'processing_results':
+                    self.cursor.execute('''
+                        CREATE TABLE processing_results (
+                            result_id TEXT PRIMARY KEY,
+                            file_id TEXT NOT NULL,
+                            project_id TEXT NOT NULL,
+                            processing_type TEXT NOT NULL,
+                            status TEXT NOT NULL,
+                            result_data TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY (file_id) REFERENCES project_files (file_id),
+                            FOREIGN KEY (project_id) REFERENCES projects (project_id)
+                        )
+                    ''')
+                elif table == 'twin_relationships':
+                    self.cursor.execute('''
+                        CREATE TABLE twin_relationships (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            twin_id TEXT NOT NULL UNIQUE,
+                            aasx_filename TEXT NOT NULL,
+                            project_id TEXT NOT NULL,
+                            aas_id TEXT,
+                            twin_name TEXT,
+                            twin_type TEXT,
+                            status TEXT DEFAULT 'active',
+                            metadata TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            last_sync TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            data_points INTEGER
+                        )
+                    ''')
+                elif table == 'twin_configurations':
+                    self.cursor.execute('''
+                        CREATE TABLE twin_configurations (
+                            twin_id TEXT PRIMARY KEY,
+                            twin_name TEXT NOT NULL,
+                            description TEXT,
+                            twin_type TEXT,
+                            version TEXT,
+                            owner TEXT,
+                            configuration_data TEXT,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    ''')
+                elif table == 'twin_events':
+                    self.cursor.execute('''
+                        CREATE TABLE twin_events (
+                            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            twin_id TEXT NOT NULL,
+                            event_type TEXT NOT NULL,
+                            event_message TEXT,
+                            severity TEXT,
+                            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            user TEXT
+                        )
+                    ''')
+                elif table == 'twin_health':
+                    self.cursor.execute('''
+                        CREATE TABLE twin_health (
+                            twin_id TEXT PRIMARY KEY,
+                            overall_health REAL DEFAULT 100.0,
+                            operational_health REAL DEFAULT 100.0,
+                            performance_health REAL DEFAULT 100.0,
+                            issues TEXT,
+                            last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            health_data TEXT
+                        )
+                    ''')
+                elif table == 'sync_history':
+                    self.cursor.execute('''
+                        CREATE TABLE sync_history (
+                            sync_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            twin_id TEXT NOT NULL,
+                            sync_type TEXT NOT NULL,
+                            sync_status TEXT NOT NULL,
+                            sync_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            sync_details TEXT
+                        )
+                    ''')
+            
+            self.conn.commit()
+            
+        except Exception as e:
+            self.conn.rollback()
+            raise DatabaseManagerError(f"Failed to create missing tables: {e}")
     
     def _get_default_user_id(self) -> str:
         """Get the default admin user ID for operations"""
@@ -480,12 +632,10 @@ class DatabaseProjectManager:
             if result is not None:
                 self.cursor.execute("""
                     INSERT OR REPLACE INTO processing_results (
-                        file_id, project_id, processing_status, timestamp, 
-                        processed_by, extraction_results
+                        result_id, file_id, project_id, processing_type, status, result_data
                     ) VALUES (?, ?, ?, ?, ?, ?)
                 """, (
-                    file_id, project_id, status, datetime.now().isoformat(),
-                    self._get_default_user_id(), json.dumps(result)
+                    str(uuid.uuid4()), file_id, project_id, "etl", status, json.dumps(result)
                 ))
             
             self.conn.commit()
@@ -866,25 +1016,741 @@ class DatabaseProjectManager:
         }
     
     def sync_all_projects(self) -> Dict[str, Any]:
-        """Synchronize all projects with disk."""
-        projects = self.list_projects()
-        results = {
-            "total_projects": len(projects),
-            "synced_projects": [],
-            "errors": []
-        }
-        
-        for project in projects:
-            try:
-                sync_result = self.sync_project_with_disk(project["project_id"])
-                results["synced_projects"].append(sync_result)
-            except Exception as e:
-                results["errors"].append({
-                    "project_id": project["project_id"],
-                    "error": str(e)
+        """Sync all projects with disk and return summary"""
+        try:
+            all_projects = self.list_projects()
+            results = {}
+            total_files_synced = 0
+            total_files_added = 0
+            total_files_removed = 0
+            
+            for project in all_projects:
+                project_id = project['project_id']
+                result = self.sync_project_with_disk(project_id)
+                results[project_id] = result
+                total_files_synced += result.get('files_synced', 0)
+                total_files_added += result.get('files_added', 0)
+                total_files_removed += result.get('files_removed', 0)
+            
+            return {
+                'success': True,
+                'projects_synced': len(all_projects),
+                'total_files_synced': total_files_synced,
+                'total_files_added': total_files_added,
+                'total_files_removed': total_files_removed,
+                'project_results': results
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'projects_synced': 0,
+                'total_files_synced': 0,
+                'total_files_added': 0,
+                'total_files_removed': 0,
+                'project_results': {}
+            }
+
+    # ==================== TWIN MANAGEMENT ====================
+    
+    def register_digital_twin(self, project_id: str, file_id: str, twin_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Register a digital twin for a processed AASX file"""
+        try:
+            # Get file info
+            file_info = self.get_file_info(project_id, file_id)
+            if not file_info:
+                return {'success': False, 'error': 'File not found'}
+            
+            # Check if twin already exists
+            existing_twin = self.get_twin_by_aasx(file_info['filename'])
+            if existing_twin:
+                return {'success': False, 'error': 'Twin already exists for this file'}
+            
+            # Generate twin ID
+            twin_id = f"twin_{file_info['filename'].replace('.aasx', '')}_{uuid.uuid4().hex[:8]}"
+            
+            # Prepare twin data
+            twin_record = {
+                'twin_id': twin_id,
+                'aasx_filename': file_info['filename'],
+                'project_id': project_id,
+                'aas_id': twin_data.get('aas_id'),
+                'twin_name': twin_data.get('twin_name', f"Twin for {file_info['filename']}"),
+                'twin_type': twin_data.get('twin_type', 'aasx'),
+                'status': 'active',
+                'metadata': json.dumps(twin_data.get('metadata', {})),
+                'data_points': twin_data.get('data_points', 0)
+            }
+            
+            # Insert twin record
+            self.cursor.execute("""
+                INSERT INTO twin_relationships (
+                    twin_id, aasx_filename, project_id, aas_id, twin_name, 
+                    twin_type, status, metadata, data_points
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                twin_record['twin_id'], twin_record['aasx_filename'], 
+                twin_record['project_id'], twin_record['aas_id'], 
+                twin_record['twin_name'], twin_record['twin_type'], 
+                twin_record['status'], twin_record['metadata'], 
+                twin_record['data_points']
+            ))
+            
+            self.conn.commit()
+            
+            return {
+                'success': True,
+                'twin_id': twin_id,
+                'twin_name': twin_record['twin_name'],
+                'aasx_filename': twin_record['aasx_filename'],
+                'status': twin_record['status']
+            }
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def update_twin_status_to_orphaned(self, filename: str, project_id: str) -> Dict[str, Any]:
+        """Update twin status to orphaned when file output is missing"""
+        try:
+            # Find twin by filename and project
+            self.cursor.execute('''
+                SELECT twin_id, twin_name FROM twin_relationships 
+                WHERE aasx_filename = ? AND project_id = ?
+            ''', (filename, project_id))
+            
+            twin = self.cursor.fetchone()
+            if not twin:
+                return {'success': False, 'error': 'Twin not found'}
+            
+            twin_id, twin_name = twin
+            
+            # Update twin status to orphaned
+            self.cursor.execute('''
+                UPDATE twin_relationships 
+                SET status = 'orphaned', last_sync = CURRENT_TIMESTAMP
+                WHERE twin_id = ?
+            ''', (twin_id,))
+            
+            # Update health to reflect orphaned status
+            self.cursor.execute('''
+                UPDATE twin_health 
+                SET overall_health = 0.0, operational_health = 0.0, 
+                    issues = ?, last_check = CURRENT_TIMESTAMP
+                WHERE twin_id = ?
+            ''', (json.dumps(['Twin orphaned due to missing output files']), twin_id))
+            
+            # Log orphaned event
+            self.cursor.execute('''
+                INSERT INTO twin_events 
+                (twin_id, event_type, event_message, severity, user)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                twin_id, 'twin_orphaned', 
+                f'Twin {twin_name} orphaned due to missing output for {filename}',
+                'warning', 'system'
+            ))
+            
+            self.conn.commit()
+            
+            return {
+                'success': True,
+                'twin_id': twin_id,
+                'twin_name': twin_name,
+                'message': f'Twin {twin_name} marked as orphaned'
+            }
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def update_twin_status_to_active(self, filename: str, project_id: str) -> Dict[str, Any]:
+        """Update twin status to active when file output is restored"""
+        try:
+            # Find twin by filename and project
+            self.cursor.execute('''
+                SELECT twin_id, twin_name FROM twin_relationships 
+                WHERE aasx_filename = ? AND project_id = ?
+            ''', (filename, project_id))
+            
+            twin = self.cursor.fetchone()
+            if not twin:
+                return {'success': False, 'error': 'Twin not found'}
+            
+            twin_id, twin_name = twin
+            
+            # Update twin status to active
+            self.cursor.execute('''
+                UPDATE twin_relationships 
+                SET status = 'active', last_sync = CURRENT_TIMESTAMP
+                WHERE twin_id = ?
+            ''', (twin_id,))
+            
+            # Reset health to active status
+            self.cursor.execute('''
+                UPDATE twin_health 
+                SET overall_health = 100.0, operational_health = 100.0, 
+                    issues = NULL, last_check = CURRENT_TIMESTAMP
+                WHERE twin_id = ?
+            ''', (twin_id,))
+            
+            # Log reactivation event
+            self.cursor.execute('''
+                INSERT INTO twin_events 
+                (twin_id, event_type, event_message, severity, user)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                twin_id, 'twin_reactivated', 
+                f'Twin {twin_name} reactivated - output files restored for {filename}',
+                'info', 'system'
+            ))
+            
+            self.conn.commit()
+            
+            return {
+                'success': True,
+                'twin_id': twin_id,
+                'twin_name': twin_name,
+                'message': f'Twin {twin_name} reactivated successfully'
+            }
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def get_all_registered_twins(self) -> List[Dict[str, Any]]:
+        """Get all registered twins from the database"""
+        try:
+            self.cursor.execute("""
+                SELECT * FROM twin_relationships 
+                ORDER BY created_at DESC
+            """)
+            rows = self.cursor.fetchall()
+            
+            twins = []
+            for row in rows:
+                twin = dict(row)
+                # Parse metadata if it exists
+                if twin.get('metadata'):
+                    try:
+                        twin['metadata'] = json.loads(twin['metadata'])
+                    except json.JSONDecodeError:
+                        twin['metadata'] = {}
+                twins.append(twin)
+            
+            return twins
+            
+        except Exception as e:
+            print(f"Error getting registered twins: {e}")
+            return []
+    
+    def get_twin_statistics(self) -> Dict[str, Any]:
+        """Get comprehensive twin statistics"""
+        try:
+            # Total twins
+            self.cursor.execute("SELECT COUNT(*) FROM twin_relationships")
+            total_twins = self.cursor.fetchone()[0]
+            
+            # Active twins
+            self.cursor.execute("SELECT COUNT(*) FROM twin_relationships WHERE status = 'active'")
+            active_twins = self.cursor.fetchone()[0]
+            
+            # Orphaned twins
+            self.cursor.execute("SELECT COUNT(*) FROM twin_relationships WHERE status = 'orphaned'")
+            orphaned_twins = self.cursor.fetchone()[0]
+            
+            # Twins by type
+            self.cursor.execute('''
+                SELECT twin_type, COUNT(*) as count 
+                FROM twin_relationships 
+                GROUP BY twin_type
+            ''')
+            twins_by_type = dict(self.cursor.fetchall())
+            
+            # Health statistics
+            self.cursor.execute('''
+                SELECT 
+                    AVG(overall_health) as avg_health,
+                    COUNT(CASE WHEN overall_health < 50 THEN 1 END) as unhealthy_count,
+                    COUNT(CASE WHEN overall_health >= 50 THEN 1 END) as healthy_count
+                FROM twin_health
+            ''')
+            health_stats = self.cursor.fetchone()
+            
+            return {
+                'total_twins': total_twins,
+                'active_twins': active_twins,
+                'orphaned_twins': orphaned_twins,
+                'twins_by_type': twins_by_type,
+                'health_stats': {
+                    'average_health': health_stats[0] or 0,
+                    'unhealthy_count': health_stats[1] or 0,
+                    'healthy_count': health_stats[2] or 0
+                }
+            }
+            
+        except Exception as e:
+            return {
+                'total_twins': 0,
+                'active_twins': 0,
+                'orphaned_twins': 0,
+                'twins_by_type': {},
+                'health_stats': {'average_health': 0, 'unhealthy_count': 0, 'healthy_count': 0},
+                'error': str(e)
+            }
+    
+    def reset_orphaned_twins(self) -> Dict[str, Any]:
+        """Reset all orphaned twins to active status if their files are completed"""
+        try:
+            # Find orphaned twins with completed files
+            self.cursor.execute('''
+                SELECT t.twin_id, t.twin_name, t.aasx_filename, t.project_id
+                FROM twin_relationships t
+                JOIN project_files f ON t.project_id = f.project_id AND t.aasx_filename = f.filename
+                WHERE t.status = 'orphaned' AND f.status = 'completed'
+            ''')
+            
+            orphaned_twins = self.cursor.fetchall()
+            reset_count = 0
+            
+            for twin in orphaned_twins:
+                twin_id, twin_name, filename, project_id = twin
+                
+                # Reset twin status to active
+                self.cursor.execute('''
+                    UPDATE twin_relationships 
+                    SET status = 'active', last_sync = CURRENT_TIMESTAMP
+                    WHERE twin_id = ?
+                ''', (twin_id,))
+                
+                # Reset health
+                self.cursor.execute('''
+                    UPDATE twin_health 
+                    SET overall_health = 100.0, operational_health = 100.0, 
+                        issues = NULL, last_check = CURRENT_TIMESTAMP
+                    WHERE twin_id = ?
+                ''', (twin_id,))
+                
+                # Log reset event
+                self.cursor.execute('''
+                    INSERT INTO twin_events 
+                    (twin_id, event_type, event_message, severity, user)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (
+                    twin_id, 'twin_reactivated', 
+                    f'Twin {twin_name} reactivated - output files restored',
+                    'info', 'system'
+                ))
+                
+                reset_count += 1
+            
+            self.conn.commit()
+            
+            return {
+                'success': True,
+                'reset_count': reset_count,
+                'message': f'Reactivated {reset_count} orphaned twins'
+            }
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def get_twin_by_aasx(self, aasx_filename: str) -> Optional[Dict[str, Any]]:
+        """Get twin information by AASX filename"""
+        try:
+            self.cursor.execute('''
+                SELECT t.*, tc.description, tc.version, tc.owner, tc.configuration_data
+                FROM twin_relationships t
+                LEFT JOIN twin_configurations tc ON t.twin_id = tc.twin_id
+                WHERE t.aasx_filename = ?
+            ''', (aasx_filename,))
+            
+            row = self.cursor.fetchone()
+            if row:
+                twin_dict = dict(row)
+                # Parse JSON fields
+                if twin_dict.get('metadata'):
+                    twin_dict['metadata'] = json.loads(twin_dict['metadata'])
+                if twin_dict.get('configuration_data'):
+                    twin_dict['configuration_data'] = json.loads(twin_dict['configuration_data'])
+                return twin_dict
+            return None
+            
+        except Exception as e:
+            print(f"Error getting twin by AASX: {e}")
+            return None
+    
+    def get_sync_status(self, twin_id: str) -> Dict[str, Any]:
+        """Get sync status and history for a twin"""
+        try:
+            # Get twin basic info
+            self.cursor.execute('''
+                SELECT twin_id, twin_name, status, last_sync, data_points
+                FROM twin_relationships 
+                WHERE twin_id = ?
+            ''', (twin_id,))
+            
+            twin = self.cursor.fetchone()
+            if not twin:
+                return {'success': False, 'error': 'Twin not found'}
+            
+            # Get recent sync history
+            self.cursor.execute('''
+                SELECT sync_type, sync_status, sync_timestamp, details
+                FROM sync_history 
+                WHERE twin_id = ?
+                ORDER BY sync_timestamp DESC
+                LIMIT 10
+            ''', (twin_id,))
+            
+            sync_history = []
+            for row in self.cursor.fetchall():
+                sync_history.append({
+                    'sync_type': row[0],
+                    'sync_status': row[1],
+                    'sync_timestamp': row[2],
+                    'details': row[3]
                 })
-        
-        return results
+            
+            return {
+                'success': True,
+                'twin_id': twin[0],
+                'twin_name': twin[1],
+                'status': twin[2],
+                'last_sync': twin[3],
+                'data_points': twin[4],
+                'sync_history': sync_history
+            }
+            
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+    
+    def discover_processed_aasx_files(self) -> List[Dict[str, Any]]:
+        """Discover AASX files that have been processed (status = 'completed')"""
+        try:
+            self.cursor.execute('''
+                SELECT f.file_id, f.filename, f.project_id, f.upload_date, f.size,
+                       p.name as project_name
+                FROM project_files f
+                JOIN projects p ON f.project_id = p.project_id
+                WHERE f.status = 'completed' AND (f.file_type = '.aasx' OR f.filename LIKE '%.aasx')
+                ORDER BY f.upload_date DESC
+            ''')
+            
+            files = []
+            for row in self.cursor.fetchall():
+                files.append({
+                    'file_id': row[0],
+                    'filename': row[1],
+                    'project_id': row[2],
+                    'upload_date': row[3],
+                    'size': row[4],
+                    'project_name': row[5]
+                })
+            
+            return files
+            
+        except Exception as e:
+            print(f"Error discovering processed AASX files: {e}")
+            return []
+    
+    def get_twin_configuration(self, twin_id: str) -> Optional[Dict[str, Any]]:
+        """Get twin configuration"""
+        try:
+            self.cursor.execute('''
+                SELECT * FROM twin_configurations WHERE twin_id = ?
+            ''', (twin_id,))
+            
+            row = self.cursor.fetchone()
+            if row:
+                config_dict = dict(row)
+                # Parse JSON fields
+                if config_dict.get('tags'):
+                    config_dict['tags'] = json.loads(config_dict['tags'])
+                if config_dict.get('settings'):
+                    config_dict['settings'] = json.loads(config_dict['settings'])
+                return config_dict
+            return None
+            
+        except Exception as e:
+            print(f"Error getting twin configuration: {e}")
+            return None
+    
+    def update_twin_configuration(self, twin_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Update twin configuration"""
+        try:
+            # Check if twin exists
+            self.cursor.execute('SELECT twin_id FROM twin_relationships WHERE twin_id = ?', (twin_id,))
+            if not self.cursor.fetchone():
+                return {'success': False, 'error': 'Twin not found'}
+            
+            # Update configuration
+            self.cursor.execute('''
+                UPDATE twin_configurations 
+                SET twin_name = ?, description = ?, twin_type = ?, version = ?, 
+                    owner = ?, tags = ?, settings = ?, updated_at = ?
+                WHERE twin_id = ?
+            ''', (
+                config.get('twin_name'),
+                config.get('description'),
+                config.get('twin_type'),
+                config.get('version'),
+                config.get('owner'),
+                json.dumps(config.get('tags', [])),
+                json.dumps(config.get('settings', {})),
+                datetime.now().isoformat(),
+                twin_id
+            ))
+            
+            self.conn.commit()
+            
+            return {'success': True, 'message': 'Twin configuration updated'}
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def get_twin_health(self, twin_id: str) -> Optional[Dict[str, Any]]:
+        """Get twin health information"""
+        try:
+            self.cursor.execute('''
+                SELECT * FROM twin_health WHERE twin_id = ?
+            ''', (twin_id,))
+            
+            row = self.cursor.fetchone()
+            if row:
+                health_dict = dict(row)
+                # Parse JSON fields
+                if health_dict.get('issues'):
+                    health_dict['issues'] = json.loads(health_dict['issues'])
+                if health_dict.get('recommendations'):
+                    health_dict['recommendations'] = json.loads(health_dict['recommendations'])
+                return health_dict
+            return None
+            
+        except Exception as e:
+            print(f"Error getting twin health: {e}")
+            return None
+    
+    def update_twin_health(self, twin_id: str, health_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update twin health information"""
+        try:
+            # Check if twin exists
+            self.cursor.execute('SELECT twin_id FROM twin_relationships WHERE twin_id = ?', (twin_id,))
+            if not self.cursor.fetchone():
+                return {'success': False, 'error': 'Twin not found'}
+            
+            # Update health
+            self.cursor.execute('''
+                UPDATE twin_health 
+                SET overall_health = ?, performance_health = ?, connectivity_health = ?,
+                    data_health = ?, operational_health = ?, issues = ?, 
+                    recommendations = ?, last_check = ?
+                WHERE twin_id = ?
+            ''', (
+                health_data.get('overall_health', 100.0),
+                health_data.get('performance_health', 100.0),
+                health_data.get('connectivity_health', 100.0),
+                health_data.get('data_health', 100.0),
+                health_data.get('operational_health', 100.0),
+                json.dumps(health_data.get('issues', [])),
+                json.dumps(health_data.get('recommendations', [])),
+                datetime.now().isoformat(),
+                twin_id
+            ))
+            
+            self.conn.commit()
+            
+            return {'success': True, 'message': 'Twin health updated'}
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def get_twin_events(self, twin_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get twin events"""
+        try:
+            self.cursor.execute('''
+                SELECT event_type, event_message, severity, timestamp, user
+                FROM twin_events 
+                WHERE twin_id = ?
+                ORDER BY timestamp DESC
+                LIMIT ?
+            ''', (twin_id, limit))
+            
+            events = []
+            for row in self.cursor.fetchall():
+                event_dict = {
+                    'event_type': row[0],
+                    'event_message': row[1],
+                    'severity': row[2],
+                    'timestamp': row[3],
+                    'user': row[4],
+                    'metadata': {}  # Default empty metadata since column doesn't exist
+                }
+                events.append(event_dict)
+            
+            return events
+            
+        except Exception as e:
+            print(f"Error getting twin events: {e}")
+            return []
+    
+    def log_twin_event(self, twin_id: str, event_type: str, message: str, severity: str, user: str = "system") -> Dict[str, Any]:
+        """Log a twin event"""
+        try:
+            self.cursor.execute('''
+                INSERT INTO twin_events 
+                (twin_id, event_type, event_message, severity, user, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (twin_id, event_type, message, severity, user, datetime.now().isoformat()))
+            
+            self.conn.commit()
+            return {'success': True, 'message': 'Event logged successfully'}
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    def log_sync_status(self, twin_id: str, status: str, data: Optional[Dict[str, Any]] = None):
+        """Log sync status to database"""
+        try:
+            # Use existing twin event logging method
+            self.log_twin_event(
+                twin_id=twin_id,
+                event_type="sync_status",
+                message=f"Sync status: {status}",
+                severity="info",
+                user="system"
+            )
+            
+        except Exception as e:
+            print(f"Error logging sync status: {e}")
+
+    def cleanup_twin_statuses(self) -> Dict[str, Any]:
+        """Clean up twin statuses to match actual file processing status"""
+        try:
+            # Find all twins and check their file status
+            self.cursor.execute('''
+                SELECT t.twin_id, t.aasx_filename, t.project_id, t.status, f.status as file_status
+                FROM twin_relationships t
+                LEFT JOIN project_files f ON t.project_id = f.project_id AND t.aasx_filename = f.filename
+            ''')
+            
+            twins = self.cursor.fetchall()
+            updated_count = 0
+            orphaned_count = 0
+            
+            for twin in twins:
+                twin_id, filename, project_id, twin_status, file_status = twin
+                
+                # If file doesn't exist or is not completed, orphan the twin
+                if not file_status or file_status != 'completed':
+                    if twin_status == 'active':
+                        self.cursor.execute('''
+                            UPDATE twin_relationships 
+                            SET status = 'orphaned', last_sync = CURRENT_TIMESTAMP
+                            WHERE twin_id = ?
+                        ''', (twin_id,))
+                        
+                        # Log the orphan event
+                        self.cursor.execute('''
+                            INSERT INTO twin_events 
+                            (twin_id, event_type, event_message, severity, user, timestamp)
+                            VALUES (?, ?, ?, ?, ?, ?)
+                        ''', (
+                            twin_id, 'twin_orphaned', 
+                            f'Twin orphaned - file {filename} status: {file_status or "not found"}',
+                            'warning', 'system', datetime.now().isoformat()
+                        ))
+                        
+                        orphaned_count += 1
+                        updated_count += 1
+                
+                # If file is completed but twin is orphaned, activate it
+                elif file_status == 'completed' and twin_status == 'orphaned':
+                    self.cursor.execute('''
+                        UPDATE twin_relationships 
+                        SET status = 'active', last_sync = CURRENT_TIMESTAMP
+                        WHERE twin_id = ?
+                    ''', (twin_id,))
+                    
+                    # Log the reactivation event
+                    self.cursor.execute('''
+                        INSERT INTO twin_events 
+                        (twin_id, event_type, event_message, severity, user, timestamp)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    ''', (
+                        twin_id, 'twin_reactivated', 
+                        f'Twin reactivated - file {filename} is completed',
+                        'info', 'system', datetime.now().isoformat()
+                    ))
+                    
+                    updated_count += 1
+            
+            self.conn.commit()
+            
+            return {
+                'success': True,
+                'message': f'Cleanup completed: {updated_count} twins updated, {orphaned_count} orphaned',
+                'updated_count': updated_count,
+                'orphaned_count': orphaned_count
+            }
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+
+    def remove_duplicate_twins(self) -> Dict[str, Any]:
+        """Remove duplicate twins for the same file in the same project"""
+        try:
+            # Find duplicate twins (same filename, same project)
+            self.cursor.execute('''
+                SELECT aasx_filename, project_id, COUNT(*) as count
+                FROM twin_relationships
+                GROUP BY aasx_filename, project_id
+                HAVING COUNT(*) > 1
+            ''')
+            
+            duplicates = self.cursor.fetchall()
+            removed_count = 0
+            
+            for filename, project_id, count in duplicates:
+                # Keep the first active twin, remove the rest
+                self.cursor.execute('''
+                    SELECT twin_id, status FROM twin_relationships
+                    WHERE aasx_filename = ? AND project_id = ?
+                    ORDER BY 
+                        CASE WHEN status = 'active' THEN 1 ELSE 2 END,
+                        twin_id
+                ''', (filename, project_id))
+                
+                twins = self.cursor.fetchall()
+                
+                # Keep the first one, remove the rest
+                for i, (twin_id, status) in enumerate(twins):
+                    if i > 0:  # Remove duplicates (keep first)
+                        # Remove twin and related data
+                        self.cursor.execute('DELETE FROM twin_relationships WHERE twin_id = ?', (twin_id,))
+                        self.cursor.execute('DELETE FROM twin_configurations WHERE twin_id = ?', (twin_id,))
+                        self.cursor.execute('DELETE FROM twin_health WHERE twin_id = ?', (twin_id,))
+                        self.cursor.execute('DELETE FROM twin_events WHERE twin_id = ?', (twin_id,))
+                        
+                        removed_count += 1
+            
+            self.conn.commit()
+            
+            return {
+                'success': True,
+                'message': f'Removed {removed_count} duplicate twins',
+                'removed_count': removed_count
+            }
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
     
     def close(self):
         """Close database connection."""

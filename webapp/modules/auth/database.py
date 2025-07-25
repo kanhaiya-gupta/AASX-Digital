@@ -9,10 +9,21 @@ from pathlib import Path
 import sys
 import os
 
-# Add the src directory to the Python path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+# Get the project root directory (3 levels up from this file)
+project_root = Path(__file__).parent.parent.parent.parent
+src_path = project_root / "src"
 
-from shared.database_manager import DatabaseProjectManager
+# Add the src directory to the Python path
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
+try:
+    from shared.database_manager import DatabaseProjectManager
+except ImportError as e:
+    print(f"Error importing DatabaseProjectManager: {e}")
+    print(f"Current sys.path: {sys.path}")
+    print(f"Looking for: {src_path}")
+    raise
 
 class AuthDatabase:
     """Database interface for authentication operations"""

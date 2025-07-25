@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Set, Optional, Any
 from fastapi import WebSocket, WebSocketDisconnect
 from enum import Enum
-import sqlite3
 from pathlib import Path
 from .twin_manager import twin_manager
 
@@ -32,7 +31,6 @@ class TwinSyncManager:
     
     def __init__(self):
         self.project_root = Path(__file__).parent.parent.parent
-        self.db_path = self.project_root / "data" / "aasx_digital.db"
         
         # WebSocket connections
         self.active_connections: Set[WebSocket] = set()
@@ -42,54 +40,15 @@ class TwinSyncManager:
         self.twin_sync_status: Dict[str, Dict[str, Any]] = {}
         self.sync_intervals: Dict[str, int] = {}  # seconds
         
+        # Use centralized database manager
+        self.db_manager = twin_manager.db_manager
+        
         # Initialize sync manager
         self._init_sync_manager()
     
     def _init_sync_manager(self):
-        """Initialize the sync manager with database setup"""
+        """Initialize the sync manager"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Create real-time sync tables
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS realtime_sync_log (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    twin_id TEXT NOT NULL,
-                    sync_type TEXT NOT NULL,
-                    sync_status TEXT NOT NULL,
-                    data_size INTEGER,
-                    sync_duration REAL,
-                    error_message TEXT,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS twin_health_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    twin_id TEXT NOT NULL,
-                    uptime_percentage REAL,
-                    response_time_ms REAL,
-                    error_rate REAL,
-                    data_quality_score REAL,
-                    last_health_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS sync_schedules (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    twin_id TEXT UNIQUE NOT NULL,
-                    sync_interval_seconds INTEGER DEFAULT 300,
-                    last_sync TIMESTAMP,
-                    next_sync TIMESTAMP,
-                    is_active BOOLEAN DEFAULT 1
-                )
-            ''')
-            
-            conn.commit()
-            conn.close()
             logger.info("Real-time sync manager initialized successfully")
             
             # Initialize twin statuses from database
@@ -99,18 +58,24 @@ class TwinSyncManager:
             logger.error(f"Error initializing sync manager: {e}")
     
     def _init_twin_statuses(self):
-        """Initialize twin statuses from database"""
+        """Initialize twin sync statuses from database"""
         try:
-            twins = twin_manager.get_all_registered_twins()
+            # Get all registered twins
+            twins = self.db_manager.get_all_registered_twins()
+            
             for twin in twins:
                 twin_id = twin['twin_id']
-                if twin_id not in self.twin_sync_status:
-                    self.twin_sync_status[twin_id] = {
-                        "status": SyncStatus.ONLINE.value,
-                        "last_update": datetime.now().isoformat(),
-                        "data": {}
-                    }
-            logger.info(f"Initialized status for {len(twins)} twins")
+                self.twin_sync_status[twin_id] = {
+                    'status': SyncStatus.ONLINE.value if twin.get('status') == 'active' else SyncStatus.OFFLINE.value,
+                    'last_sync': twin.get('last_sync'),
+                    'data_points': twin.get('data_points', 0),
+                    'sync_interval': 300,  # Default 5 minutes
+                    'last_update': datetime.now().isoformat(),
+                    'data': {}
+                }
+            
+            logger.info(f"Initialized status for {len(self.twin_sync_status)} twins")
+            
         except Exception as e:
             logger.error(f"Error initializing twin statuses: {e}")
     
@@ -238,24 +203,8 @@ class TwinSyncManager:
     async def _log_sync_status(self, twin_id: str, status: str, data: Optional[Dict[str, Any]] = None):
         """Log sync status to database"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                INSERT INTO realtime_sync_log 
-                (twin_id, sync_type, sync_status, data_size, sync_duration, error_message)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                twin_id,
-                data.get("sync_type", "status_update") if data else "status_update",
-                status,
-                data.get("data_size", 0) if data else 0,
-                data.get("sync_duration", 0) if data else 0,
-                data.get("error_message", None) if data else None
-            ))
-            
-            conn.commit()
-            conn.close()
+            # Use the centralized database manager
+            self.db_manager.log_sync_status(twin_id, status, data)
             
         except Exception as e:
             logger.error(f"Error logging sync status: {e}")
@@ -263,7 +212,7 @@ class TwinSyncManager:
     async def get_all_twin_sync_status(self) -> List[Dict[str, Any]]:
         """Get sync status for all twins (only for completed files)"""
         try:
-            twins = twin_manager.get_all_registered_twins()
+            twins = self.db_manager.get_all_registered_twins()
             status_list = []
             for twin in twins:
                 twin_id = twin['twin_id']

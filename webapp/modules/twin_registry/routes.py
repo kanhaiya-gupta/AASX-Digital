@@ -13,8 +13,6 @@ import json
 import random
 import os
 
-# Import AASX integration
-from .aasx_integration import AASXIntegration
 # Import real-time sync manager
 from .realtime_sync import sync_manager, SyncStatus
 # Import performance monitoring
@@ -35,8 +33,7 @@ project_manager = ProjectManager()
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
 
-# Initialize AASX integration
-aasx_integration = AASXIntegration()
+# AASX integration is now handled by TwinManager
 
 # Pydantic models
 class TwinRegistration(BaseModel):
@@ -59,68 +56,6 @@ class TwinSyncRequest(BaseModel):
     sync_type: str
     force: bool = False
 
-class AASXRegistrationRequest(BaseModel):
-    aasx_filename: str
-    project_id: str
-
-# Mock twin data (will be replaced with real data from AASX integration)
-# REMOVED: Mock data is no longer needed - only real AASX twins should be shown
-# TWINS_DB = [
-#     {
-#         "id": "dt-001",
-#         "twin_id": "dt-001",
-#         "twin_name": "Additive Manufacturing Facility",
-#         "twin_type": "additive_manufacturing",
-#         "aas_id": "aas-001",
-#         "description": "Digital twin for additive manufacturing facility with quality monitoring",
-#         "status": "active",
-#         "version": "1.0",
-#         "created_at": "2024-01-15T10:00:00Z",
-#         "updated_at": "2024-07-08T15:30:00Z",
-#         "metadata": {
-#             "location": "Building A, Floor 2",
-#             "equipment_count": 15,
-#             "capacity": "1000 parts/day",
-#             "technology": "SLS, FDM, SLA"
-#         }
-#     },
-#     {
-#         "id": "dt-002",
-#         "twin_id": "dt-002",
-#         "twin_name": "Hydrogen Filling Station",
-#         "twin_type": "hydrogen_station",
-#         "aas_id": "aas-002",
-#         "description": "Digital twin for hydrogen filling station with safety monitoring",
-#         "status": "active",
-#         "version": "1.0",
-#         "created_at": "2024-02-20T14:00:00Z",
-#         "updated_at": "2024-07-08T16:45:00Z",
-#         "metadata": {
-#             "location": "Highway Exit 15",
-#             "storage_capacity": "5000 kg",
-#             "daily_capacity": "200 vehicles",
-#             "safety_level": "high"
-#         }
-#     },
-#     {
-#         "id": "dt-003",
-#         "twin_id": "dt-003",
-#         "twin_name": "Quality Control Lab",
-#         "twin_type": "quality_lab",
-#         "aas_id": "aas-003",
-#         "description": "Digital twin for quality control laboratory",
-#         "status": "active",
-#         "version": "1.0",
-#         "created_at": "2024-03-10T09:00:00Z",
-#         "updated_at": "2024-07-08T12:15:00Z",
-#         "metadata": {
-#             "location": "Building B, Floor 1",
-#             "equipment_count": 8,
-#             "certifications": ["ISO 17025", "ISO 9001"],
-#             "test_capacity": "500 samples/day"
-#         }
-#     }
-# ]
 
 @router.get("/", response_class=HTMLResponse)
 async def twin_registry_dashboard(request: Request):
@@ -128,9 +63,9 @@ async def twin_registry_dashboard(request: Request):
     print("🔍 Twin Registry dashboard route called")
     
     try:
-        # Get real twins from AASX integration
+        # Get real twins from TwinManager
         print("📊 Getting AASX twins...")
-        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        aasx_twins = twin_manager.get_all_registered_twins()
         print(f"✅ Found {len(aasx_twins)} AASX twins")
     except Exception as e:
         print(f"⚠️ Warning: AASX integration error: {e}")
@@ -355,7 +290,7 @@ async def get_twin_details(twin_id: str):
             }
         
         # Check if it's an AASX twin
-        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        aasx_twins = twin_manager.get_all_registered_twins()
         for aasx_twin in aasx_twins:
             if aasx_twin["twin_id"] == twin_id:
                 return aasx_twin
@@ -439,8 +374,8 @@ async def create_twin_enhanced(twin_data: Dict[str, Any]):
 async def sync_twin(twin_id: str, sync_request: TwinSyncRequest):
     """Sync digital twin with AAS"""
     try:
-        # Find the twin from AASX integration
-        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        # Find the twin from TwinManager
+        aasx_twins = twin_manager.get_all_registered_twins()
         twin = None
         for t in aasx_twins:
             if t["twin_id"] == twin_id:
@@ -540,8 +475,8 @@ async def get_twin_relationships(twin_id: str):
 async def get_twin_statistics():
     """Get twin registry statistics"""
     try:
-        # Get real twins from AASX integration
-        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        # Get real twins from TwinManager
+        aasx_twins = twin_manager.get_all_registered_twins()
         
         # Calculate statistics
         total_twins = len(aasx_twins)
@@ -572,8 +507,8 @@ async def get_twin_statistics():
 async def get_twin_registry_status():
     """Get twin registry status"""
     try:
-        # Get real twins from AASX integration
-        aasx_twins = aasx_integration.get_all_twins_with_aasx()
+        # Get real twins from TwinManager
+        aasx_twins = twin_manager.get_all_registered_twins()
         
         total_twins = len(aasx_twins)
         active_twins = len([twin for twin in aasx_twins if twin.get("status") == "active"])
@@ -596,34 +531,13 @@ async def get_twin_registry_status():
 
 # AASX Integration Endpoints
 
-@router.post("/api/twins/register-from-aasx")
-async def register_twin_from_aasx(request: AASXRegistrationRequest):
-    """Register a new twin from processed AASX file"""
-    try:
-        result = aasx_integration.auto_register_twin_from_aasx(
-            request.aasx_filename, 
-            request.project_id
-        )
-        
-        if result.get("success", False):
-            return {
-                "message": "Digital twin registered successfully from AASX",
-                "twin_id": result["twin_id"],
-                "twin_name": result["twin_name"],
-                "aasx_filename": result["aasx_filename"],
-                "status": result["status"]
-            }
-        else:
-            raise HTTPException(status_code=400, detail=result.get("error", "Failed to register twin"))
-            
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/api/twins/{twin_id}/sync-status")
 async def get_twin_sync_status(twin_id: str):
     """Get real-time sync status between twin and AASX data"""
     try:
-        status = aasx_integration.get_sync_status(twin_id)
+        status = twin_manager.get_sync_status(twin_id)
         
         if "error" in status:
             raise HTTPException(status_code=404, detail=status["error"])
@@ -639,7 +553,7 @@ async def get_twin_sync_status(twin_id: str):
 async def discover_processed_aasx_files():
     """Discover AASX files that have been processed by checking FILES_DB status"""
     try:
-        files = aasx_integration.discover_processed_aasx_files_from_status()
+        files = twin_manager.discover_processed_aasx_files()
         return {
             "files": files,
             "total_count": len(files),
@@ -650,51 +564,13 @@ async def discover_processed_aasx_files():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/aasx/auto-register-all")
-async def auto_register_all_processed_aasx():
-    """Automatically register twins for all completed files from FILES_DB status"""
-    try:
-        files = aasx_integration.discover_processed_aasx_files_from_status()
-        registered_twins = []
-        errors = []
-        
-        for file_info in files:
-            try:
-                result = aasx_integration.auto_register_twin_from_aasx(
-                    file_info["aasx_filename"],
-                    file_info["project_id"]
-                )
-                
-                if result.get("success", False):
-                    registered_twins.append(result)
-                else:
-                    errors.append({
-                        "file": file_info["aasx_filename"],
-                        "error": result.get("error", "Unknown error")
-                    })
-                    
-            except Exception as e:
-                errors.append({
-                    "file": file_info["aasx_filename"],
-                    "error": str(e)
-                })
-        
-        return {
-            "message": f"Auto-registration completed. {len(registered_twins)} twins registered, {len(errors)} errors.",
-            "registered_twins": registered_twins,
-            "errors": errors,
-            "total_processed": len(files),
-            "method": "status_based"
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/api/twins/aasx/{aasx_filename}")
 async def get_twin_by_aasx_filename(aasx_filename: str):
     """Get twin information by AASX filename"""
     try:
-        twin = aasx_integration.get_twin_by_aasx(aasx_filename)
+        twin = twin_manager.get_twin_by_aasx(aasx_filename)
         
         if twin:
             return twin
@@ -715,7 +591,7 @@ async def get_aasx_projects():
         
         # Also get projects from AASX integration for backward compatibility
         try:
-            aasx_projects = aasx_integration.get_all_projects()
+            aasx_projects = twin_manager.get_all_projects()
             
             # Merge projects, giving priority to centralized projects
             centralized_project_ids = {p.get('id') for p in projects}
@@ -763,7 +639,7 @@ async def get_aasx_files_by_project(project_id: str):
         
         # Also get files from AASX integration for backward compatibility
         try:
-            all_files = aasx_integration.discover_processed_aasx_files()
+            all_files = twin_manager.discover_processed_aasx_files()
             aasx_project_files = [file for file in all_files if file.get("project_id") == project_id]
             
             # Merge files, giving priority to centralized files
@@ -787,14 +663,7 @@ async def get_aasx_files_by_project(project_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/aasx/projects/{project_id}/auto-register")
-async def auto_register_project_twins(project_id: str):
-    """Auto-register all twins from a specific project"""
-    try:
-        result = aasx_integration.auto_register_project_twins(project_id)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
 
 # ============================================================================
 # Phase 2.1: Real-Time Sync Endpoints
@@ -1149,7 +1018,7 @@ async def get_twin_health(twin_id: str):
         performance = performance_monitor.get_twin_performance(twin_id)
         
         # Get sync status
-        sync_status = aasx_integration.get_sync_status(twin_id)
+        sync_status = twin_manager.get_sync_status(twin_id)
         
         # Determine overall health
         health_status = "healthy"
@@ -1191,7 +1060,7 @@ async def get_twin_health(twin_id: str):
 async def get_orphaned_twins():
     """Get all orphaned twins"""
     try:
-        orphaned_twins = aasx_integration.get_orphaned_twins()
+        orphaned_twins = twin_manager.get_orphaned_twins()
         return {
             "orphaned_twins": orphaned_twins,
             "count": len(orphaned_twins),
@@ -1205,7 +1074,7 @@ async def restore_orphaned_twin(twin_id: str):
     """Restore orphaned twin when output data is available"""
     try:
         # Get twin information
-        twin = aasx_integration.get_twin_by_id(twin_id)
+        twin = twin_manager.get_twin_by_aasx(twin_id)
         if not twin:
             raise HTTPException(status_code=404, detail="Twin not found")
         
@@ -1220,7 +1089,7 @@ async def restore_orphaned_twin(twin_id: str):
             raise HTTPException(status_code=400, detail="Missing AASX filename or project ID")
         
         # Try to restore twin status
-        result = aasx_integration.update_twin_status_to_active(aasx_filename, project_id)
+        result = twin_manager.db_manager.update_twin_status_to_active(aasx_filename, project_id)
         
         if result.get('success', False):
             return {
@@ -1242,14 +1111,14 @@ async def restore_orphaned_twin(twin_id: str):
 async def restore_all_orphaned_twins():
     """Restore all orphaned twins that have output data available"""
     try:
-        orphaned_twins = aasx_integration.get_orphaned_twins()
+        orphaned_twins = twin_manager.get_orphaned_twins()
         restored_count = 0
         failed_count = 0
         results = []
         
         for twin in orphaned_twins:
             try:
-                result = aasx_integration.update_twin_status_to_active(
+                result = twin_manager.db_manager.update_twin_status_to_active(
                     twin['aasx_filename'], 
                     twin['project_id']
                 )
