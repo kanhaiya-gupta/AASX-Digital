@@ -28,8 +28,7 @@ except ImportError as e:
 class AuthDatabase:
     """Database interface for authentication operations"""
     
-    def __init__(self, db_path: str = "data/aasx_digital.db"):
-        self.db_path = db_path
+    def __init__(self):
         self.db_manager = DatabaseProjectManager(
             projects_dir=Path("data/projects"),
             output_dir=Path("output")
@@ -38,18 +37,14 @@ class AuthDatabase:
     def get_user_by_username(self, username: str) -> Optional[dict]:
         """Get user by username"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("""
+            self.db_manager.cursor.execute("""
                 SELECT user_id, username, email, password_hash, full_name, 
                        role, status, created_at, last_login
                 FROM users 
                 WHERE username = ?
             """, (username,))
             
-            row = cursor.fetchone()
-            conn.close()
+            row = self.db_manager.cursor.fetchone()
             
             if row:
                 return {

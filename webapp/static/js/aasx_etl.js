@@ -14,7 +14,7 @@ console.log('🚀 aasx_etl.js loaded successfully');
 class AASXETLPipeline {
     constructor() {
         this.isProcessing = false;
-        this.currentProgress = { extract: 0, transform: 0, load: 0, overall: 0 };
+        this.currentProgress = { overall: 0 };
         this.progressInterval = null;
         this.selectedFiles = new Set();
         this.presets = {
@@ -293,12 +293,8 @@ class AASXETLPipeline {
             if (result.success) {
                 // Update progress with final values from backend
                 if (result.progress) {
-                    this.updateETLProgress(
-                        result.progress.extract,
-                        result.progress.transform,
-                        result.progress.load,
-                        result.progress.overall
-                    );
+                    const overall = result.progress.overall || 100;
+                    this.updateETLProgress(overall, overall, overall, overall);
                 }
                 
                 // Stop any remaining animations
@@ -321,13 +317,10 @@ class AASXETLPipeline {
 
     startProgressSimulation() {
         this.progressInterval = setInterval(() => {
-            // Simulate realistic progress (using integers)
-            const currentExtract = Math.min(90, this.currentProgress.extract + Math.round(Math.random() * 5));
-            const currentTransform = Math.min(90, this.currentProgress.transform + Math.round(Math.random() * 3));
-            const currentLoad = Math.min(90, this.currentProgress.load + Math.round(Math.random() * 4));
-            const currentOverall = Math.min(90, Math.round((currentExtract + currentTransform + currentLoad) / 3));
+            // Simulate realistic unified progress
+            const currentOverall = Math.min(90, this.currentProgress.overall + Math.round(Math.random() * 3));
             
-            this.updateETLProgress(currentExtract, currentTransform, currentLoad, currentOverall);
+            this.updateETLProgress(currentOverall, currentOverall, currentOverall, currentOverall);
         }, 500);
     }
 
@@ -381,12 +374,8 @@ class AASXETLPipeline {
             if (result.success) {
                 // Update progress with final values
                 if (result.progress) {
-                    this.updateETLProgress(
-                        result.progress.extract,
-                        result.progress.transform,
-                        result.progress.load,
-                        result.progress.overall
-                    );
+                    const overall = result.progress.overall || 100;
+                    this.updateETLProgress(overall, overall, overall, overall);
                 }
                 
                 // Stop any remaining animations
@@ -733,30 +722,22 @@ class AASXETLPipeline {
     }
 
     updateETLProgress(extract, transform, load, overall) {
-        // Ensure all values are integers
-        this.currentProgress = { 
-            extract: Math.round(extract), 
-            transform: Math.round(transform), 
-            load: Math.round(load), 
-            overall: Math.round(overall) 
-        };
+        console.log('🔄 Updating ETL progress:', { overall });
         
-        // Update progress circles
-        this.updateProgressCircle('extractProgress', this.currentProgress.extract);
-        this.updateProgressCircle('transformProgress', this.currentProgress.transform);
-        this.updateProgressCircle('loadProgress', this.currentProgress.load);
-        this.updateProgressCircle('overallProgress', this.currentProgress.overall);
+        // Update progress circles (all show same unified progress)
+        this.updateProgressCircle('extractProgress', overall);
+        this.updateProgressCircle('transformProgress', overall);
+        this.updateProgressCircle('loadProgress', overall);
+        this.updateProgressCircle('overallProgress', overall);
         
         // Update progress bar
         const progressBar = document.getElementById('overallProgressBar');
         if (progressBar) {
-            progressBar.style.width = `${this.currentProgress.overall}%`;
-            progressBar.setAttribute('aria-valuenow', this.currentProgress.overall);
-            
-            // Remove animation when complete
-            if (this.currentProgress.overall >= 100) {
-                progressBar.classList.remove('progress-bar-animated');
-            }
+            progressBar.style.width = `${overall}%`;
+            progressBar.setAttribute('aria-valuenow', overall);
+            console.log('📊 Progress bar updated to:', overall + '%');
+        } else {
+            console.error('❌ Progress bar element not found');
         }
     }
 
@@ -2452,10 +2433,6 @@ class ProjectManager {
         let lastBackendUpdate = Date.now();
         let consecutiveNoUpdates = 0;
         let backendCompleted = false;
-        let currentPhase = 'extract';
-        let extractProgress = 0;
-        let transformProgress = 0;
-        let loadProgress = 0;
         let overallProgress = 0;
         
         // Progressive simulation that adapts to backend status
@@ -2472,42 +2449,12 @@ class ProjectManager {
                 return;
             }
             
-            // Continue simulation based on current phase
-            switch (currentPhase) {
-                case 'extract':
-                    extractProgress += 2;
-                    if (extractProgress >= 100) {
-                        extractProgress = 100;
-                        currentPhase = 'transform';
-                        this.updateETLStatus('Extraction completed. Starting transformation...', 'info');
-                    }
-                    break;
-                case 'transform':
-                    transformProgress += 3;
-                    if (transformProgress >= 100) {
-                        transformProgress = 100;
-                        currentPhase = 'load';
-                        this.updateETLStatus('Transformation completed. Starting loading...', 'info');
-                    }
-                    break;
-                case 'load':
-                    loadProgress += 4;
-                    if (loadProgress >= 100) {
-                        loadProgress = 100;
-                        currentPhase = 'waiting';
-                        this.updateETLStatus('Loading completed. Waiting for backend completion...', 'info');
-                    }
-                    break;
-                case 'waiting':
-                    // Keep showing 100% while waiting for backend
-                    break;
-            }
+            // Simple unified progress increment
+            overallProgress += 2;
+            if (overallProgress > 90) overallProgress = 90; // Don't reach 100% until backend confirms
             
-            // Calculate overall progress
-            overallProgress = Math.round((extractProgress + transformProgress + loadProgress) / 3);
-            
-            // Update progress display
-            this.updateETLProgress(extractProgress, transformProgress, loadProgress, overallProgress);
+            // Update progress display (all phases show same progress)
+            this.updateETLProgress(overallProgress, overallProgress, overallProgress, overallProgress);
             
         }, 200); // Slightly slower for better UX
         
@@ -2536,7 +2483,7 @@ class ProjectManager {
                                 backendCompleted = true;
                                 console.log('✅ Backend completed after 2+ seconds of no updates');
                             } else {
-                                this.updateETLStatus('Backend processing completed. Finalizing...', 'info');
+                                this.updateETLStatus('Processing completed. Finalizing...', 'info');
                             }
                         }
                     }
@@ -2571,12 +2518,12 @@ class ProjectManager {
     }
 
     updateETLProgress(extract, transform, load, overall) {
-        console.log('🔄 Updating ETL progress:', { extract, transform, load, overall });
+        console.log('🔄 Updating ETL progress:', { overall });
         
-        // Update progress circles
-        this.updateProgressCircle('extractProgress', extract);
-        this.updateProgressCircle('transformProgress', transform);
-        this.updateProgressCircle('loadProgress', load);
+        // Update progress circles (all show same unified progress)
+        this.updateProgressCircle('extractProgress', overall);
+        this.updateProgressCircle('transformProgress', overall);
+        this.updateProgressCircle('loadProgress', overall);
         this.updateProgressCircle('overallProgress', overall);
         
         // Update progress bar

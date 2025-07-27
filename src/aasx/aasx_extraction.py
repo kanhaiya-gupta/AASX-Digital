@@ -106,7 +106,21 @@ def extract_aasx(aasx_path: Path, output_dir: Path, formats: list = None):
     # Add original file info to results
     results['original'] = {'status': 'completed', 'output': str(original_copy_path)}
     
-    return results
+    # Determine overall status
+    successful_formats = [fmt for fmt, result in results.items() if result.get('status') == 'completed']
+    failed_formats = [fmt for fmt, result in results.items() if result.get('status') == 'failed']
+    
+    overall_status = 'completed' if successful_formats else 'failed'
+    
+    # Return standardized result format
+    return {
+        'status': overall_status,
+        'formats': successful_formats,
+        'failed_formats': failed_formats,
+        'results': results,
+        'processing_time': 0,  # TODO: Add actual timing
+        'aas_data': None  # TODO: Extract AAS data from JSON if available
+    }
 
 
 def batch_extract(input_path: Path, output_dir: Path, formats: list = None):

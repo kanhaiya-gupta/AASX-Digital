@@ -13,12 +13,12 @@
                         <i class="fas fa-brain text-primary me-2"></i>
                         AI/RAG Analytics Platform
                     </h2>
-                    <p class="text-muted mb-0">Advanced AI-powered analysis for AASX Digital Twin data</p>
+                    <p class="text-muted mb-0">Advanced AI-powered analysis with modular RAG techniques</p>
                 </div>
                 <div class="text-end">
-                    <span class="badge bg-success fs-6">Production Ready</span>
+                    <span class="badge bg-success fs-6">Modular RAG System</span>
                     <br>
-                    <small class="text-muted">v2.0 - Enhanced RAG System</small>
+                    <small class="text-muted">v3.0 - Enhanced Techniques</small>
                 </div>
             </div>
         </div>
@@ -78,10 +78,10 @@
                         </div>
                         <div class="col-md-2 col-sm-4 col-6 mb-3">
                             <div class="text-center">
-                                <div class="status-indicator" id="status-qdrant-client">
-                                    <i class="fas fa-memory fa-2x text-muted"></i>
+                                <div class="status-indicator" id="status-rag-techniques">
+                                    <i class="fas fa-magic fa-2x text-muted"></i>
                                 </div>
-                                <small class="d-block mt-1">Vector Client</small>
+                                <small class="d-block mt-1">RAG Techniques</small>
                             </div>
                         </div>
                     </div>
@@ -123,6 +123,7 @@
                                 <i class="fas fa-brain text-success me-1"></i>RAG Technique
                             </label>
                             <select class="form-select" id="rag-technique-select">
+                                <option value="">Auto-select (Recommended)</option>
                                 <option value="basic">Basic RAG</option>
                                 <option value="hybrid">Hybrid RAG</option>
                                 <option value="multi_step">Multi-Step RAG</option>
@@ -150,24 +151,24 @@
                                 <div class="col-md-8">
                                     <h6 class="text-success mb-2">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        <span id="technique-title">Basic RAG</span>
+                                        <span id="technique-title">Auto-select (Recommended)</span>
                                     </h6>
                                     <div id="technique-description">
-                                        <p class="mb-1 small">Simple retrieval + generation approach using vector search and LLM</p>
-                                        <p class="mb-1 small"><strong>Best For:</strong> Simple queries, quick responses</p>
-                                        <p class="mb-0 small"><strong>Performance:</strong> Fastest, lowest resource usage</p>
+                                        <p class="mb-1 small">System will automatically select the best RAG technique based on your query</p>
+                                        <p class="mb-1 small"><strong>Best For:</strong> All query types, optimal performance</p>
+                                        <p class="mb-0 small"><strong>Performance:</strong> Intelligent selection, balanced approach</p>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="text-center">
                                         <div class="technique-icon mb-2">
-                                            <i class="fas fa-rocket fa-2x text-success"></i>
+                                            <i class="fas fa-magic fa-2x text-success"></i>
                                         </div>
                                         <div class="technique-stats">
                                             <small class="text-muted">
-                                                <div><i class="fas fa-tachometer-alt me-1"></i>Speed: Fast</div>
-                                                <div><i class="fas fa-memory me-1"></i>Memory: Low</div>
-                                                <div><i class="fas fa-brain me-1"></i>Complexity: Simple</div>
+                                                <div><i class="fas fa-tachometer-alt me-1"></i>Speed: Optimal</div>
+                                                <div><i class="fas fa-memory me-1"></i>Memory: Balanced</div>
+                                                <div><i class="fas fa-brain me-1"></i>Complexity: Adaptive</div>
                                             </small>
                                         </div>
                                     </div>
@@ -210,6 +211,10 @@
                                 <i class="fas fa-eraser me-1"></i>
                                 Clear
                             </button>
+                            <button type="button" class="btn btn-outline-info ms-2" id="get-recommendations">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Get Recommendations
+                            </button>
                         </div>
                         <div class="text-end">
                             <small class="text-muted">
@@ -239,6 +244,19 @@
                 </div>
                 <div class="card-body" id="response-content">
                     <!-- Results will be populated here -->
+                </div>
+            </div>
+
+            <!-- Technique Comparison Results -->
+            <div class="card border-0 shadow-sm mt-4" id="comparison-section" style="display: none;">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-balance-scale me-2"></i>
+                        Technique Comparison
+                    </h5>
+                </div>
+                <div class="card-body" id="comparison-content">
+                    <!-- Comparison results will be populated here -->
                 </div>
             </div>
         </div>
@@ -274,6 +292,14 @@
                         <button class="btn btn-success demo-query-btn" id="run-all-demos">
                             <i class="fas fa-rocket me-2"></i>
                             Run All Demos
+                        </button>
+                        <button class="btn btn-outline-info" id="compare-techniques">
+                            <i class="fas fa-balance-scale me-2"></i>
+                            Compare Techniques
+                        </button>
+                        <button class="btn btn-outline-warning" id="process-embeddings">
+                            <i class="fas fa-cube me-2"></i>
+                            Process Embeddings
                         </button>
                     </div>
                 </div>
@@ -400,20 +426,535 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', path='/js/ai_rag.js') }}"></script>
 <script>
+// Enhanced AI/RAG functionality with modular system integration
+
+// Global variables for enhanced functionality
+let currentQuery = '';
+let systemStatus = {};
+let availableTechniques = [];
+
+// Initialize enhanced functionality
+document.addEventListener('DOMContentLoaded', function() {
+    loadEnhancedSystemStatus();
+    loadAvailableTechniques();
+    setupEnhancedEventListeners();
+});
+
+// Load enhanced system status
+async function loadEnhancedSystemStatus() {
+    try {
+        const response = await fetch('/ai-rag/status');
+        const status = await response.json();
+        systemStatus = status;
+        updateEnhancedSystemStatus(status);
+    } catch (error) {
+        console.error('Error loading enhanced system status:', error);
+    }
+}
+
+// Load available techniques
+async function loadAvailableTechniques() {
+    try {
+        const response = await fetch('/ai-rag/techniques');
+        const techniques = await response.json();
+        availableTechniques = techniques;
+        updateTechniqueSelect(techniques);
+    } catch (error) {
+        console.error('Error loading techniques:', error);
+    }
+}
+
+// Update technique select with available techniques
+function updateTechniqueSelect(techniques) {
+    const techniqueSelect = document.getElementById('rag-technique-select');
+    if (techniqueSelect) {
+        // Keep existing options and add new ones
+        const currentValue = techniqueSelect.value;
+        
+        // Clear and rebuild
+        techniqueSelect.innerHTML = '<option value="">Auto-select (Recommended)</option>';
+        
+        techniques.forEach(technique => {
+            const option = document.createElement('option');
+            option.value = technique.id || technique.name?.toLowerCase();
+            option.textContent = technique.name || technique.id;
+            techniqueSelect.appendChild(option);
+        });
+        
+        // Restore selection if it was valid
+        if (currentValue && Array.from(techniqueSelect.options).some(opt => opt.value === currentValue)) {
+            techniqueSelect.value = currentValue;
+        }
+    }
+}
+
+// Update enhanced system status
+function updateEnhancedSystemStatus(status) {
+    // Update existing status indicators
+    updateStatusIndicator('status-qdrant', status.vector_db_connected);
+    updateStatusIndicator('status-rag-techniques', status.available_techniques > 0);
+    updateStatusIndicator('status-system', status.config_loaded);
+    
+    // Update system stats if available
+    const systemStats = document.getElementById('system-stats');
+    if (systemStats && status) {
+        systemStats.innerHTML = `
+            <div class="row">
+                <div class="col-6">
+                    <small class="text-muted">Vector DB</small>
+                    <div class="fw-bold ${status.vector_db_connected ? 'text-success' : 'text-danger'}">
+                        ${status.vector_db_connected ? 'Connected' : 'Disconnected'}
+                    </div>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted">RAG Techniques</small>
+                    <div class="fw-bold text-primary">${status.available_techniques}</div>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-12">
+                    <small class="text-muted">Available Techniques</small>
+                    <div class="mt-1">
+                        ${status.technique_names?.map(name => 
+                            `<span class="badge bg-primary me-1">${name}</span>`
+                        ).join('') || 'None available'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Setup enhanced event listeners
+function setupEnhancedEventListeners() {
+    // Enhanced technique selection
+    const techniqueSelect = document.getElementById('rag-technique-select');
+    if (techniqueSelect) {
+        techniqueSelect.addEventListener('change', function() {
+            updateTechniqueInfo(this.value);
+        });
+    }
+    
+    // Enhanced query submission
+    const submitBtn = document.getElementById('submit-query');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+            submitEnhancedQuery();
+        });
+    }
+    
+    // Get recommendations button
+    const recommendationsBtn = document.getElementById('get-recommendations');
+    if (recommendationsBtn) {
+        recommendationsBtn.addEventListener('click', function() {
+            getTechniqueRecommendations();
+        });
+    }
+    
+    // Compare techniques button
+    const compareBtn = document.getElementById('compare-techniques');
+    if (compareBtn) {
+        compareBtn.addEventListener('click', function() {
+            compareTechniques();
+        });
+    }
+    
+    // Process embeddings button
+    const embeddingsBtn = document.getElementById('process-embeddings');
+    if (embeddingsBtn) {
+        embeddingsBtn.addEventListener('click', function() {
+            processProjectEmbeddings();
+        });
+    }
+}
+
+// Update technique information display
+function updateTechniqueInfo(techniqueId) {
+    const techniqueTitle = document.getElementById('technique-title');
+    const techniqueDescription = document.getElementById('technique-description');
+    const techniqueIcon = document.querySelector('.technique-icon i');
+    
+    if (!techniqueId) {
+        // Auto-select
+        techniqueTitle.textContent = 'Auto-select (Recommended)';
+        techniqueDescription.innerHTML = `
+            <p class="mb-1 small">System will automatically select the best RAG technique based on your query</p>
+            <p class="mb-1 small"><strong>Best For:</strong> All query types, optimal performance</p>
+            <p class="mb-0 small"><strong>Performance:</strong> Intelligent selection, balanced approach</p>
+        `;
+        techniqueIcon.className = 'fas fa-magic fa-2x text-success';
+    } else {
+        // Find technique info
+        const technique = availableTechniques.find(t => (t.id || t.name?.toLowerCase()) === techniqueId);
+        if (technique) {
+            techniqueTitle.textContent = technique.name || techniqueId;
+            techniqueDescription.innerHTML = `
+                <p class="mb-1 small">${technique.description || 'Advanced RAG technique'}</p>
+                <p class="mb-1 small"><strong>Best For:</strong> ${technique.best_for || 'General queries'}</p>
+                <p class="mb-0 small"><strong>Performance:</strong> ${technique.performance || 'Balanced'}</p>
+            `;
+            techniqueIcon.className = 'fas fa-brain fa-2x text-primary';
+        }
+    }
+}
+
+// Enhanced query submission
+async function submitEnhancedQuery() {
+    const query = document.getElementById('query-input').value.trim();
+    if (!query) {
+        alert('Please enter a query');
+        return;
+    }
+    
+    currentQuery = query;
+    showLoading();
+    
+    try {
+        const techniqueId = document.getElementById('rag-technique-select').value;
+        const llmModel = document.getElementById('llm-model-select').value;
+        const analysisType = document.getElementById('analysis-type-select').value;
+        
+        const requestData = {
+            query: query,
+            technique_id: techniqueId || null,
+            llm_model: llmModel,
+            analysis_type: analysisType,
+            enable_auto_selection: !techniqueId,
+            search_limit: 10
+        };
+        
+        const response = await fetch('/ai-rag/query', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            displayEnhancedResults(result);
+        } else {
+            throw new Error(result.detail || 'Analysis failed');
+        }
+        
+    } catch (error) {
+        console.error('Error submitting enhanced query:', error);
+        alert('Error: ' + error.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+// Display enhanced results
+function displayEnhancedResults(result) {
+    const responseSection = document.getElementById('response-section');
+    const responseContent = document.getElementById('response-content');
+    
+    responseContent.innerHTML = `
+        <div class="mb-3">
+            <h6 class="text-primary">
+                <i class="fas fa-question-circle me-1"></i>
+                Query
+            </h6>
+            <p class="mb-0">${result.query}</p>
+        </div>
+        
+        <div class="mb-3">
+            <h6 class="text-success">
+                <i class="fas fa-lightbulb me-1"></i>
+                Analysis
+            </h6>
+            <div class="bg-light p-3 rounded">
+                ${result.answer || result.analysis || 'No analysis available'}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-info">
+                    <i class="fas fa-magic me-1"></i>
+                    Technique Used
+                </h6>
+                <p class="mb-0">
+                    <span class="badge bg-primary">${result.technique_name || result.rag_technique || 'Unknown'}</span>
+                    <small class="text-muted ms-2">(${result.technique_id || 'auto'})</small>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-info">
+                    <i class="fas fa-clock me-1"></i>
+                    Performance
+                </h6>
+                <p class="mb-0">
+                    <span class="badge bg-success">${result.execution_time ? result.execution_time.toFixed(2) + 's' : 'N/A'}</span>
+                    <small class="text-muted ms-2">${result.search_results_count || 0} results</small>
+                </p>
+            </div>
+        </div>
+        
+        ${result.context && result.context.length > 0 ? `
+        <div class="mt-3">
+            <h6 class="text-warning">
+                <i class="fas fa-file-alt me-1"></i>
+                Context Sources
+            </h6>
+            <ul class="list-unstyled">
+                ${result.context.map(source => `<li><small class="text-muted">• ${source}</small></li>`).join('')}
+            </ul>
+        </div>
+        ` : ''}
+        
+        ${result.sources && result.sources.length > 0 ? `
+        <div class="mt-3">
+            <h6 class="text-info">
+                <i class="fas fa-link me-1"></i>
+                Sources
+            </h6>
+            <ul class="list-unstyled">
+                ${result.sources.map(source => `<li><small class="text-muted">• ${source}</small></li>`).join('')}
+            </ul>
+        </div>
+        ` : ''}
+    `;
+    
+    responseSection.style.display = 'block';
+    responseSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Get technique recommendations
+async function getTechniqueRecommendations() {
+    const query = document.getElementById('query-input').value.trim();
+    if (!query) {
+        alert('Please enter a query first');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/ai-rag/techniques/recommendations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: query })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            displayRecommendations(result.recommendations);
+        } else {
+            throw new Error(result.detail || 'Failed to get recommendations');
+        }
+        
+    } catch (error) {
+        console.error('Error getting recommendations:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// Display recommendations
+function displayRecommendations(recommendations) {
+    const responseSection = document.getElementById('response-section');
+    const responseContent = document.getElementById('response-content');
+    
+    responseContent.innerHTML = `
+        <div class="mb-3">
+            <h6 class="text-primary">
+                <i class="fas fa-lightbulb me-1"></i>
+                Technique Recommendations
+            </h6>
+            <p class="text-muted">Based on your query analysis</p>
+        </div>
+        
+        ${recommendations.map((rec, index) => `
+        <div class="card mb-2 ${index === 0 ? 'border-primary' : 'border-light'}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="mb-1">
+                            ${index === 0 ? '<i class="fas fa-star text-warning me-1"></i>' : ''}
+                            ${rec.technique_id.charAt(0).toUpperCase() + rec.technique_id.slice(1)} RAG
+                        </h6>
+                        <p class="mb-1 text-muted">${rec.reason}</p>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-${index === 0 ? 'primary' : 'secondary'}">
+                            ${(rec.confidence * 100).toFixed(0)}% confidence
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `).join('')}
+    `;
+    
+    responseSection.style.display = 'block';
+    responseSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Compare techniques
+async function compareTechniques() {
+    const query = document.getElementById('query-input').value.trim();
+    if (!query) {
+        alert('Please enter a query first');
+        return;
+    }
+    
+    try {
+        const techniqueIds = ['basic', 'hybrid', 'multi_step'];
+        
+        const response = await fetch('/ai-rag/techniques/compare', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query: query,
+                technique_ids: techniqueIds,
+                search_limit: 10
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            displayComparison(result);
+        } else {
+            throw new Error(result.detail || 'Comparison failed');
+        }
+        
+    } catch (error) {
+        console.error('Error comparing techniques:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// Display comparison results
+function displayComparison(comparison) {
+    const comparisonSection = document.getElementById('comparison-section');
+    const comparisonContent = document.getElementById('comparison-content');
+    
+    comparisonContent.innerHTML = `
+        <div class="mb-3">
+            <h6 class="text-primary">
+                <i class="fas fa-balance-scale me-1"></i>
+                Technique Comparison
+            </h6>
+            <p class="text-muted">Query: "${comparison.query}"</p>
+        </div>
+        
+        ${Object.entries(comparison.results).map(([techniqueId, result]) => `
+        <div class="card mb-2 ${result.status === 'success' ? 'border-success' : 'border-danger'}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">
+                            ${techniqueId.charAt(0).toUpperCase() + techniqueId.slice(1)} RAG
+                            ${result.status === 'success' ? 
+                                '<i class="fas fa-check-circle text-success ms-1"></i>' : 
+                                '<i class="fas fa-times-circle text-danger ms-1"></i>'
+                            }
+                        </h6>
+                        ${result.status === 'success' ? 
+                            `<small class="text-muted">Execution time: ${result.result.execution_time.toFixed(2)}s</small>` :
+                            `<small class="text-danger">${result.error}</small>`
+                        }
+                    </div>
+                    <span class="badge bg-${result.status === 'success' ? 'success' : 'danger'}">
+                        ${result.status}
+                    </span>
+                </div>
+            </div>
+        </div>
+        `).join('')}
+        
+        ${comparison.best_technique ? `
+        <div class="alert alert-success mt-3">
+            <i class="fas fa-trophy me-2"></i>
+            <strong>Best Technique:</strong> ${comparison.best_technique.charAt(0).toUpperCase() + comparison.best_technique.slice(1)} RAG
+        </div>
+        ` : ''}
+    `;
+    
+    comparisonSection.style.display = 'block';
+    comparisonSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Process project embeddings
+async function processProjectEmbeddings() {
+    try {
+        // Get projects first
+        const projectsResponse = await fetch('/ai-rag/projects');
+        const projectsData = await projectsResponse.json();
+        
+        if (projectsData.projects && projectsData.projects.length > 0) {
+            const projectId = projectsData.projects[0].id;
+            
+            const response = await fetch(`/ai-rag/projects/${projectId}/embeddings`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert(`Embeddings processed: ${result.embeddings_created} created, ${result.files_processed} files processed`);
+            } else {
+                throw new Error(result.detail || 'Processing failed');
+            }
+        } else {
+            alert('No projects available for embedding processing');
+        }
+        
+    } catch (error) {
+        console.error('Error processing embeddings:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// Utility functions
+function showLoading() {
+    const loadingSpinner = document.getElementById('query-loading');
+    if (loadingSpinner) {
+        loadingSpinner.style.display = 'block';
+    }
+}
+
+function hideLoading() {
+    const loadingSpinner = document.getElementById('query-loading');
+    if (loadingSpinner) {
+        loadingSpinner.style.display = 'none';
+    }
+}
+
+function updateStatusIndicator(elementId, isConnected) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const icon = element.querySelector('i');
+        if (isConnected) {
+            icon.className = icon.className.replace('text-muted', 'text-success');
+        } else {
+            icon.className = icon.className.replace('text-muted', 'text-danger');
+        }
+    }
+}
+
+// Keep existing functions for backward compatibility
 // Vector Database Management Functions
 function refreshVectorDbInfo() {
     fetch('/ai-rag/vector-db-info')
         .then(response => response.json())
         .then(data => {
             const infoDiv = document.getElementById('vector-db-info');
-            if (data.success) {
+            if (data.status === 'connected') {
                 infoDiv.innerHTML = `
                     <div class="alert alert-info">
-                        <strong>Total Collections:</strong> ${data.total_collections}<br>
-                        <strong>Database Type:</strong> ${data.db_type}<br>
                         <strong>Status:</strong> <span class="badge bg-success">Connected</span><br>
-                        <strong>Last Updated:</strong> ${data.last_updated}<br>
-                        <small class="text-muted">Collections from all ETL runs are accumulated globally</small>
+                        <strong>Collection:</strong> ${data.collection_name}<br>
+                        <strong>Database Type:</strong> Qdrant Vector Database<br>
+                        <small class="text-muted">Vector database is ready for queries</small>
                     </div>
                 `;
             } else {
@@ -654,9 +1195,15 @@ function showDataStats() {
         });
 }
 
-// Initialize vector database info on page load
+// Initialize enhanced functionality on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Load existing functionality
     refreshVectorDbInfo();
+    
+    // Load enhanced functionality
+    loadEnhancedSystemStatus();
+    loadAvailableTechniques();
+    setupEnhancedEventListeners();
 });
 </script>
 {% endblock %} 

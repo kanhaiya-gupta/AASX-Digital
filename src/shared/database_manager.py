@@ -140,14 +140,19 @@ class DatabaseProjectManager:
                             file_id TEXT PRIMARY KEY,
                             project_id TEXT NOT NULL,
                             filename TEXT NOT NULL,
+                            original_filename TEXT NOT NULL,
                             filepath TEXT NOT NULL,
                             file_type TEXT,
+                            file_type_description TEXT,
                             size INTEGER,
                             upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            description TEXT,
                             status TEXT DEFAULT 'not_processed',
                             processing_result TEXT,
                             metadata TEXT,
-                            FOREIGN KEY (project_id) REFERENCES projects (project_id)
+                            uploaded_by TEXT,
+                            FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE
                         )
                     ''')
                 elif table == 'processing_results':
@@ -161,8 +166,8 @@ class DatabaseProjectManager:
                             result_data TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            FOREIGN KEY (file_id) REFERENCES project_files (file_id),
-                            FOREIGN KEY (project_id) REFERENCES projects (project_id)
+                            FOREIGN KEY (file_id) REFERENCES project_files (file_id) ON DELETE CASCADE,
+                            FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE
                         )
                     ''')
                 elif table == 'twin_relationships':
@@ -179,7 +184,8 @@ class DatabaseProjectManager:
                             metadata TEXT,
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             last_sync TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            data_points INTEGER
+                            data_points INTEGER,
+                            FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE
                         )
                     ''')
                 elif table == 'twin_configurations':
@@ -550,8 +556,7 @@ class DatabaseProjectManager:
             self.conn.commit()
             self._update_project_stats(project_id)
             
-            # Also update files.json for backward compatibility
-            self._sync_files_json(project_id)
+            # Database-only approach - no JSON files needed
             
         except Exception as e:
             # Re-enable foreign key constraints in case of error
@@ -566,7 +571,7 @@ class DatabaseProjectManager:
             self.conn.commit()
             
             self._update_project_stats(project_id)
-            self._sync_files_json(project_id)
+            # Database-only approach - no JSON files needed
             
         except Exception as e:
             raise DatabaseManagerError(f"Failed to unregister file: {e}")
@@ -596,9 +601,14 @@ class DatabaseProjectManager:
                 ORDER BY upload_date DESC
             """, (project_id,))
             
+            # Get column names
+            columns = [description[0] for description in self.cursor.description]
+            
             files = []
             for row in self.cursor.fetchall():
-                files.append(dict(row))
+                # Create dictionary with column names as keys
+                file_dict = dict(zip(columns, row))
+                files.append(file_dict)
             
             return files
             
@@ -639,8 +649,7 @@ class DatabaseProjectManager:
                 ))
             
             self.conn.commit()
-            self._sync_files_json(project_id)
-            # No more auto-registration here; registration is explicit in the ETL route.
+            # Database-only approach - no JSON files needed
         except Exception as e:
             raise DatabaseManagerError(f"Failed to update file status: {e}")
     
@@ -666,38 +675,7 @@ class DatabaseProjectManager:
         except Exception as e:
             raise DatabaseManagerError(f"Failed to update project stats: {e}")
     
-    def _sync_files_json(self, project_id: str):
-        """Sync database files to files.json for backward compatibility."""
-        try:
-            files = self.list_project_files(project_id)
-            
-            # Convert database format to JSON format
-            json_files = []
-            for file_info in files:
-                json_file = {
-                    "id": file_info['file_id'],
-                    "filename": file_info['filename'],
-                    "original_filename": file_info['original_filename'],
-                    "project_id": file_info['project_id'],
-                    "filepath": file_info['filepath'],
-                    "size": file_info['size'],
-                    "upload_date": file_info['upload_date'],
-                    "updated_at": file_info['updated_at'],
-                    "description": file_info['description'],
-                    "status": file_info['status'],
-                    "file_type": file_info['file_type'],
-                    "file_type_description": file_info['file_type_description']
-                }
-                json_files.append(json_file)
-            
-            # Save to files.json
-            project_dir = self.get_project_dir(project_id)
-            files_json = project_dir / "files.json"
-            with open(files_json, "w", encoding="utf-8") as f:
-                json.dump(json_files, f, indent=2)
-                
-        except Exception as e:
-            print(f"Warning: Failed to sync files.json: {e}")
+
     
     # ==================== FILE UPLOAD OPERATIONS ====================
     
@@ -1062,13 +1040,18 @@ class DatabaseProjectManager:
             if not file_info:
                 return {'success': False, 'error': 'File not found'}
             
-            # Check if twin already exists
-            existing_twin = self.get_twin_by_aasx(file_info['filename'])
+            # Check if twin already exists for this specific project and file
+            existing_twin = self.get_twin_by_project_and_aasx(project_id, file_info['filename'])
             if existing_twin:
-                return {'success': False, 'error': 'Twin already exists for this file'}
+                return {'success': False, 'error': 'Twin already exists for this file in this project'}
             
-            # Generate twin ID
-            twin_id = f"twin_{file_info['filename'].replace('.aasx', '')}_{uuid.uuid4().hex[:8]}"
+            # Get project name for twin ID
+            project_metadata = self.get_project_metadata(project_id)
+            project_name = project_metadata.get('name', 'Unknown_Project').replace(' ', '_').replace('-', '_')
+            
+            # Generate human-readable twin ID: DT-{project_name}-{filename_without_extension}
+            filename_without_ext = file_info['filename'].replace('.aasx', '')
+            twin_id = f"DT-{project_name}-{filename_without_ext}"
             
             # Prepare twin data
             twin_record = {
@@ -1076,7 +1059,7 @@ class DatabaseProjectManager:
                 'aasx_filename': file_info['filename'],
                 'project_id': project_id,
                 'aas_id': twin_data.get('aas_id'),
-                'twin_name': twin_data.get('twin_name', f"Twin for {file_info['filename']}"),
+                'twin_name': twin_data.get('twin_name', f"Digital Twin - {project_name} - {filename_without_ext}"),
                 'twin_type': twin_data.get('twin_type', 'aasx'),
                 'status': 'active',
                 'metadata': json.dumps(twin_data.get('metadata', {})),
@@ -1105,6 +1088,58 @@ class DatabaseProjectManager:
                 'twin_name': twin_record['twin_name'],
                 'aasx_filename': twin_record['aasx_filename'],
                 'status': twin_record['status']
+            }
+            
+        except Exception as e:
+            self.conn.rollback()
+            return {'success': False, 'error': str(e)}
+    
+    def update_digital_twin(self, project_id: str, file_id: str, twin_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update an existing digital twin with new data"""
+        try:
+            # Get file info
+            file_info = self.get_file_info(project_id, file_id)
+            if not file_info:
+                return {'success': False, 'error': 'File not found'}
+            
+            # Find existing twin
+            existing_twin = self.get_twin_by_aasx(file_info['filename'])
+            if not existing_twin:
+                return {'success': False, 'error': 'Twin not found for this file'}
+            
+            twin_id = existing_twin['twin_id']
+            
+            # Update twin data
+            self.cursor.execute("""
+                UPDATE twin_relationships 
+                SET aas_id = ?, twin_name = ?, twin_type = ?, 
+                    metadata = ?, data_points = ?, last_updated = CURRENT_TIMESTAMP
+                WHERE twin_id = ?
+            """, (
+                twin_data.get('aas_id'),
+                twin_data.get('twin_name', existing_twin['twin_name']),
+                twin_data.get('twin_type', existing_twin['twin_type']),
+                json.dumps(twin_data.get('metadata', {})),
+                twin_data.get('data_points', existing_twin['data_points']),
+                twin_id
+            ))
+            
+            self.conn.commit()
+            
+            # Log the update event
+            self.log_twin_event(
+                twin_id, 
+                'twin_updated', 
+                f'Twin updated with AI/RAG insights. Data points: {twin_data.get("data_points", 0)}', 
+                'info'
+            )
+            
+            return {
+                'success': True,
+                'twin_id': twin_id,
+                'twin_name': twin_data.get('twin_name', existing_twin['twin_name']),
+                'aasx_filename': existing_twin['aasx_filename'],
+                'status': 'updated'
             }
             
         except Exception as e:
@@ -1380,6 +1415,31 @@ class DatabaseProjectManager:
             
         except Exception as e:
             print(f"Error getting twin by AASX: {e}")
+            return None
+    
+    def get_twin_by_project_and_aasx(self, project_id: str, aasx_filename: str) -> Optional[Dict[str, Any]]:
+        """Get twin by project ID and AASX filename"""
+        try:
+            self.cursor.execute('''
+                SELECT t.*, tc.description, tc.version, tc.owner, tc.configuration_data
+                FROM twin_relationships t
+                LEFT JOIN twin_configurations tc ON t.twin_id = tc.twin_id
+                WHERE t.project_id = ? AND t.aasx_filename = ?
+            ''', (project_id, aasx_filename))
+            
+            row = self.cursor.fetchone()
+            if row:
+                twin_dict = dict(row)
+                # Parse JSON fields
+                if twin_dict.get('metadata'):
+                    twin_dict['metadata'] = json.loads(twin_dict['metadata'])
+                if twin_dict.get('configuration_data'):
+                    twin_dict['configuration_data'] = json.loads(twin_dict['configuration_data'])
+                return twin_dict
+            return None
+            
+        except Exception as e:
+            print(f"Error getting twin by project and AASX filename: {e}")
             return None
     
     def get_sync_status(self, twin_id: str) -> Dict[str, Any]:

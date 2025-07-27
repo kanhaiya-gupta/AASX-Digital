@@ -4,36 +4,37 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 
-ANALYTICS_DB_PATH = Path('data/aasx_digital.db')  # Use a separate DB if desired
+# Use centralized database instead of separate database
+from src.shared.database_manager import DatabaseProjectManager
 
 class AnalyticsManager:
     """
     Centralized analytics manager for digital twin metrics, KPIs, and trends.
     All analytics API endpoints should use this class for querying and aggregation.
-    This version is decoupled from the live twin registry and uses a dedicated analytics table.
+    This version uses the centralized database manager instead of creating its own database.
     """
-    def __init__(self, db_path: Path = ANALYTICS_DB_PATH):
-        self.db_path = db_path
+    def __init__(self):
+        self.db_manager = DatabaseProjectManager()
         self._init_analytics_table()
 
     def _init_analytics_table(self):
-        """Create the twin_metrics table if it does not exist."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS twin_metrics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                twin_id TEXT NOT NULL,
-                metric_type TEXT NOT NULL,
-                metric_value REAL NOT NULL,
-                timestamp TEXT NOT NULL,
-                UNIQUE(twin_id, metric_type, timestamp)
-            )
-        ''')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_twin_metrics_twin_id ON twin_metrics(twin_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_twin_metrics_metric_type ON twin_metrics(metric_type)')
-        conn.commit()
-        conn.close()
+        """Create the twin_metrics table if it does not exist in the centralized database."""
+        try:
+            self.db_manager.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS twin_metrics (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    twin_id TEXT NOT NULL,
+                    metric_type TEXT NOT NULL,
+                    metric_value REAL NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    UNIQUE(twin_id, metric_type, timestamp)
+                )
+            ''')
+            self.db_manager.cursor.execute('CREATE INDEX IF NOT EXISTS idx_twin_metrics_twin_id ON twin_metrics(twin_id)')
+            self.db_manager.cursor.execute('CREATE INDEX IF NOT EXISTS idx_twin_metrics_metric_type ON twin_metrics(metric_type)')
+            self.db_manager.conn.commit()
+        except Exception as e:
+            print(f"Warning: Failed to initialize analytics table: {e}")
 
     def get_all_twins_metrics(self, metric_type: str = 'quality_score', days: int = 30) -> List[Dict[str, Any]]:
         """
@@ -45,20 +46,21 @@ class AnalyticsManager:
             List[Dict[str, Any]]: List of twins with their latest metric value.
         """
         since = (datetime.now() - timedelta(days=days)).isoformat()
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT twin_id, MAX(timestamp), metric_value
-            FROM twin_metrics
-            WHERE metric_type = ? AND timestamp >= ?
-            GROUP BY twin_id
-        ''', (metric_type, since))
-        results = cursor.fetchall()
-        conn.close()
-        return [
-            {'twin_id': row[0], 'timestamp': row[1], metric_type: row[2]}
-            for row in results
-        ]
+        try:
+            self.db_manager.cursor.execute('''
+                SELECT twin_id, MAX(timestamp), metric_value
+                FROM twin_metrics
+                WHERE metric_type = ? AND timestamp >= ?
+                GROUP BY twin_id
+            ''', (metric_type, since))
+            results = self.db_manager.cursor.fetchall()
+            return [
+                {'twin_id': row[0], 'timestamp': row[1], metric_type: row[2]}
+                for row in results
+            ]
+        except Exception as e:
+            print(f"Error getting twin metrics: {e}")
+            return []
 
     def get_twin_metrics(self, twin_id: str, metric_type: str = 'quality_score', days: int = 30) -> List[Dict[str, Any]]:
         """
@@ -71,20 +73,21 @@ class AnalyticsManager:
             List[Dict[str, Any]]: List of metric values with timestamps.
         """
         since = (datetime.now() - timedelta(days=days)).isoformat()
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT timestamp, metric_value
-            FROM twin_metrics
-            WHERE twin_id = ? AND metric_type = ? AND timestamp >= ?
-            ORDER BY timestamp ASC
-        ''', (twin_id, metric_type, since))
-        results = cursor.fetchall()
-        conn.close()
-        return [
-            {'timestamp': row[0], metric_type: row[1]}
-            for row in results
-        ]
+        try:
+            self.db_manager.cursor.execute('''
+                SELECT timestamp, metric_value
+                FROM twin_metrics
+                WHERE twin_id = ? AND metric_type = ? AND timestamp >= ?
+                ORDER BY timestamp ASC
+            ''', (twin_id, metric_type, since))
+            results = self.db_manager.cursor.fetchall()
+            return [
+                {'timestamp': row[0], metric_type: row[1]}
+                for row in results
+            ]
+        except Exception as e:
+            print(f"Error getting twin metrics: {e}")
+            return []
 
     def aggregate_kpis(self, metric_type: str = 'quality_score', days: int = 30) -> Dict[str, Any]:
         """
@@ -118,14 +121,14 @@ class AnalyticsManager:
         """
         if not timestamp:
             timestamp = datetime.now().isoformat()
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT OR IGNORE INTO twin_metrics (twin_id, metric_type, metric_value, timestamp)
-            VALUES (?, ?, ?, ?)
-        ''', (twin_id, metric_type, metric_value, timestamp))
-        conn.commit()
-        conn.close()
+        try:
+            self.db_manager.cursor.execute('''
+                INSERT OR IGNORE INTO twin_metrics (twin_id, metric_type, metric_value, timestamp)
+                VALUES (?, ?, ?, ?)
+            ''', (twin_id, metric_type, metric_value, timestamp))
+            self.db_manager.conn.commit()
+        except Exception as e:
+            print(f"Error inserting metric: {e}")
 
 # Global analytics manager instance
 analytics_manager = AnalyticsManager() 

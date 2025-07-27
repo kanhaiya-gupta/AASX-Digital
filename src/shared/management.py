@@ -116,11 +116,8 @@ class ProjectManager:
     def delete_project(self, project_id: str) -> bool:
         """Delete a project and all its files."""
         try:
-            project_dir = self.get_project_dir(project_id)
-            if project_dir.exists():
-                shutil.rmtree(project_dir)
-                return True
-            return False
+            # Use the database manager to delete the project (this handles both DB and filesystem)
+            return self.db_manager.delete_project(project_id)
         except Exception as e:
             raise FileManagementError(f"Failed to delete project {project_id}: {e}")
     
@@ -734,25 +731,36 @@ class ProjectManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    def register_digital_twin(self, project_id: str, file_id: str):
+    def register_digital_twin(self, project_id: str, file_id: str, twin_data: Dict[str, Any] = None):
         """Register a digital twin for the given file_id in the given project."""
         if self.use_database:
             # Use centralized DatabaseManager
-            twin_data = {
-                'twin_name': f'Twin_{file_id}',
-                'twin_type': 'aasx_digital_twin',
-                'description': f'Digital twin for file {file_id}',
-                'version': '1.0.0',
-                'owner': 'system',
-                'tags': ['aasx', 'digital_twin'],
-                'settings': {},
-                'metadata': {}
-            }
+            if twin_data is None:
+                twin_data = {
+                    'twin_name': f'Twin_{file_id}',
+                    'twin_type': 'aasx_digital_twin',
+                    'description': f'Digital twin for file {file_id}',
+                    'version': '1.0.0',
+                    'owner': 'system',
+                    'tags': ['aasx', 'digital_twin'],
+                    'settings': {},
+                    'metadata': {}
+                }
             return self.db_manager.register_digital_twin(project_id, file_id, twin_data)
         else:
             # Fallback for JSON-based system
             print(f"⚠️ Twin registration not supported in JSON mode for file {file_id}")
             return {'success': False, 'error': 'Twin registration not supported in JSON mode'}
+    
+    def update_digital_twin(self, project_id: str, file_id: str, twin_data: Dict[str, Any]):
+        """Update an existing digital twin with new data."""
+        if self.use_database:
+            # Use centralized DatabaseManager
+            return self.db_manager.update_digital_twin(project_id, file_id, twin_data)
+        else:
+            # Fallback for JSON-based system
+            print(f"⚠️ Twin update not supported in JSON mode for file {file_id}")
+            return {'success': False, 'error': 'Twin update not supported in JSON mode'}
 
 # ==================== BACKWARD COMPATIBILITY FUNCTIONS ====================
 
