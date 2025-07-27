@@ -1,0 +1,27 @@
+# AI/RAG Module Dependencies
+
+# Vector Database
+qdrant-client>=1.7.0
+
+# OpenAI for embeddings
+openai>=1.0.0
+
+# Sentence Transformers (alternative embedding provider)
+sentence-transformers>=2.2.0
+
+# Environment variable loading
+python-dotenv>=1.0.0
+
+# Data processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Image processing (for future image embeddings)
+Pillow>=10.0.0
+
+# PDF processing (for future PDF support)
+PyPDF2>=3.0.0
+
+# Utilities
+requests>=2.31.0
+tqdm>=4.65.0 

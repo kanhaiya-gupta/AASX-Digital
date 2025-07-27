@@ -1,0 +1,40 @@
+# Requirements for AI/RAG Processors
+# Install these packages for full processor functionality
+
+# Document Processing
+PyPDF2>=3.0.0
+pdfplumber>=0.9.0
+pymupdf>=1.23.0
+python-docx>=0.8.11
+textract>=1.6.5
+striprtf>=0.0.26
+
+# Image Processing and OCR
+pytesseract>=0.3.10
+Pillow>=10.0.0
+easyocr>=1.7.0
+paddleocr>=2.7.0
+numpy>=1.24.0
+
+# Code Processing
+# (No additional dependencies needed - uses standard library)
+
+# Spreadsheet Processing
+pandas>=2.0.0
+openpyxl>=3.1.0
+xlrd>=2.0.0
+odfpy>=1.4.0
+
+# CAD Processing
+ezdxf>=1.0.0
+trimesh>=3.20.0
+# OCE (OpenCascade) - install via conda: conda install -c conda-forge oce
+# ODA File Converter - commercial tool for DWG files
+
+# Optional: For better OCR performance
+# tesseract-ocr  # System package - install via package manager
+# antiword       # System package - install via package manager
+
+# Development and Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0 
