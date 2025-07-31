@@ -1,0 +1,70 @@
+<!-- Data Management Panel -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-info text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-folder me-2"></i>
+            Data Management
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- Use Cases Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-sitemap me-2"></i>
+                    Use Cases
+                </h6>
+                <div id="useCasesContainer">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-sitemap fa-3x mb-3 text-muted"></i>
+                        <h5>Loading Use Cases...</h5>
+                        <p>Please wait while we load the use cases</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Section (Hidden by default) -->
+        <div class="row mb-3" id="projectsSection" style="display: none;">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="text-success mb-0">
+                        <i class="fas fa-folder me-2"></i>
+                        Projects in: <span id="selectedUseCaseName" class="fw-bold"></span>
+                    </h6>
+                    <button class="btn btn-sm btn-outline-secondary" id="backToUseCases">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Use Cases
+                    </button>
+                </div>
+                <div id="projectsContainer">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
+                        <h5>No Projects Found</h5>
+                        <p>This use case has no projects yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.use-case-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.use-case-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.use-case-card .card-footer {
+    border-top: 1px solid rgba(0,0,0,0.125);
+}
+
+.use-case-card:hover .card-footer {
+    background-color: #f8f9fa;
+}
+</style>

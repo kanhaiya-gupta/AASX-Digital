@@ -1,72 +1,47 @@
 /**
- * AASX Project Manager Core
- * Main ProjectManager class for managing projects and use cases
+ * AASX Data Manager Core
+ * Main DataManager class for managing data, use cases, and projects
  */
 
 import { formatFileSize, getFileStatusInfo, getStatusBadgeColor } from '../../shared/utils.js';
 import { showSuccess, showError, showWarning } from '../../shared/alerts.js';
 
-export class ProjectManager {
+export class DataManager {
     constructor() {
         this.projects = [];
         this.useCases = [];
         this.categories = {};
-        this.isInitialized = false;
+        this.selectedUseCase = null;
         this.autoRefreshInterval = null;
-        this.progressInterval = null;
     }
 
     async init() {
-        console.log('🚀 Project Manager initializing...');
+        console.log('🚀 Data Manager initializing...');
         
         try {
-            // Initialize alert system
-            if (typeof initAlertSystem === 'function') {
-                initAlertSystem();
-            }
-            
-            // Setup event listeners
             this.setupEventListeners();
-            
-            // Initialize flow chart
             this.initFlowChart();
-            
-            // Load initial data
             await this.loadProjects();
-            
-            // Start auto-refresh
             this.startAutoRefresh();
             
-            this.isInitialized = true;
-            console.log('✅ Project Manager initialized successfully');
-            
+            console.log('✅ Data Manager initialized successfully');
         } catch (error) {
-            console.error('❌ Project Manager initialization failed:', error);
-            showError('Failed to initialize Project Manager');
+            console.error('❌ Data Manager initialization failed:', error);
         }
     }
 
     setupEventListeners() {
-        // File upload forms
-        $('#fileUploadForm').on('submit', (e) => this.handleFileUpload(e));
-        $('#urlUploadForm').on('submit', (e) => this.handleUrlUpload(e));
-        
-        // Use case change handlers
-        $('#uploadUseCaseSelect').on('change', () => this.onUseCaseChange('upload'));
-        $('#urlUseCaseSelect').on('change', () => this.onUseCaseChange('url'));
-        $('#etlUseCaseSelect').on('change', () => this.onUseCaseChange('etl'));
-        
-        // Data management
-        $('#createProjectForm').on('submit', (e) => this.createProject(e));
-        $('#refreshProjects').on('click', () => this.loadProjects());
-        $('#syncProjects').on('click', () => this.refreshAndSync());
-        
-        // ETL pipeline
-        $('#refreshEtlFiles').on('click', () => this.refreshEtlFiles());
-        
-        // Modal events
-        $('#createProjectModal').on('hidden.bs.modal', () => this.resetCreateProjectForm());
-        
+        // Back to use cases button
+        $(document).on('click', '#backToUseCases', () => {
+            this.showUseCases();
+        });
+
+        // Use case click handler
+        $(document).on('click', '.use-case-card', (e) => {
+            const useCaseId = $(e.currentTarget).data('use-case-id');
+            this.selectUseCase(useCaseId);
+        });
+
         console.log('📋 Event listeners setup complete');
     }
 
@@ -178,7 +153,7 @@ export class ProjectManager {
                 1: 'Upload AASX files to get started',
                 2: 'Create a new project to organize your files',
                 3: 'Refresh to see your uploaded files',
-                4: 'Select a project category to view files',
+                4: () => $('.category-card').first().attr('title'), // Tooltip for category card
                 5: 'View analytics and insights'
             };
             
@@ -192,7 +167,7 @@ export class ProjectManager {
         console.log('🔄 Loading projects and use cases...');
         
         try {
-            // Load projects and use cases in parallel
+            // Load both projects and use cases
             const [projectsResponse, useCasesResponse] = await Promise.all([
                 fetch('/api/aasx/projects'),
                 fetch('/api/aasx/use-cases')
@@ -212,45 +187,26 @@ export class ProjectManager {
                     console.log('🔍 Sample project structure:', this.projects[0]);
                 }
                 
-                // Categorize and render projects
-                this.categories = this.groupProjectsByCategory();
-                this.renderProjects();
+                // Group projects by use case (now async)
+                await this.groupProjectsByUseCase();
+                
+                // Show use cases by default
+                await this.showUseCases();
                 
                 // Update stats
                 await this.updateStats();
                 
-                // Update project selects
-                this.updateProjectSelects();
-                
             } else {
-                // Handle API errors properly
-                const projectsError = projectsResponse.ok ? null : `Projects API: ${projectsResponse.status} ${projectsResponse.statusText}`;
-                const useCasesError = useCasesResponse.ok ? null : `Use Cases API: ${useCasesResponse.status} ${useCasesResponse.statusText}`;
-                
-                const errorMessage = [projectsError, useCasesError].filter(Boolean).join(', ');
-                console.error('❌ API calls failed:', errorMessage);
-                
-                // Show user-friendly error message
+                console.error('❌ API calls failed:', {
+                    'Projects API': projectsResponse.status + ' ' + projectsResponse.statusText,
+                    'Use Cases API': useCasesResponse.status + ' ' + useCasesResponse.statusText
+                });
                 this.showDatabaseError('Failed to load data from database. Please ensure the database is properly initialized.');
-                
-                // Clear data to prevent stale state
-                this.projects = [];
-                this.useCases = [];
-                this.categories = {};
-                this.renderProjects();
-                this.updateStatsWithFallback();
             }
             
         } catch (error) {
-            console.error('Error loading projects:', error);
-            this.showDatabaseError('Database connection error. Please check your database setup.');
-            
-            // Clear data to prevent stale state
-            this.projects = [];
-            this.useCases = [];
-            this.categories = {};
-            this.renderProjects();
-            this.updateStatsWithFallback();
+            console.error('❌ Error loading data:', error);
+            this.showDatabaseError('Database error while loading data');
         }
     }
 
@@ -378,10 +334,11 @@ export class ProjectManager {
     }
 
     // Group projects by category
-    groupProjectsByCategory() {
+    groupProjectsByCategory(projects = null) {
+        const projectsToGroup = projects || this.projects;
         const categories = {};
         
-        this.projects.forEach(project => {
+        projectsToGroup.forEach(project => {
             const category = project.category || 'uncategorized';
             if (!categories[category]) {
                 categories[category] = [];
@@ -392,7 +349,50 @@ export class ProjectManager {
         return categories;
     }
 
-    // Render projects in the UI
+    // Group projects by use case
+    async groupProjectsByUseCase() {
+        const useCasesWithProjects = [];
+        
+        for (const useCase of this.useCases) {
+            try {
+                // Load projects for each use case using the same API as dropdown manager
+                console.log(`🔍 Data Manager: Loading projects for use case ${useCase.id} (${useCase.name})`);
+                const response = await fetch(`/api/aasx/use-cases/${useCase.id}/projects`);
+                if (response.ok) {
+                    const projects = await response.json();
+                    useCasesWithProjects.push({
+                        id: useCase.id,
+                        name: useCase.name,
+                        description: useCase.description,
+                        projects: projects
+                    });
+                    console.log(`📁 Data Manager: Loaded ${projects.length} projects for use case: ${useCase.name}`);
+                    console.log(`📋 Data Manager: Project names:`, projects.map(p => p.name));
+                } else {
+                    console.warn(`Failed to load projects for use case: ${useCase.name}`);
+                    useCasesWithProjects.push({
+                        id: useCase.id,
+                        name: useCase.name,
+                        description: useCase.description,
+                        projects: []
+                    });
+                }
+            } catch (error) {
+                console.error(`Error loading projects for use case ${useCase.name}:`, error);
+                useCasesWithProjects.push({
+                    id: useCase.id,
+                    name: useCase.name,
+                    description: useCase.description,
+                    projects: []
+                });
+            }
+        }
+        
+        this.useCases = useCasesWithProjects;
+        return this.useCases;
+    }
+
+    // Render projects in the UI (legacy method - now handled by showProjectsForUseCase)
     renderProjects() {
         const container = $('#projectsContainer');
         if (!container.length) {
@@ -483,6 +483,146 @@ export class ProjectManager {
         `;
     }
 
+    // Show use cases in the UI
+    async showUseCases() {
+        const container = $('#useCasesContainer');
+        const projectsSection = $('#projectsSection');
+        
+        if (!container.length) {
+            console.warn('Use cases container not found');
+            return;
+        }
+        
+        // Hide projects section, show use cases
+        projectsSection.hide();
+        
+        // Show loading state
+        container.html(`
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 class="text-muted">Loading Use Cases...</h5>
+                <p class="text-muted">Please wait while we load the use cases</p>
+            </div>
+        `);
+        
+        try {
+            // Group projects by use case (now async)
+            const useCasesWithProjects = await this.groupProjectsByUseCase();
+            
+            if (useCasesWithProjects.length === 0) {
+                container.html(`
+                    <div class="text-center py-5">
+                        <i class="fas fa-sitemap fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No use cases found</h5>
+                        <p class="text-muted">Create your first use case to get started</p>
+                    </div>
+                `);
+                return;
+            }
+            
+            // Render use cases
+            let html = '<div class="row">';
+            useCasesWithProjects.forEach(useCase => {
+                html += this.renderUseCaseCard(useCase);
+            });
+            html += '</div>';
+            
+            container.html(html);
+        } catch (error) {
+            console.error('Error loading use cases:', error);
+            container.html(`
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h5 class="text-danger">Error Loading Use Cases</h5>
+                    <p class="text-muted">Please refresh the page to try again</p>
+                </div>
+            `);
+        }
+    }
+
+    // Render a single use case card
+    renderUseCaseCard(useCase) {
+        const projectCount = useCase.projects ? useCase.projects.length : 0;
+        const categoryIcon = this.getCategoryIcon(useCase.category || 'general');
+        
+        return `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card use-case-card h-100" data-use-case-id="${useCase.id}" style="cursor: pointer;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title mb-0">
+                                <i class="${categoryIcon} me-2"></i>${useCase.name}
+                            </h6>
+                            <span class="badge bg-primary">${projectCount} projects</span>
+                        </div>
+                        <p class="card-text text-muted small">${useCase.description || 'No description'}</p>
+                        <div class="use-case-stats">
+                            <small class="text-muted">
+                                <i class="fas fa-folder me-1"></i>${projectCount} projects
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <button class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-eye me-1"></i>View Projects
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Handle use case selection
+    selectUseCase(useCaseId) {
+        const useCase = this.useCases.find(uc => uc.id === useCaseId);
+        if (!useCase) {
+            console.error('Use case not found:', useCaseId);
+            return;
+        }
+        
+        this.selectedUseCase = useCase;
+        this.showProjectsForUseCase(useCase);
+    }
+
+    // Show projects for a specific use case
+    showProjectsForUseCase(useCase) {
+        const projectsSection = $('#projectsSection');
+        const useCasesContainer = $('#useCasesContainer');
+        const selectedUseCaseName = $('#selectedUseCaseName');
+        const projectsContainer = $('#projectsContainer');
+        
+        // Update UI
+        selectedUseCaseName.text(useCase.name);
+        useCasesContainer.hide();
+        projectsSection.show();
+        
+        // Render projects
+        if (!useCase.projects || useCase.projects.length === 0) {
+            projectsContainer.html(`
+                <div class="text-center py-5">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No projects found</h5>
+                    <p class="text-muted">This use case has no projects yet</p>
+                    <button class="btn btn-primary" onclick="showCreateProjectModal()">
+                        <i class="fas fa-plus me-2"></i>Create Project
+                    </button>
+                </div>
+            `);
+            return;
+        }
+        
+        // Render projects by category
+        let html = '';
+        const categories = this.groupProjectsByCategory(useCase.projects);
+        Object.keys(categories).forEach(category => {
+            html += this.renderProjectCategory(category, categories[category]);
+        });
+        
+        projectsContainer.html(html);
+    }
+
     // Get category icon
     getCategoryIcon(category) {
         const icons = {
@@ -533,4 +673,4 @@ export class ProjectManager {
 }
 
 // Export the class
-export default ProjectManager;
+export default DataManager;

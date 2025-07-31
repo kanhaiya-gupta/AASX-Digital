@@ -14,39 +14,56 @@ console.log('✅ AASX index.js: Shared utilities imported');
 
 // Import AASX modules
 console.log('📦 AASX index.js: Importing AASX modules...');
-import ProjectManager from './project-manager/core.js';
+import DataManager from './data-manager/core.js';
 import { AASXETLPipeline } from './etl-pipeline/core.js';
+import { dropdownManager } from './shared/dropdown-manager.js';
 console.log('✅ AASX index.js: AASX modules imported');
 
 // Global instances
-let projectManager = null;
+let dataManager = null;
 let aasxETLPipeline = null;
+let isInitialized = false;
 
 /**
  * Initialize AASX Module
  * Sets up all AASX components and functionality
  */
 export async function initAASXModule() {
+    if (isInitialized) {
+        console.log('⚠️ AASX module already initialized, skipping...');
+        return;
+    }
+    
     console.log('🚀 AASX Digital Twin Analytics Framework initializing...');
     
     try {
         // Initialize alert system first
         initAlertSystem();
         
-        // Initialize Project Manager
-        projectManager = new ProjectManager();
-        await projectManager.init();
+        // Initialize Data Manager
+        dataManager = new DataManager();
+        await dataManager.init();
         
         // Initialize ETL Pipeline
         aasxETLPipeline = new AASXETLPipeline();
         await aasxETLPipeline.init();
         
+        // Make ETL pipeline globally accessible for HTML callbacks
+        window.aasxETLPipeline = aasxETLPipeline;
+        
+        // Initialize Dropdown Manager
+        await dropdownManager.init();
+        
+        // Make dropdown manager globally accessible
+        window.dropdownManager = dropdownManager;
+        
+        isInitialized = true;
         console.log('✅ AASX Digital Twin Analytics Framework initialized');
         
         // Dispatch custom event for other modules
         window.dispatchEvent(new CustomEvent('aasxModuleReady', {
             detail: {
-                projectManager,
+                dataManager,
                 aasxETLPipeline
             }
         }));
@@ -58,10 +75,10 @@ export async function initAASXModule() {
 }
 
 /**
- * Get Project Manager Instance
+ * Get Data Manager Instance
  */
-export function getProjectManager() {
-    return projectManager;
+export function getDataManager() {
+    return dataManager;
 }
 
 /**
@@ -75,9 +92,9 @@ export function getAASXETLPipeline() {
  * Cleanup AASX Module
  */
 export function cleanupAASXModule() {
-    if (projectManager) {
-        projectManager.destroy();
-        projectManager = null;
+    if (dataManager) {
+        dataManager.destroy();
+        dataManager = null;
     }
     
     if (aasxETLPipeline) {
@@ -85,6 +102,11 @@ export function cleanupAASXModule() {
         aasxETLPipeline = null;
     }
     
+    if (dropdownManager) {
+        dropdownManager.destroy();
+    }
+    
+    isInitialized = false;
     console.log('🧹 AASX module cleaned up');
 }
 
@@ -92,16 +114,16 @@ export function cleanupAASXModule() {
  * Check if AASX Module is Ready
  */
 export function isAASXModuleReady() {
-    return projectManager && aasxETLPipeline && 
-           projectManager.isInitialized && aasxETLPipeline.isInitialized;
+    return dataManager && aasxETLPipeline &&
+           dataManager.isInitialized && aasxETLPipeline.isInitialized;
 }
 
 /**
  * Refresh AASX Data
  */
 export async function refreshAASXData() {
-    if (projectManager) {
-        await projectManager.loadProjects();
+    if (dataManager) {
+        await dataManager.loadProjects();
     }
     
     if (aasxETLPipeline) {
@@ -110,11 +132,14 @@ export async function refreshAASXData() {
 }
 
 // Auto-initialize when DOM is ready
+let autoInitCalled = false;
 $(document).ready(() => {
-    // Check if we're on an AASX page
-    if (window.location.pathname.includes('/aasx')) {
+    // Check if we're on an AASX page and not already initialized
+    if (window.location.pathname.includes('/aasx') && !autoInitCalled) {
+        autoInitCalled = true;
         initAASXModule().catch(error => {
             console.error('Failed to initialize AASX module:', error);
+            autoInitCalled = false; // Reset flag on error
         });
     }
 });
@@ -125,7 +150,7 @@ window.AASXModule = {
     cleanup: cleanupAASXModule,
     isReady: isAASXModuleReady,
     refresh: refreshAASXData,
-    getProjectManager,
+    getDataManager,
     getAASXETLPipeline
 };
 
@@ -135,6 +160,6 @@ export default {
     cleanup: cleanupAASXModule,
     isReady: isAASXModuleReady,
     refresh: refreshAASXData,
-    getProjectManager,
+    getDataManager,
     getAASXETLPipeline
 };

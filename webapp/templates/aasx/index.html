@@ -2,6 +2,11 @@
 
 {% block title %}AASX Data Management & Processing{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/data-management.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/aasx.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <!-- Header -->
@@ -32,7 +37,7 @@
         <!-- Left Column - Data Management -->
         <div class="col-lg-8">
             <!-- Include Data Management Component -->
-            {% include 'aasx/components/project_management.html' %}
+            {% include 'aasx/components/data_management.html' %}
             
             <!-- File Upload Section -->
             {% include 'aasx/components/file_upload.html' %}
@@ -58,12 +63,9 @@
     console.log('🔍 AASX Template: Loading modular AASX system...');
     
     try {
-        const { initAASXModule } = await import("{{ url_for('static', path='/js/aasx/index.js') }}");
+        // Just import the module - initialization will happen automatically
+        await import("{{ url_for('static', path='/js/aasx/index.js') }}");
         console.log('✅ AASX Template: Modular system imported successfully');
-        
-        // Initialize the modular AASX system
-        await initAASXModule();
-        console.log('✅ AASX Template: Modular system initialized');
         
     } catch (error) {
         console.error('❌ AASX Template: Modular system failed to load:', error);

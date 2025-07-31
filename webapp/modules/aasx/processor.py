@@ -221,17 +221,29 @@ class AASXProcessor:
                         elif status == 'failed':
                             failed_files += 1
             
+            # Calculate success rate
+            success_rate = 0.0
+            if total_files > 0:
+                success_rate = (processed_files / total_files) * 100
+            
             return {
                 'total_projects': len(projects),
                 'total_files': total_files,
                 'processed_files': processed_files,
                 'failed_files': failed_files,
-                'pending_files': total_files - processed_files - failed_files
+                'pending_files': total_files - processed_files - failed_files,
+                'success_rate': success_rate
             }
             
         except Exception as e:
             return {
-                'error': str(e)
+                'error': str(e),
+                'total_projects': 0,
+                'total_files': 0,
+                'processed_files': 0,
+                'failed_files': 0,
+                'pending_files': 0,
+                'success_rate': 0.0
             }
 
 # Global instance

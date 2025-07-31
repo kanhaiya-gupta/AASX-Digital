@@ -42,21 +42,33 @@ class UseCaseService:
                     'general': 'fas fa-chart-line'
                 }
                 
+                # Extract metadata if it exists
+                metadata = {}
+                if hasattr(use_case, 'metadata') and use_case.metadata:
+                    if isinstance(use_case.metadata, str):
+                        import json
+                        try:
+                            metadata = json.loads(use_case.metadata)
+                        except:
+                            metadata = {}
+                    elif isinstance(use_case.metadata, dict):
+                        metadata = use_case.metadata
+                
                 api_use_case = {
-                    "id": use_case.get('id'),
-                    "name": use_case.get('name'),
-                    "description": use_case.get('description'),
-                    "category": use_case.get('category'),
-                    "icon": category_icons.get(use_case.get('category'), 'fas fa-cog'),
-                    "industry": use_case.get('industry'),
-                    "complexity": use_case.get('complexity'),
-                    "expected_duration": use_case.get('expected_duration'),
-                    "data_points": use_case.get('data_points'),
-                    "physics_type": use_case.get('physics_type'),
-                    "tags": use_case.get('tags', []),
-                    "famous_examples": use_case.get('famous_examples', []),
-                    "optimization_targets": use_case.get('optimization_targets', []),
-                    "materials": use_case.get('materials', [])
+                    "id": use_case.use_case_id,
+                    "name": use_case.name,
+                    "description": use_case.description,
+                    "category": use_case.category,
+                    "icon": category_icons.get(use_case.category, 'fas fa-cog'),
+                    "industry": metadata.get('industry'),
+                    "complexity": metadata.get('complexity'),
+                    "expected_duration": metadata.get('expected_duration'),
+                    "data_points": metadata.get('data_points'),
+                    "physics_type": metadata.get('physics_type'),
+                    "tags": metadata.get('tags', []),
+                    "famous_examples": metadata.get('famous_examples', []),
+                    "optimization_targets": metadata.get('optimization_targets', []),
+                    "materials": metadata.get('materials', [])
                 }
                 api_use_cases.append(api_use_case)
             
@@ -69,7 +81,9 @@ class UseCaseService:
         """Get a specific use case by ID"""
         try:
             use_case = self.use_case_repo.get_by_id(use_case_id)
-            return use_case.to_dict() if use_case else None
+            if use_case:
+                return use_case.to_dict()
+            return None
         except Exception as e:
             raise Exception(f"Failed to get use case {use_case_id}: {str(e)}")
     

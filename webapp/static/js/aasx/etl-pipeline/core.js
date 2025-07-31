@@ -67,10 +67,7 @@ export class AASXETLPipeline {
 
     initializeProgressCircles() {
         try {
-            // Initialize progress circles with 0 progress
-            this.updateProgressCircle('extractProgress', 0);
-            this.updateProgressCircle('transformProgress', 0);
-            this.updateProgressCircle('loadProgress', 0);
+            // Initialize overall progress circle with 0 progress
             this.updateProgressCircle('overallProgress', 0);
         } catch (error) {
             console.warn('Progress circles initialization failed:', error.message);
@@ -124,7 +121,7 @@ export class AASXETLPipeline {
         this.startProgressSimulation();
 
         try {
-            const response = await fetch('/aasx/api/etl/run', {
+            const response = await fetch('/api/aasx/etl/run', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -152,12 +149,7 @@ export class AASXETLPipeline {
         this.progressInterval = setInterval(() => {
             this.currentProgress.overall += Math.random() * 5;
             if (this.currentProgress.overall > 100) this.currentProgress.overall = 100;
-            this.updateETLProgress(
-                this.currentProgress.overall * 0.3,
-                this.currentProgress.overall * 0.4,
-                this.currentProgress.overall * 0.3,
-                this.currentProgress.overall
-            );
+            this.updateETLProgress(this.currentProgress.overall);
         }, 500);
     }
 
@@ -168,10 +160,7 @@ export class AASXETLPipeline {
         }
     }
 
-    updateETLProgress(extract, transform, load, overall) {
-        this.updateProgressCircle('extractProgress', extract);
-        this.updateProgressCircle('transformProgress', transform);
-        this.updateProgressCircle('loadProgress', load);
+    updateETLProgress(overall) {
         this.updateProgressCircle('overallProgress', overall);
     }
 
@@ -210,16 +199,20 @@ export class AASXETLPipeline {
 
     async refreshFiles() {
         try {
-            const response = await fetch('/aasx/api/files');
+            const response = await fetch('/api/aasx/files');
             if (response.ok) {
                 this.files = await response.json();
                 this.renderFileList();
                 console.log(`📁 Loaded ${this.files.length} files`);
             } else {
-                showError('Failed to refresh files');
+                console.warn('No files endpoint available yet - this is expected for new installations');
+                this.files = [];
+                this.renderFileList();
             }
         } catch (error) {
-            showError(`Error refreshing files: ${error.message}`);
+            console.warn('Files endpoint not available yet:', error.message);
+            this.files = [];
+            this.renderFileList();
         }
     }
 
@@ -341,6 +334,91 @@ export class AASXETLPipeline {
         $('#processingMode').val('single');
         $('#batchSize').val('10');
         showInfo('Configuration reset to defaults');
+    }
+
+    renderFileList() {
+        const container = $('#etlFileList');
+        if (!container.length) {
+            console.warn('ETL file list container not found');
+            return;
+        }
+
+        if (this.files.length === 0) {
+            container.html(`
+                <div class="text-center py-4">
+                    <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No AASX files available</h6>
+                    <p class="text-muted small">Upload AASX files to projects to start ETL processing</p>
+                </div>
+            `);
+            this.updateSelectedCount();
+            return;
+        }
+
+        let html = '';
+        this.files.forEach(file => {
+            const isSelected = this.selectedFiles.has(file.filename);
+            const statusColor = this.getFileStatusColor(file.status || 'not_processed');
+            const statusText = this.getFileStatusText(file.status || 'not_processed');
+            
+            html += `
+                <div class="file-item d-flex align-items-center p-2 border-bottom">
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" 
+                               id="file_${file.file_id}" 
+                               ${isSelected ? 'checked' : ''}
+                               onchange="window.aasxETLPipeline.toggleFileSelection('${file.filename}', this.checked)">
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${file.filename}</h6>
+                                <small class="text-muted">${file.description || 'No description'}</small>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-folder me-1"></i>${file.project_name || 'Unknown Project'}
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-hdd me-1"></i>${formatFileSize(file.size || 0)}
+                                </small>
+                            </div>
+                            <span class="badge ${statusColor}">${statusText}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.html(html);
+        this.updateSelectedCount();
+    }
+
+    toggleFileSelection(filename, checked) {
+        if (checked) {
+            this.selectedFiles.add(filename);
+        } else {
+            this.selectedFiles.delete(filename);
+        }
+        this.updateSelectedCount();
+    }
+
+    getFileStatusColor(status) {
+        const colors = {
+            'processed': 'bg-success',
+            'processing': 'bg-warning',
+            'failed': 'bg-danger',
+            'not_processed': 'bg-secondary'
+        };
+        return colors[status] || 'bg-secondary';
+    }
+
+    getFileStatusText(status) {
+        const texts = {
+            'processed': 'Processed',
+            'processing': 'Processing',
+            'failed': 'Failed',
+            'not_processed': 'Pending'
+        };
+        return texts[status] || 'Unknown';
     }
 
     // Cleanup method

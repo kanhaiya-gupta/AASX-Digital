@@ -43,11 +43,20 @@ class ProjectRepository(BaseRepository[Project]):
     def get_by_use_case_id(self, use_case_id: str) -> List[Dict[str, Any]]:
         """Get projects linked to a specific use case as dictionaries."""
         query = """
-            SELECT p.* FROM projects p
+            SELECT p.*, puc.use_case_id FROM projects p
             JOIN project_use_case_links puc ON p.project_id = puc.project_id
             WHERE puc.use_case_id = ?
         """
         results = self.db_manager.execute_query(query, (use_case_id,))
+        return results
+    
+    def get_all_with_use_cases(self) -> List[Dict[str, Any]]:
+        """Get all projects with their use case relationships."""
+        query = """
+            SELECT p.*, puc.use_case_id FROM projects p
+            LEFT JOIN project_use_case_links puc ON p.project_id = puc.project_id
+        """
+        results = self.db_manager.execute_query(query)
         return results
     
     def get_by_owner(self, user_id: str) -> List[Project]:

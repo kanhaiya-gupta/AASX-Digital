@@ -50,8 +50,8 @@ class ProjectService:
                 # Get projects for specific use case
                 projects = self.project_repo.get_by_use_case_id(use_case_id)
             else:
-                # Get all projects
-                projects = self.project_repo.get_all()
+                # Get all projects with their use case relationships
+                projects = self.project_repo.get_all_with_use_cases()
             
             return [project.to_dict() if hasattr(project, 'to_dict') else project for project in projects]
         except Exception as e:

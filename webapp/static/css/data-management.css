@@ -1,0 +1,275 @@
+/* Data Management Interface Styles */
+/* ================================= */
+
+/* Use Case Cards */
+.use-case-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.use-case-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+    border-color: #007bff;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.use-case-card .card-body {
+    padding: 1.5rem;
+}
+
+.use-case-card .card-title {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.use-case-card .card-text {
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+.use-case-card .badge {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.use-case-card .use-case-stats {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.use-case-card .card-footer {
+    background: transparent;
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+/* Project Cards */
+.project-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    background: #ffffff;
+}
+
+.project-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: #28a745;
+}
+
+.project-card .card-body {
+    padding: 1.25rem;
+}
+
+.project-card .card-title {
+    color: #495057;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.project-card .card-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.project-card .project-stats {
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #f8f9fa;
+}
+
+.project-card .card-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    padding: 0.75rem 1.25rem;
+}
+
+/* Category Sections */
+.category-section {
+    margin-bottom: 2rem;
+}
+
+.category-title {
+    color: #495057;
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.category-title i {
+    color: #007bff;
+}
+
+.category-title .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Navigation and Breadcrumbs */
+#projectsSection .d-flex {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1.5rem;
+}
+
+#selectedUseCaseName {
+    color: #28a745;
+    font-weight: 700;
+}
+
+#backToUseCases {
+    transition: all 0.2s ease;
+}
+
+#backToUseCases:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+/* Loading States */
+.loading-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.loading-state i {
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.loading-state h5 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.loading-state p {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state i {
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.empty-state h5 {
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #adb5bd;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .use-case-card .card-body {
+        padding: 1rem;
+    }
+    
+    .project-card .card-body {
+        padding: 1rem;
+    }
+    
+    .category-title {
+        font-size: 1.1rem;
+    }
+    
+    #projectsSection .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    #backToUseCases {
+        align-self: flex-start;
+    }
+}
+
+/* Animation for card transitions */
+.use-case-card,
+.project-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hover effects for interactive elements */
+.use-case-card:hover .card-title {
+    color: #007bff;
+}
+
+.project-card:hover .card-title {
+    color: #28a745;
+}
+
+/* Status badges */
+.badge.bg-success {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+/* Custom scrollbar for long lists */
+#useCasesContainer,
+#projectsContainer {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#useCasesContainer::-webkit-scrollbar,
+#projectsContainer::-webkit-scrollbar {
+    width: 6px;
+}
+
+#useCasesContainer::-webkit-scrollbar-track,
+#projectsContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#useCasesContainer::-webkit-scrollbar-thumb,
+#projectsContainer::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#useCasesContainer::-webkit-scrollbar-thumb:hover,
+#projectsContainer::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+} 

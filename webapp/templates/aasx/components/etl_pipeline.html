@@ -25,32 +25,28 @@
                             <i class="fas fa-list me-2"></i>
                             Project Files
                         </h6>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label fw-bold mb-0">Select Use Case:</label>
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="refreshEtlFiles">
-                                    <i class="fas fa-sync-alt me-1"></i>
-                                    Refresh Files
-                                </button>
+                        <div class="dropdown-section">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-bold mb-0">Select Use Case:</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="refreshEtlFiles">
+                                        <i class="fas fa-sync-alt me-1"></i>
+                                        Refresh Files
+                                    </button>
+                                </div>
+                                <select class="form-select use-case-select mb-2" id="etlUseCaseSelect">
+                                    <option value="">Choose a use case...</option>
+                                </select>
                             </div>
-                            <select class="form-select mb-2" id="etlUseCaseSelect">
-                                <option value="">Choose a use case...</option>
-                                <option value="thermal">🔥 Thermal Analysis</option>
-                                <option value="structural">🏗️ Structural Analysis</option>
-                                <option value="fluid_dynamics">💧 Fluid Dynamics</option>
-                                <option value="multi_physics">🔗 Multi-Physics</option>
-                                <option value="industrial">🏭 Industrial Applications</option>
-                                <option value="other">🔬 Other Projects Analysis</option>
-                            </select>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold mb-0">Select Project:</label>
+                                <select class="form-select project-select" id="etlProjectSelect">
+                                    <option value="">Choose a project...</option>
+                                    <option value="" disabled>Select a use case first to see available projects</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold mb-0">Select Project:</label>
-                            <select class="form-select" id="etlProjectSelect" disabled>
-                                <option value="">Choose a project...</option>
-                            </select>
-                            <small class="form-text text-muted">Select a use case first to see available projects</small>
-                        </div>
-                        <div id="etlFilesList">
+                        <div class="file-list" id="etlFilesList">
                             <div class="text-center text-muted py-4">
                                 <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
                                 <h5>No Files Available</h5>
