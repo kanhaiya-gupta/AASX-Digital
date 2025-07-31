@@ -1,0 +1,132 @@
+<!-- Results Visualization -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-gradient-warning text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-chart-line me-2"></i>
+            Advanced Results Visualization
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Visualization Type</label>
+                <select class="form-select" id="visualization-type">
+                    <option value="contour">Contour Plot</option>
+                    <option value="vector">Vector Field</option>
+                    <option value="streamline">Streamlines</option>
+                    <option value="animation">Animation</option>
+                    <option value="3d_surface">3D Surface</option>
+                    <option value="scatter">Scatter Plot</option>
+                    <option value="line">Line Plot</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Variable</label>
+                <select class="form-select" id="visualization-variable">
+                    <option value="temperature">Temperature</option>
+                    <option value="pressure">Pressure</option>
+                    <option value="velocity">Velocity</option>
+                    <option value="stress">Stress</option>
+                    <option value="displacement">Displacement</option>
+                    <option value="strain">Strain</option>
+                    <option value="heat_flux">Heat Flux</option>
+                    <option value="electric_field">Electric Field</option>
+                    <option value="magnetic_field">Magnetic Field</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Time Step</label>
+                <input type="range" class="form-range" id="time-slider" min="0" max="100" value="0">
+                <small class="text-muted">Time: <span id="time-display">0.0s</span></small>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Color Scale</label>
+                <select class="form-select" id="color-scale">
+                    <option value="viridis">Viridis</option>
+                    <option value="plasma">Plasma</option>
+                    <option value="inferno">Inferno</option>
+                    <option value="magma">Magma</option>
+                    <option value="coolwarm">Cool-Warm</option>
+                    <option value="rainbow">Rainbow</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Advanced Visualization Options -->
+        <div class="card bg-light border-0 mb-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-cog me-1"></i>
+                    Visualization Options
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label small">Show Mesh</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="show-mesh" checked>
+                            <label class="form-check-label" for="show-mesh">Display mesh</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Show Boundaries</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="show-boundaries" checked>
+                            <label class="form-check-label" for="show-boundaries">Display boundaries</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Show Vectors</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="show-vectors">
+                            <label class="form-check-label" for="show-vectors">Display vectors</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Auto Scale</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="auto-scale" checked>
+                            <label class="form-check-label" for="auto-scale">Auto scale</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="visualization-container" style="height: 500px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <div class="text-center text-muted">
+                <i class="fas fa-chart-area fa-3x mb-3"></i>
+                <p>Select a simulation to view results</p>
+                <small>Advanced visualization with multiple plot types and real-time updates</small>
+            </div>
+        </div>
+        
+        <!-- Visualization Controls -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="export-plot-btn">
+                        <i class="fas fa-download me-1"></i>Export Plot
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="screenshot-btn">
+                        <i class="fas fa-camera me-1"></i>Screenshot
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm" id="animation-btn">
+                        <i class="fas fa-play me-1"></i>Create Animation
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-outline-success btn-sm" id="compare-results-btn">
+                        <i class="fas fa-balance-scale me-1"></i>Compare Results
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm" id="statistics-btn">
+                        <i class="fas fa-chart-bar me-1"></i>Statistics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

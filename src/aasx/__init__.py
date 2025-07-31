@@ -5,17 +5,26 @@ This package contains the core AASX processing logic including:
 - ETL pipeline for AASX data processing using external .NET processor
 - AASX file extraction and generation orchestration
 - Data transformation and validation
+- Round-trip conversion capabilities
 """
 
-# New modular backend imports
-from .aasx_extraction import extract_aasx, batch_extract
-from .aasx_generator import generate_aasx, batch_generate
+# Unified AASX processor imports
+from .aasx_processor import (
+    extract_aasx, 
+    batch_extract,
+    generate_aasx, 
+    generate_aasx_from_structured,
+    batch_generate,
+    round_trip_conversion
+)
 
 __all__ = [
     'extract_aasx',
     'batch_extract', 
     'generate_aasx',
-    'batch_generate'
+    'generate_aasx_from_structured',
+    'batch_generate',
+    'round_trip_conversion'
 ]
 
-__version__ = '1.0.0' 
+__version__ = '2.0.0' 

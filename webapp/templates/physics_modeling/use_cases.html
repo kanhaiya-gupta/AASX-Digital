@@ -1,0 +1,799 @@
+{% extends "base.html" %}
+
+{% block title %}Physics Modeling Use Cases - AASX Digital Twin Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/physics_modeling.css') }}">
+<style>
+.use-case-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.use-case-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.use-case-detail {
+    display: none;
+}
+
+.use-case-detail.active {
+    display: block;
+}
+
+.industry-badge {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.famous-example {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+.optimization-target {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-rocket me-2"></i>
+                            Physics Modeling Use Cases
+                        </h5>
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-light btn-sm me-3" id="createUseCaseBtn">
+                                <i class="fas fa-plus me-1"></i>
+                                Create New Use Case
+                            </button>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="use-project-data-toggle" checked>
+                                <label class="form-check-label text-white" for="use-project-data-toggle">
+                                    <i class="fas fa-database me-1"></i>
+                                    Use Real Projects
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <span id="use-case-description">
+                            Manage and create physics modeling use cases. Create new use cases with detailed specifications, 
+                            or view existing ones from your projects and framework templates.
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Case Categories -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-layer-group me-2"></i>
+                        Use Case Categories
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center p-3 border rounded use-case-category" data-category="thermal">
+                                <i class="fas fa-fire fa-2x text-danger mb-2"></i>
+                                <h6>Thermal Analysis</h6>
+                                <small class="text-muted">5 use cases</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center p-3 border rounded use-case-category" data-category="structural">
+                                <i class="fas fa-cube fa-2x text-warning mb-2"></i>
+                                <h6>Structural Analysis</h6>
+                                <small class="text-muted">5 use cases</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center p-3 border rounded use-case-category" data-category="fluid_dynamics">
+                                <i class="fas fa-water fa-2x text-info mb-2"></i>
+                                <h6>Fluid Dynamics</h6>
+                                <small class="text-muted">5 use cases</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center p-3 border rounded use-case-category" data-category="multi_physics">
+                                <i class="fas fa-link fa-2x text-success mb-2"></i>
+                                <h6>Multi-Physics</h6>
+                                <small class="text-muted">5 use cases</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center p-3 border rounded use-case-category" data-category="industrial">
+                                <i class="fas fa-industry fa-2x text-secondary mb-2"></i>
+                                <h6>Industrial Applications</h6>
+                                <small class="text-muted">6 use cases</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <div class="text-center p-3 border rounded use-case-category" data-category="hydrogen">
+                                <i class="fas fa-leaf fa-2x text-success mb-2"></i>
+                                <h6>Hydrogen Economy</h6>
+                                <small class="text-muted">Special focus</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases Content -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Use Cases Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Thermal Analysis Use Cases -->
+                    <div class="use-case-section" id="thermal-section">
+                        <h4 class="mb-4">
+                            <i class="fas fa-fire text-danger me-2"></i>
+                            Thermal Analysis Use Cases
+                        </h4>
+                        <div class="row" id="thermal-use-cases">
+                            <!-- Thermal use cases will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Structural Analysis Use Cases -->
+                    <div class="use-case-section" id="structural-section" style="display: none;">
+                        <h4 class="mb-4">
+                            <i class="fas fa-cube text-warning me-2"></i>
+                            Structural Analysis Use Cases
+                        </h4>
+                        <div class="row" id="structural-use-cases">
+                            <!-- Structural use cases will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Fluid Dynamics Use Cases -->
+                    <div class="use-case-section" id="fluid_dynamics-section" style="display: none;">
+                        <h4 class="mb-4">
+                            <i class="fas fa-water text-info me-2"></i>
+                            Fluid Dynamics Use Cases
+                        </h4>
+                        <div class="row" id="fluid_dynamics-use-cases">
+                            <!-- Fluid use cases will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Multi-Physics Use Cases -->
+                    <div class="use-case-section" id="multi_physics-section" style="display: none;">
+                        <h4 class="mb-4">
+                            <i class="fas fa-link text-success me-2"></i>
+                            Multi-Physics Use Cases
+                        </h4>
+                        <div class="row" id="multi_physics-use-cases">
+                            <!-- Multi-physics use cases will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Industrial Applications Use Cases -->
+                    <div class="use-case-section" id="industrial-section" style="display: none;">
+                        <h4 class="mb-4">
+                            <i class="fas fa-industry text-secondary me-2"></i>
+                            Industrial Applications Use Cases
+                        </h4>
+                        <div class="row" id="industrial-use-cases">
+                            <!-- Industrial use cases will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Hydrogen Economy Use Case -->
+                    <div class="use-case-section" id="hydrogen-section" style="display: none;">
+                        <h4 class="mb-4">
+                            <i class="fas fa-leaf text-success me-2"></i>
+                            Hydrogen Economy Infrastructure Analysis
+                        </h4>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <h5>German Hydrogen Infrastructure Analysis</h5>
+                                                <p class="text-muted">Comprehensive analysis of hydrogen infrastructure for Germany's energy transition</p>
+                                                
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-target text-primary me-1"></i>Challenge</h6>
+                                                        <p>Optimizing hydrogen infrastructure for efficiency, safety, and cost-effectiveness in Germany's energy transition</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-chart-line text-success me-1"></i>Targets</h6>
+                                                        <ul class="list-unstyled">
+                                                            <li>• 2030: 5 GW electrolysis capacity</li>
+                                                            <li>• 2040: 10 GW electrolysis capacity</li>
+                                                            <li>• Maximize renewable energy utilization</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-cube text-warning me-1"></i>Materials</h6>
+                                                        <ul class="list-unstyled">
+                                                            <li>• Hydrogen Gas</li>
+                                                            <li>• Oxygen Gas</li>
+                                                            <li>• Water</li>
+                                                            <li>• Alkaline Electrolyte</li>
+                                                            <li>• PEM Membrane</li>
+                                                            <li>• Composite Hydrogen Tank</li>
+                                                            <li>• Steel</li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-bullseye text-danger me-1"></i>Optimization Goals</h6>
+                                                        <ul class="list-unstyled">
+                                                            <li>• Maximize hydrogen production efficiency</li>
+                                                            <li>• Minimize energy consumption per kg H₂</li>
+                                                            <li>• Optimize storage capacity and safety</li>
+                                                            <li>• Reduce infrastructure costs</li>
+                                                            <li>• Ensure grid integration compatibility</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card bg-light border-0">
+                                                    <div class="card-body">
+                                                        <h6><i class="fas fa-star text-warning me-1"></i>Famous Examples</h6>
+                                                        <ul class="list-unstyled">
+                                                            <li>• Siemens Energy</li>
+                                                            <li>• Linde</li>
+                                                            <li>• Air Liquide</li>
+                                                            <li>• German National Hydrogen Strategy</li>
+                                                        </ul>
+                                                        
+                                                        <h6 class="mt-3"><i class="fas fa-chart-bar text-info me-1"></i>Expected Results</h6>
+                                                        <ul class="list-unstyled">
+                                                            <li>• Production: 100-1000 kg/day</li>
+                                                            <li>• Efficiency: 70-85%</li>
+                                                            <li>• Storage: 35-70 MPa</li>
+                                                            <li>• Flow Rate: 100-1000 m³/h</li>
+                                                            <li>• System Efficiency: 60-75%</li>
+                                                            <li>• Safety Margin: >10x LEL</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-3">
+                                            <button class="btn btn-primary" onclick="createModelFromUseCase('hydrogen_economy')">
+                                                <i class="fas fa-plus me-1"></i>Create Model from This Use Case
+                                            </button>
+                                            <button class="btn btn-outline-info ms-2" onclick="viewUseCaseDetails('hydrogen_economy')">
+                                                <i class="fas fa-eye me-1"></i>View Full Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Use Case Detail Modal -->
+<div class="modal fade" id="useCaseDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="useCaseModalTitle">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Use Case Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="useCaseModalBody">
+                <!-- Use case details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="createModelFromUseCaseBtn">
+                    <i class="fas fa-plus me-1"></i>Create Model
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Use Case Creation/Edit Modal -->
+<div class="modal fade" id="useCaseFormModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="useCaseFormModalTitle">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Create New Use Case
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="useCaseForm">
+                    <!-- Basic Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="useCaseName" class="form-label fw-bold">
+                                <i class="fas fa-tag text-primary me-1"></i>Use Case Name <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="useCaseName" name="name" required 
+                                   placeholder="e.g., CPU Cooling Analysis">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="useCaseCategory" class="form-label fw-bold">
+                                <i class="fas fa-layer-group text-success me-1"></i>Category <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="useCaseCategory" name="category" required>
+                                <option value="">Select category...</option>
+                                <option value="thermal">Thermal Analysis</option>
+                                <option value="structural">Structural Analysis</option>
+                                <option value="fluid_dynamics">Fluid Dynamics Analysis</option>
+                                <option value="multi_physics">Multi-Physics Analysis</option>
+                                <option value="industrial">Industrial Applications Analysis</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="useCaseIndustry" class="form-label fw-bold">
+                                <i class="fas fa-industry text-warning me-1"></i>Industry
+                            </label>
+                            <input type="text" class="form-control" id="useCaseIndustry" name="industry" 
+                                   placeholder="e.g., Electronics, Automotive, Aerospace">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="useCasePhysicsType" class="form-label fw-bold">
+                                <i class="fas fa-atom text-info me-1"></i>Physics Type
+                            </label>
+                            <select class="form-select" id="useCasePhysicsType" name="physics_type">
+                                <option value="">Select physics type...</option>
+                                <option value="thermal">Thermal</option>
+                                <option value="structural">Structural</option>
+                                <option value="fluid_dynamics">Fluid Dynamics</option>
+                                <option value="electromagnetic">Electromagnetic</option>
+                                <option value="multi_physics">Multi-Physics</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="useCaseDescription" class="form-label fw-bold">
+                            <i class="fas fa-align-left text-secondary me-1"></i>Description <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="useCaseDescription" name="description" rows="3" required
+                                  placeholder="Describe the use case, its objectives, and key challenges..."></textarea>
+                    </div>
+
+                    <!-- Advanced Configuration -->
+                    <div class="card bg-light border-0 mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-cog me-1"></i>
+                                Advanced Configuration
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="useCaseComplexity" class="form-label fw-bold">Complexity Level</label>
+                                    <select class="form-select" id="useCaseComplexity" name="complexity">
+                                        <option value="basic">Basic</option>
+                                        <option value="intermediate">Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                        <option value="expert">Expert</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="useCaseDuration" class="form-label fw-bold">Expected Duration</label>
+                                    <input type="text" class="form-control" id="useCaseDuration" name="expected_duration" 
+                                           placeholder="e.g., 2-4 hours, 1-2 days">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="useCaseDataPoints" class="form-label fw-bold">Data Points</label>
+                                    <input type="number" class="form-control" id="useCaseDataPoints" name="data_points" 
+                                           placeholder="e.g., 1000, 10000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Famous Examples -->
+                    <div class="card bg-light border-0 mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-star me-1"></i>
+                                Famous Examples & Applications
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="useCaseFamousExamples" class="form-label fw-bold">Famous Examples</label>
+                                <textarea class="form-control" id="useCaseFamousExamples" name="famous_examples" rows="3"
+                                          placeholder="Enter famous real-world examples, one per line or comma-separated..."></textarea>
+                                <small class="text-muted">Examples: Intel i9-13900K, Tesla Model S, Boeing 787</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optimization Targets -->
+                    <div class="card bg-light border-0 mb-3">
+                        <div class="card-header bg-warning text-dark">
+                            <h6 class="mb-0">
+                                <i class="fas fa-bullseye me-1"></i>
+                                Optimization Targets
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="useCaseOptimizationTargets" class="form-label fw-bold">Optimization Targets</label>
+                                <textarea class="form-control" id="useCaseOptimizationTargets" name="optimization_targets" rows="3"
+                                          placeholder="Enter optimization targets, one per line or comma-separated..."></textarea>
+                                <small class="text-muted">Examples: Reduce temperature by 20%, Minimize weight, Maximize efficiency</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Materials -->
+                    <div class="card bg-light border-0 mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-cube me-1"></i>
+                                Materials & Properties
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="useCaseMaterials" class="form-label fw-bold">Materials</label>
+                                <textarea class="form-control" id="useCaseMaterials" name="materials" rows="3"
+                                          placeholder="Enter materials and their properties in JSON format or simple text..."></textarea>
+                                <small class="text-muted">Examples: Aluminum (thermal conductivity: 237 W/mK), Steel (density: 7850 kg/m³)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="mb-3">
+                        <label for="useCaseTags" class="form-label fw-bold">
+                            <i class="fas fa-tags text-secondary me-1"></i>Tags
+                        </label>
+                        <input type="text" class="form-control" id="useCaseTags" name="tags" 
+                               placeholder="Enter tags separated by commas...">
+                        <small class="text-muted">Examples: electronics, cooling, high-performance, automotive</small>
+                    </div>
+
+                    <!-- Hidden fields -->
+                    <input type="hidden" id="useCaseId" name="use_case_id">
+                    <input type="hidden" id="useCaseMode" name="mode" value="create">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="deleteUseCaseBtn" style="display: none;">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </button>
+                <button type="button" class="btn btn-primary" id="saveUseCaseBtn">
+                    <i class="fas fa-save me-1"></i>Save Use Case
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='/js/physics_modeling_use_cases.js') }}"></script>
+<script>
+// Global modal instance
+let useCaseModal = null;
+
+// Category selection
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize modal
+    const modalElement = document.getElementById('useCaseDetailModal');
+    if (modalElement) {
+        useCaseModal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        
+        // Add proper cleanup on modal hidden
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            // Clear modal content
+            document.getElementById('useCaseModalTitle').innerHTML = 
+                '<i class="fas fa-info-circle me-2"></i>Use Case Details';
+            document.getElementById('useCaseModalBody').innerHTML = '';
+            
+            // Remove event listeners
+            const createBtn = document.getElementById('createModelFromUseCaseBtn');
+            if (createBtn) {
+                createBtn.onclick = null;
+            }
+            
+            // Force remove any remaining backdrop
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => {
+                backdrop.remove();
+            });
+            
+            // Remove modal-open class from body
+            document.body.classList.remove('modal-open');
+            
+            // Reset body padding if it was modified
+            const body = document.body;
+            if (body.style.paddingRight) {
+                body.style.paddingRight = '';
+            }
+            
+            // CRITICAL: Restore body overflow to allow scrolling
+            body.style.overflow = '';
+            body.style.overflowX = '';
+            body.style.overflowY = '';
+            
+            // Force a reflow to ensure changes take effect
+            body.offsetHeight;
+        });
+        
+        // Also handle cleanup on modal shown to prevent issues
+        modalElement.addEventListener('shown.bs.modal', function () {
+            // Ensure backdrop is properly created
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (!backdrop) {
+                const newBackdrop = document.createElement('div');
+                newBackdrop.className = 'modal-backdrop fade show';
+                document.body.appendChild(newBackdrop);
+            }
+        });
+    }
+    
+    // Category click handlers
+    document.querySelectorAll('.use-case-category').forEach(category => {
+        category.addEventListener('click', function() {
+            const categoryName = this.dataset.category;
+            showCategory(categoryName);
+        });
+    });
+    
+    // Load initial category
+    showCategory('thermal');
+});
+
+function showCategory(categoryName) {
+    // Hide all sections
+    document.querySelectorAll('.use-case-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Show selected section
+    const targetSection = document.getElementById(categoryName + '-section');
+    if (targetSection) {
+        targetSection.style.display = 'block';
+    }
+    
+    // Update active category styling
+    document.querySelectorAll('.use-case-category').forEach(cat => {
+        cat.classList.remove('bg-primary', 'text-white');
+        cat.classList.add('border');
+    });
+    
+    const activeCategory = document.querySelector(`[data-category="${categoryName}"]`);
+    if (activeCategory) {
+        activeCategory.classList.remove('border');
+        activeCategory.classList.add('bg-primary', 'text-white');
+    }
+}
+
+function createModelFromUseCase(useCaseName) {
+    // Close modal first
+    if (useCaseModal) {
+        useCaseModal.hide();
+    }
+    
+    // Manual cleanup to ensure backdrop is removed
+    cleanupModalBackdrop();
+    
+    // Redirect to physics modeling page with use case pre-selected
+    window.location.href = `/physics-modeling?use_case=${useCaseName}`;
+}
+
+function viewUseCaseDetails(useCaseName) {
+    // Show loading state
+    document.getElementById('useCaseModalTitle').innerHTML = 
+        '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+    document.getElementById('useCaseModalBody').innerHTML = 
+        '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading use case details...</p></div>';
+    
+    // Show modal first
+    if (useCaseModal) {
+        useCaseModal.show();
+    }
+    
+    // Load use case details
+    fetch(`/physics-modeling/api/use-cases/${useCaseName}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('useCaseModalTitle').innerHTML = 
+                `<i class="fas fa-info-circle me-2"></i>${data.name || useCaseName}`;
+            document.getElementById('useCaseModalBody').innerHTML = 
+                formatUseCaseDetails(data);
+            
+            // Set up create model button
+            const createBtn = document.getElementById('createModelFromUseCaseBtn');
+            if (createBtn) {
+                createBtn.onclick = () => createModelFromUseCase(useCaseName);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading use case details:', error);
+            document.getElementById('useCaseModalTitle').innerHTML = 
+                '<i class="fas fa-exclamation-triangle me-2"></i>Error';
+            document.getElementById('useCaseModalBody').innerHTML = 
+                '<div class="alert alert-danger">Failed to load use case details. Please try again.</div>';
+        });
+}
+
+function formatUseCaseDetails(useCase) {
+    return `
+        <div class="row">
+            <div class="col-md-8">
+                <h6><i class="fas fa-info-circle text-primary me-1"></i>Description</h6>
+                <p>${useCase.description || 'No description available'}</p>
+                
+                <h6><i class="fas fa-exclamation-triangle text-warning me-1"></i>Challenge</h6>
+                <p>${useCase.challenge || 'No challenge description available'}</p>
+                
+                <h6><i class="fas fa-industry text-info me-1"></i>Industry</h6>
+                <span class="badge bg-primary">${useCase.industry || 'General'}</span>
+                
+                ${useCase.materials ? `
+                <h6 class="mt-3"><i class="fas fa-cube text-success me-1"></i>Materials</h6>
+                <ul class="list-unstyled">
+                    ${useCase.materials.map(material => `<li>• ${material}</li>`).join('')}
+                </ul>
+                ` : ''}
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-light border-0">
+                    <div class="card-body">
+                        <h6><i class="fas fa-star text-warning me-1"></i>Famous Examples</h6>
+                        <ul class="list-unstyled">
+                            ${(useCase.famous_examples || []).map(example => `<li>• ${example}</li>`).join('')}
+                        </ul>
+                        
+                        <h6 class="mt-3"><i class="fas fa-bullseye text-danger me-1"></i>Optimization Targets</h6>
+                        <ul class="list-unstyled">
+                            ${(useCase.optimization_targets || []).map(target => `<li>• ${target}</li>`).join('')}
+                        </ul>
+                        
+                        ${useCase.expected_results ? `
+                        <h6 class="mt-3"><i class="fas fa-chart-line text-success me-1"></i>Expected Results</h6>
+                        <ul class="list-unstyled">
+                            ${Object.entries(useCase.expected_results).map(([key, value]) => 
+                                `<li>• ${key.replace(/_/g, ' ').toUpperCase()}: ${value}</li>`
+                            ).join('')}
+                        </ul>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Manual cleanup function for modal backdrop
+function cleanupModalBackdrop() {
+    // Remove all modal backdrops
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => {
+        backdrop.remove();
+    });
+    
+    // Remove modal-open class from body
+    document.body.classList.remove('modal-open');
+    
+    // Reset body padding
+    const body = document.body;
+    if (body.style.paddingRight) {
+        body.style.paddingRight = '';
+    }
+    
+    // CRITICAL: Restore body overflow to allow scrolling
+    body.style.overflow = '';
+    body.style.overflowX = '';
+    body.style.overflowY = '';
+    
+    // Force a reflow to ensure changes take effect
+    body.offsetHeight;
+    
+    // Additional cleanup for any remaining modal-related styles
+    const html = document.documentElement;
+    if (html.style.overflow) {
+        html.style.overflow = '';
+    }
+}
+
+// Add click handler for modal close button to ensure proper cleanup
+document.addEventListener('DOMContentLoaded', function() {
+    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Immediate cleanup for better responsiveness
+            cleanupModalBackdrop();
+            
+            // Additional cleanup after a short delay
+            setTimeout(() => {
+                const body = document.body;
+                body.style.overflow = '';
+                body.style.overflowX = '';
+                body.style.overflowY = '';
+                body.classList.remove('modal-open');
+                
+                // Force scroll restoration
+                window.scrollTo(0, window.scrollY);
+            }, 50);
+        });
+    });
+    
+    // Also handle escape key and backdrop clicks
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cleanupModalBackdrop();
+        }
+    });
+    
+    // Handle backdrop clicks
+    const modalElement = document.getElementById('useCaseDetailModal');
+    if (modalElement) {
+        modalElement.addEventListener('click', function(e) {
+            if (e.target === modalElement) {
+                cleanupModalBackdrop();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

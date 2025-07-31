@@ -141,26 +141,16 @@ def main():
     """
     Main function to analyze AASX files.
     """
-    # Find AASX files
-    # Find AASX files
-    aasx_dir = Path("aasx-generator/data/samples_aasx/servodcmotor")
-    if not aasx_dir.exists():
-        logger.error(f"AASX directory not found: {aasx_dir}")
+    # Use the specific Carbon Footprint AASX file
+    aasx_file = Path("data/projects/fb35fa1d-5fbe-45a5-a5a9-fbaa1a6ce026/IDTA_02023__Template_CarbonFootprint_1.aasx")
+    
+    if not aasx_file.exists():
+        logger.error(f"AASX file not found: {aasx_file}")
         return
     
-    aasx_files = list(aasx_dir.rglob("*.aasx"))
+    logger.info(f"Analyzing AASX file: {aasx_file}")
     
-    if not aasx_files:
-        logger.error("No AASX files found in current directory or subdirectories")
-        return
-    
-    logger.info(f"Found {len(aasx_files)} AASX files")
-    
-    # Analyze first file
-    first_file = str(aasx_files[0])
-    logger.info(f"Analyzing first file: {first_file}")
-    
-    result = analyze_aasx_contents(first_file)
+    result = analyze_aasx_contents(str(aasx_file))
     
     logger.info("=== ANALYSIS COMPLETE ===")
     logger.info("Check the generated JSON file for detailed results")

@@ -13,10 +13,13 @@ import time
 from pathlib import Path
 import uvicorn
 
+# Set environment for production
+os.environ['NODE_ENV'] = 'production'
+
 # Load environment variables from .env file if it exists
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    # The webapp config will handle loading the correct .env file
 except ImportError:
     # If python-dotenv is not installed, continue without it
     pass

@@ -1,0 +1,115 @@
+<!-- Real-time Monitoring Panel - Collapsible -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-warning text-white" style="cursor: pointer;" onclick="toggleRealtimePanel()">
+                <h5 class="mb-0">
+                    <i class="fas fa-wifi me-2"></i>
+                    Real-time Monitoring
+                    <i class="fas fa-chevron-down float-end" id="realtimeToggleIcon"></i>
+                </h5>
+            </div>
+            <div class="card-body" id="realtimePanelBody">
+                <div class="row">
+                    <!-- Real-time Status -->
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3">
+                                <div class="status-dot" id="realtimeStatus">
+                                    <i class="fas fa-circle"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-0" id="realtimeStatusText">Connecting...</h6>
+                                <small class="text-muted" id="realtimeStatusDetails">Establishing connection</small>
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-primary mb-0" id="subscriberCount">0</h6>
+                                    <small class="text-muted">Subscribers</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-success mb-0" id="lastUpdate">--</h6>
+                                    <small class="text-muted">Last Update</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Monitoring -->
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select Twin:</label>
+                            <select class="form-select" id="performanceTwinSelect">
+                                <option value="">Choose a twin...</option>
+                            </select>
+                        </div>
+                        
+                        <div id="performanceMetrics">
+                            <div class="row text-center">
+                                <div class="col-6 mb-3">
+                                    <div class="border rounded p-2">
+                                        <h6 class="text-primary mb-0" id="cpuUsage">--</h6>
+                                        <small class="text-muted">CPU %</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="border rounded p-2">
+                                        <h6 class="text-info mb-0" id="memoryUsage">--</h6>
+                                        <small class="text-muted">Memory %</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="border rounded p-2">
+                                        <h6 class="text-success mb-0" id="responseTime">--</h6>
+                                        <small class="text-muted">Response (ms)</small>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <div class="border rounded p-2">
+                                        <h6 class="text-warning mb-0" id="healthScore">--</h6>
+                                        <small class="text-muted">Health %</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Alerts -->
+                    <div class="col-md-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-bell me-2"></i>Recent Alerts
+                        </h6>
+                        <div id="recentAlerts">
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                                <p class="mb-0">No recent alerts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Real-time Twin Status Cards -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-wifi me-2"></i>Real-time Twin Status
+                        </h6>
+                        <div class="row" id="realtimeTwinStatus">
+                            <!-- Real-time twin status cards will be loaded here -->
+                            <div class="col-12 text-center text-muted">
+                                <i class="fas fa-info-circle fa-2x mb-3"></i>
+                                <p>Loading real-time twin status...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

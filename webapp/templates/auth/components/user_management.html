@@ -1,0 +1,127 @@
+<!-- User Management Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    User Management
+                </h5>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-light" id="refreshUsers">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button class="btn btn-sm btn-outline-light" id="exportUsers">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Action Buttons -->
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-primary" id="addUser">
+                                <i class="fas fa-user-plus me-2"></i>Add User
+                            </button>
+                            <button class="btn btn-success" id="bulkActivateBtn" disabled>
+                                <i class="fas fa-check me-2"></i>Activate Selected
+                            </button>
+                            <button class="btn btn-warning" id="bulkDeactivateBtn" disabled>
+                                <i class="fas fa-ban me-2"></i>Deactivate Selected
+                            </button>
+                            <button class="btn btn-danger" id="bulkDeleteBtn" disabled>
+                                <i class="fas fa-trash me-2"></i>Delete Selected
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="userSearch" placeholder="Search users...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Statistics -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h4 class="mb-0" id="totalUsers">0</h4>
+                                <small>Total Users</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h4 class="mb-0" id="activeUsers">0</h4>
+                                <small>Active Users</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h4 class="mb-0" id="pendingUsers">0</h4>
+                                <small>Pending Users</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h4 class="mb-0" id="lockedUsers">0</h4>
+                                <small>Locked Users</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="usersTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAllUsers" class="form-check-input">
+                                </th>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- User data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingUsers" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-2">Loading users...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyUsers" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Users Found</h5>
+                    <p class="text-muted">Get started by creating the first user account</p>
+                    <button class="btn btn-primary" id="addFirstUser">
+                        <i class="fas fa-user-plus me-2"></i>Create First User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

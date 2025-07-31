@@ -34,65 +34,161 @@ body {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Buttons */
-.btn {
-    border-radius: 8px;
-    font-weight: 500;
+/* Project Management Styles */
+.project-categories .card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
+    margin-bottom: 1rem;
 }
 
-.btn-primary {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-}
-
-.btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0b5ed7;
+.project-categories .card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
 }
 
-/* Stats Cards */
-.bg-primary {
-    background-color: #0d6efd !important;
+.project-categories .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 1.25rem;
 }
 
-.bg-success {
-    background-color: #198754 !important;
+.project-categories .card-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
 }
 
-.bg-info {
-    background-color: #0dcaf0 !important;
+.project-categories .card-header h5 {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
 }
 
-.bg-warning {
-    background-color: #ffc107 !important;
+.project-categories .card-header p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
 }
 
-/* Activity List */
-.list-group-item {
-    border: none;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem 0;
+.project-categories .card-header small {
+    font-size: 0.8rem;
+    line-height: 1.3;
 }
 
-.list-group-item:last-child {
+.project-categories .card-header .badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+}
+
+.project-categories .card-body {
+    padding: 1rem;
+}
+
+.project-categories .fa-2x {
+    font-size: 1.75rem;
+}
+
+.project-categories .text-muted {
+    color: #6c757d !important;
+}
+
+.project-categories .text-dark {
+    color: #212529 !important;
+}
+
+.project-categories .border-start {
+    border-left: 2px solid #dee2e6 !important;
+}
+
+/* Project Cards */
+.project-categories .col-md-6.col-lg-4 .card {
+    height: 100%;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.project-categories .col-md-6.col-lg-4 .card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.15);
+}
+
+.project-categories .col-md-6.col-lg-4 .card-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
     border-bottom: none;
+    padding: 0.75rem 1rem;
 }
 
-/* Footer */
-footer {
+.project-categories .col-md-6.col-lg-4 .card-body {
+    padding: 1rem;
+}
+
+.project-categories .col-md-6.col-lg-4 .card-footer {
+    background-color: #f8f9fa;
     border-top: 1px solid #e9ecef;
+    padding: 0.5rem 1rem;
 }
 
-/* Responsive */
+/* Summary Section */
+.project-categories .bg-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%) !important;
+}
+
+.project-categories .bg-success {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%) !important;
+}
+
+/* Category Icons */
+.project-categories .fa-fire {
+    color: #dc3545;
+}
+
+.project-categories .fa-cube {
+    color: #fd7e14;
+}
+
+.project-categories .fa-water {
+    color: #0dcaf0;
+}
+
+.project-categories .fa-link {
+    color: #198754;
+}
+
+.project-categories .fa-industry {
+    color: #6c757d;
+}
+
+.project-categories .fa-folder {
+    color: #6c757d;
+}
+
+.project-categories .fa-lightbulb {
+    color: #ffc107;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .display-4 {
-        font-size: 2.5rem;
+    .project-categories .card-header {
+        padding: 1rem;
     }
     
-    .card-body {
-        padding: 1.5rem;
+    .project-categories .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .project-categories .fa-2x {
+        font-size: 1.5rem;
+    }
+    
+    .project-categories .card-header p {
+        font-size: 0.85rem;
+    }
+    
+    .project-categories .card-header small {
+        font-size: 0.75rem;
     }
 }
 
@@ -357,4 +453,737 @@ footer {
 #technique-description li i {
     width: 16px;
     text-align: center;
+}
+
+/* Professional Category Cards */
+.category-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.category-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.category-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.category-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+}
+
+.category-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.category-icon {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e9ecef;
+}
+
+.category-icon i {
+    font-size: 1.75rem;
+}
+
+.category-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.category-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.category-description {
+    font-size: 0.95rem;
+    color: #6c757d;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.5;
+}
+
+.category-examples {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.examples-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.examples-text {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+.category-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.project-count {
+    text-align: center;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    color: white;
+    border-radius: 8px;
+    min-width: 80px;
+}
+
+.count-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.count-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.expand-indicator {
+    color: #6c757d;
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+}
+
+.category-header[aria-expanded="true"] .expand-indicator {
+    transform: rotate(180deg);
+}
+
+.category-projects {
+    padding: 1.5rem;
+    background: #f8f9fa;
+}
+
+/* Category Icons Colors */
+.category-icon .fa-fire {
+    color: #dc3545;
+}
+
+.category-icon .fa-cube {
+    color: #fd7e14;
+}
+
+.category-icon .fa-water {
+    color: #0dcaf0;
+}
+
+.category-icon .fa-link {
+    color: #198754;
+}
+
+.category-icon .fa-industry {
+    color: #6c757d;
+}
+
+.category-icon .fa-folder {
+    color: #6c757d;
+}
+
+/* Project Cards within Categories */
+.category-projects .col-md-6.col-lg-4 .card {
+    height: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.category-projects .col-md-6.col-lg-4 .card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.15);
+    transform: translateY(-2px);
+}
+
+.category-projects .col-md-6.col-lg-4 .card-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 0.75rem 1rem;
+}
+
+.category-projects .col-md-6.col-lg-4 .card-body {
+    padding: 1rem;
+}
+
+.category-projects .col-md-6.col-lg-4 .card-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 8px 8px;
+    padding: 0.5rem 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .category-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .category-icon {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .category-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .category-title {
+        font-size: 1.25rem;
+    }
+    
+    .category-description {
+        font-size: 0.9rem;
+    }
+    
+    .category-actions {
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .project-count {
+        min-width: 70px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .count-number {
+        font-size: 1.25rem;
+    }
+    
+    .category-examples {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .category-header {
+        padding: 1rem;
+    }
+    
+    .category-projects {
+        padding: 1rem;
+    }
+    
+    .category-title {
+        font-size: 1.1rem;
+    }
+    
+    .category-description {
+        font-size: 0.85rem;
+    }
+}
+
+/* Project Management Flow Chart Styles */
+.project-flow-chart {
+    position: relative;
+    padding: 10px 0;
+}
+
+.flow-step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.flow-step:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.flow-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 2;
+}
+
+.flow-icon::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    z-index: -1;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+.flow-content {
+    flex: 1;
+}
+
+.flow-content h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.flow-content small {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.flow-arrow {
+    text-align: center;
+    margin: 10px 0;
+    position: relative;
+}
+
+.flow-arrow i {
+    font-size: 16px;
+    background: #fff;
+    padding: 8px;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid #007bff;
+    animation: bounce 1.5s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+    60% { transform: translateY(-3px); }
+}
+
+/* Quick Stats Styles */
+.quick-stat {
+    padding: 10px 5px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.quick-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #6c757d;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .flow-step {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px;
+    }
+    
+    .flow-icon {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .flow-content h6 {
+        font-size: 13px;
+    }
+    
+    .flow-content small {
+        font-size: 11px;
+    }
+    
+    .stat-number {
+        font-size: 20px;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+    }
+}
+
+/* Animation for flow steps */
+.flow-step:nth-child(1) { animation: slideInLeft 0.6s ease-out; }
+.flow-step:nth-child(3) { animation: slideInLeft 0.6s ease-out 0.1s both; }
+.flow-step:nth-child(5) { animation: slideInLeft 0.6s ease-out 0.2s both; }
+.flow-step:nth-child(7) { animation: slideInLeft 0.6s ease-out 0.3s both; }
+.flow-step:nth-child(9) { animation: slideInLeft 0.6s ease-out 0.4s both; }
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Enhanced hover effects */
+.flow-step:hover .flow-icon {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.flow-step:hover .flow-content h6 {
+    color: #007bff;
+}
+
+/* Status indicators for flow steps */
+.flow-step.completed {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: #28a745;
+}
+
+.flow-step.completed .flow-icon {
+    background: #28a745 !important;
+}
+
+.flow-step.active {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-color: #ffc107;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+}
+
+.flow-step.active .flow-icon {
+    background: #ffc107 !important;
+    animation: pulse 2s infinite;
+}
+
+/* Progress indicator */
+.flow-progress {
+    position: absolute;
+    left: 25px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+    z-index: 1;
+}
+
+.flow-progress-bar {
+    height: 0%;
+    background: linear-gradient(to bottom, #007bff, #28a745);
+    transition: height 0.5s ease;
+    border-radius: 1px;
+}
+
+/* Tooltip styles */
+.flow-step {
+    position: relative;
+}
+
+.flow-step::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #343a40;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+.flow-step::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #343a40;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    margin-bottom: -5px;
+}
+
+.flow-step:hover::before,
+.flow-step:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mermaid Flowchart Styles */
+.mermaid-flowchart {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.mermaid {
+    text-align: center;
+    overflow-x: auto;
+}
+
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Hierarchy Explanation Styles */
+.hierarchy-explanation {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+}
+
+.hierarchy-explanation h6 {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.hierarchy-explanation ul li {
+    margin-bottom: 5px;
+    padding-left: 5px;
+}
+
+.hierarchy-explanation ul li strong {
+    color: #495057;
+}
+
+/* Responsive adjustments for Mermaid */
+@media (max-width: 768px) {
+    .mermaid-flowchart {
+        padding: 10px;
+    }
+    
+    .mermaid svg {
+        font-size: 12px;
+    }
+    
+    .hierarchy-explanation {
+        padding: 10px;
+    }
+    
+    .hierarchy-explanation .row {
+        flex-direction: column;
+    }
+    
+    .hierarchy-explanation .col-md-6 {
+        margin-bottom: 15px;
+    }
+}
+
+/* Mermaid theme customization */
+.mermaid .node rect,
+.mermaid .node circle,
+.mermaid .node ellipse,
+.mermaid .node polygon {
+    stroke-width: 2px;
+    stroke-linejoin: round;
+}
+
+.mermaid .edgePath path {
+    stroke-width: 2px;
+    stroke-linecap: round;
+}
+
+.mermaid .label {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 500;
+}
+
+/* Animation for flowchart loading */
+.mermaid-flowchart {
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fallback Flowchart Styles */
+.flowchart-fallback {
+    padding: 20px;
+}
+
+.hierarchy-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.hierarchy-tree .level-1,
+.hierarchy-tree .level-2,
+.hierarchy-tree .level-3,
+.hierarchy-tree .level-4 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.hierarchy-tree .node {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.hierarchy-tree .node:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.hierarchy-tree .node.primary {
+    background: #007bff;
+    color: white;
+    border-color: #0056b3;
+}
+
+.hierarchy-tree .node.success {
+    background: #28a745;
+    color: white;
+    border-color: #1e7e34;
+}
+
+.hierarchy-tree .node.warning {
+    background: #ffc107;
+    color: #000;
+    border-color: #e0a800;
+}
+
+.hierarchy-tree .node.info {
+    background: #17a2b8;
+    color: white;
+    border-color: #138496;
+}
+
+.hierarchy-tree .node.secondary {
+    background: #6c757d;
+    color: white;
+    border-color: #545b62;
+}
+
+.hierarchy-tree .node.dark {
+    background: #343a40;
+    color: white;
+    border-color: #1d2124;
+}
+
+.hierarchy-tree .node.light {
+    background: #f8f9fa;
+    color: #495057;
+    border-color: #dee2e6;
+}
+
+.hierarchy-tree .arrow {
+    font-size: 20px;
+    color: #007bff;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+/* Responsive adjustments for fallback */
+@media (max-width: 768px) {
+    .hierarchy-tree .level-2 {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .hierarchy-tree .node {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    .hierarchy-tree .arrow {
+        font-size: 16px;
+    }
 }

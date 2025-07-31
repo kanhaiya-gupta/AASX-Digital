@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Physics Modeling - AASX Digital Twin Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/physics_modeling.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    {% include 'physics_modeling/partials/header.html' %}
+
+    <!-- System Status Dashboard -->
+    {% include 'physics_modeling/partials/system_status.html' %}
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <!-- Left Column - Model Creation and Management -->
+        <div class="col-lg-8">
+            <!-- Model Creation Panel -->
+            {% include 'physics_modeling/partials/model_creation.html' %}
+
+            <!-- Simulation Control Panel -->
+            {% include 'physics_modeling/partials/simulation_control.html' %}
+
+            <!-- Results Visualization -->
+            {% include 'physics_modeling/partials/results_visualization.html' %}
+        </div>
+
+        <!-- Right Column - Model Management and Status -->
+        <div class="col-lg-4">
+            <!-- Available Models -->
+            {% include 'physics_modeling/partials/available_models.html' %}
+
+            <!-- Active Simulations -->
+            {% include 'physics_modeling/partials/active_simulations.html' %}
+
+            <!-- Model Validation -->
+            {% include 'physics_modeling/partials/model_validation.html' %}
+
+            <!-- System Information -->
+            {% include 'physics_modeling/partials/system_information.html' %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% include 'physics_modeling/partials/modals.html' %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', path='/js/physics_modeling.js') }}"></script>
+<script>
+// Debug script for physics modeling
+console.log('🔧 Physics Modeling template loaded');
+
+// Check if physicsUI is available
+function checkPhysicsUI() {
+    if (window.physicsUI) {
+        console.log('✅ physicsUI is available:', window.physicsUI);
+        return true;
+    } else {
+        console.log('❌ physicsUI is not available');
+        return false;
+    }
+}
+
+// Add click handlers with debugging
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔧 DOM Content Loaded - Setting up debug handlers');
+    
+    // Check physicsUI after a short delay
+    setTimeout(() => {
+        checkPhysicsUI();
+    }, 1000);
+});
+</script>
+{% endblock %}

@@ -44,6 +44,9 @@ class TwinRegistration(BaseModel):
     description: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
     model_id: Optional[str] = None
+    
+    class Config:
+        protected_namespaces = ()
 
 class TwinUpdate(BaseModel):
     twin_name: Optional[str] = None

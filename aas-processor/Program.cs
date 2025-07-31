@@ -179,6 +179,19 @@ namespace AasProcessor
                             {
                                 File.WriteAllText(enhancedOutputPath, enhancedResult);
                                 Console.WriteLine($"Enhanced AASX data exported to: {enhancedOutputPath}");
+                                // Also write YAML if output is .json
+                                if (enhancedOutputPath.EndsWith(".json"))
+                                {
+                                    var jsonDoc = System.Text.Json.JsonDocument.Parse(enhancedResult);
+                                    var dotNetObj = ConvertJsonElement(jsonDoc.RootElement);
+                                    var yamlSerializer = new SerializerBuilder()
+                                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                        .Build();
+                                    var yaml = yamlSerializer.Serialize(dotNetObj);
+                                    var yamlPath = enhancedOutputPath.Substring(0, enhancedOutputPath.Length - 5) + ".yaml";
+                                    File.WriteAllText(yamlPath, yaml);
+                                    Console.WriteLine($"Enhanced AASX data also exported to: {yamlPath}");
+                                }
                             }
                             else
                             {
@@ -259,7 +272,21 @@ namespace AasProcessor
                         string graphOutputPath = args[2];
                         try
                         {
-                            string graphJson = AasProcessorModular.ExportGraph(graphAasxFilePath);
+                            // Automatically detect AAS version and use appropriate export method
+                            string aasVersion = DetectAasVersionFromAasx(graphAasxFilePath);
+                            string graphJson;
+                            
+                            if (aasVersion == "3.0")
+                            {
+                                graphJson = AasProcessorModular.ExportGraphAas30(graphAasxFilePath);
+                                Console.WriteLine($"Detected AAS {aasVersion}, using AAS 3.0 specific graph export");
+                            }
+                            else
+                            {
+                                graphJson = AasProcessorModular.ExportGraph(graphAasxFilePath);
+                                Console.WriteLine($"Detected AAS {aasVersion}, using generic graph export");
+                            }
+                            
                             File.WriteAllText(graphOutputPath, graphJson);
                             Console.WriteLine($"Graph data exported to: {graphOutputPath}");
                         }
@@ -269,6 +296,8 @@ namespace AasProcessor
                             Environment.Exit(1);
                         }
                         break;
+
+
 
                     case "export-rdf":
                         if (args.Length < 3)
@@ -284,6 +313,218 @@ namespace AasProcessor
                             string rdfTurtle = AasProcessorModular.ExportRdf(rdfAasxFilePath);
                             File.WriteAllText(rdfOutputPath, rdfTurtle);
                             Console.WriteLine($"RDF/Turtle data exported to: {rdfOutputPath}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
+                        }
+                        break;
+
+                    case "process-aas20":
+                        if (args.Length < 2)
+                        {
+                            Console.WriteLine("Error: Input AASX file path required for 'process-aas20' command.");
+                            ShowUsage();
+                            return;
+                        }
+                        string aas20FilePath = args[1];
+                        string? aas20OutputPath = args.Length > 2 ? args[2] : null;
+                        try
+                        {
+                            string aas20Result = AasProcessor2_0.ProcessAasxFile(aas20FilePath, aas20OutputPath);
+                            if (!string.IsNullOrEmpty(aas20OutputPath))
+                            {
+                                File.WriteAllText(aas20OutputPath, aas20Result);
+                                Console.WriteLine($"AAS 2.0 data exported to: {aas20OutputPath}");
+                                // Also write YAML if output is .json
+                                if (aas20OutputPath.EndsWith(".json"))
+                                {
+                                    var jsonDoc = System.Text.Json.JsonDocument.Parse(aas20Result);
+                                    var dotNetObj = ConvertJsonElement(jsonDoc.RootElement);
+                                    var yamlSerializer = new SerializerBuilder()
+                                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                        .Build();
+                                    var yaml = yamlSerializer.Serialize(dotNetObj);
+                                    var yamlPath = aas20OutputPath.Substring(0, aas20OutputPath.Length - 5) + ".yaml";
+                                    File.WriteAllText(yamlPath, yaml);
+                                    Console.WriteLine($"AAS 2.0 data also exported to: {yamlPath}");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine(aas20Result);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
+                        }
+                        break;
+
+                    case "process-aas20-enhanced":
+                        if (args.Length < 2)
+                        {
+                            Console.WriteLine("Error: Input AASX file path required for 'process-aas20-enhanced' command.");
+                            ShowUsage();
+                            return;
+                        }
+                        string aas20EnhancedFilePath = args[1];
+                        string? aas20EnhancedOutputPath = args.Length > 2 ? args[2] : null;
+                        try
+                        {
+                            string aas20EnhancedResult = AasProcessor2_0.ProcessAasxFileEnhanced(aas20EnhancedFilePath, aas20EnhancedOutputPath);
+                            if (!string.IsNullOrEmpty(aas20EnhancedOutputPath))
+                            {
+                                File.WriteAllText(aas20EnhancedOutputPath, aas20EnhancedResult);
+                                Console.WriteLine($"Enhanced AAS 2.0 data exported to: {aas20EnhancedOutputPath}");
+                                // Also write YAML if output is .json
+                                if (aas20EnhancedOutputPath.EndsWith(".json"))
+                                {
+                                    var jsonDoc = System.Text.Json.JsonDocument.Parse(aas20EnhancedResult);
+                                    var dotNetObj = ConvertJsonElement(jsonDoc.RootElement);
+                                    var yamlSerializer = new SerializerBuilder()
+                                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                        .Build();
+                                    var yaml = yamlSerializer.Serialize(dotNetObj);
+                                    var yamlPath = aas20EnhancedOutputPath.Substring(0, aas20EnhancedOutputPath.Length - 5) + ".yaml";
+                                    File.WriteAllText(yamlPath, yaml);
+                                    Console.WriteLine($"Enhanced AAS 2.0 data also exported to: {yamlPath}");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine(aas20EnhancedResult);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
+                        }
+                        break;
+
+                    case "process-aas30":
+                        if (args.Length < 2)
+                        {
+                            Console.WriteLine("Error: Input AASX file path required for 'process-aas30' command.");
+                            ShowUsage();
+                            return;
+                        }
+                        string aas30FilePath = args[1];
+                        string? aas30OutputPath = args.Length > 2 ? args[2] : null;
+                        try
+                        {
+                            string aas30Result = AasProcessor3_0.ProcessAasxFile(aas30FilePath, aas30OutputPath);
+                            if (!string.IsNullOrEmpty(aas30OutputPath))
+                            {
+                                File.WriteAllText(aas30OutputPath, aas30Result);
+                                Console.WriteLine($"AAS 3.0 data exported to: {aas30OutputPath}");
+                                // Also write YAML if output is .json
+                                if (aas30OutputPath.EndsWith(".json"))
+                                {
+                                    var jsonDoc = System.Text.Json.JsonDocument.Parse(aas30Result);
+                                    var dotNetObj = ConvertJsonElement(jsonDoc.RootElement);
+                                    var yamlSerializer = new SerializerBuilder()
+                                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                        .Build();
+                                    var yaml = yamlSerializer.Serialize(dotNetObj);
+                                    var yamlPath = aas30OutputPath.Substring(0, aas30OutputPath.Length - 5) + ".yaml";
+                                    File.WriteAllText(yamlPath, yaml);
+                                    Console.WriteLine($"AAS 3.0 data also exported to: {yamlPath}");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine(aas30Result);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
+                        }
+                        break;
+
+                    case "process-aas30-enhanced":
+                        if (args.Length < 2)
+                        {
+                            Console.WriteLine("Error: Input AASX file path required for 'process-aas30-enhanced' command.");
+                            ShowUsage();
+                            return;
+                        }
+                        string aas30EnhancedFilePath = args[1];
+                        string? aas30EnhancedOutputPath = args.Length > 2 ? args[2] : null;
+                        try
+                        {
+                            string aas30EnhancedResult = AasProcessor3_0.ProcessAasxFileEnhanced(aas30EnhancedFilePath, aas30EnhancedOutputPath);
+                            if (!string.IsNullOrEmpty(aas30EnhancedOutputPath))
+                            {
+                                File.WriteAllText(aas30EnhancedOutputPath, aas30EnhancedResult);
+                                Console.WriteLine($"Enhanced AAS 3.0 data exported to: {aas30EnhancedOutputPath}");
+                                // Also write YAML if output is .json
+                                if (aas30EnhancedOutputPath.EndsWith(".json"))
+                                {
+                                    var jsonDoc = System.Text.Json.JsonDocument.Parse(aas30EnhancedResult);
+                                    var dotNetObj = ConvertJsonElement(jsonDoc.RootElement);
+                                    var yamlSerializer = new SerializerBuilder()
+                                        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                                        .Build();
+                                    var yaml = yamlSerializer.Serialize(dotNetObj);
+                                    var yamlPath = aas30EnhancedOutputPath.Substring(0, aas30EnhancedOutputPath.Length - 5) + ".yaml";
+                                    File.WriteAllText(yamlPath, yaml);
+                                    Console.WriteLine($"Enhanced AAS 3.0 data also exported to: {yamlPath}");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine(aas30EnhancedResult);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
+                        }
+                        break;
+
+                    case "export-graph-aas20":
+                        if (args.Length < 3)
+                        {
+                            Console.WriteLine("Error: Input AASX file path and output graph JSON path required for 'export-graph-aas20' command.");
+                            ShowUsage();
+                            return;
+                        }
+                        string graphAas20FilePath = args[1];
+                        string graphAas20OutputPath = args[2];
+                        try
+                        {
+                            string graphAas20Json = AasProcessor2_0.ExportGraph(graphAas20FilePath);
+                            File.WriteAllText(graphAas20OutputPath, graphAas20Json);
+                            Console.WriteLine($"AAS 2.0 Graph data exported to: {graphAas20OutputPath}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            Environment.Exit(1);
+                        }
+                        break;
+
+                    case "export-graph-aas30":
+                        if (args.Length < 3)
+                        {
+                            Console.WriteLine("Error: Input AASX file path and output graph JSON path required for 'export-graph-aas30' command.");
+                            ShowUsage();
+                            return;
+                        }
+                        string graphAas30FilePath = args[1];
+                        string graphAas30OutputPath = args[2];
+                        try
+                        {
+                            string graphAas30Json = AasProcessor3_0.ExportGraph(graphAas30FilePath);
+                            File.WriteAllText(graphAas30OutputPath, graphAas30Json);
+                            Console.WriteLine($"AAS 3.0 Graph data exported to: {graphAas30OutputPath}");
                         }
                         catch (Exception ex)
                         {
@@ -312,13 +553,42 @@ namespace AasProcessor
             Console.WriteLine();
             Console.WriteLine("Commands:");
             Console.WriteLine();
+            Console.WriteLine("=== Multi-Version Commands (Auto-Detect) ===");
             Console.WriteLine("  process <aasx-file>");
-            Console.WriteLine("    Process AASX file and output basic JSON");
+            Console.WriteLine("    Process AASX file and output basic JSON (auto-detects AAS version)");
             Console.WriteLine();
             Console.WriteLine("  process-enhanced <aasx-file> [output-path]");
             Console.WriteLine("    Process AASX file with enhanced extraction and save documents separately");
+            Console.WriteLine("    Creates: output.json + output_documents/ folder (auto-detects AAS version)");
+            Console.WriteLine();
+            Console.WriteLine("  export-graph <aasx-file> <output-graph.json>");
+            Console.WriteLine("    Export graph data (nodes and edges) from AASX file as JSON");
+            Console.WriteLine("    Automatically detects AAS version and uses appropriate export method");
+            Console.WriteLine();
+            Console.WriteLine("=== Dedicated AAS 2.0 Commands ===");
+            Console.WriteLine("  process-aas20 <aasx-file> [output-path]");
+            Console.WriteLine("    Process AASX file as AAS 2.0 with basic extraction");
+            Console.WriteLine();
+            Console.WriteLine("  process-aas20-enhanced <aasx-file> [output-path]");
+            Console.WriteLine("    Process AASX file as AAS 2.0 with enhanced extraction");
             Console.WriteLine("    Creates: output.json + output_documents/ folder");
             Console.WriteLine();
+            Console.WriteLine("  export-graph-aas20 <aasx-file> <output-graph.json>");
+            Console.WriteLine("    Export AAS 2.0 specific graph data as JSON");
+            Console.WriteLine();
+            Console.WriteLine("=== Dedicated AAS 3.0 Commands ===");
+            Console.WriteLine("  process-aas30 <aasx-file> [output-path]");
+            Console.WriteLine("    Process AASX file as AAS 3.0 with basic extraction");
+            Console.WriteLine();
+            Console.WriteLine("  process-aas30-enhanced <aasx-file> [output-path]");
+            Console.WriteLine("    Process AASX file as AAS 3.0 with enhanced extraction");
+            Console.WriteLine("    Creates: output.json + output_documents/ folder");
+            Console.WriteLine();
+            Console.WriteLine("  export-graph-aas30 <aasx-file> <output-graph.json>");
+            Console.WriteLine("    Export AAS 3.0 specific graph data with proper submodel element hierarchy");
+            Console.WriteLine("    Includes sub-submodels and nested elements as separate nodes");
+            Console.WriteLine();
+            Console.WriteLine("=== Backward Conversion Commands ===");
             Console.WriteLine("  generate <json-data> <output-path> [--embedded-files <files-json>]");
             Console.WriteLine("    Generate AASX from JSON data (legacy method)");
             Console.WriteLine();
@@ -326,17 +596,25 @@ namespace AasProcessor
             Console.WriteLine("    Generate AASX from structured JSON using documents directory");
             Console.WriteLine("    Expects: input.json + input_documents/ folder");
             Console.WriteLine();
-            Console.WriteLine("  export-graph <aasx-file> <output-graph.json>");
-            Console.WriteLine("    Export graph data (nodes and edges) from AASX file as JSON");
-            Console.WriteLine();
+            Console.WriteLine("=== Other Export Commands ===");
             Console.WriteLine("  export-rdf <aasx-file> <output-rdf.ttl>");
             Console.WriteLine("    Export AASX data as RDF/Turtle format for semantic web applications");
             Console.WriteLine();
             Console.WriteLine("Examples:");
+            Console.WriteLine("  # Multi-version (auto-detect)");
             Console.WriteLine("  AasProcessor process-enhanced data/example.aasx output/result");
-            Console.WriteLine("  AasProcessor generate-structured output/result.json output/reconstructed.aasx");
             Console.WriteLine("  AasProcessor export-graph data/example.aasx output/graph.json");
-            Console.WriteLine("  AasProcessor export-rdf data/example.aasx output/aas_data.ttl");
+            Console.WriteLine();
+            Console.WriteLine("  # Dedicated AAS 2.0");
+            Console.WriteLine("  AasProcessor process-aas20-enhanced data/example.aasx output/result_aas20");
+            Console.WriteLine("  AasProcessor export-graph-aas20 data/example.aasx output/graph_aas20.json");
+            Console.WriteLine();
+            Console.WriteLine("  # Dedicated AAS 3.0");
+            Console.WriteLine("  AasProcessor process-aas30-enhanced data/example.aasx output/result_aas30");
+            Console.WriteLine("  AasProcessor export-graph-aas30 data/example.aasx output/graph_aas30.json");
+            Console.WriteLine();
+            Console.WriteLine("  # Backward conversion");
+            Console.WriteLine("  AasProcessor generate-structured output/result.json output/reconstructed.aasx");
             Console.WriteLine();
             Console.WriteLine("Document Structure:");
             Console.WriteLine("  Forward:  AASX → JSON + _documents/ folder");
@@ -415,6 +693,29 @@ namespace AasProcessor
                     return element.GetBoolean();
                 default:
                     return null;
+            }
+        }
+
+        static string DetectAasVersionFromAasx(string aasxFilePath)
+        {
+            try
+            {
+                // Extract XML content from AASX file
+                string xmlContent = ExtractAasxXmlContent(aasxFilePath);
+                
+                // Create XmlDocument and use the existing Versioning utility to detect AAS version
+                var doc = new System.Xml.XmlDocument();
+                doc.LoadXml(xmlContent);
+                
+                string aasVersion = AasProcessor.Utils.Versioning.DetectAasVersion(doc);
+                
+                return aasVersion ?? "2.0"; // Default to 2.0 if detection fails
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not detect AAS version from {aasxFilePath}: {ex.Message}");
+                Console.WriteLine("Defaulting to AAS 2.0 for graph export");
+                return "2.0";
             }
         }
     }

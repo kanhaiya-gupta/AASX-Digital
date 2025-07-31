@@ -1,0 +1,94 @@
+<!-- System Configuration Panel -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2"></i>
+                    System Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-sliders-h me-2"></i>Registry Settings
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label">Auto-refresh Interval (seconds)</label>
+                            <select class="form-select" id="refreshInterval">
+                                <option value="5">5 seconds</option>
+                                <option value="10" selected>10 seconds</option>
+                                <option value="30">30 seconds</option>
+                                <option value="60">1 minute</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Default Twin Type</label>
+                            <select class="form-select" id="defaultTwinType">
+                                <option value="generic">Generic</option>
+                                <option value="manufacturing">Manufacturing</option>
+                                <option value="energy">Energy</option>
+                                <option value="component">Component</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="autoStartMonitoring" checked>
+                                <label class="form-check-label" for="autoStartMonitoring">
+                                    Auto-start monitoring on page load
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enableNotifications" checked>
+                                <label class="form-check-label" for="enableNotifications">
+                                    Enable browser notifications
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-database me-2"></i>Data Management
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label">Data Retention Period</label>
+                            <select class="form-select" id="dataRetention">
+                                <option value="7">7 days</option>
+                                <option value="30" selected>30 days</option>
+                                <option value="90">90 days</option>
+                                <option value="365">1 year</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Backup Frequency</label>
+                            <select class="form-select" id="backupFrequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly" selected>Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-primary" id="backupNow">
+                                <i class="fas fa-download me-2"></i>Backup Now
+                            </button>
+                            <button class="btn btn-outline-secondary" id="restoreBackup">
+                                <i class="fas fa-upload me-2"></i>Restore
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-warning" id="clearOldData">
+                                <i class="fas fa-broom me-2"></i>Clear Old Data
+                            </button>
+                            <button class="btn btn-outline-danger" id="resetRegistry">
+                                <i class="fas fa-trash me-2"></i>Reset Registry
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
