@@ -33,13 +33,34 @@ export class DataManager {
     setupEventListeners() {
         // Back to use cases button
         $(document).on('click', '#backToUseCases', () => {
-            this.showUseCases();
+            this.showUseCasesSimple();
         });
 
         // Use case click handler
         $(document).on('click', '.use-case-card', (e) => {
             const useCaseId = $(e.currentTarget).data('use-case-id');
             this.selectUseCase(useCaseId);
+        });
+
+        // Project view button handler
+        $(document).on('click', '.btn-view-project', (e) => {
+            e.preventDefault();
+            const projectId = $(e.currentTarget).data('project-id');
+            this.viewProject(projectId);
+        });
+
+        // Project upload button handler
+        $(document).on('click', '.btn-upload-project', (e) => {
+            e.preventDefault();
+            const projectId = $(e.currentTarget).data('project-id');
+            this.uploadToProject(projectId);
+        });
+
+        // Project delete button handler
+        $(document).on('click', '.btn-delete-project', (e) => {
+            e.preventDefault();
+            const projectId = $(e.currentTarget).data('project-id');
+            this.deleteProject(projectId);
         });
 
         console.log('📋 Event listeners setup complete');
@@ -471,12 +492,17 @@ export class DataManager {
                         </div>
                     </div>
                     <div class="card-footer bg-transparent">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewProject('${project.id}')">
-                            <i class="fas fa-eye me-1"></i>View
-                        </button>
-                        <button class="btn btn-sm btn-outline-success" onclick="uploadToProject('${project.id}')">
-                            <i class="fas fa-upload me-1"></i>Upload
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary btn-view-project" data-project-id="${project.project_id}">
+                                <i class="fas fa-eye me-1"></i>View
+                            </button>
+                            <button class="btn btn-sm btn-outline-success btn-upload-project" data-project-id="${project.project_id}">
+                                <i class="fas fa-upload me-1"></i>Upload
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger btn-delete-project" data-project-id="${project.project_id}">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -495,6 +521,7 @@ export class DataManager {
         
         // Hide projects section, show use cases
         projectsSection.hide();
+        container.show(); // Make sure use cases container is visible
         
         // Show loading state
         container.html(`
@@ -542,6 +569,42 @@ export class DataManager {
         }
     }
 
+    // Simple method to show use cases without reloading data
+    showUseCasesSimple() {
+        const container = $('#useCasesContainer');
+        const projectsSection = $('#projectsSection');
+        
+        if (!container.length) {
+            console.warn('Use cases container not found');
+            return;
+        }
+        
+        // Hide projects section, show use cases
+        projectsSection.hide();
+        container.show();
+        
+        // Render use cases from existing data
+        if (!this.useCases || this.useCases.length === 0) {
+            container.html(`
+                <div class="text-center py-5">
+                    <i class="fas fa-sitemap fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No use cases found</h5>
+                    <p class="text-muted">Create your first use case to get started</p>
+                </div>
+            `);
+            return;
+        }
+        
+        // Render use cases
+        let html = '<div class="row">';
+        this.useCases.forEach(useCase => {
+            html += this.renderUseCaseCard(useCase);
+        });
+        html += '</div>';
+        
+        container.html(html);
+    }
+
     // Render a single use case card
     renderUseCaseCard(useCase) {
         const projectCount = useCase.projects ? useCase.projects.length : 0;
@@ -558,11 +621,6 @@ export class DataManager {
                             <span class="badge bg-primary">${projectCount} projects</span>
                         </div>
                         <p class="card-text text-muted small">${useCase.description || 'No description'}</p>
-                        <div class="use-case-stats">
-                            <small class="text-muted">
-                                <i class="fas fa-folder me-1"></i>${projectCount} projects
-                            </small>
-                        </div>
                     </div>
                     <div class="card-footer bg-transparent">
                         <button class="btn btn-sm btn-outline-primary w-100">
@@ -613,12 +671,12 @@ export class DataManager {
             return;
         }
         
-        // Render projects by category
-        let html = '';
-        const categories = this.groupProjectsByCategory(useCase.projects);
-        Object.keys(categories).forEach(category => {
-            html += this.renderProjectCategory(category, categories[category]);
+        // Render projects directly (no category grouping needed for use case view)
+        let html = '<div class="row">';
+        useCase.projects.forEach(project => {
+            html += this.renderProjectCard(project);
         });
+        html += '</div>';
         
         projectsContainer.html(html);
     }
@@ -664,6 +722,299 @@ export class DataManager {
                 });
             }
         });
+    }
+
+    // View project details
+    viewProject(projectId) {
+        console.log(`🔍 Viewing project: ${projectId}`);
+        
+        // Find the project
+        const project = this.findProjectById(projectId);
+        if (!project) {
+            showError('Project not found');
+            return;
+        }
+        
+        // Show project details modal or navigate to project details page
+        this.showProjectDetails(project);
+    }
+
+    // Upload to project
+    uploadToProject(projectId) {
+        console.log(`📤 Uploading to project: ${projectId}`);
+        
+        // Find the project
+        const project = this.findProjectById(projectId);
+        if (!project) {
+            showError('Project not found');
+            return;
+        }
+        
+        // Navigate to file upload section with pre-selected project
+        this.navigateToUploadWithProject(project);
+    }
+
+    // Delete project
+    async deleteProject(projectId) {
+        console.log(`🗑️ Deleting project: ${projectId}`);
+        
+        // Find the project
+        const project = this.findProjectById(projectId);
+        if (!project) {
+            showError('Project not found');
+            return;
+        }
+        
+        // Show confirmation dialog
+        const confirmed = await this.showDeleteConfirmation(project);
+        if (!confirmed) {
+            return;
+        }
+        
+        // Delete the project
+        await this.performProjectDeletion(project);
+    }
+
+    // Find project by ID across all use cases
+    findProjectById(projectId) {
+        for (const useCase of this.useCases) {
+            if (useCase.projects) {
+                const project = useCase.projects.find(p => p.project_id === projectId);
+                if (project) {
+                    return { ...project, useCase: useCase };
+                }
+            }
+        }
+        return null;
+    }
+
+    // Show project details
+    showProjectDetails(project) {
+        const modalHtml = `
+            <div class="modal fade" id="projectDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-folder me-2"></i>${project.name}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6>Description</h6>
+                                    <p class="text-muted">${project.description || 'No description available'}</p>
+                                    
+                                    <h6>Project Details</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Project ID:</strong> ${project.project_id}</li>
+                                        <li><strong>Status:</strong> <span class="badge bg-${this.getStatusColor(project.status || 'active')}">${project.status || 'active'}</span></li>
+                                        <li><strong>Files:</strong> ${project.file_count || 0} files</li>
+                                        <li><strong>Created:</strong> ${new Date(project.created_at).toLocaleDateString()}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Use Case</h6>
+                                    <p class="text-primary">${project.useCase ? project.useCase.name : 'Unknown'}</p>
+                                    
+                                    <h6>Tags</h6>
+                                    <div class="mb-3">
+                                        ${this.renderTags(project.tags)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" onclick="dataManager.deleteProject('${project.project_id}')">
+                                <i class="fas fa-trash me-1"></i>Delete Project
+                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="dataManager.uploadToProject('${project.project_id}')">
+                                <i class="fas fa-upload me-1"></i>Upload Files
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        $('#projectDetailsModal').remove();
+        
+        // Add modal to body and show it
+        $('body').append(modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('projectDetailsModal'));
+        modal.show();
+    }
+
+    // Navigate to upload section with pre-selected project
+    navigateToUploadWithProject(project) {
+        // Scroll to file upload section
+        const uploadSection = $('.card-header:contains("File Upload & Management")').closest('.card');
+        if (uploadSection.length) {
+            $('html, body').animate({
+                scrollTop: uploadSection.offset().top - 100
+            }, 500);
+            
+            // Pre-select the use case and project in upload dropdowns
+            setTimeout(() => {
+                this.preSelectUploadOptions(project);
+            }, 600);
+        } else {
+            showError('File upload section not found');
+        }
+    }
+
+    // Pre-select upload options
+    preSelectUploadOptions(project) {
+        // Find the use case ID for this project
+        const useCaseId = project.useCase ? project.useCase.id : null;
+        
+        if (useCaseId) {
+            // Select use case in upload dropdowns
+            $('.use-case-select').val(useCaseId).trigger('change');
+            
+            // Wait for projects to load, then select the project
+            setTimeout(() => {
+                $('.project-select').val(project.project_id).trigger('change');
+            }, 1000);
+            
+            showSuccess(`Ready to upload files to "${project.name}"`);
+        }
+    }
+
+    // Show delete confirmation dialog
+    showDeleteConfirmation(project) {
+        return new Promise((resolve) => {
+            const modalHtml = `
+                <div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Project
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-3">
+                                    <i class="fas fa-trash fa-3x text-danger mb-3"></i>
+                                    <h5>Are you sure you want to delete this project?</h5>
+                                </div>
+                                <div class="alert alert-warning">
+                                    <strong>Project:</strong> ${project.name}<br>
+                                    <strong>Use Case:</strong> ${project.useCase ? project.useCase.name : 'Unknown'}<br>
+                                    <strong>Files:</strong> ${project.file_count || 0} files
+                                </div>
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    <strong>Warning:</strong> This action cannot be undone. All project files and data will be permanently deleted.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                                    <i class="fas fa-trash me-1"></i>Delete Project
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            $('#deleteConfirmationModal').remove();
+            
+            // Add modal to body
+            $('body').append(modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+            
+            // Handle confirmation
+            $('#confirmDeleteBtn').on('click', () => {
+                modal.hide();
+                resolve(true);
+            });
+            
+            // Handle cancellation
+            $('#deleteConfirmationModal').on('hidden.bs.modal', () => {
+                resolve(false);
+            });
+            
+            modal.show();
+        });
+    }
+
+    // Perform project deletion
+    async performProjectDeletion(project) {
+        try {
+            // Show loading state
+            showWarning('Deleting project...');
+            
+            // Call API to delete project
+            const response = await fetch(`/api/aasx/projects/${project.project_id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                showSuccess(`Project "${project.name}" deleted successfully`);
+                
+                // Remove project from local data
+                this.removeProjectFromData(project.project_id);
+                
+                // Refresh the current view
+                await this.refreshCurrentView();
+                
+            } else {
+                const errorData = await response.json();
+                showError(`Failed to delete project: ${errorData.detail || 'Unknown error'}`);
+            }
+            
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            showError('Failed to delete project. Please try again.');
+        }
+    }
+
+    // Remove project from local data
+    removeProjectFromData(projectId) {
+        for (const useCase of this.useCases) {
+            if (useCase.projects) {
+                const projectIndex = useCase.projects.findIndex(p => p.project_id === projectId);
+                if (projectIndex !== -1) {
+                    useCase.projects.splice(projectIndex, 1);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Refresh current view
+    async refreshCurrentView() {
+        // If we're viewing a specific use case, refresh that view
+        if (this.selectedUseCase) {
+            this.showProjectsForUseCase(this.selectedUseCase);
+        } else {
+            // If we're viewing all use cases, refresh that view
+            await this.showUseCases();
+        }
+    }
+
+    // Render tags
+    renderTags(tags) {
+        if (!tags) return '<span class="text-muted">No tags</span>';
+        
+        try {
+            const tagArray = typeof tags === 'string' ? JSON.parse(tags) : tags;
+            return tagArray.map(tag => 
+                `<span class="badge bg-light text-dark me-1">${tag}</span>`
+            ).join('');
+        } catch (e) {
+            return '<span class="text-muted">Invalid tags</span>';
+        }
     }
 
     showDatabaseError(message) {

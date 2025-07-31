@@ -57,6 +57,9 @@ export async function initAASXModule() {
         // Make dropdown manager globally accessible
         window.dropdownManager = dropdownManager;
         
+        // Make data manager globally accessible for modal callbacks
+        window.dataManager = dataManager;
+        
         isInitialized = true;
         console.log('✅ AASX Digital Twin Analytics Framework initialized');
         
