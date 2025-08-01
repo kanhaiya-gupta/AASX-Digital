@@ -118,6 +118,15 @@ class FileRepository(BaseRepository[File]):
         except Exception:
             return False
     
+    def update_federated_learning(self, file_id: str, federated_setting: str) -> bool:
+        """Update federated learning setting for a file."""
+        query = "UPDATE files SET federated_learning = ?, updated_at = datetime('now') WHERE file_id = ?"
+        try:
+            affected_rows = self.db_manager.execute_update(query, (federated_setting, file_id))
+            return affected_rows > 0
+        except Exception:
+            return False
+    
     def get_file_trace_info(self, file_id: str) -> Optional[Dict[str, Any]]:
         """Get complete trace information for a file."""
         query = """

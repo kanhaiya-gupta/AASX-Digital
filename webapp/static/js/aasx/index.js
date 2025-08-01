@@ -17,11 +17,14 @@ console.log('📦 AASX index.js: Importing AASX modules...');
 import DataManager from './data-manager/core.js';
 import { AASXETLPipeline } from './etl-pipeline/core.js';
 import { dropdownManager } from './shared/dropdown-manager.js';
+import ProjectCreator from './project-creator.js';
+import FileUploadHandler from './file-upload-handler.js';
 console.log('✅ AASX index.js: AASX modules imported');
 
 // Global instances
 let dataManager = null;
 let aasxETLPipeline = null;
+let etlConfigManager = null;
 let isInitialized = false;
 
 /**
@@ -57,6 +60,18 @@ export async function initAASXModule() {
         // Make dropdown manager globally accessible
         window.dropdownManager = dropdownManager;
         
+        // Initialize Project Creator
+        const projectCreator = new ProjectCreator();
+        window.projectCreator = projectCreator;
+        
+        // Initialize File Upload Handler
+        const fileUploadHandler = new FileUploadHandler();
+        window.fileUploadHandler = fileUploadHandler;
+        
+        // Initialize ETL Configuration Manager (lazy load when needed)
+        // This will be initialized when the ETL configuration form is accessed
+        console.log('ℹ️ ETL Configuration Manager will be initialized when needed');
+        
         // Make data manager globally accessible for modal callbacks
         window.dataManager = dataManager;
         
@@ -89,6 +104,49 @@ export function getDataManager() {
  */
 export function getAASXETLPipeline() {
     return aasxETLPipeline;
+}
+
+/**
+ * Get ETL Configuration Manager Instance
+ */
+export function getETLConfigurationManager() {
+    return etlConfigManager;
+}
+
+/**
+ * Initialize ETL Configuration Manager when needed
+ */
+export async function initETLConfigurationManager() {
+    if (etlConfigManager) {
+        return etlConfigManager;
+    }
+    
+    try {
+        // Check if ETL configuration form exists
+        const etlConfigForm = document.getElementById('etlConfigForm');
+        if (!etlConfigForm) {
+            console.log('⚠️ ETL Configuration form not found');
+            return null;
+        }
+        
+        // Dynamically import ETL Configuration Manager
+        const { default: ETLConfigurationManager } = await import('./etl-configuration.js');
+        
+        // Initialize ETL Configuration Manager
+        etlConfigManager = new ETLConfigurationManager();
+        const initialized = etlConfigManager.init(); // Call the init method
+        if (initialized) {
+            window.etlConfigManager = etlConfigManager;
+            console.log('✅ ETL Configuration Manager initialized');
+            return etlConfigManager;
+        } else {
+            return null;
+        }
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize ETL Configuration Manager:', error);
+        return null;
+    }
 }
 
 /**

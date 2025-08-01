@@ -1,40 +1,4 @@
-<!-- Project Creation Modal -->
-<div class="modal fade" id="projectModal" tabindex="-1" aria-labelledby="projectModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="projectModalLabel">
-                    <i class="fas fa-folder-plus me-2"></i>
-                    Create New Project
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="projectForm">
-                    <div class="mb-3">
-                        <label for="projectName" class="form-label fw-bold">Project Name:</label>
-                        <input type="text" class="form-control" id="projectName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="projectDescription" class="form-label fw-bold">Description:</label>
-                        <textarea class="form-control" id="projectDescription" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="projectTags" class="form-label fw-bold">Tags (comma-separated):</label>
-                        <input type="text" class="form-control" id="projectTags" placeholder="manufacturing, quality-control, automation">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveProject">
-                    <i class="fas fa-save me-2"></i>
-                    Create Project
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+{% include 'aasx/components/project_creation_modal.html' %}
 
 <!-- Project Details Modal -->
 <div class="modal fade" id="projectDetailsModal" tabindex="-1" aria-labelledby="projectDetailsModalLabel" aria-hidden="true">

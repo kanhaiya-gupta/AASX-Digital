@@ -5,11 +5,10 @@ User Model
 Data model for users in the AAS Data Modeling framework.
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from .base_model import BaseModel
-import uuid
 
 @dataclass
 class User(BaseModel):
@@ -19,15 +18,10 @@ class User(BaseModel):
     username: str
     email: Optional[str] = None
     full_name: Optional[str] = None
-    org_id: Optional[str] = None
+    organization_id: Optional[str] = None
     role: str = "user"
     is_active: bool = True
     last_login: Optional[str] = None
-    
-    def __post_init__(self):
-        """Initialize user_id from the base id."""
-        super().__post_init__()
-        self.user_id = self.id
     
     def validate(self) -> bool:
         """Validate user data."""
@@ -67,14 +61,4 @@ class User(BaseModel):
         }
         
         user_permissions = role_permissions.get(self.role, [])
-        return permission in user_permissions
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for database storage."""
-        data = super().to_dict()
-        return data
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'User':
-        """Create User instance from dictionary."""
-        return super().from_dict(data) 
+        return permission in user_permissions 

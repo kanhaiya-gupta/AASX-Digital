@@ -57,86 +57,8 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card bg-light border-0">
-                    <div class="card-body">
-                        <h6 class="text-primary mb-3">
-                            <i class="fas fa-cog me-2"></i>
-                            ETL Configuration
-                        </h6>
-                        <form id="etlConfigForm">
-                            <!-- Extract Configuration -->
-                            <h6 class="text-success mb-2">
-                                <i class="fas fa-download me-1"></i>Extract Configuration
-                            </h6>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="hybridProcessing" checked>
-                                    <label class="form-check-label" for="hybridProcessing">
-                                        Hybrid Processing
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="parallelProcessing" checked>
-                                    <label class="form-check-label" for="parallelProcessing">
-                                        Parallel Processing
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <!-- Transform Configuration -->
-                            <h6 class="text-info mb-2">
-                                <i class="fas fa-exchange-alt me-1"></i>Transform Configuration
-                            </h6>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="dataValidation" checked>
-                                    <label class="form-check-label" for="dataValidation">
-                                        Data Validation
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="dataCleaning" checked>
-                                    <label class="form-check-label" for="dataCleaning">
-                                        Data Cleaning
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <!-- Load Configuration -->
-                            <h6 class="text-warning mb-2">
-                                <i class="fas fa-upload me-1"></i>Load Configuration
-                            </h6>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="sqliteExport" checked>
-                                    <label class="form-check-label" for="sqliteExport">
-                                        SQLite Export
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="vectorExport" checked>
-                                    <label class="form-check-label" for="vectorExport">
-                                        Vector DB Export
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="jsonExport" checked>
-                                    <label class="form-check-label" for="jsonExport">
-                                        JSON Export
-                                    </label>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <!-- Include the new ETL Configuration Component -->
+                {% include 'aasx/components/etl_configuration.html' %}
             </div>
         </div>
     </div>

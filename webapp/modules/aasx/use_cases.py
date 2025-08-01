@@ -90,8 +90,33 @@ class UseCaseService:
     def create_use_case(self, use_case_data: Dict[str, Any]) -> str:
         """Create a new use case"""
         try:
-            use_case = self.use_case_repo.create(use_case_data)
-            return use_case.use_case_id if use_case else None
+            from src.shared.models.use_case import UseCase
+            
+            # Create UseCase model object
+            use_case_obj = UseCase(**use_case_data)
+            
+            print(f"🔧 Use Case Service: Created UseCase model object:")
+            print(f"   📋 Use Case ID: {getattr(use_case_obj, 'use_case_id', 'N/A')}")
+            print(f"   📝 Name: {use_case_obj.name}")
+            print(f"   📄 Description: {use_case_obj.description}")
+            print(f"   🏷️  Category: {use_case_obj.category}")
+            print(f"   📊 Metadata: {use_case_obj.metadata}")
+            
+            # Create use case using repository
+            print(f"🔧 Use Case Service: About to create use case in database...")
+            created_use_case = self.use_case_repo.create(use_case_obj)
+            print(f"🔧 Use Case Service: Database creation result: {created_use_case is not None}")
+            
+            if not created_use_case:
+                raise Exception("Failed to create use case")
+            
+            use_case_id = created_use_case.use_case_id if hasattr(created_use_case, 'use_case_id') else created_use_case.id
+            
+            print(f"✅ Use case created successfully:")
+            print(f"   📋 Use Case ID: {use_case_id}")
+            print(f"   📝 Name: {created_use_case.name}")
+            
+            return use_case_id
         except Exception as e:
             raise Exception(f"Failed to create use case: {str(e)}")
     

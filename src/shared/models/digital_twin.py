@@ -15,9 +15,9 @@ import uuid
 class DigitalTwin(BaseModel):
     """Digital twin data model."""
     
-    twin_id: str = field(default_factory=lambda: str(uuid.uuid4()), init=False)
-    twin_name: str
-    file_id: str
+    file_id: str  # Required field - no default
+    twin_id: str = field(init=False)  # Will be set to file_id during creation
+    twin_name: str = "DT - Unknown Use Case - Unknown Project - Unknown File"
     status: str = "active"
     metadata: Dict[str, Any] = field(default_factory=dict)
     
@@ -56,6 +56,9 @@ class DigitalTwin(BaseModel):
     def __post_init__(self):
         """Initialize the model."""
         super().__post_init__()
+        # Set twin_id to file_id for 1:1 relationship
+        if hasattr(self, 'file_id') and self.file_id:
+            self.twin_id = self.file_id
     
     def validate(self) -> bool:
         """Validate digital twin data."""

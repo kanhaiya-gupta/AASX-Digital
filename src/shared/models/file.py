@@ -15,11 +15,14 @@ import uuid
 class File(BaseModel):
     """File data model."""
     
-    file_id: str = field(default_factory=lambda: str(uuid.uuid4()), init=False)
+    # Required fields (no defaults)
     filename: str
     original_filename: str
     project_id: str
     filepath: str
+    
+    # Optional fields with defaults
+    file_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     size: int = 0
     description: str = ""
     status: str = "not_processed"
@@ -27,6 +30,7 @@ class File(BaseModel):
     file_type_description: str = ""
     user_id: Optional[str] = None
     upload_date: Optional[str] = None
+    federated_learning: str = "not_allowed"  # "allowed", "not_allowed", "conditional"
     
     def __post_init__(self):
         """Initialize the model."""
@@ -76,4 +80,12 @@ class File(BaseModel):
         # Ensure upload_date is set
         if not data.get('upload_date'):
             data['upload_date'] = self.created_at.isoformat()
+        # Map file_id to the correct field for database
+        if hasattr(self, 'file_id') and self.file_id:
+            data['file_id'] = self.file_id
+        # Ensure all required fields are present
+        required_fields = ['file_id', 'filename', 'original_filename', 'project_id', 'filepath', 'size', 'status', 'federated_learning']
+        for field in required_fields:
+            if field not in data and hasattr(self, field):
+                data[field] = getattr(self, field)
         return data 

@@ -86,6 +86,7 @@
     </div>
 </div>
 
+
 <!-- Data Management Flow Chart -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-gradient-success text-white">
@@ -171,28 +172,6 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Quick Stats -->
-        <div class="row mt-3 text-center">
-            <div class="col-4">
-                <div class="quick-stat">
-                    <div class="stat-number text-primary" id="flowTotalProjects">0</div>
-                    <div class="stat-label">Projects</div>
-                </div>
-            </div>
-            <div class="col-4">
-                <div class="quick-stat">
-                    <div class="stat-number text-success" id="flowTotalFiles">0</div>
-                    <div class="stat-label">Files</div>
-                </div>
-            </div>
-            <div class="col-4">
-                <div class="quick-stat">
-                    <div class="stat-number text-warning" id="flowProcessed">0</div>
-                    <div class="stat-label">Processed</div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -206,7 +185,7 @@
     </div>
     <div class="card-body">
         <div class="d-grid gap-2">
-            <button type="button" class="btn btn-primary" id="createProject">
+            <button type="button" class="btn btn-primary" id="sidebarCreateProjectBtn" data-bs-toggle="modal" data-bs-target="#projectCreationModal">
                 <i class="fas fa-plus me-2"></i>
                 Create New Project
             </button>

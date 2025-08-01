@@ -8,7 +8,7 @@ import openai
 from sentence_transformers import SentenceTransformer
 import numpy as np
 
-from src.shared.config import EMBEDDING_MODELS_CONFIG
+from src.ai_rag.config import EMBEDDING_MODELS_CONFIG
 from src.shared.utils import setup_logging
 
 

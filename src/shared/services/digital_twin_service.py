@@ -69,8 +69,47 @@ class DigitalTwinService(BaseService[DigitalTwin]):
         else:
             twin = twin_result
         
+        # Perform comprehensive health check after creation
+        if twin and hasattr(twin, 'twin_id'):
+            self._perform_post_creation_health_check(twin, twin_data)
+        
         self.logger.info(f"Registered digital twin: {twin.twin_name} for file: {file_id}")
         return twin
+    
+    def _perform_post_creation_health_check(self, twin: DigitalTwin, twin_data: Dict[str, Any]) -> None:
+        """Perform comprehensive health check after twin creation."""
+        try:
+            # Update ETL status based on twin_data
+            etl_results = twin_data.get('metadata', {})
+            output_dir = twin_data.get('output_directory', '')
+            
+            # Update ETL status
+            etl_success = etl_results.get('status') != 'failed' if etl_results else False
+            self.update_etl_status(twin.twin_id, etl_success, output_dir)
+            
+            # Update physics context if available
+            if etl_results.get('etl_results'):
+                self.update_physics_context(twin.twin_id, etl_results.get('etl_results', {}))
+            
+            # Perform comprehensive health check
+            health_result = self.perform_health_check(twin.twin_id)
+            
+            # Update federated learning status if user consented
+            user_consent = twin_data.get('user_consent', False)
+            federated_setting = twin_data.get('federated_learning', 'not_allowed')
+            if user_consent and federated_setting in ['allowed', 'conditional']:
+                self.update_federated_participation(twin.twin_id, 'active')
+                
+                # Perform federated health check
+                federated_health_result = self.perform_federated_health_check(twin.twin_id)
+                self.logger.info(f"Federated health check for twin {twin.twin_id}: {federated_health_result}")
+            
+            self.logger.info(f"Post-creation health check for twin {twin.twin_id}: {health_result}")
+            
+        except Exception as e:
+            self.logger.error(f"Error during post-creation health check for twin {twin.twin_id}: {e}")
+            # Record error but don't fail the creation
+            self.record_error(twin.twin_id, f"Health check error: {str(e)}")
     
     def get_twin_with_file_info(self, twin_id: str) -> Optional[Dict[str, Any]]:
         """Get digital twin with complete file information."""
@@ -458,6 +497,94 @@ class DigitalTwinService(BaseService[DigitalTwin]):
         
         return success
     
+    def update_federated_learning_round(self, twin_id: str, round_number: int, model_version: str = None, 
+                                       contribution_score: int = None) -> bool:
+        """Update federated learning round information."""
+        twin = self.get_by_id(twin_id)
+        if not twin:
+            self._raise_business_error(f"Digital twin {twin_id} not found")
+        
+        # Validate round number
+        if round_number < 0:
+            self._raise_business_error("Round number must be non-negative")
+        
+        # Validate contribution score
+        if contribution_score is not None and (contribution_score < 0 or contribution_score > 100):
+            self._raise_business_error("Contribution score must be between 0 and 100")
+        
+        # Use repository method for detailed update
+        success = self.get_repository().update_federated_learning_round(
+            twin_id, round_number, model_version, contribution_score, self._get_current_timestamp()
+        )
+        
+        if success:
+            self.logger.info(f"Updated twin {twin_id} federated learning round to {round_number}")
+        
+        return success
+    
+    def update_physics_modeling_data(self, twin_id: str, physics_data: Dict[str, Any]) -> bool:
+        """Update physics modeling data for a digital twin."""
+        twin = self.get_by_id(twin_id)
+        if not twin:
+            self._raise_business_error(f"Digital twin {twin_id} not found")
+        
+        # Validate physics data
+        if 'simulation_status' in physics_data:
+            valid_statuses = ["pending", "running", "completed", "failed", "ready"]
+            if physics_data['simulation_status'] not in valid_statuses:
+                self._raise_business_error(f"Invalid simulation status. Must be one of: {valid_statuses}")
+        
+        # Use repository method for detailed update
+        success = self.get_repository().update_physics_modeling(twin_id, physics_data)
+        
+        if success:
+            self.logger.info(f"Updated twin {twin_id} physics modeling data")
+        
+        return success
+    
+    def record_simulation_run(self, twin_id: str, simulation_results: Dict[str, Any], 
+                             run_timestamp: str = None) -> bool:
+        """Record a new simulation run for a digital twin."""
+        twin = self.get_by_id(twin_id)
+        if not twin:
+            self._raise_business_error(f"Digital twin {twin_id} not found")
+        
+        # Validate simulation results
+        if not simulation_results:
+            self._raise_business_error("Simulation results cannot be empty")
+        
+        # Use repository method for detailed update
+        success = self.get_repository().update_simulation_run(twin_id, simulation_results, run_timestamp)
+        
+        if success:
+            self.logger.info(f"Recorded simulation run for twin {twin_id}")
+        
+        return success
+    
+    def update_health_monitoring_data(self, twin_id: str, health_data: Dict[str, Any]) -> bool:
+        """Update health monitoring data for a digital twin."""
+        twin = self.get_by_id(twin_id)
+        if not twin:
+            self._raise_business_error(f"Digital twin {twin_id} not found")
+        
+        # Validate health data
+        if 'health_score' in health_data:
+            if not (0 <= health_data['health_score'] <= 100):
+                self._raise_business_error("Health score must be between 0 and 100")
+        
+        if 'health_status' in health_data:
+            valid_statuses = ["unknown", "healthy", "warning", "critical", "maintenance"]
+            if health_data['health_status'] not in valid_statuses:
+                self._raise_business_error(f"Invalid health status. Must be one of: {valid_statuses}")
+        
+        # Use repository method for detailed update
+        success = self.get_repository().update_health_monitoring(twin_id, health_data)
+        
+        if success:
+            self.logger.info(f"Updated twin {twin_id} health monitoring data")
+        
+        return success
+    
     def calculate_federated_contribution(self, twin_id: str) -> int:
         """Calculate twin's contribution score for federated learning."""
         twin = self.get_by_id(twin_id)
@@ -545,23 +672,35 @@ class DigitalTwinService(BaseService[DigitalTwin]):
             self._raise_business_error(f"Invalid status transition from {current_status} to {new_status}")
     
     def _generate_twin_name(self, file_id: str) -> str:
-        """Generate twin name based on file information."""
-        # Get file information
-        file = self.file_repository.get_by_id(file_id)
-        if not file:
-            return f"Digital Twin - {file_id}"
+        """Generate a standardized twin name following the convention: DT - Use Case - Project - Filename"""
+        import os
+        
+        # Get file information to build proper twin name
+        file_info = self.file_repository.get_by_id(file_id)
+        if not file_info:
+            return "DT - Unknown Use Case - Unknown Project - Unknown File"
         
         # Get project information
-        project_info = self.project_repository.get_project_hierarchy_info(file.project_id)
-        if not project_info or not project_info.get("primary_use_case"):
-            return f"Digital Twin - {file.original_filename}"
+        project_id = file_info.project_id if hasattr(file_info, 'project_id') else file_info.get('project_id')
+        if not project_id:
+            return "DT - Unknown Use Case - Unknown Project - Unknown File"
         
-        # Generate name: Use Case - Project Name - Filename
-        use_case_name = project_info["primary_use_case"]["name"]
-        project_name = project_info["project"].name
-        filename = file.original_filename
+        project_info = self.project_repository.get_project_hierarchy_info(project_id)
+        if not project_info:
+            return "DT - Unknown Use Case - Unknown Project - Unknown File"
         
-        return f"{use_case_name} - {project_name} - {filename}"
+        # Extract components
+        use_case_name = project_info.get('use_case_name', 'Unknown Use Case')
+        project_name = project_info.get('project_name', 'Unknown Project')
+        filename = file_info.filename if hasattr(file_info, 'filename') else file_info.get('filename', 'Unknown File')
+        
+        # Remove file extension from filename
+        filename_without_ext = os.path.splitext(filename)[0]
+        
+        # Generate standardized twin name
+        twin_name = f"DT - {use_case_name} - {project_name} - {filename_without_ext}"
+        
+        return twin_name
     
     def _update_existing_twin(self, twin_id: str, twin_data: Dict[str, Any]) -> DigitalTwin:
         """Update existing twin instead of creating new one."""

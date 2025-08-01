@@ -7,6 +7,7 @@ from typing import Dict, List, Any
 import openai
 from datetime import datetime
 from .base_technique import BaseRAGTechnique
+from src.ai_rag.embedding_models.text_embeddings import TextEmbeddingManager
 
 
 class BasicRAGTechnique(BaseRAGTechnique):
@@ -203,7 +204,7 @@ Please provide a comprehensive analysis based on the available digital twin data
     
     def _get_query_embedding(self, query: str) -> List[float]:
         """
-        Get embedding for the query.
+        Get embedding for the query using secure TextEmbeddingManager.
         
         Args:
             query: Query text
@@ -211,18 +212,17 @@ Please provide a comprehensive analysis based on the available digital twin data
         Returns:
             Query embedding vector
         """
-        # This is a placeholder - in practice, you'd use the same embedding model
-        # that was used to create the vectors in the database
         try:
-            response = openai.Embedding.create(
-                input=query,
-                model="text-embedding-ada-002"
-            )
-            return response['data'][0]['embedding']
+            embedding_manager = TextEmbeddingManager()
+            embedding = embedding_manager.get_model().embed_text(query)
+            if embedding:
+                return embedding
+            else:
+                self.logger.error("Failed to generate embedding")
+                raise ValueError("Embedding generation failed")
         except Exception as e:
-            self.logger.error(f"Error getting query embedding: {e}")
-            # Return a dummy embedding (this should be handled better in production)
-            return [0.0] * 1536
+            self.logger.error(f"Error generating embedding: {e}")
+            raise ValueError(f"Embedding generation failed: {e}")
     
     def validate_parameters(self, **kwargs) -> bool:
         """Validate basic RAG parameters"""

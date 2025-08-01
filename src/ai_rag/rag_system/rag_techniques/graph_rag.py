@@ -8,6 +8,7 @@ import openai
 from datetime import datetime
 import json
 from .base_technique import BaseRAGTechnique
+from src.ai_rag.embedding_models.text_embeddings import TextEmbeddingManager
 
 
 class GraphRAGTechnique(BaseRAGTechnique):
@@ -368,7 +369,7 @@ Provide a clear, structured response that leverages both vector similarity and g
     
     def _get_query_embedding(self, query: str) -> List[float]:
         """
-        Get embedding for the query.
+        Get embedding for the query using secure TextEmbeddingManager.
         
         Args:
             query: Query text
@@ -377,14 +378,16 @@ Provide a clear, structured response that leverages both vector similarity and g
             Query embedding vector
         """
         try:
-            response = openai.Embedding.create(
-                input=query,
-                model="text-embedding-ada-002"
-            )
-            return response['data'][0]['embedding']
+            embedding_manager = TextEmbeddingManager()
+            embedding = embedding_manager.get_model().embed_text(query)
+            if embedding:
+                return embedding
+            else:
+                self.logger.error("Failed to generate embedding")
+                raise ValueError("Embedding generation failed")
         except Exception as e:
-            self.logger.error(f"Error getting query embedding: {e}")
-            return [0.0] * 1536
+            self.logger.error(f"Error generating embedding: {e}")
+            raise ValueError(f"Embedding generation failed: {e}")
     
     def validate_parameters(self, **kwargs) -> bool:
         """Validate graph RAG parameters"""

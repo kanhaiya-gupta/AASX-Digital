@@ -60,6 +60,14 @@ class Project(BaseModel):
         data = super().to_dict()
         data['tags'] = json.dumps(self.tags) if self.tags else "[]"
         data['metadata'] = json.dumps(self.metadata) if self.metadata else "{}"
+        # Map project_id to the correct field for database
+        if hasattr(self, 'project_id') and self.project_id:
+            data['project_id'] = self.project_id
+        # Ensure all required fields are present
+        required_fields = ['project_id', 'name', 'description', 'tags', 'file_count', 'total_size', 'is_public', 'access_level']
+        for field in required_fields:
+            if field not in data and hasattr(self, field):
+                data[field] = getattr(self, field)
         return data
     
     @classmethod

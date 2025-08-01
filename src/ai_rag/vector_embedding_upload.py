@@ -8,8 +8,10 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-from src.shared.management import ProjectManager
-from src.shared.config import VECTOR_DB_CONFIG, EMBEDDING_MODELS_CONFIG, PROCESSING_CONFIG, OUTPUT_CONFIG
+from src.shared.services.project_service import ProjectService
+from src.shared.services.file_service import FileService
+from src.shared.database.connection_manager import DatabaseConnectionManager
+from src.ai_rag.config import VECTOR_DB_CONFIG, EMBEDDING_MODELS_CONFIG, PROCESSING_CONFIG, OUTPUT_CONFIG
 from src.shared.utils import setup_logging, ensure_dir
 
 from .vector_db.qdrant_client import QdrantClient
@@ -30,8 +32,20 @@ class VectorEmbeddingUploader:
         self.logger = setup_logging("vector_embedding_uploader")
         self.config = config or {}
         
-        # Initialize components
-        self.project_manager = ProjectManager()
+        # Initialize database connection and services
+        self.db_manager = DatabaseConnectionManager()
+        self.project_service = ProjectService(
+            self.db_manager,
+            self.db_manager.get_use_case_repository(),
+            self.db_manager.get_file_repository()
+        )
+        self.file_service = FileService(
+            self.db_manager,
+            self.db_manager.get_project_repository(),
+            self.db_manager.get_digital_twin_repository()
+        )
+        
+        # Initialize AI/RAG components
         self.vector_db = None
         self.text_embedding_manager = TextEmbeddingManager()
         self.processor_manager = None
@@ -70,8 +84,8 @@ class VectorEmbeddingUploader:
         self.logger.info(f"Starting vector embedding for project: {project_id}")
         
         try:
-            # Get project files
-            files = self.project_manager.list_project_files(project_id)
+            # Get project files using the file service
+            files = self.file_service.get_files_by_project(project_id)
             if not files:
                 self.logger.warning(f"No files found for project: {project_id}")
                 return {'status': 'no_files', 'project_id': project_id}

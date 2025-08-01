@@ -39,7 +39,7 @@ class AIRAGETLIntegration:
             text_embedding_manager = TextEmbeddingManager()
             
             # Initialize Qdrant with config
-            from src.shared.config import VECTOR_DB_CONFIG
+            from src.ai_rag.config import VECTOR_DB_CONFIG
             vector_db_config = {
                 'host': VECTOR_DB_CONFIG['host'],
                 'port': VECTOR_DB_CONFIG['port'],

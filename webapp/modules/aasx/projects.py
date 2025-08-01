@@ -85,7 +85,7 @@ class ProjectService:
             raise Exception(f"Failed to get project {project_id}: {str(e)}")
     
     def create_project(self, project_data: Dict[str, Any], use_case_id: str) -> str:
-        """Create a new project and link it to a use case"""
+        """Create a new project and link it to a use case following the initialization script pattern"""
         try:
             # Validate use case exists
             use_case = self.use_case_repo.get_by_id(use_case_id)
@@ -95,14 +95,31 @@ class ProjectService:
             # Get use case name for ID generation
             use_case_name = use_case.name if hasattr(use_case, 'name') else use_case.get("name")
             
-            # Generate unique project ID that includes use case context
+            # Generate unique project ID that includes use case context (following init script pattern)
             project_id = self.generate_project_id(project_data.get('name', 'Unnamed Project'), use_case_name)
             
-            # Create project using repository
-            project_data['id'] = project_id  # Set the generated ID
-            project = self.project_repo.create(project_data)
+            # Import Project model
+            from src.shared.models.project import Project
             
-            if not project:
+            # Add the generated ID to project data
+            project_data['project_id'] = project_id
+            
+            # Create Project model object
+            project_obj = Project(**project_data)
+            
+            print(f"🔧 Project Service: Created Project model object:")
+            print(f"   📁 Project ID: {getattr(project_obj, 'project_id', 'N/A')}")
+            print(f"   📝 Name: {project_obj.name}")
+            print(f"   📄 Description: {project_obj.description}")
+            print(f"   🏷️  Tags: {project_obj.tags}")
+            print(f"   📊 Metadata: {project_obj.metadata}")
+            
+            # Create project using repository
+            print(f"🔧 Project Service: About to create project in database...")
+            created_project = self.project_repo.create(project_obj)
+            print(f"🔧 Project Service: Database creation result: {created_project is not None}")
+            
+            if not created_project:
                 raise Exception("Failed to create project")
             
             # Link project to use case
@@ -112,7 +129,14 @@ class ProjectService:
                 self.project_repo.delete(project_id)
                 raise Exception(f"Failed to link project to use case {use_case_id}")
             
-            return project_id
+            final_project_id = created_project.project_id if hasattr(created_project, 'project_id') else created_project.id
+            
+            print(f"✅ Project created successfully:")
+            print(f"   📁 Project ID: {final_project_id}")
+            print(f"   📝 Name: {created_project.name}")
+            print(f"   📋 Use Case: {use_case_name}")
+            
+            return final_project_id
         except Exception as e:
             raise Exception(f"Failed to create project: {str(e)}")
     

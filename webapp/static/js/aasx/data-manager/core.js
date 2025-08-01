@@ -492,15 +492,15 @@ export class DataManager {
                         </div>
                     </div>
                     <div class="card-footer bg-transparent">
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-primary btn-view-project" data-project-id="${project.project_id}">
-                                <i class="fas fa-eye me-1"></i>View
+                        <div class="d-flex gap-1 justify-content-center">
+                            <button class="btn btn-xs btn-outline-primary btn-view-project" data-project-id="${project.project_id}" title="View Project Details">
+                                <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-success btn-upload-project" data-project-id="${project.project_id}">
-                                <i class="fas fa-upload me-1"></i>Upload
+                            <button class="btn btn-xs btn-outline-success btn-upload-project" data-project-id="${project.project_id}" title="Upload Files">
+                                <i class="fas fa-upload"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger btn-delete-project" data-project-id="${project.project_id}">
-                                <i class="fas fa-trash me-1"></i>Delete
+                            <button class="btn btn-xs btn-outline-danger btn-delete-project" data-project-id="${project.project_id}" title="Delete Project">
+                                <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>

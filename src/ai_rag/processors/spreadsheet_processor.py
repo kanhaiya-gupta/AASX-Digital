@@ -63,7 +63,7 @@ class SpreadsheetProcessor(BaseDataProcessor):
             
             # Save embedding locally
             vector_data = {
-                'id': self.vector_db.generate_vector_id(project_id, file_path.name),
+                'id': file_info.get('file_id'),  # Use file_id directly for deterministic mapping
                 'vector': embedding,
                 'payload': metadata
             }

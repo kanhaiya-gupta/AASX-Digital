@@ -13,6 +13,7 @@ from .use_case import UseCase
 from .project import Project
 from .file import File
 from .digital_twin import DigitalTwin
+from .user_consent import UserConsent
 
 __all__ = [
     'BaseModel',
@@ -21,5 +22,6 @@ __all__ = [
     'UseCase',
     'Project', 
     'File',
-    'DigitalTwin'
+    'DigitalTwin',
+    'UserConsent'
 ] 
