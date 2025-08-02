@@ -43,6 +43,46 @@ class ProjectService:
         project_uuid = uuid.uuid5(namespace_uuid, combined_name.lower().replace(' ', '-'))
         return str(project_uuid)
     
+    def get_project_id_by_path(self, use_case_name: str, project_name: str) -> Optional[str]:
+        """Get existing project ID by use case name and project name (reverse engineering)."""
+        try:
+            print(f"🔍 ProjectService: Searching for project: {use_case_name}/{project_name}")
+            
+            # Use the efficient repository method that does it all in one query
+            project_id = self.project_repo.get_project_id_by_path(use_case_name, project_name)
+            
+            if project_id:
+                print(f"✅ ProjectService: Found project '{project_name}' with ID: {project_id}")
+            else:
+                print(f"❌ ProjectService: Project '{project_name}' not found in use case '{use_case_name}'")
+            
+            return project_id
+            
+        except Exception as e:
+            print(f"❌ ProjectService: Error finding project by path: {str(e)}")
+            return None
+    
+    def get_use_case_id_by_name(self, use_case_name: str) -> Optional[str]:
+        """Get use case ID by name (reverse engineering)."""
+        try:
+            print(f"🔍 ProjectService: Searching for use case: {use_case_name}")
+            
+            # Use the repository method to get use case by name
+            use_case = self.use_case_repo.get_by_name(use_case_name)
+            
+            if use_case:
+                use_case_id = use_case.use_case_id
+                print(f"✅ ProjectService: Found use case '{use_case_name}' with ID: {use_case_id}")
+                return use_case_id
+            else:
+                print(f"❌ ProjectService: Use case '{use_case_name}' not found")
+                return None
+            
+        except Exception as e:
+            print(f"❌ ProjectService: Error finding use case by name: {str(e)}")
+            return None
+    
+    
     def list_projects(self, use_case_id: str = None) -> List[Dict[str, Any]]:
         """Get all projects, optionally filtered by use case"""
         try:
@@ -53,7 +93,37 @@ class ProjectService:
                 # Get all projects with their use case relationships
                 projects = self.project_repo.get_all_with_use_cases()
             
-            return [project.to_dict() if hasattr(project, 'to_dict') else project for project in projects]
+            # Convert to list of dictionaries and add file counts
+            project_list = []
+            for project in projects:
+                project_dict = project.to_dict() if hasattr(project, 'to_dict') else project
+                
+                # Debug: Print project structure
+                print(f"🔍 Project dict keys: {list(project_dict.keys())}")
+                print(f"🔍 Project dict: {project_dict}")
+                
+                # Get file count for this project
+                project_id = project_dict.get('project_id') or project_dict.get('id')
+                print(f"🔍 Extracted project_id: {project_id}")
+                
+                if project_id:
+                    # First try to use the file_count from the database
+                    db_file_count = project_dict.get('file_count', 0)
+                    print(f"🔍 Database file_count: {db_file_count}")
+                    
+                    # Also get the actual count from files table
+                    actual_file_count = self.get_project_file_count(project_id)
+                    print(f"🔍 Actual file count for {project_id}: {actual_file_count}")
+                    
+                    # Use the actual count (more reliable)
+                    project_dict['file_count'] = actual_file_count
+                else:
+                    print(f"❌ No project_id found in project_dict")
+                    project_dict['file_count'] = 0
+                
+                project_list.append(project_dict)
+            
+            return project_list
         except Exception as e:
             raise Exception(f"Failed to list projects: {str(e)}")
     
@@ -197,6 +267,19 @@ class ProjectService:
             return files
         except Exception as e:
             raise Exception(f"Failed to get files for project {project_id}: {str(e)}")
+    
+    def get_project_file_count(self, project_id: str) -> int:
+        """Get the number of files in a project"""
+        try:
+            print(f"🔍 Getting file count for project_id: {project_id}")
+            from src.shared.repositories.file_repository import FileRepository
+            file_repo = FileRepository(self.db_manager)
+            files = file_repo.get_by_project_id(project_id)
+            print(f"🔍 Found {len(files)} files for project {project_id}")
+            return len(files)
+        except Exception as e:
+            print(f"❌ Error getting file count for project {project_id}: {e}")
+            return 0
     
     def link_project_to_use_case(self, project_id: str, use_case_id: str) -> bool:
         """Link a project to a use case"""

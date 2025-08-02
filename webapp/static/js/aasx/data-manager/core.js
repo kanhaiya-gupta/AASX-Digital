@@ -381,6 +381,13 @@ export class DataManager {
                 const response = await fetch(`/api/aasx/use-cases/${useCase.id}/projects`);
                 if (response.ok) {
                     const projects = await response.json();
+                    console.log(`📁 Data Manager: Raw projects response for ${useCase.name}:`, projects);
+                    
+                    // Debug: Check file_count for each project
+                    projects.forEach(project => {
+                        console.log(`🔍 Project ${project.name}: file_count = ${project.file_count}, files array length = ${project.files ? project.files.length : 'no files array'}`);
+                    });
+                    
                     useCasesWithProjects.push({
                         id: useCase.id,
                         name: useCase.name,
@@ -472,7 +479,10 @@ export class DataManager {
 
     // Render a single project card
     renderProjectCard(project) {
-        const fileCount = project.files ? project.files.length : 0;
+        console.log(`🔍 renderProjectCard: Project ${project.name}:`, project);
+        console.log(`🔍 renderProjectCard: file_count = ${project.file_count}, type = ${typeof project.file_count}`);
+        
+        const fileCount = project.file_count || 0;
         const status = project.status || 'active';
         const statusColor = this.getStatusColor(status);
         
@@ -656,6 +666,13 @@ export class DataManager {
         useCasesContainer.hide();
         projectsSection.show();
         
+        console.log(`🔍 showProjectsForUseCase: Use case ${useCase.name} has ${useCase.projects ? useCase.projects.length : 0} projects`);
+        if (useCase.projects) {
+            useCase.projects.forEach(project => {
+                console.log(`🔍 Project ${project.name}: file_count = ${project.file_count}`);
+            });
+        }
+        
         // Render projects
         if (!useCase.projects || useCase.projects.length === 0) {
             projectsContainer.html(`
@@ -789,10 +806,13 @@ export class DataManager {
     }
 
     // Show project details
-    showProjectDetails(project) {
+    async showProjectDetails(project) {
+        console.log(`🔍 showProjectDetails: Loading details for project ${project.name}`);
+        
+        // Show loading state first
         const modalHtml = `
             <div class="modal fade" id="projectDetailsModal" tabindex="-1">
-                <div class="modal-dialog modal-lg">
+                <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">
@@ -801,38 +821,12 @@ export class DataManager {
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <h6>Description</h6>
-                                    <p class="text-muted">${project.description || 'No description available'}</p>
-                                    
-                                    <h6>Project Details</h6>
-                                    <ul class="list-unstyled">
-                                        <li><strong>Project ID:</strong> ${project.project_id}</li>
-                                        <li><strong>Status:</strong> <span class="badge bg-${this.getStatusColor(project.status || 'active')}">${project.status || 'active'}</span></li>
-                                        <li><strong>Files:</strong> ${project.file_count || 0} files</li>
-                                        <li><strong>Created:</strong> ${new Date(project.created_at).toLocaleDateString()}</li>
-                                    </ul>
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
                                 </div>
-                                <div class="col-md-4">
-                                    <h6>Use Case</h6>
-                                    <p class="text-primary">${project.useCase ? project.useCase.name : 'Unknown'}</p>
-                                    
-                                    <h6>Tags</h6>
-                                    <div class="mb-3">
-                                        ${this.renderTags(project.tags)}
-                                    </div>
-                                </div>
+                                <p class="mt-2">Loading project details...</p>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-danger" onclick="dataManager.deleteProject('${project.project_id}')">
-                                <i class="fas fa-trash me-1"></i>Delete Project
-                            </button>
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary" onclick="dataManager.uploadToProject('${project.project_id}')">
-                                <i class="fas fa-upload me-1"></i>Upload Files
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -846,8 +840,226 @@ export class DataManager {
         $('body').append(modalHtml);
         const modal = new bootstrap.Modal(document.getElementById('projectDetailsModal'));
         modal.show();
+        
+        try {
+            // Fetch detailed project information including files
+            const response = await fetch(`/api/aasx/projects/${project.project_id}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch project details: ${response.status}`);
+            }
+            
+            const projectDetails = await response.json();
+            console.log(`🔍 Project details loaded:`, projectDetails);
+            
+            // Update modal with detailed information
+            this.updateProjectDetailsModal(projectDetails);
+            
+        } catch (error) {
+            console.error('❌ Error loading project details:', error);
+            this.updateProjectDetailsModal(project, error.message);
+        }
     }
-
+    
+    // Update project details modal with comprehensive information
+    updateProjectDetailsModal(projectDetails, errorMessage = null) {
+        const modalBody = $('#projectDetailsModal .modal-body');
+        
+        if (errorMessage) {
+            modalBody.html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading project details: ${errorMessage}
+                </div>
+            `);
+            return;
+        }
+        
+        const files = projectDetails.files || [];
+        const useCase = projectDetails.use_case;
+        
+        const modalContent = `
+            <div class="row">
+                <div class="col-md-8">
+                    <h6>Description</h6>
+                    <p class="text-muted">${projectDetails.description || 'No description available'}</p>
+                    
+                    <h6>Project Details</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Project ID:</strong> <code>${projectDetails.project_id}</code></li>
+                        <li><strong>Status:</strong> <span class="badge bg-${this.getStatusColor(projectDetails.status || 'active')}">${projectDetails.status || 'active'}</span></li>
+                        <li><strong>Files:</strong> ${files.length} files</li>
+                        <li><strong>Created:</strong> ${new Date(projectDetails.created_at).toLocaleDateString()}</li>
+                        <li><strong>Last Updated:</strong> ${new Date(projectDetails.updated_at).toLocaleDateString()}</li>
+                    </ul>
+                    
+                    <h6 class="mt-4">Files in Project</h6>
+                    ${this.renderProjectFiles(files)}
+                </div>
+                <div class="col-md-4">
+                    <h6>Use Case</h6>
+                    <p class="text-primary">${useCase ? useCase.name : 'Unknown'}</p>
+                    
+                    <h6>Tags</h6>
+                    <div class="mb-3">
+                        ${this.renderTags(projectDetails.tags)}
+                    </div>
+                    
+                    <h6>Metadata</h6>
+                    <div class="mb-3">
+                        ${this.renderMetadata(projectDetails.metadata)}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+                 modalBody.html(modalContent);
+         
+         // Add modal footer
+         const modalFooter = `
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-danger" onclick="dataManager.deleteProject('${projectDetails.project_id}')">
+                     <i class="fas fa-trash me-1"></i>Delete Project
+                 </button>
+                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                 <button type="button" class="btn btn-primary" onclick="dataManager.uploadToProject('${projectDetails.project_id}')">
+                     <i class="fas fa-upload me-1"></i>Upload Files
+                 </button>
+             </div>
+         `;
+         
+         modalBody.after(modalFooter);
+     }
+    
+    // Render project files with detailed information
+    renderProjectFiles(files) {
+        if (!files || files.length === 0) {
+            return `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    No files uploaded to this project yet.
+                </div>
+            `;
+        }
+        
+        let filesHtml = '<div class="table-responsive"><table class="table table-sm table-hover">';
+        filesHtml += `
+            <thead class="table-light">
+                <tr>
+                    <th>File Name</th>
+                    <th>Status</th>
+                    <th>Size</th>
+                    <th>Upload Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        files.forEach(file => {
+            const statusColor = this.getFileStatusColor(file.status);
+            const fileSize = this.formatFileSize(file.size);
+            const uploadDate = new Date(file.upload_date).toLocaleDateString();
+            
+            filesHtml += `
+                <tr>
+                    <td>
+                        <div>
+                            <strong>${file.filename}</strong>
+                            ${file.original_filename !== file.filename ? `<br><small class="text-muted">Original: ${file.original_filename}</small>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-${statusColor}">${file.status || 'unknown'}</span>
+                    </td>
+                    <td>${fileSize}</td>
+                    <td>${uploadDate}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary btn-sm" onclick="dataManager.viewFileDetails('${file.file_id}')" title="View File Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="dataManager.deleteFile('${file.file_id}')" title="Delete File">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        filesHtml += '</tbody></table></div>';
+        return filesHtml;
+    }
+    
+    // Get color for file status
+    getFileStatusColor(status) {
+        const colors = {
+            'not_processed': 'warning',
+            'processing': 'info',
+            'processed': 'success',
+            'failed': 'danger',
+            'error': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+    
+    // Format file size
+    formatFileSize(bytes) {
+        if (!bytes) return '0 B';
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    }
+    
+    // Render metadata
+    renderMetadata(metadata) {
+        if (!metadata) {
+            return '<p class="text-muted small">No metadata available</p>';
+        }
+        
+        try {
+            const metadataObj = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
+            let html = '<div class="small">';
+            Object.entries(metadataObj).forEach(([key, value]) => {
+                html += `<div><strong>${key}:</strong> ${value}</div>`;
+            });
+            html += '</div>';
+            return html;
+        } catch (e) {
+            return '<p class="text-muted small">Invalid metadata format</p>';
+        }
+        }
+    
+    // View file details
+    viewFileDetails(fileId) {
+        console.log(`🔍 Viewing file details for file ID: ${fileId}`);
+        // TODO: Implement file details view
+        showInfo('File details view will be implemented soon');
+    }
+    
+    // Delete file
+    async deleteFile(fileId) {
+        console.log(`🗑️ Deleting file with ID: ${fileId}`);
+        if (confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
+            try {
+                const response = await fetch(`/api/aasx/files/${fileId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showSuccess('File deleted successfully');
+                    // Refresh the current view
+                    await this.refreshCurrentView();
+                } else {
+                    showError('Failed to delete file');
+                }
+            } catch (error) {
+                console.error('Error deleting file:', error);
+                showError('Error deleting file');
+            }
+        }
+    }
+    
     // Navigate to upload section with pre-selected project
     navigateToUploadWithProject(project) {
         // Scroll to file upload section

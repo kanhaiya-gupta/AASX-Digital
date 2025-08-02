@@ -37,12 +37,19 @@ class AASXProcessor:
         """Run the complete ETL pipeline with all steps."""
         try:
             print("🚀 Starting ETL pipeline...")
+            print(f"📋 Received config: {config}")
             
             # Extract configuration
             file_id = config.get('file_id')
             project_id = config.get('project_id')
             use_case_id = config.get('use_case_id')
             output_formats = config.get('output_formats', ['json', 'graph', 'rdf', 'yaml'])
+            
+            print(f"🔍 Extracted config values:")
+            print(f"   - file_id: {file_id}")
+            print(f"   - project_id: {project_id}")
+            print(f"   - use_case_id: {use_case_id}")
+            print(f"   - output_formats: {output_formats}")
             
             # User consent and privacy settings
             user_consent = config.get('user_consent', False)
@@ -57,11 +64,25 @@ class AASXProcessor:
             if not file_info:
                 return {'status': 'error', 'message': f'File {file_id} not found'}
             
+            # Create hierarchical output path: output/usecase/project/filename_without_extension/
+            output_dir = self.create_hierarchical_output_path(config, file_info)
+            print(f"📁 Output directory: {output_dir}")
+            
             # Step 1: Process ETL extraction
             print("📊 Step 1: Processing ETL extraction...")
+            print(f"🔍 File path being processed: {file_info.filepath}")
+            
+            # Normalize the file path to handle Windows backslashes
+            normalized_filepath = str(file_info.filepath).replace('\\', '/')
+            file_path = Path(normalized_filepath)
+            
+            print(f"🔍 Normalized file path: {file_path}")
+            print(f"🔍 File exists check: {file_path.exists()}")
+            print(f"🔍 File absolute path: {file_path.absolute()}")
+            
             etl_result = self.process_etl_extraction(
-                Path(file_info.filename), 
-                Path("data/etl_output"), 
+                file_path, 
+                output_dir, 
                 output_formats
             )
             
@@ -80,7 +101,7 @@ class AASXProcessor:
                 'data_privacy_level': data_privacy_level
             }
             twin_result = self.create_digital_twin_step(
-                project_id, file_id, file_info.__dict__, etl_result, Path("data/etl_output"), config=config
+                project_id, file_id, file_info.__dict__, etl_result, output_dir, config=config
             )
             
             if twin_result.get('status') != 'success':
@@ -95,7 +116,7 @@ class AASXProcessor:
             ai_rag_data = {
                 'project_id': project_id,
                 'file_info': file_info.__dict__,
-                'output_dir': Path("data/etl_output")
+                'output_dir': output_dir
             }
             
             try:
@@ -148,6 +169,33 @@ class AASXProcessor:
         except Exception as e:
             print(f"❌ ETL pipeline failed: {e}")
             return {'status': 'error', 'message': str(e)}
+    
+    def create_hierarchical_output_path(self, config: Dict[str, Any], file_info) -> Path:
+        """Create hierarchical output path: output/usecase/project/filename_without_extension/"""
+        try:
+            # Get use case and project names from config
+            use_case_name = config.get('use_case_name', 'Unknown_Use_Case')
+            project_name = config.get('project_name', 'Unknown_Project')
+            
+            # Get filename without extension
+            filename = file_info.filename
+            filename_without_ext = Path(filename).stem
+            
+            # Create hierarchical path
+            output_path = Path("output") / use_case_name / project_name / filename_without_ext
+            
+            # Create directories if they don't exist
+            output_path.mkdir(parents=True, exist_ok=True)
+            
+            print(f"📁 Created hierarchical output path: {output_path}")
+            return output_path
+            
+        except Exception as e:
+            print(f"❌ Error creating hierarchical output path: {e}")
+            # Fallback to flat structure
+            fallback_path = Path("output") / filename_without_ext
+            fallback_path.mkdir(parents=True, exist_ok=True)
+            return fallback_path
     
     def process_ai_rag(self, etl_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process AI/RAG analysis on ETL data"""
@@ -445,8 +493,25 @@ class AASXProcessor:
         """Modular function: Update file status to processed"""
         try:
             if file_id:
+                # Get file info to find project_id
+                file_info = self.file_repo.get_by_id(file_id)
+                project_id = None
+                if file_info:
+                    project_id = file_info.project_id if hasattr(file_info, 'project_id') else file_info.get('project_id')
+                
+                # Update file status
                 self.file_repo.update_status(file_id, 'processed')
                 print(f"✅ Updated file status to 'processed' for {filename}")
+                
+                # Update project's updated_at timestamp to reflect the file processing
+                if project_id:
+                    try:
+                        from datetime import datetime
+                        self.project_repo.update(project_id, {"updated_at": datetime.now().isoformat()})
+                        print(f"🔧 Processor: Updated project {project_id} timestamp after file processing")
+                    except Exception as update_error:
+                        print(f"⚠️ Processor: Failed to update project timestamp after processing: {update_error}")
+                
                 return {
                     'status': 'success',
                     'file_id': file_id,
@@ -468,10 +533,16 @@ class AASXProcessor:
     def process_single_file(self, file_path: Path, output_dir: Path, formats: List[str] = None) -> Dict[str, Any]:
         """Process a single AASX file"""
         try:
+            print(f"🔍 process_single_file: Input file_path: {file_path}")
+            print(f"🔍 process_single_file: output_dir: {output_dir}")
+            print(f"🔍 process_single_file: formats: {formats}")
+            
             if formats is None:
                 formats = ['json', 'graph', 'rdf', 'yaml']
             
+            print(f"🔍 process_single_file: About to call extract_aasx with file_path: {file_path}")
             result = extract_aasx(file_path, output_dir, formats=formats)
+            print(f"🔍 process_single_file: extract_aasx result: {result}")
             return result
             
         except Exception as e:
@@ -532,8 +603,14 @@ class AASXProcessor:
     def process_etl_extraction(self, file_path: Path, output_dir: Path, formats: List[str]) -> Dict[str, Any]:
         """Process ETL extraction for a single file"""
         try:
+            print(f"🔍 process_etl_extraction: Input file_path: {file_path}")
+            print(f"🔍 process_etl_extraction: file_path type: {type(file_path)}")
+            print(f"🔍 process_etl_extraction: file_path exists: {file_path.exists()}")
+            print(f"🔍 process_etl_extraction: file_path absolute: {file_path.absolute()}")
+            
             # Validate inputs
             if not file_path.exists():
+                print(f"❌ process_etl_extraction: File does not exist: {file_path}")
                 return {
                     'status': 'failed',
                     'error': f'File not found: {file_path}'

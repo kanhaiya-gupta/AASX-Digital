@@ -191,4 +191,18 @@ class ProjectRepository(BaseRepository[Project]):
             "project": project,
             "use_cases": use_cases,
             "primary_use_case": primary_use_case
-        } 
+        }
+    
+    def get_project_id_by_path(self, use_case_name: str, project_name: str) -> Optional[str]:
+        """Get project ID by use case name and project name (reverse engineering)."""
+        query = """
+            SELECT p.project_id
+            FROM projects p
+            JOIN project_use_case_links puc ON p.project_id = puc.project_id
+            JOIN use_cases uc ON puc.use_case_id = uc.use_case_id
+            WHERE uc.name = ? AND p.name = ?
+        """
+        results = self.db_manager.execute_query(query, (use_case_name, project_name))
+        if results:
+            return results[0]['project_id']
+        return None 

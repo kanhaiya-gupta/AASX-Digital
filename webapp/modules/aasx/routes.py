@@ -44,9 +44,10 @@ federated_learning_service = FederatedLearningService(digital_twin_service)
 
 # Models
 class ETLConfigRequest(BaseModel):
-    files: Optional[List[str]] = None
+    files: Optional[List[Any]] = None  # Can be List[str] (filenames) or List[dict] (file objects with hierarchy)
     project_id: Optional[str] = None
     project_name: Optional[str] = None
+    use_case_name: Optional[str] = None  # For hierarchy-based file lookup
     output_dir: Optional[str] = None
     formats: Optional[List[str]] = ["json", "graph", "rdf", "yaml"]
     federated_learning: Optional[str] = "not_allowed"  # "allowed", "not_allowed", "conditional"
@@ -302,15 +303,67 @@ async def list_all_files():
 async def run_etl_pipeline(config: ETLConfigRequest):
     """Run ETL pipeline for AASX files with federated learning integration"""
     try:
+        print("🔍 ETL Route: Received request")
+        print(f"📋 ETL Route: Config data: {config.dict()}")
+        
         # Validate federated learning setting
         if config.federated_learning not in ['allowed', 'not_allowed', 'conditional']:
             raise HTTPException(status_code=400, detail="Invalid federated_learning value. Must be 'allowed', 'not_allowed', or 'conditional'")
         
-        # Run ETL pipeline - all business logic is in processor
-        result = aasx_processor.run_etl_pipeline(config.dict())
+        # Handle file selection - do reverse engineering to find file_id and project_id
+        config_dict = config.dict()
+        if config.files and len(config.files) > 0:
+            print(f"🔄 ETL Route: Processing file selection: {config.files}")
+            
+            # Check if we have file objects with hierarchy info
+            if isinstance(config.files[0], dict) and 'use_case_name' in config.files[0]:
+                # We have hierarchy info - do reverse engineering
+                file_obj = config.files[0]  # Process first file for now
+                filename = file_obj['filename']
+                use_case_name = file_obj['use_case_name']
+                project_name = file_obj['project_name']
+                
+                print(f"🔍 ETL Route: Reverse engineering file_id for: {use_case_name}/{project_name}/{filename}")
+                
+                # Get use_case_id from use case name
+                use_case_id = use_case_service.get_use_case_id_by_name(use_case_name)
+                if use_case_id:
+                    print(f"✅ ETL Route: Found use_case_id: {use_case_id}")
+                                
+                    # Use project service to find project_id first
+                    project_id = project_service.get_project_id_by_path(use_case_name, project_name)
+                    if project_id:
+                        print(f"✅ ETL Route: Found project_id: {project_id}")
+                                
+                        # Get file_id from filename
+                        file_id = file_service.get_file_id_by_path(use_case_name, project_name, filename)
+                        if file_id:
+                            config_dict['file_id'] = file_id
+                            config_dict['project_id'] = project_id
+                            config_dict['use_case_id'] = use_case_id
+                            config_dict['use_case_name'] = use_case_name
+                            config_dict['project_name'] = project_name
+                            print(f"✅ ETL Route: Found file_id: {file_id}, project_id: {project_id}, use_case_id: {use_case_id}")
+                        else:
+                            print(f"❌ ETL Route: Could not find file_id for {use_case_name}/{project_name}/{filename}")
+                            raise HTTPException(status_code=404, detail=f"File {filename} not found in {use_case_name}/{project_name}")
+                else:
+                    print(f"❌ ETL Route: Could not find project_id for {use_case_name}/{project_name}")
+                    raise HTTPException(status_code=404, detail=f"Project {project_name} not found in use case {use_case_name}")
+            else:
+                # Invalid file format - should be dict with hierarchy info
+                print(f"❌ ETL Route: Invalid file format. Expected dict with hierarchy info, got: {type(config.files[0])}")
+                raise HTTPException(status_code=400, detail="Invalid file format. Expected hierarchy information (use_case_name, project_name, filename)")
         
+        print(f"📤 ETL Route: Sending to processor: {config_dict}")
+        
+        # Run ETL pipeline - all business logic is in processor
+        result = aasx_processor.run_etl_pipeline(config_dict)
+        
+        print(f"📥 ETL Route: Processor result: {result}")
         return result
     except Exception as e:
+        print(f"💥 ETL Route: Exception: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/etl/progress")

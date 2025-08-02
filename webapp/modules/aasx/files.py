@@ -148,6 +148,14 @@ class FileService:
                         print(f"⚠️ Failed to clean up uploaded file: {cleanup_error}")
                 raise Exception("Failed to create file record in database")
             
+            # Update project's updated_at timestamp to reflect the file upload
+            try:
+                from datetime import datetime
+                self.project_repo.update(project_id, {"updated_at": datetime.now().isoformat()})
+                print(f"🔧 File Service: Updated project {project_id} timestamp")
+            except Exception as update_error:
+                print(f"⚠️ File Service: Failed to update project timestamp: {update_error}")
+            
             # Convert to dictionary for response
             file_info = created_file.to_dict() if hasattr(created_file, 'to_dict') else created_file.__dict__
             
@@ -240,7 +248,19 @@ class FileService:
             if not file_info:
                 raise Exception("File not found")
             
-            return self.file_repo.delete(file_id)
+            # Delete the file
+            delete_result = self.file_repo.delete(file_id)
+            
+            # Update project's updated_at timestamp to reflect the file deletion
+            if delete_result:
+                try:
+                    from datetime import datetime
+                    self.project_repo.update(project_id, {"updated_at": datetime.now().isoformat()})
+                    print(f"🔧 File Service: Updated project {project_id} timestamp after file deletion")
+                except Exception as update_error:
+                    print(f"⚠️ File Service: Failed to update project timestamp after deletion: {update_error}")
+            
+            return delete_result
         except Exception as e:
             raise Exception(f"Failed to delete file {file_id}: {str(e)}")
     
@@ -266,6 +286,14 @@ class FileService:
                 if federated_setting not in ['allowed', 'not_allowed', 'conditional']:
                     raise Exception("Invalid federated_learning value. Must be 'allowed', 'not_allowed', or 'conditional'")
                 self.file_repo.update_federated_learning(file_id, federated_setting)
+            
+            # Update project's updated_at timestamp to reflect the file update
+            try:
+                from datetime import datetime
+                self.project_repo.update(project_id, {"updated_at": datetime.now().isoformat()})
+                print(f"🔧 File Service: Updated project {project_id} timestamp after file update")
+            except Exception as update_error:
+                print(f"⚠️ File Service: Failed to update project timestamp after file update: {update_error}")
             
             return True
         except Exception as e:
@@ -402,6 +430,22 @@ class FileService:
             return self.file_repo.find_by_name_and_project(filename, project_id)
         except Exception as e:
             raise Exception(f"Failed to find file by name: {str(e)}")
+    
+    def get_file_by_filename(self, filename: str) -> Optional[Dict[str, Any]]:
+        """Get file information by filename across all projects."""
+        try:
+            print(f"🔍 FileService: Looking for filename: {filename}")
+            all_files = self.file_repo.get_all()
+            for file in all_files:
+                if file.filename == filename:
+                    file_dict = file.__dict__
+                    print(f"✅ FileService: Found file: {file_dict}")
+                    return file_dict
+            print(f"❌ FileService: File not found: {filename}")
+            return None
+        except Exception as e:
+            print(f"💥 FileService: Error finding file by filename: {e}")
+            return None
     
     def find_file_by_hierarchy(self, use_case_name: str, project_name: str, filename: str) -> Optional[Dict[str, Any]]:
         """Find file ID by use case name, project name, and filename"""

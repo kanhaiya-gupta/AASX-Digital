@@ -158,6 +158,26 @@ class UseCaseService:
             return self.use_case_repo.get_statistics()
         except Exception as e:
             raise Exception(f"Failed to get use case statistics: {str(e)}")
+    
+    def get_use_case_id_by_name(self, use_case_name: str) -> Optional[str]:
+        """Get use case ID by name (reverse engineering)."""
+        try:
+            print(f"🔍 UseCaseService: Searching for use case: {use_case_name}")
+            
+            # Use the repository method to get use case by name
+            use_case = self.use_case_repo.get_by_name(use_case_name)
+            
+            if use_case:
+                use_case_id = use_case.use_case_id
+                print(f"✅ UseCaseService: Found use case '{use_case_name}' with ID: {use_case_id}")
+                return use_case_id
+            else:
+                print(f"❌ UseCaseService: Use case '{use_case_name}' not found")
+                return None
+                
+        except Exception as e:
+            print(f"❌ UseCaseService: Error finding use case by name: {str(e)}")
+            return None
 
 # Global instance
 use_case_service = UseCaseService() 

@@ -45,7 +45,14 @@ export class AASXETLPipeline {
 
     initializeEventListeners() {
         // ETL pipeline controls
-        $('#runETLPipeline').on('click', () => this.runETLPipeline());
+        $('#runSelectedPipeline').on('click', () => {
+            console.log('🔘 Run Selected Pipeline button clicked');
+            this.runETLPipeline();
+        });
+        $('#runAllData').on('click', () => {
+            console.log('🔘 Run All Data button clicked');
+            this.runETLPipeline();
+        });
         $('#refreshEtlFiles').on('click', () => this.refreshFiles());
         
         // File selection
@@ -61,6 +68,9 @@ export class AASXETLPipeline {
             const presetName = $(e.target).data('preset');
             this.loadPreset(presetName);
         });
+        
+        // Project selection change
+        $('#etlProjectSelect').on('change', () => this.refreshFiles());
         
         console.log('📋 ETL Pipeline event listeners setup complete');
     }
@@ -103,43 +113,69 @@ export class AASXETLPipeline {
     }
 
     async runETLPipeline() {
+        console.log('🚀 ETL Pipeline execution started');
+        
         if (this.isProcessing) {
+            console.log('⚠️ Pipeline is already running, aborting');
             showWarning('Pipeline is already running');
             return;
         }
 
         const config = this.getETLConfiguration();
         const selectedFiles = this.getSelectedFiles();
+        
+        console.log('📋 ETL Configuration:', config);
+        console.log('📁 Selected Files:', selectedFiles);
 
         if (selectedFiles.length === 0) {
+            console.log('⚠️ No files selected, aborting');
             showWarning('Please select at least one file to process');
             return;
         }
 
+        console.log('✅ Starting ETL processing...');
         this.isProcessing = true;
         this.showETLProgress();
         this.startProgressSimulation();
 
         try {
+            console.log('📡 Making API call to /api/aasx/etl/run');
+            console.log('📤 Request payload:', {
+                files: selectedFiles,
+                config: config
+            });
+            
+            // Combine files and config into a single request body
+            const requestBody = {
+                ...config,
+                files: selectedFiles
+            };
+            
+            console.log('📤 Request payload:', requestBody);
+            
             const response = await fetch('/api/aasx/etl/run', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    files: selectedFiles,
-                    config: config
-                })
+                body: JSON.stringify(requestBody)
             });
+
+            console.log('📡 API Response status:', response.status);
+            console.log('📡 API Response ok:', response.ok);
 
             if (response.ok) {
                 const result = await response.json();
+                console.log('✅ API call successful, result:', result);
                 this.showETLResults(result);
             } else {
                 const error = await response.json();
+                console.log('❌ API call failed, error:', error);
                 showError(`ETL Pipeline failed: ${error.detail}`);
             }
         } catch (error) {
+            console.log('💥 API call exception:', error);
             showError(`ETL Pipeline error: ${error.message}`);
         } finally {
+            console.log('🏁 ETL Pipeline execution finished');
             this.isProcessing = false;
             this.stopProgressSimulation();
         }
@@ -173,24 +209,34 @@ export class AASXETLPipeline {
         $('#etlProgressSection').hide();
         $('#etlResultsSection').show();
         
+        // Safely handle undefined arrays
+        const outputFormats = result.outputFormats || [];
+        const exportFormats = result.exportFormats || [];
+        const processedFiles = result.processedFiles || 0;
+        const duration = result.duration || 0;
+        
         const resultsHtml = `
             <div class="alert alert-success">
                 <h5><i class="fas fa-check-circle"></i> ETL Pipeline Completed Successfully</h5>
-                <p>Processed ${result.processedFiles} files in ${result.duration} seconds</p>
+                <p>Processed ${processedFiles} files in ${duration} seconds</p>
             </div>
             <div class="row">
                 <div class="col-md-6">
                     <h6>Output Formats Generated:</h6>
                     <ul>
-                        ${result.outputFormats.map(format => `<li>${format}</li>`).join('')}
+                        ${outputFormats.length > 0 ? outputFormats.map(format => `<li>${format}</li>`).join('') : '<li>No output formats specified</li>'}
                     </ul>
                 </div>
                 <div class="col-md-6">
                     <h6>Export Formats:</h6>
                     <ul>
-                        ${result.exportFormats.map(format => `<li>${format}</li>`).join('')}
+                        ${exportFormats.length > 0 ? exportFormats.map(format => `<li>${format}</li>`).join('') : '<li>No export formats specified</li>'}
                     </ul>
                 </div>
+            </div>
+            <div class="mt-3">
+                <h6>Processing Details:</h6>
+                <pre class="bg-light p-2 rounded">${JSON.stringify(result, null, 2)}</pre>
             </div>
         `;
         
@@ -199,25 +245,57 @@ export class AASXETLPipeline {
 
     async refreshFiles() {
         try {
-            const response = await fetch('/api/aasx/files');
+            const projectId = $('#etlProjectSelect').val();
+            if (!projectId) {
+                this.files = [];
+                this.renderFileList();
+                return;
+            }
+
+            const response = await fetch(`/api/aasx/projects/${projectId}/files`);
             if (response.ok) {
                 this.files = await response.json();
                 this.renderFileList();
-                console.log(`📁 Loaded ${this.files.length} files`);
+                console.log(`📁 Loaded ${this.files.length} files for project ${projectId}`);
             } else {
-                console.warn('No files endpoint available yet - this is expected for new installations');
+                console.warn('No files found for project:', projectId);
                 this.files = [];
                 this.renderFileList();
             }
         } catch (error) {
-            console.warn('Files endpoint not available yet:', error.message);
+            console.warn('Failed to load files:', error.message);
             this.files = [];
             this.renderFileList();
         }
     }
 
     getSelectedFiles() {
-        return Array.from(this.selectedFiles);
+        const selected = Array.from(this.selectedFiles);
+        console.log('📁 getSelectedFiles() called, selected files:', selected);
+        console.log('📁 this.selectedFiles Set contents:', this.selectedFiles);
+        
+        // Send simple hierarchy information - let backend do reverse engineering
+        const selectedFilesWithHierarchy = [];
+        
+        for (const filename of selected) {
+            // Get use case and project information from the current selection
+            const useCaseSelect = $('#etlUseCaseSelect');
+            const projectSelect = $('#etlProjectSelect');
+            
+            const useCaseName = useCaseSelect.find('option:selected').text();
+            const projectName = projectSelect.find('option:selected').text();
+            
+            selectedFilesWithHierarchy.push({
+                filename: filename,
+                use_case_name: useCaseName,
+                project_name: projectName
+            });
+            
+            console.log(`📋 File hierarchy: ${useCaseName}/${projectName}/${filename}`);
+        }
+        
+        console.log('📁 Selected files with hierarchy:', selectedFilesWithHierarchy);
+        return selectedFilesWithHierarchy;
     }
 
     toggleSelectAll(checked) {
@@ -259,17 +337,27 @@ export class AASXETLPipeline {
 
     getSelectedOutputFormats() {
         const formats = [];
-        $('input[name="outputFormat"]:checked').each(function() {
-            formats.push($(this).val());
-        });
+        console.log('🔍 Reading output formats from ETL configuration...');
+        
+        // Check each output format checkbox
+        if ($('#jsonExport').is(':checked')) formats.push('json');
+        if ($('#yamlExport').is(':checked')) formats.push('yaml');
+        if ($('#graphExport').is(':checked')) formats.push('graph');
+        if ($('#rdfExport').is(':checked')) formats.push('rdf');
+        
+        console.log('📋 Selected output formats:', formats);
         return formats;
     }
 
     getSelectedExportFormats() {
         const formats = [];
-        $('input[name="exportFormat"]:checked').each(function() {
-            formats.push($(this).val());
-        });
+        console.log('🔍 Reading export formats from ETL configuration...');
+        
+        // Check each export format checkbox
+        if ($('#sqliteExport').is(':checked')) formats.push('sqlite');
+        if ($('#vectorDbExport').is(':checked')) formats.push('vector_db');
+        
+        console.log('📋 Selected export formats:', formats);
         return formats;
     }
 
@@ -337,7 +425,7 @@ export class AASXETLPipeline {
     }
 
     renderFileList() {
-        const container = $('#etlFileList');
+        const container = $('#etlFilesList');
         if (!container.length) {
             console.warn('ETL file list container not found');
             return;
