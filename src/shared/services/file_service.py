@@ -39,11 +39,11 @@ class FileService(BaseService[File]):
         
         if existing_file:
             # Update existing file instead of creating duplicate
-            return self._update_existing_file(existing_file.file_id, file_data, file_content)
+            return self._update_existing_file(existing_file.id, file_data, file_content)
         
         # Generate unique file ID
         file_id = str(uuid.uuid4())
-        file_data["file_id"] = file_id
+        file_data["id"] = file_id
         
         # Get use case information for better file organization
         project_use_cases = self.project_repository.get_project_use_cases(project_id)
@@ -59,19 +59,12 @@ class FileService(BaseService[File]):
         file_data["filename"] = f"{file_id}_{file_data['original_filename']}"
         file_data["filepath"] = f"uploads/{use_case_name}/{project_name}/{file_data['filename']}"
         
-        # Remove project_name from file_data as it's not a field in the File model
-        file_data.pop("project_name", None)
-        
         # Create file
         file = self.create(file_data)
         
         # Update project statistics
-        files_in_project = self.get_repository().get_by_project(project_id)
-        file_count = len(files_in_project)
-        total_size = sum(f.size for f in files_in_project)
-        
-        self.project_repository.update_file_count(project_id, file_count)
-        self.project_repository.update_total_size(project_id, total_size)
+        self.project_repository.update_file_count(project_id)
+        self.project_repository.update_total_size(project_id)
         
         self.logger.info(f"Uploaded file: {file.original_filename} to project: {project_name}")
         return file
@@ -88,70 +81,6 @@ class FileService(BaseService[File]):
         return {
             "file": file,
             "trace_info": trace_info
-        }
-    
-    def get_file_id_by_path(self, use_case_name: str, project_name: str, filename: str) -> Optional[str]:
-        """Get file_id from use case, project, and filename.
-        
-        This is essential for file retrieval when using the hierarchy-based path structure.
-        """
-        try:
-            # First, find the use case by name
-            use_case = self.get_repository().get_use_case_by_name(use_case_name)
-            if not use_case:
-                self.logger.warning(f"Use case not found: {use_case_name}")
-                return None
-            
-            # Find the project by name within the use case
-            project = self.project_repository.get_project_by_name_and_use_case(project_name, use_case['id'])
-            if not project:
-                self.logger.warning(f"Project '{project_name}' not found in use case '{use_case_name}'")
-                return None
-            
-            # Find the file by original filename in the project
-            file = self.get_repository().find_by_original_filename(filename, project.id)
-            if not file:
-                self.logger.warning(f"File '{filename}' not found in project '{project_name}'")
-                return None
-            
-            self.logger.info(f"Found file_id: {file.file_id} for path: {use_case_name}/{project_name}/{filename}")
-            return file.file_id
-            
-        except Exception as e:
-            self.logger.error(f"Error getting file_id by path {use_case_name}/{project_name}/{filename}: {e}")
-            return None
-    
-    def get_file_by_path(self, use_case_name: str, project_name: str, filename: str) -> Optional[File]:
-        """Get file object from use case, project, and filename."""
-        file_id = self.get_file_id_by_path(use_case_name, project_name, filename)
-        if file_id:
-            return self.get_by_id(file_id)
-        return None
-    
-    def get_file_path_info(self, file_id: str) -> Optional[Dict[str, Any]]:
-        """Get the logical path information for a file (usecase/project/filename)."""
-        file = self.get_by_id(file_id)
-        if not file:
-            return None
-        
-        # Get project information
-        project_use_cases = self.project_repository.get_project_use_cases(file.project_id)
-        if not project_use_cases:
-            return None
-        
-        primary_use_case = project_use_cases[0]
-        
-        # Get actual project name
-        project = self.project_repository.get_by_id(file.project_id)
-        project_name = project.name if project else file.project_id
-        
-        return {
-            "file_id": file_id,
-            "use_case_name": primary_use_case['name'],
-            "project_name": project_name,
-            "filename": file.original_filename,
-            "logical_path": f"{primary_use_case['name']}/{project_name}/{file.original_filename}",
-            "physical_path": file.filepath
         }
     
     def get_files_by_project(self, project_id: str) -> List[File]:

@@ -30,11 +30,11 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None
     
     # Neo4j settings
-    neo4j_uri: str = "neo4j://localhost:7688"
+    neo4j_uri: str = "neo4j://localhost:7687"
     neo4j_user: str = "neo4j"
     neo4j_password: str = "Neo4j123"
     neo4j_database: str = "neo4j"
-    neo4j_port: str = "7688"
+    neo4j_port: str = "7687"
     
     # Qdrant settings
     qdrant_host: str = "localhost"

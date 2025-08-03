@@ -8,7 +8,7 @@ export default class KGVisualization {
         this.isInitialized = false;
         this.config = {
             apiBaseUrl: '/api/kg-neo4j',
-            containerId: 'kg-graph-container',
+            containerId: 'graph-container',
             width: 800,
             height: 600,
             nodeSize: 20,

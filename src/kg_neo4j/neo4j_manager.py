@@ -7,6 +7,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+from datetime import datetime
 from neo4j import GraphDatabase, Driver, Session
 import subprocess
 import psutil
@@ -53,22 +54,42 @@ class Neo4jManager:
     def test_connection(self) -> bool:
         """Test if connection is working"""
         try:
+            if not self.driver:
+                logger.error("Neo4j driver not initialized")
+                return False
+                
             with self.driver.session() as session:
                 result = session.run("RETURN 1 as test")
                 record = result.single()
-                return record and record["test"] == 1
+                success = record and record["test"] == 1
+                if success:
+                    logger.info("✅ Neo4j connection test successful")
+                return success
         except Exception as e:
-            logger.error(f"Connection test failed: {e}")
+            logger.error(f"❌ Neo4j connection test failed: {e}")
+            logger.error(f"   URI: {self.uri}")
+            logger.error(f"   User: {self.user}")
+            logger.error(f"   Please check if Neo4j is running and accessible")
             return False
     
     def import_graph_file(self, file_path: Path):
-        """Import graph data from a JSON file"""
+        """Import graph data from a JSON file using Python Neo4j driver and Bolt protocol"""
         try:
             logger.info(f"Importing graph file: {file_path}")
+            
+            # Check if driver is connected
+            if not self.driver:
+                raise Exception("Neo4j driver not initialized. Please check connection settings.")
+            
+            # Test connection before importing
+            if not self.test_connection():
+                raise Exception("Cannot connect to Neo4j database. Please check if Neo4j is running.")
             
             # Read the graph file
             with open(file_path, 'r', encoding='utf-8') as f:
                 graph_data = json.load(f)
+            
+            logger.info(f"📊 Loaded JSON data: {len(graph_data.get('nodes', []))} nodes, {len(graph_data.get('edges', []))} edges")
             
             # Extract filename for metadata
             filename = file_path.stem
@@ -76,24 +97,94 @@ class Neo4jManager:
             with self.driver.session() as session:
                 # Import nodes
                 if 'nodes' in graph_data:
+                    logger.info(f"📥 Importing {len(graph_data['nodes'])} nodes...")
                     self._import_nodes(session, graph_data['nodes'], filename)
                 
-                # Import relationships
-                if 'relationships' in graph_data:
-                    self._import_relationships(session, graph_data['relationships'], filename)
+                # Import relationships (handle both 'edges' and 'relationships' keys)
+                edge_data = graph_data.get('relationships', graph_data.get('edges', []))
+                if edge_data:
+                    logger.info(f"🔗 Importing {len(edge_data)} relationships...")
+                    self._import_relationships(session, edge_data, filename)
                 
                 # Import metadata
                 if 'metadata' in graph_data:
+                    logger.info("📋 Importing metadata...")
                     self._import_metadata(session, graph_data['metadata'], filename)
             
-            logger.info(f"Successfully imported {file_path.name}")
+            logger.info(f"✅ Successfully imported {file_path.name} into Neo4j")
             
         except Exception as e:
-            logger.error(f"Failed to import {file_path}: {e}")
+            logger.error(f"❌ Failed to import {file_path}: {e}")
+            raise
+
+    def import_graph_file_with_id(self, file_path: Path, file_id: str):
+        """Import graph data from a JSON file with file_id tracking"""
+        try:
+            logger.info(f"Importing graph file: {file_path} with file_id: {file_id}")
+            
+            # Check if driver is connected
+            if not self.driver:
+                raise Exception("Neo4j driver not initialized. Please check connection settings.")
+            
+            # Test connection before importing
+            if not self.test_connection():
+                raise Exception("Cannot connect to Neo4j database. Please check if Neo4j is running.")
+            
+            # Read the graph file
+            with open(file_path, 'r', encoding='utf-8') as f:
+                graph_data = json.load(f)
+            
+            logger.info(f"📊 Loaded JSON data: {len(graph_data.get('nodes', []))} nodes, {len(graph_data.get('edges', []))} edges")
+            
+            # Extract filename for metadata
+            filename = file_path.stem
+            
+            with self.driver.session() as session:
+                # Import nodes
+                if 'nodes' in graph_data:
+                    logger.info(f"📥 Importing {len(graph_data['nodes'])} nodes...")
+                    self._import_nodes_with_id(session, graph_data['nodes'], filename, file_id)
+                
+                # Import relationships (handle both 'edges' and 'relationships' keys)
+                edge_data = graph_data.get('relationships', graph_data.get('edges', []))
+                if edge_data:
+                    logger.info(f"🔗 Importing {len(edge_data)} relationships...")
+                    self._import_relationships_with_id(session, edge_data, filename, file_id)
+                
+                # Import metadata
+                if 'metadata' in graph_data:
+                    logger.info("📋 Importing metadata...")
+                    self._import_metadata_with_id(session, graph_data['metadata'], filename, file_id)
+            
+            logger.info(f"✅ Successfully imported {file_path.name} into Neo4j with file_id: {file_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to import {file_path}: {e}")
             raise
     
+    def _clean_properties(self, properties: Dict) -> Dict:
+        """Clean properties to ensure they are Neo4j-compatible"""
+        cleaned = {}
+        for key, value in properties.items():
+            if isinstance(value, (str, int, float, bool, list)):
+                # These types are directly compatible with Neo4j
+                cleaned[key] = value
+            elif isinstance(value, dict):
+                # Convert dict to JSON string
+                cleaned[key] = json.dumps(value)
+            elif value is None:
+                # Skip None values
+                continue
+            else:
+                # Convert other types to string
+                cleaned[key] = str(value)
+        return cleaned
+
     def _import_nodes(self, session: Session, nodes: List[Dict], source_file: str):
-        """Import nodes into Neo4j"""
+        """Import nodes into Neo4j using Cypher MERGE statements"""
+        imported_count = 0
+        failed_count = 0
+        
         for node in nodes:
             try:
                 # Extract node properties
@@ -101,49 +192,143 @@ class Neo4jManager:
                 node_type = node.get('type', 'Node')
                 properties = {k: v for k, v in node.items() if k not in ['id', 'id_short', 'type']}
                 
+                # Clean properties for Neo4j compatibility
+                properties = self._clean_properties(properties)
+                
                 # Add source file metadata
                 properties['source_file'] = source_file
-                properties['imported_at'] = 'datetime()'
+                properties['imported_at'] = datetime.now().isoformat()
                 
-                # Create Cypher query
+                # Create Cypher query with proper escaping
                 query = f"""
                 MERGE (n:{node_type} {{id: $node_id}})
                 SET n += $properties
                 RETURN n
                 """
                 
-                session.run(query, node_id=node_id, properties=properties)
+                result = session.run(query, node_id=node_id, properties=properties)
+                imported_count += 1
                 
             except Exception as e:
                 logger.warning(f"Failed to import node {node.get('id', 'unknown')}: {e}")
+                failed_count += 1
+        
+        logger.info(f"📥 Nodes imported: {imported_count} successful, {failed_count} failed")
+    
+    def _import_nodes_with_id(self, session: Session, nodes: List[Dict], source_file: str, file_id: str):
+        """Import nodes into Neo4j with file_id tracking"""
+        imported_count = 0
+        failed_count = 0
+        
+        for node in nodes:
+            try:
+                # Extract node properties
+                node_id = node.get('id', node.get('id_short', f"node_{hash(str(node))}"))
+                node_type = node.get('type', 'Node')
+                properties = {k: v for k, v in node.items() if k not in ['id', 'id_short', 'type']}
+                
+                # Clean properties for Neo4j compatibility
+                properties = self._clean_properties(properties)
+                
+                # Add source file metadata and file_id
+                properties['source_file'] = source_file
+                properties['file_id'] = file_id
+                properties['imported_at'] = datetime.now().isoformat()
+                
+                # Create Cypher query with proper escaping
+                query = f"""
+                MERGE (n:{node_type} {{id: $node_id}})
+                SET n += $properties
+                RETURN n
+                """
+                
+                result = session.run(query, node_id=node_id, properties=properties)
+                imported_count += 1
+                
+            except Exception as e:
+                logger.warning(f"Failed to import node {node.get('id', 'unknown')}: {e}")
+                failed_count += 1
+        
+        logger.info(f"📥 Nodes imported with file_id: {imported_count} successful, {failed_count} failed")
     
     def _import_relationships(self, session: Session, relationships: List[Dict], source_file: str):
-        """Import relationships into Neo4j"""
+        """Import relationships into Neo4j using Cypher MATCH/MERGE statements"""
+        imported_count = 0
+        failed_count = 0
+        
         for rel in relationships:
             try:
                 # Extract relationship properties
-                source_id = rel.get('source_id', rel.get('from'))
-                target_id = rel.get('target_id', rel.get('to'))
-                rel_type = rel.get('type', 'RELATES_TO')
-                properties = {k: v for k, v in rel.items() if k not in ['source_id', 'target_id', 'type', 'from', 'to']}
+                source_id = rel.get('source_id', rel.get('from', rel.get('source')))
+                target_id = rel.get('target_id', rel.get('to', rel.get('target')))
+                rel_type = rel.get('type', rel.get('relationship_type', 'RELATES_TO'))
+                properties = {k: v for k, v in rel.items() if k not in ['source_id', 'target_id', 'type', 'from', 'to', 'source', 'target', 'relationship_type']}
+                
+                # Clean properties for Neo4j compatibility
+                properties = self._clean_properties(properties)
                 
                 # Add source file metadata
                 properties['source_file'] = source_file
-                properties['imported_at'] = 'datetime()'
+                properties['imported_at'] = datetime.now().isoformat()
                 
-                # Create Cypher query
+                # Create Cypher query that matches by both id and idShort
                 query = f"""
                 MATCH (a), (b)
-                WHERE a.id = $source_id AND b.id = $target_id
+                WHERE (a.id = $source_id OR a.idShort = $source_id) 
+                  AND (b.id = $target_id OR b.idShort = $target_id)
                 MERGE (a)-[r:{rel_type}]->(b)
                 SET r += $properties
                 RETURN r
                 """
                 
-                session.run(query, source_id=source_id, target_id=target_id, properties=properties)
+                result = session.run(query, source_id=source_id, target_id=target_id, properties=properties)
+                imported_count += 1
                 
             except Exception as e:
                 logger.warning(f"Failed to import relationship {rel.get('type', 'unknown')}: {e}")
+                failed_count += 1
+        
+        logger.info(f"🔗 Relationships imported: {imported_count} successful, {failed_count} failed")
+    
+    def _import_relationships_with_id(self, session: Session, relationships: List[Dict], source_file: str, file_id: str):
+        """Import relationships into Neo4j with file_id tracking"""
+        imported_count = 0
+        failed_count = 0
+        
+        for rel in relationships:
+            try:
+                # Extract relationship properties
+                source_id = rel.get('source_id', rel.get('from', rel.get('source')))
+                target_id = rel.get('target_id', rel.get('to', rel.get('target')))
+                rel_type = rel.get('type', rel.get('relationship_type', 'RELATES_TO'))
+                properties = {k: v for k, v in rel.items() if k not in ['source_id', 'target_id', 'type', 'from', 'to', 'source', 'target', 'relationship_type']}
+                
+                # Clean properties for Neo4j compatibility
+                properties = self._clean_properties(properties)
+                
+                # Add source file metadata and file_id
+                properties['source_file'] = source_file
+                properties['file_id'] = file_id
+                properties['imported_at'] = datetime.now().isoformat()
+                
+                # Create Cypher query that matches by both id and idShort
+                query = f"""
+                MATCH (a), (b)
+                WHERE (a.id = $source_id OR a.idShort = $source_id) 
+                  AND (b.id = $target_id OR b.idShort = $target_id)
+                MERGE (a)-[r:{rel_type}]->(b)
+                SET r += $properties
+                RETURN r
+                """
+                
+                result = session.run(query, source_id=source_id, target_id=target_id, properties=properties)
+                imported_count += 1
+                
+            except Exception as e:
+                logger.warning(f"Failed to import relationship {rel.get('type', 'unknown')}: {e}")
+                failed_count += 1
+        
+        logger.info(f"🔗 Relationships imported with file_id: {imported_count} successful, {failed_count} failed")
     
     def _import_metadata(self, session: Session, metadata: Dict, source_file: str):
         """Import metadata as a metadata node"""
@@ -160,12 +345,37 @@ class Neo4jManager:
         except Exception as e:
             logger.warning(f"Failed to import metadata for {source_file}: {e}")
     
+    def _import_metadata_with_id(self, session: Session, metadata: Dict, source_file: str, file_id: str):
+        """Import metadata as a metadata node with file_id tracking"""
+        try:
+            # Create metadata node with file_id
+            query = """
+            MERGE (m:Metadata {source_file: $source_file, file_id: $file_id})
+            SET m += $metadata
+            RETURN m
+            """
+            
+            session.run(query, source_file=source_file, file_id=file_id, metadata=metadata)
+            
+        except Exception as e:
+            logger.warning(f"Failed to import metadata for {source_file} with file_id {file_id}: {e}")
+    
     def execute_query(self, query: str) -> List[Dict]:
         """Execute a Cypher query and return results"""
         try:
             with self.driver.session() as session:
                 result = session.run(query)
                 return [dict(record) for record in result]
+        except Exception as e:
+            logger.error(f"Query execution failed: {e}")
+            raise
+    
+    def execute_query_raw(self, query: str) -> List:
+        """Execute a Cypher query and return raw Neo4j objects (not converted to dict)"""
+        try:
+            with self.driver.session() as session:
+                result = session.run(query)
+                return list(result)  # Return raw records with Neo4j objects
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
             raise
@@ -214,7 +424,64 @@ class Neo4jManager:
         """Close the Neo4j connection"""
         if self.driver:
             self.driver.close()
-            logger.info("Neo4j connection closed") 
+            logger.info("Neo4j connection closed")
+    
+    def check_neo4j_ports(self) -> Dict[str, Any]:
+        """Check if Neo4j ports are accessible"""
+        try:
+            import socket
+            
+            # Check Bolt port (7687 or 7688)
+            bolt_port = 7687 if "7687" in self.uri else 7688
+            http_port = 7474
+            
+            results = {}
+            
+            # Test Bolt port
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                result = sock.connect_ex(('localhost', bolt_port))
+                sock.close()
+                results['bolt_port'] = {
+                    'port': bolt_port,
+                    'accessible': result == 0,
+                    'status': 'open' if result == 0 else 'closed'
+                }
+            except Exception as e:
+                results['bolt_port'] = {
+                    'port': bolt_port,
+                    'accessible': False,
+                    'status': 'error',
+                    'error': str(e)
+                }
+            
+            # Test HTTP port
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                result = sock.connect_ex(('localhost', http_port))
+                sock.close()
+                results['http_port'] = {
+                    'port': http_port,
+                    'accessible': result == 0,
+                    'status': 'open' if result == 0 else 'closed'
+                }
+            except Exception as e:
+                results['http_port'] = {
+                    'port': http_port,
+                    'accessible': False,
+                    'status': 'error',
+                    'error': str(e)
+                }
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error checking Neo4j ports: {e}")
+            return {
+                'error': str(e)
+            } 
 
     def check_docker_status(self) -> Dict[str, Any]:
         """Check if Docker Neo4j container is running"""

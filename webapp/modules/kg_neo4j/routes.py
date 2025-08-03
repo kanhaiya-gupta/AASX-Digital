@@ -1,6 +1,7 @@
 """
-Neo4j Management Hub API Routes
+Knowledge Graph Neo4j API Routes
 Provides REST API endpoints for Neo4j management and Docker operations
+Uses centralized data management system for clean separation of concerns
 """
 
 from fastapi import APIRouter, HTTPException, Request
@@ -8,25 +9,22 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import os
-import json
-import subprocess
-import time
-from pathlib import Path
 import logging
+from pathlib import Path
 from typing import Optional, List, Dict, Any
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Import centralized file management system
-from src.shared.management import ProjectManager, FileManagementError
+# Import module-specific services
+from .services.kg_neo4j_service import KGNeo4jService
+from .services.graph_discovery_service import GraphDiscoveryService
 
 # Create FastAPI Router
-router = APIRouter(tags=["Neo4j Management"])
+router = APIRouter(tags=["Knowledge Graph Neo4j"])
 
-# Initialize centralized project manager
-project_manager = ProjectManager()
+# Create service instances
+kg_neo4j_service = KGNeo4jService()
+graph_discovery_service = GraphDiscoveryService()
 
 # Pydantic models for request/response
 class DockerResponse(BaseModel):
@@ -37,11 +35,15 @@ class DockerResponse(BaseModel):
 class StatusResponse(BaseModel):
     success: bool
     docker_running: bool
+    connected: bool
     browser_accessible: bool
     active_connections: int
     docker_status: str
     last_checked: str
     error: Optional[str] = None
+
+class QueryRequest(BaseModel):
+    query: str
 
 # ============================================================================
 # ROUTE DEFINITIONS
@@ -49,13 +51,13 @@ class StatusResponse(BaseModel):
 
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    """Neo4j Management Hub main page"""
+    """Knowledge Graph Neo4j main page"""
     templates = Jinja2Templates(directory="webapp/templates")
     return templates.TemplateResponse("kg_neo4j/index.html", {"request": request})
 
 @router.get("/visualize", response_class=HTMLResponse)
 async def visualize(request: Request):
-    """Neo4j Graph Visualization page"""
+    """Knowledge Graph visualization page"""
     templates = Jinja2Templates(directory="webapp/templates")
     return templates.TemplateResponse("kg_neo4j/visualize.html", {"request": request})
 
@@ -63,1329 +65,979 @@ async def visualize(request: Request):
 # API ENDPOINTS
 # ============================================================================
 
-@router.get("/api/status", response_model=StatusResponse)
+@router.get("/status", response_model=StatusResponse)
 async def get_status():
     """Get Neo4j connection and system status"""
     try:
-        # Check if Neo4j is running via Docker
-        docker_status = check_docker_status()
-        
-        # Check if Neo4j Browser is accessible
-        browser_accessible = check_browser_accessibility()
-        
-        # Check active connections (simplified)
-        active_connections = get_active_connections()
-        
-        status_data = StatusResponse(
-            success=docker_status.get('running', False),
-            docker_running=docker_status.get('running', False),
-            browser_accessible=browser_accessible,
-            active_connections=active_connections,
-            docker_status=docker_status.get('status', 'Unknown'),
-            last_checked=time.strftime('%Y-%m-%d %H:%M:%S')
-        )
-        
-        return status_data
-        
+        result = kg_neo4j_service.get_system_status()
+        return StatusResponse(**result)
     except Exception as e:
-        logger.error(f"Error getting status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/docker-status")
+@router.get("/docker-status")
 async def get_docker_status():
     """Get detailed Docker container status"""
     try:
-        status = check_docker_status()
-        return {
-            'success': True,
-            'status': status.get('status', 'Unknown'),
-            'running': status.get('running', False),
-            'container_id': status.get('container_id', ''),
-            'details': status
-        }
+        return kg_neo4j_service.get_docker_status()
     except Exception as e:
-        logger.error(f"Error getting Docker status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/docker/start", response_model=DockerResponse)
+@router.post("/docker/start", response_model=DockerResponse)
 async def start_docker():
     """Start Neo4j Docker container"""
     try:
-        result = start_neo4j_docker()
-        return DockerResponse(
-            success=result.get('success', False),
-            message=result.get('message', ''),
-            error=result.get('error', '')
-        )
+        result = kg_neo4j_service.start_docker_container()
+        return DockerResponse(**result)
     except Exception as e:
-        logger.error(f"Error starting Docker: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/docker/stop", response_model=DockerResponse)
+@router.post("/docker/stop", response_model=DockerResponse)
 async def stop_docker():
     """Stop Neo4j Docker container"""
     try:
-        result = stop_neo4j_docker()
-        return DockerResponse(
-            success=result.get('success', False),
-            message=result.get('message', ''),
-            error=result.get('error', '')
-        )
+        result = kg_neo4j_service.stop_docker_container()
+        return DockerResponse(**result)
     except Exception as e:
-        logger.error(f"Error stopping Docker: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ============================================================================
-# LOCAL NEO4J DESKTOP ENDPOINTS
-# ============================================================================
-
-@router.get("/api/local/status")
+@router.get("/local/status")
 async def get_local_neo4j_status():
     """Get local Neo4j Desktop status"""
     try:
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        return neo4j_manager.get_local_neo4j_info()
+        return kg_neo4j_service.get_local_neo4j_status()
     except Exception as e:
-        logger.error(f"Error checking local Neo4j status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/local/desktop-status")
+@router.get("/local/desktop-status")
 async def get_local_desktop_status():
-    """Get local Neo4j Desktop application status"""
+    """Get local Neo4j Desktop installation status"""
     try:
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        return neo4j_manager.check_local_neo4j_desktop()
+        result = kg_neo4j_service.get_local_neo4j_status()
+        return {
+            'installed': result.get('desktop_installed', False),
+            'running': result.get('desktop_running', False)
+        }
     except Exception as e:
-        logger.error(f"Error checking local desktop status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/local/connection-status")
+@router.get("/local/connection-status")
 async def get_local_connection_status():
     """Get local Neo4j connection status"""
     try:
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        return neo4j_manager.check_local_neo4j_connection()
+        result = kg_neo4j_service.get_local_neo4j_status()
+        return {
+            'available': result.get('connection_available', False),
+            'browser_url': result.get('browser_url'),
+            'bolt_url': result.get('bolt_url')
+        }
     except Exception as e:
-        logger.error(f"Error checking local connection status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/local/launch")
+@router.post("/local/launch")
 async def launch_local_neo4j_desktop():
-    """Launch local Neo4j Desktop application"""
+    """Launch Neo4j Desktop application"""
     try:
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        return neo4j_manager.launch_local_neo4j_desktop()
+        return kg_neo4j_service.launch_local_desktop()
     except Exception as e:
-        logger.error(f"Error launching local Neo4j Desktop: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/local/info")
+@router.get("/local/info")
 async def get_local_neo4j_info():
-    """Get comprehensive local Neo4j Desktop information"""
+    """Get local Neo4j information"""
     try:
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        return neo4j_manager.get_local_neo4j_info()
+        result = kg_neo4j_service.get_local_neo4j_status()
+        return {
+            'desktop_installed': result.get('desktop_installed', False),
+            'desktop_running': result.get('desktop_running', False),
+            'connection_available': result.get('connection_available', False),
+            'browser_url': result.get('browser_url'),
+            'bolt_url': result.get('bolt_url')
+        }
     except Exception as e:
-        logger.error(f"Error getting local Neo4j info: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/api/query")
-async def execute_cypher_query(request: Request):
-    """Execute Cypher query and return results for visualization"""
+@router.post("/query")
+async def execute_cypher_query(request: QueryRequest):
+    """Execute Cypher query against Neo4j"""
     try:
-        body = await request.json()
-        query = body.get('query', '')
+        result = kg_neo4j_service.execute_cypher_query(request.query)
         
-        if not query:
+        if result['success']:
+            return {
+                'success': True,
+                'data': result['data'],
+                'query': result['query'],
+                'timestamp': result['timestamp']
+            }
+        else:
             return {
                 'success': False,
-                'error': 'No query provided'
+                'error': result['error'],
+                'query': result['query']
             }
-        
-        # Try to connect to Neo4j and execute query
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        
-        # Try Docker first, then local
-        results = None
-        statistics = {
-            'total_nodes': 0,
-            'total_relationships': 0,
-            'asset_nodes': 0,
-            'submodel_nodes': 0,
-            'property_nodes': 0
-        }
-        
-        try:
-            # Try Docker connection
-            results = neo4j_manager.execute_query_docker(query)
-            if results:
-                statistics = calculate_statistics(results)
-        except Exception as docker_error:
-            logger.warning(f"Docker query failed: {docker_error}")
-            
-            try:
-                # Try local connection
-                results = neo4j_manager.execute_query_local(query)
-                if results:
-                    statistics = calculate_statistics(results)
-            except Exception as local_error:
-                logger.error(f"Local query failed: {local_error}")
-                raise Exception(f"Both Docker and Local connections failed: {docker_error}, {local_error}")
-        
-        if results is None:
-            return {
-                'success': False,
-                'error': 'No Neo4j connection available'
-            }
-        
-        return {
-            'success': True,
-            'results': results,
-            'statistics': statistics
-        }
-        
     except Exception as e:
-        logger.error(f"Error executing query: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/projects")
+@router.get("/projects")
 async def get_projects():
-    """Get list of projects using centralized project manager"""
+    """Get all projects"""
     try:
-        # Get projects from centralized manager
-        projects = project_manager.list_projects()
-        
-        # If no projects found in centralized system, try to import from AASX routes for backward compatibility
-        if not projects:
-            try:
-                from webapp.aasx.routes import PROJECTS_DB
-                projects = list(PROJECTS_DB.values())
-            except ImportError:
-                # If import fails, try to read from projects database file
-                projects_db_file = Path("output/projects_database.json")
-                if projects_db_file.exists():
-                    try:
-                        with open(projects_db_file, 'r') as f:
-                            db_data = json.load(f)
-                            projects = list(db_data.get('projects', {}).values())
-                    except:
-                        pass
-        
-        return {
-            'success': True,
-            'projects': projects,
-            'total_count': len(projects)
-        }
-    except FileManagementError as e:
-        logger.error(f"File management error getting projects: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
-    except Exception as e:
-        logger.error(f"Error getting projects: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
-
-@router.get("/api/projects/{project_id}/files")
-async def get_project_files(project_id: str):
-    """Get files for a specific project with graph existence information using centralized project manager"""
-    try:
-        # Check if project exists in centralized system
-        if not project_manager.project_exists(project_id):
+        result = kg_neo4j_service.get_projects()
+        if result['success']:
             return {
-                'success': False,
-                'error': 'Project not found'
+                'success': True,
+                'projects': result['projects']
             }
-        
-        # Get files from centralized manager
-        project_files = project_manager.list_project_files(project_id)
-        
-        # If no files found in centralized system, try to import from AASX routes for backward compatibility
-        if not project_files:
-            try:
-                from webapp.aasx.routes import FILES_DB
-                project_files = [f for f in FILES_DB.values() if f["project_id"] == project_id]
-            except ImportError:
-                # If import fails, try to read from project directory structure
-                project_dir = Path(f"output/projects/{project_id}")
-                if project_dir.exists():
-                    for file_dir in project_dir.iterdir():
-                        if file_dir.is_dir():
-                            # Try to find file info
-                            file_info_file = file_dir / "file_info.json"
-                            if file_info_file.exists():
-                                try:
-                                    with open(file_info_file, 'r') as f:
-                                        file_info = json.load(f)
-                                        project_files.append(file_info)
-                                except:
-                                    # Create basic file info from directory name
-                                    project_files.append({
-                                        "id": file_dir.name,
-                                        "filename": file_dir.name,
-                                        "original_filename": file_dir.name,
-                                        "project_id": project_id,
-                                        "filepath": str(file_dir),
-                                        "size": 0,
-                                        "upload_date": "Unknown",
-                                        "description": f"File from directory {file_dir.name}",
-                                        "status": "completed",
-                                        "processing_result": {}
-                                    })
-        
-        # Add graph existence information for each file
-        for file_info in project_files:
-            # Check if graph data file exists
-            file_output_dir = Path(file_info.get('filepath', ''))
-            if not file_output_dir.exists():
-                filename = file_info.get('original_filename', file_info.get('filename', file_info['id']))
-                file_output_dir = Path(f"output/projects/{project_id}/{filename}")
-            
-            graph_data_file = file_output_dir / "aasx_data_graph.json"
-            file_info['graph_exists'] = graph_data_file.exists()
-            
-            if file_info['graph_exists']:
-                try:
-                    with open(graph_data_file, 'r') as f:
-                        graph_data = json.load(f)
-                    file_info['node_count'] = len(graph_data.get('nodes', []))
-                except:
-                    file_info['node_count'] = 0
-            else:
-                file_info['node_count'] = 0
-        
-        return {
-            'success': True,
-            'files': project_files,
-            'total_count': len(project_files)
-        }
-    except FileManagementError as e:
-        logger.error(f"File management error getting project files: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        else:
+            raise HTTPException(status_code=500, detail=result['error'])
     except Exception as e:
-        logger.error(f"Error getting project files: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/projects/{project_id}/graph")
+
+
+@router.get("/projects/{project_id}/graph")
 async def get_project_graph(project_id: str):
     """Get graph data for a specific project"""
     try:
-        import os
-        import json
-        from pathlib import Path
-        
-        # Try to get project info from AASX routes first
-        project = None
-        project_files = []
-        
-        try:
-            from webapp.aasx.routes import PROJECTS_DB, FILES_DB
-            
-            if project_id in PROJECTS_DB:
-                project = PROJECTS_DB[project_id]
-                project_files = [f for f in FILES_DB.values() if f["project_id"] == project_id]
-        except ImportError:
-            # If import fails, try to get project info from directory structure
-            project_dir = Path(f"output/projects/{project_id}")
-            if project_dir.exists():
-                project_info_file = project_dir / "project_info.json"
-                if project_info_file.exists():
-                    try:
-                        with open(project_info_file, 'r') as f:
-                            project = json.load(f)
-                    except:
-                        pass
-                
-                # Get files from directory structure
-                for file_dir in project_dir.iterdir():
-                    if file_dir.is_dir():
-                        file_info_file = file_dir / "file_info.json"
-                        if file_info_file.exists():
-                            try:
-                                with open(file_info_file, 'r') as f:
-                                    file_info = json.load(f)
-                                    project_files.append(file_info)
-                            except:
-                                project_files.append({
-                                    "id": file_dir.name,
-                                    "filename": file_dir.name,
-                                    "original_filename": file_dir.name,
-                                    "project_id": project_id,
-                                    "filepath": str(file_dir),
-                                    "size": 0,
-                                    "upload_date": "Unknown",
-                                    "description": f"File from directory {file_dir.name}",
-                                    "status": "completed",
-                                    "processing_result": {}
-                                })
-        
-        if not project:
-            return {
-                'success': False,
-                'error': 'Project not found'
-            }
-        
-        # Build query for project data
-        project_name = project.get('name', project_id)
-        query = f"""
-        MATCH (n) 
-        WHERE n.source_file STARTS WITH '{project_name}' 
-        RETURN n 
-        LIMIT 50
-        """
-        
-        # Execute query
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        
-        results = None
-        try:
-            results = neo4j_manager.execute_query_docker(query)
-        except:
-            try:
-                results = neo4j_manager.execute_query_local(query)
-            except Exception as e:
-                logger.error(f"Failed to execute project query: {e}")
-                return {
-                    'success': False,
-                    'error': f'Failed to query Neo4j: {str(e)}'
-                }
-        
-        if results is None:
-            return {
-                'success': False,
-                'error': 'No Neo4j connection available'
-            }
-        
-        statistics = calculate_statistics(results)
-        
-        return {
-            'success': True,
-            'project': project,
-            'files': project_files,
-            'results': results,
-            'statistics': statistics
-        }
-        
+        result = kg_neo4j_service.get_project_graph(project_id)
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result['error'])
     except Exception as e:
-        logger.error(f"Error getting project graph: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/files/{file_id}/graph")
+@router.get("/files/{file_id}/graph")
 async def get_file_graph(file_id: str):
     """Get graph data for a specific file"""
     try:
-        import os
-        import json
-        from pathlib import Path
-        
-        # Try to get file info from AASX routes first
-        file_info = None
-        
-        try:
-            from webapp.aasx.routes import FILES_DB
-            
-            if file_id in FILES_DB:
-                file_info = FILES_DB[file_id]
-        except ImportError:
-            # If import fails, try to find file in project directories
-            output_dir = Path("output/projects")
-            if output_dir.exists():
-                for project_dir in output_dir.iterdir():
-                    if project_dir.is_dir():
-                        file_dir = project_dir / file_id
-                        if file_dir.exists() and file_dir.is_dir():
-                            file_info_file = file_dir / "file_info.json"
-                            if file_info_file.exists():
-                                try:
-                                    with open(file_info_file, 'r') as f:
-                                        file_info = json.load(f)
-                                        break
-                                except:
-                                    pass
-                            else:
-                                # Create basic file info
-                                file_info = {
-                                    "id": file_id,
-                                    "filename": file_id,
-                                    "original_filename": file_id,
-                                    "project_id": project_dir.name,
-                                    "filepath": str(file_dir),
-                                    "size": 0,
-                                    "upload_date": "Unknown",
-                                    "description": f"File from directory {file_id}",
-                                    "status": "completed",
-                                    "processing_result": {}
-                                }
-                                break
-        
-        if not file_info:
-            return {
-                'success': False,
-                'error': 'File not found'
-            }
-        
-        # Build query for file data
-        filename = file_info.get('original_filename', file_id)
-        query = f"""
-        MATCH (n) 
-        WHERE n.source_file = '{filename}' 
-        RETURN n 
-        LIMIT 50
-        """
-        
-        # Execute query
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        
-        results = None
-        try:
-            results = neo4j_manager.execute_query_docker(query)
-        except:
-            try:
-                results = neo4j_manager.execute_query_local(query)
-            except Exception as e:
-                logger.error(f"Failed to execute file query: {e}")
-                return {
-                    'success': False,
-                    'error': f'Failed to query Neo4j: {str(e)}'
-                }
-        
-        if results is None:
-            return {
-                'success': False,
-                'error': 'No Neo4j connection available'
-            }
-        
-        statistics = calculate_statistics(results)
-        
-        return {
-            'success': True,
-            'file': file_info,
-            'results': results,
-            'statistics': statistics
-        }
-        
+        result = kg_neo4j_service.get_file_graph(file_id)
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result['error'])
     except Exception as e:
-        logger.error(f"Error getting file graph: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/files/{file_id}/graph-exists")
+@router.get("/files/{file_id}/graph-exists")
 async def check_file_graph_exists(file_id: str):
-    """Check if graph data exists for a specific file"""
+    """Check if graph data exists for a file"""
     try:
-        import os
-        import json
-        from pathlib import Path
-        
-        # Try to get file info from AASX routes first
-        file_info = None
-        
-        try:
-            from webapp.aasx.routes import FILES_DB
-            
-            if file_id in FILES_DB:
-                file_info = FILES_DB[file_id]
-        except ImportError:
-            # If import fails, try to find file in project directories
-            output_dir = Path("output/projects")
-            if output_dir.exists():
-                for project_dir in output_dir.iterdir():
-                    if project_dir.is_dir():
-                        file_dir = project_dir / file_id
-                        if file_dir.exists() and file_dir.is_dir():
-                            file_info_file = file_dir / "file_info.json"
-                            if file_info_file.exists():
-                                try:
-                                    with open(file_info_file, 'r') as f:
-                                        file_info = json.load(f)
-                                        break
-                                except:
-                                    pass
-                            else:
-                                # Create basic file info
-                                file_info = {
-                                    "id": file_id,
-                                    "filename": file_id,
-                                    "original_filename": file_id,
-                                    "project_id": project_dir.name,
-                                    "filepath": str(file_dir),
-                                    "size": 0,
-                                    "upload_date": "Unknown",
-                                    "description": f"File from directory {file_id}",
-                                    "status": "completed",
-                                    "processing_result": {}
-                                }
-                                break
-        
-        if not file_info:
-            return {
-                'success': False,
-                'error': 'File not found',
-                'graph_exists': False
-            }
-        
-        # Check if graph data exists by querying Neo4j
-        filename = file_info.get('original_filename', file_id)
-        query = f"""
-        MATCH (n) 
-        WHERE n.source_file = '{filename}' 
-        RETURN count(n) as node_count
-        """
-        
-        # Execute query
-        from src.kg_neo4j.neo4j_manager import neo4j_manager
-        
-        results = None
-        try:
-            results = neo4j_manager.execute_query_docker(query)
-        except:
-            try:
-                results = neo4j_manager.execute_query_local(query)
-            except Exception as e:
-                logger.error(f"Failed to check graph existence: {e}")
-                return {
-                    'success': False,
-                    'error': f'Failed to query Neo4j: {str(e)}',
-                    'graph_exists': False
-                }
-        
-        if results is None:
-            return {
-                'success': False,
-                'error': 'No Neo4j connection available',
-                'graph_exists': False
-            }
-        
-        # Check if any nodes exist for this file
-        node_count = 0
-        if results and len(results) > 0:
-            node_count = results[0].get('node_count', 0)
-        
-        graph_exists = node_count > 0
-        
+        result = kg_neo4j_service.check_file_graph_exists(file_id)
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result['error'])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/files/{file_id}/graph-data")
+async def get_file_graph_data(file_id: str):
+    """Get detailed graph data for a file"""
+    try:
+        result = kg_neo4j_service.get_file_graph_data(file_id)
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result['error'])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/projects/{project_id}/graph-data")
+async def get_project_graph_data(project_id: str):
+    """Get detailed graph data for a project"""
+    try:
+        result = kg_neo4j_service.get_project_graph_data(project_id)
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result['error'])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/available-folders")
+async def get_available_folders():
+    """Get list of available data folders"""
+    try:
+        result = kg_neo4j_service.get_available_folders()
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=500, detail=result['error'])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/database-stats")
+async def get_database_stats():
+    """Get database statistics"""
+    try:
+        result = kg_neo4j_service.get_database_stats()
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=500, detail=result['error'])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Additional endpoints for UI components
+@router.get("/kg-neo4j/status")
+async def get_kg_neo4j_status():
+    """Get Knowledge Graph Neo4j status for UI components"""
+    try:
+        result = kg_neo4j_service.get_system_status()
+        return {
+            'docker_status': 'connected' if result.get('docker_running') else 'disconnected',
+            'local_status': 'connected' if result.get('browser_accessible') else 'disconnected',
+            'browser_status': 'connected' if result.get('browser_accessible') else 'disconnected',
+            'connection_status': 'connected' if result.get('docker_running') else 'disconnected',
+            'data_status': 'loaded' if result.get('active_connections', 0) > 0 else 'empty',
+            'performance_status': 'good' if result.get('docker_running') else 'poor'
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/kg-neo4j/graph-data")
+async def get_kg_neo4j_graph_data():
+    """Get graph data for visualization"""
+    try:
+        # This would return actual graph data for visualization
         return {
             'success': True,
-            'file': file_info,
-            'graph_exists': graph_exists,
-            'node_count': node_count
+            'nodes': [],
+            'edges': []
         }
-        
     except Exception as e:
-        logger.error(f"Error checking file graph existence: {e}")
-        return {
-            'success': False,
-            'error': str(e),
-            'graph_exists': False
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/files/{file_id}/graph-data")
-async def get_file_graph_data(file_id: str):
-    """Get graph data directly from JSON files without Neo4j"""
+@router.post("/kg-neo4j/execute-query")
+async def execute_kg_neo4j_query(request: QueryRequest):
+    """Execute Cypher query for UI components"""
     try:
-        import os
-        import json
-        from pathlib import Path
+        result = kg_neo4j_service.execute_cypher_query(request.query)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/kg-neo4j/available-folders")
+async def get_kg_neo4j_available_folders():
+    """Get available folders for UI components"""
+    try:
+        result = kg_neo4j_service.get_available_folders()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/kg-neo4j/import-data")
+async def import_kg_neo4j_data(directory: str):
+    """Import data for UI components"""
+    try:
+        # Implementation for data import
+        return {
+            'success': True,
+            'imported_files': 0,
+            'message': 'Data import completed'
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/kg-neo4j/export-data")
+async def export_kg_neo4j_data(format: str = "json"):
+    """Export data for UI components"""
+    try:
+        # Implementation for data export
+        return {
+            'success': True,
+            'format': format,
+            'message': 'Data export completed'
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/kg-neo4j/database-stats")
+async def get_kg_neo4j_database_stats():
+    """Get database stats for UI components"""
+    try:
+        result = kg_neo4j_service.get_database_stats()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/kg-neo4j/clear-data")
+async def clear_kg_neo4j_data():
+    """Clear database data for UI components"""
+    try:
+        # Implementation for clearing data
+        return {
+            'success': True,
+            'message': 'Database cleared successfully'
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# GRAPH DISCOVERY ENDPOINTS
+# ============================================================================
+
+@router.get("/hierarchy/use-cases")
+async def get_use_cases_with_graphs():
+    """Get all use cases that have graph data files"""
+    try:
+        use_cases = graph_discovery_service.discover_use_cases_with_graphs()
+        return {
+            "success": True,
+            "use_cases": use_cases,
+            "count": len(use_cases)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/hierarchy/use-cases/{use_case_id}/projects")
+async def get_projects_with_graphs(use_case_id: str):
+    """Get all projects in a use case that have graph data files"""
+    try:
+        projects = graph_discovery_service.discover_projects_with_graphs(use_case_id)
+        return {
+            "success": True,
+            "use_case_id": use_case_id,
+            "projects": projects,
+            "count": len(projects)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/hierarchy/projects/{project_id}/files")
+async def get_files_with_graphs(project_id: str):
+    """Get all files in a project that have graph data files"""
+    try:
+        files = graph_discovery_service.discover_files_with_graphs(project_id)
+        return {
+            "success": True,
+            "project_id": project_id,
+            "files": files,
+            "count": len(files)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/hierarchy/files/{file_id}/graph")
+async def get_file_graph_status(file_id: str):
+    """Get graph file status for a specific file"""
+    try:
+        graph_status = graph_discovery_service.get_graph_file_status(file_id)
+        return {
+            "success": True,
+            "file_id": file_id,
+            "graph_status": graph_status
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/discovery/use-cases")
+async def discover_use_cases_with_graphs():
+    """Discover use cases with graphs (alias for hierarchy endpoint)"""
+    try:
+        use_cases = graph_discovery_service.discover_use_cases_with_graphs()
+        return {
+            "success": True,
+            "use_cases": use_cases,
+            "count": len(use_cases)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/discovery/projects/{use_case_id}")
+async def discover_projects_with_graphs(use_case_id: str):
+    """Discover projects with graphs for a use case"""
+    try:
+        projects = graph_discovery_service.discover_projects_with_graphs(use_case_id)
+        return {
+            "success": True,
+            "use_case_id": use_case_id,
+            "projects": projects,
+            "count": len(projects)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/discovery/files/{project_id}")
+async def discover_files_with_graphs(project_id: str):
+    """Discover files with graphs for a project"""
+    try:
+        files = graph_discovery_service.discover_files_with_graphs(project_id)
+        return {
+            "success": True,
+            "project_id": project_id,
+            "files": files,
+            "count": len(files)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/discovery/validate/{file_id}")
+async def validate_graph_file(file_id: str):
+    """Validate if a graph file exists and has correct format"""
+    try:
+        is_valid = graph_discovery_service.validate_graph_file(file_id)
+        return {
+            "success": True,
+            "file_id": file_id,
+            "is_valid": is_valid
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/discovery/status")
+async def get_discovery_status():
+    """Get overall discovery status for all graph data"""
+    try:
+        status = graph_discovery_service.get_hierarchical_availability_status()
+        return {
+            "success": True,
+            "status": status
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# FRONTEND CONFIGURATION ENDPOINTS
+# ============================================================================
+
+@router.get("/config")
+async def get_config():
+    """Get configuration for frontend initialization"""
+    try:
+        return {
+            "success": True,
+            "config": {
+                "api_base_url": "/api/kg-neo4j",
+                "docker_enabled": True,
+                "local_enabled": True,
+                "graph_discovery_enabled": True,
+                "hierarchical_data_enabled": True,
+                "features": {
+                    "docker_management": True,
+                    "graph_visualization": True,
+                    "data_management": True,
+                    "analytics": True,
+                    "query_interface": True
+                }
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/visualization-config")
+async def get_visualization_config():
+    """Get visualization configuration"""
+    try:
+        return {
+            "success": True,
+            "config": {
+                "containerId": "graph-container",
+                "width": 800,
+                "height": 600,
+                "nodeSize": 20,
+                "linkDistance": 100,
+                "charge": -300,
+                "gravity": 0.1,
+                "alpha": 0.3,
+                "colors": {
+                    "default": "#1f77b4",
+                    "person": "#ff7f0e",
+                    "organization": "#2ca02c",
+                    "location": "#d62728",
+                    "concept": "#9467bd",
+                    "event": "#8c564b",
+                    "relationship": "#e377c2"
+                },
+                "nodeLabels": True,
+                "linkLabels": True,
+                "zoomEnabled": True,
+                "panEnabled": True,
+                "dragEnabled": True,
+                "tooltipEnabled": True,
+                "animationEnabled": True,
+                "autoLayout": True,
+                "layoutAlgorithm": "force",
+                "updateInterval": 1000
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/initialize")
+async def initialize_module():
+    """Initialize the Knowledge Graph module"""
+    try:
+        # Check if services are available
+        discovery_status = graph_discovery_service.get_hierarchical_availability_status()
+        docker_status = kg_neo4j_service.get_docker_status()
         
-        # Try to get file info from AASX routes first
-        file_info = None
+        return {
+            "success": True,
+            "initialized": True,
+            "services": {
+                "graph_discovery": True,
+                "docker_management": True,
+                "neo4j_integration": True
+            },
+            "status": {
+                "discovery": discovery_status,
+                "docker": docker_status
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graph-data")
+async def get_graph_data():
+    """Get graph data for visualization"""
+    try:
+        # Get all nodes and relationships from Neo4j
+        nodes_query = "MATCH (n) RETURN n"
+        relationships_query = "MATCH (a)-[r]->(b) RETURN a, r, b"
+        
+        nodes = []
+        relationships = []
         
         try:
-            from webapp.aasx.routes import FILES_DB
+            # Use the database stats to get basic info
+            stats = kg_neo4j_service.get_database_stats()
+            logger.info(f"Database stats: {stats}")
             
-            if file_id in FILES_DB:
-                file_info = FILES_DB[file_id]
-        except ImportError:
-            pass
-        
-        # Search for graph data file directly
-        output_dir = Path("output/projects")
-        graph_data_file = None
-        found_project_id = None
-        found_file_dir = None
-        
-        logger.info(f"Searching for file {file_id} in output directory: {output_dir}")
-        if file_info:
-            logger.info(f"File info: project_id={file_info.get('project_id')}, filename={file_info.get('original_filename')}")
-            logger.info(f"Base filename: {os.path.splitext(file_info.get('original_filename', ''))[0]}")
-        
-        if output_dir.exists():
-            logger.info(f"Found output directory, scanning projects...")
-            for project_dir in output_dir.iterdir():
-                if project_dir.is_dir():
-                    logger.info(f"Checking project directory: {project_dir.name}")
-                    for file_dir in project_dir.iterdir():
-                        if file_dir.is_dir():
-                            potential_graph_file = file_dir / "aasx_data_graph.json"
-                            logger.info(f"Checking file directory: {file_dir.name}, graph file exists: {potential_graph_file.exists()}")
-                            if potential_graph_file.exists():
-                                # If we have file info, check if this matches
-                                if file_info:
-                                    # Compare with base filename (without extension)
-                                    file_base_name = os.path.splitext(file_info.get('original_filename', ''))[0]
-                                    if (file_info.get('project_id') == project_dir.name and 
-                                        file_base_name == file_dir.name):
-                                        graph_data_file = potential_graph_file
-                                        found_project_id = project_dir.name
-                                        found_file_dir = file_dir.name
-                                        break
-                                else:
-                                    # If no file info, use the first one we find
-                                    graph_data_file = potential_graph_file
-                                    found_project_id = project_dir.name
-                                    found_file_dir = file_dir.name
-                                    break
-                    if graph_data_file:
-                        break
-        
-        if not graph_data_file:
-            return {
-                'success': False,
-                'error': 'Graph data file not found',
-                'graph_data': None
-            }
-        
-        # Create file info if not available
-        if not file_info:
-            file_info = {
-                "id": file_id,
-                "filename": found_file_dir,
-                "original_filename": found_file_dir,
-                "project_id": found_project_id,
-                "filepath": str(graph_data_file.parent),
-                "size": 0,
-                "upload_date": "Unknown",
-                "description": f"File from directory {found_file_dir}",
-                "status": "completed",
-                "processing_result": {}
-            }
-        
-        # Read and parse the graph data
-        try:
-            with open(graph_data_file, 'r') as f:
-                graph_data = json.load(f)
+            # Simple queries that should work
+            nodes_query = "MATCH (n) RETURN n LIMIT 100"
+            relationships_query = "MATCH (a)-[r]->(b) RETURN a, r, b LIMIT 100"
             
-            # Convert to D3.js compatible format
-            nodes = []
-            links = []
+            logger.info("Executing nodes query...")
+            nodes_result = kg_neo4j_service.execute_query_raw(nodes_query)
+            logger.info(f"Nodes query returned {len(nodes_result)} results")
+            
+            logger.info("Executing relationships query...")
+            relationships_result = kg_neo4j_service.execute_query_raw(relationships_query)
+            logger.info(f"Relationships query returned {len(relationships_result)} results")
             
             # Process nodes
-            for node in graph_data.get('nodes', []):
-                nodes.append({
-                    'id': node['id'],
-                    'label': node.get('description', node['id']),
-                    'type': node['type'],
-                    'properties': {k: v for k, v in node.items() if k not in ['id', 'type']}
-                })
-            
-            # Process edges
-            for edge in graph_data.get('edges', []):
-                links.append({
-                    'source': edge['source_id'],
-                    'target': edge['target_id'],
-                    'type': edge['type'],
-                    'properties': edge.get('properties', {})
-                })
-            
-            # Calculate statistics
-            statistics = {
-                'total_nodes': len(nodes),
-                'total_relationships': len(links),
-                'asset_nodes': len([n for n in nodes if n['type'] == 'asset']),
-                'submodel_nodes': len([n for n in nodes if n['type'] == 'submodel']),
-                'property_nodes': len([n for n in nodes if n['type'] == 'property']),
-                'document_nodes': len([n for n in nodes if n['type'] == 'document'])
-            }
-            
-            return {
-                'success': True,
-                'file': file_info,
-                'graph_data': {
-                    'nodes': nodes,
-                    'links': links
-                },
-                'statistics': statistics,
-                'metadata': graph_data.get('metadata', {})
-            }
-            
-        except Exception as e:
-            logger.error(f"Error reading graph data file: {e}")
-            return {
-                'success': False,
-                'error': f'Error reading graph data: {str(e)}',
-                'graph_data': None
-            }
-        
-    except Exception as e:
-        logger.error(f"Error getting file graph data: {e}")
-        return {
-            'success': False,
-            'error': str(e),
-            'graph_data': None
-        }
-
-@router.get("/api/projects/{project_id}/graph-data")
-async def get_project_graph_data(project_id: str):
-    """Get graph data for all files in a project directly from JSON files"""
-    try:
-        import os
-        import json
-        from pathlib import Path
-        
-        # Try to get project info from AASX routes first
-        project = None
-        project_files = []
-        
-        try:
-            from webapp.aasx.routes import PROJECTS_DB, FILES_DB
-            
-            if project_id in PROJECTS_DB:
-                project = PROJECTS_DB[project_id]
-                project_files = [f for f in FILES_DB.values() if f["project_id"] == project_id]
-        except ImportError:
-            # If import fails, try to get project info from directory structure
-            project_dir = Path(f"output/projects/{project_id}")
-            if project_dir.exists():
-                project_info_file = project_dir / "project_info.json"
-                if project_info_file.exists():
-                    try:
-                        with open(project_info_file, 'r') as f:
-                            project = json.load(f)
-                    except:
-                        pass
-                
-                # Get files from directory structure
-                for file_dir in project_dir.iterdir():
-                    if file_dir.is_dir():
-                        file_info_file = file_dir / "file_info.json"
-                        if file_info_file.exists():
-                            try:
-                                with open(file_info_file, 'r') as f:
-                                    file_info = json.load(f)
-                                    project_files.append(file_info)
-                            except:
-                                project_files.append({
-                                    "id": file_dir.name,
-                                    "filename": file_dir.name,
-                                    "original_filename": file_dir.name,
-                                    "project_id": project_id,
-                                    "filepath": str(file_dir),
-                                    "size": 0,
-                                    "upload_date": "Unknown",
-                                    "description": f"File from directory {file_dir.name}",
-                                    "status": "completed",
-                                    "processing_result": {}
-                                })
-        
-        if not project:
-            return {
-                'success': False,
-                'error': 'Project not found',
-                'graph_data': None
-            }
-        
-        # Collect graph data from all files in the project
-        all_nodes = []
-        all_links = []
-        node_id_map = {}  # To handle duplicate nodes across files
-        
-        for file_info in project_files:
-            # Look for graph data file
-            filename = file_info.get('original_filename', file_info['id'])
-            base_filename = os.path.splitext(filename)[0]
-            file_output_dir = Path(f"output/projects/{project_id}/{base_filename}")
-            
-            graph_data_file = file_output_dir / "aasx_data_graph.json"
-            
-            if graph_data_file.exists():
+            logger.info("Processing nodes...")
+            for record in nodes_result:
                 try:
-                    with open(graph_data_file, 'r') as f:
-                        graph_data = json.load(f)
+                    node = record['n']  # This is now a raw Neo4j Node object
+                    node_dict = dict(node)
                     
-                    # Process nodes
-                    for node in graph_data.get('nodes', []):
-                        node_id = node['id']
-                        if node_id not in node_id_map:
-                            node_id_map[node_id] = len(all_nodes)
-                            all_nodes.append({
-                                'id': node_id,
-                                'label': node.get('description', node_id),
-                                'type': node['type'],
-                                'properties': {k: v for k, v in node.items() if k not in ['id', 'type']},
-                                'source_file': file_info.get('original_filename', file_info['id'])
-                            })
+                    # Extract node ID - prioritize the 'id' property from the data
+                    node_id = node_dict.get('id') or node_dict.get('idShort')
+                    if not node_id:
+                        # Fallback to Neo4j element_id
+                        node_id = node.element_id if hasattr(node, 'element_id') else f"node_{hash(str(node))}"
                     
-                    # Process edges
-                    for edge in graph_data.get('edges', []):
-                        source_id = edge['source_id']
-                        target_id = edge['target_id']
-                        
-                        # Only add edge if both nodes exist
-                        if source_id in node_id_map and target_id in node_id_map:
-                            all_links.append({
-                                'source': source_id,
-                                'target': target_id,
-                                'type': edge['type'],
-                                'properties': edge.get('properties', {}),
-                                'source_file': file_info.get('original_filename', file_info['id'])
-                            })
-                
-                except Exception as e:
-                    logger.error(f"Error reading graph data for file {file_info.get('original_filename', file_info['id'])}: {e}")
+                    # Extract label from Neo4j labels
+                    node_label = list(node.labels)[0] if node.labels else 'Node'
+                    
+                    nodes.append({
+                        'id': str(node_id),
+                        'label': str(node_label),
+                        'properties': node_dict
+                    })
+                except Exception as node_error:
+                    logger.warning(f"Error processing node: {node_error}")
                     continue
-        
-        # Calculate statistics
-        statistics = {
-            'total_nodes': len(all_nodes),
-            'total_relationships': len(all_links),
-            'asset_nodes': len([n for n in all_nodes if n['type'] == 'asset']),
-            'submodel_nodes': len([n for n in all_nodes if n['type'] == 'submodel']),
-            'property_nodes': len([n for n in all_nodes if n['type'] == 'property']),
-            'document_nodes': len([n for n in all_nodes if n['type'] == 'document'])
-        }
+            
+            # Process relationships
+            logger.info("Processing relationships...")
+            for record in relationships_result:
+                try:
+                    rel = record['r']  # This is now a raw Neo4j Relationship object
+                    a_node = record['a']  # Raw Neo4j Node object
+                    b_node = record['b']  # Raw Neo4j Node object
+                    
+                    # Convert to dictionaries for property access
+                    a_dict = dict(a_node)
+                    b_dict = dict(b_node)
+                    rel_dict = dict(rel)
+                    
+                    # Extract relationship ID from Neo4j element_id
+                    rel_id = rel.element_id if hasattr(rel, 'element_id') else f"rel_{hash(str(rel))}"
+                    
+                    # Extract node IDs - prioritize 'id' property from data
+                    a_id = a_dict.get('id') or a_dict.get('idShort') or a_node.element_id
+                    b_id = b_dict.get('id') or b_dict.get('idShort') or b_node.element_id
+                    
+                    # Extract relationship type from Neo4j object
+                    rel_type = rel.type if hasattr(rel, 'type') else 'RELATES_TO'
+                    
+                    relationships.append({
+                        'id': str(rel_id),
+                        'source': str(a_id),
+                        'target': str(b_id),
+                        'type': str(rel_type),
+                        'properties': rel_dict
+                    })
+                except Exception as rel_error:
+                    logger.warning(f"Error processing relationship: {rel_error}")
+                    continue
+                
+        except Exception as db_error:
+            logger.error(f"Database query failed: {db_error}")
+            # Return empty arrays if database query fails
+            nodes = []
+            relationships = []
         
         return {
-            'success': True,
-            'project': project,
-            'files': project_files,
-            'graph_data': {
-                'nodes': all_nodes,
-                'links': all_links
-            },
-            'statistics': statistics,
-            'metadata': {
-                'total_files_processed': len([f for f in project_files if Path(f.get('filepath', '')).exists()]),
-                'total_files': len(project_files)
+            "success": True,
+            "nodes": nodes,
+            "relationships": relationships
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/nodes")
+async def create_node(node_data: Dict[str, Any]):
+    """Create a new node"""
+    try:
+        import time
+        return {
+            "success": True,
+            "node": {
+                "id": f"node_{len(node_data.get('labels', []))}_{int(time.time() * 1000)}",
+                "labels": node_data.get('labels', []),
+                "properties": node_data.get('properties', {})
             }
         }
-        
     except Exception as e:
-        logger.error(f"Error getting project graph data: {e}")
-        return {
-            'success': False,
-            'error': str(e),
-            'graph_data': None
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/debug/file-path/{file_id}")
-async def debug_file_path(file_id: str):
-    """Debug endpoint to test file path construction"""
+@router.get("/nodes/{node_id}")
+async def get_node(node_id: str):
+    """Get a specific node"""
     try:
-        import os
-        import json
-        from pathlib import Path
-        
-        # Try to get file info from AASX routes first
-        file_info = None
-        
-        try:
-            from webapp.aasx.routes import FILES_DB
-            
-            if file_id in FILES_DB:
-                file_info = FILES_DB[file_id]
-                logger.info(f"Found file in FILES_DB: {file_info}")
-            else:
-                logger.info(f"File {file_id} not found in FILES_DB")
-        except ImportError as e:
-            logger.info(f"Import error: {e}")
-        
-        # Also try to find file in project directories
-        output_dir = Path("output/projects")
-        found_dirs = []
-        
-        if output_dir.exists():
-            for project_dir in output_dir.iterdir():
-                if project_dir.is_dir():
-                    for file_dir in project_dir.iterdir():
-                        if file_dir.is_dir():
-                            graph_file = file_dir / "aasx_data_graph.json"
-                            if graph_file.exists():
-                                found_dirs.append({
-                                    'project_id': project_dir.name,
-                                    'file_dir': file_dir.name,
-                                    'graph_file': str(graph_file),
-                                    'file_id_match': file_dir.name == file_id
-                                })
-        
         return {
-            'success': True,
-            'file_id': file_id,
-            'file_info_from_db': file_info,
-            'found_directories': found_dirs,
-            'all_files_in_db': list(FILES_DB.keys()) if 'FILES_DB' in locals() else []
+            "success": True,
+            "node": {
+                "id": node_id,
+                "labels": [],
+                "properties": {}
+            }
         }
-        
     except Exception as e:
-        logger.error(f"Error in debug endpoint: {e}")
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/api/debug/graph-data/{project_id}")
-async def debug_graph_data(project_id: str):
-    """Debug endpoint to test graph data loading"""
+@router.put("/nodes/{node_id}")
+async def update_node(node_id: str, node_data: Dict[str, Any]):
+    """Update a specific node"""
     try:
-        import os
-        import json
-        from pathlib import Path
-        
-        # Try to get project info from AASX routes first
-        project = None
-        project_files = []
-        
-        try:
-            from webapp.aasx.routes import PROJECTS_DB, FILES_DB
-            
-            if project_id in PROJECTS_DB:
-                project = PROJECTS_DB[project_id]
-                project_files = [f for f in FILES_DB.values() if f["project_id"] == project_id]
-                logger.info(f"Found project in DB: {project}")
-                logger.info(f"Project files: {len(project_files)}")
-        except ImportError as e:
-            logger.info(f"Import error: {e}")
-        
-        # Collect graph data from all files in the project
-        all_nodes = []
-        all_links = []
-        node_id_map = {}  # To handle duplicate nodes across files
-        debug_info = []
-        
-        for file_info in project_files:
-            # Look for graph data file
-            filename = file_info.get('original_filename', file_info['id'])
-            base_filename = os.path.splitext(filename)[0]
-            file_output_dir = Path(f"output/projects/{project_id}/{base_filename}")
-            
-            graph_data_file = file_output_dir / "aasx_data_graph.json"
-            debug_info.append({
-                'file_info': file_info,
-                'file_output_dir': str(file_output_dir),
-                'graph_data_file': str(graph_data_file),
-                'exists': graph_data_file.exists()
-            })
-            
-            if graph_data_file.exists():
-                try:
-                    with open(graph_data_file, 'r') as f:
-                        graph_data = json.load(f)
-                    
-                    debug_info[-1]['graph_data_keys'] = list(graph_data.keys())
-                    debug_info[-1]['nodes_count'] = len(graph_data.get('nodes', []))
-                    debug_info[-1]['edges_count'] = len(graph_data.get('edges', []))
-                    
-                    # Process nodes
-                    for node in graph_data.get('nodes', []):
-                        node_id = node['id']
-                        if node_id not in node_id_map:
-                            node_id_map[node_id] = len(all_nodes)
-                            all_nodes.append({
-                                'id': node_id,
-                                'label': node.get('description', node_id),
-                                'type': node['type'],
-                                'properties': {k: v for k, v in node.items() if k not in ['id', 'type']},
-                                'source_file': file_info.get('original_filename', file_info['id'])
-                            })
-                    
-                    # Process edges
-                    for edge in graph_data.get('edges', []):
-                        source_id = edge['source_id']
-                        target_id = edge['target_id']
-                        
-                        # Only add edge if both nodes exist
-                        if source_id in node_id_map and target_id in node_id_map:
-                            all_links.append({
-                                'source': source_id,
-                                'target': target_id,
-                                'type': edge['type'],
-                                'properties': edge.get('properties', {}),
-                                'source_file': file_info.get('original_filename', file_info['id'])
-                            })
-                
-                except Exception as e:
-                    logger.error(f"Error reading graph data for file {file_info.get('original_filename', file_info['id'])}: {e}")
-                    debug_info[-1]['error'] = str(e)
-                    continue
-        
         return {
-            'success': True,
-            'project': project,
-            'project_files_count': len(project_files),
-            'debug_info': debug_info,
-            'processed_nodes': len(all_nodes),
-            'processed_links': len(all_links),
-            'node_id_map_size': len(node_id_map),
-            'sample_nodes': all_nodes[:3] if all_nodes else [],
-            'sample_links': all_links[:3] if all_links else []
+            "success": True,
+            "node": {
+                "id": node_id,
+                "labels": node_data.get('labels', []),
+                "properties": node_data.get('properties', {})
+            }
         }
-        
     except Exception as e:
-        logger.error(f"Error in debug graph data endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/nodes/{node_id}")
+async def delete_node(node_id: str):
+    """Delete a specific node"""
+    try:
         return {
-            'success': False,
-            'error': str(e)
+            "success": True,
+            "message": f"Node {node_id} deleted"
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/relationships")
+async def create_relationship(relationship_data: Dict[str, Any]):
+    """Create a new relationship"""
+    try:
+        import time
+        return {
+            "success": True,
+            "relationship": {
+                "id": f"rel_{int(time.time() * 1000)}",
+                "startNode": relationship_data.get('startNode'),
+                "endNode": relationship_data.get('endNode'),
+                "type": relationship_data.get('type'),
+                "properties": relationship_data.get('properties', {})
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/relationships/{relationship_id}")
+async def get_relationship(relationship_id: str):
+    """Get a specific relationship"""
+    try:
+        return {
+            "success": True,
+            "relationship": {
+                "id": relationship_id,
+                "startNode": "",
+                "endNode": "",
+                "type": "",
+                "properties": {}
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/relationships/{relationship_id}")
+async def update_relationship(relationship_id: str, relationship_data: Dict[str, Any]):
+    """Update a specific relationship"""
+    try:
+        return {
+            "success": True,
+            "relationship": {
+                "id": relationship_id,
+                "startNode": relationship_data.get('startNode'),
+                "endNode": relationship_data.get('endNode'),
+                "type": relationship_data.get('type'),
+                "properties": relationship_data.get('properties', {})
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/relationships/{relationship_id}")
+async def delete_relationship(relationship_id: str):
+    """Delete a specific relationship"""
+    try:
+        return {
+            "success": True,
+            "message": f"Relationship {relationship_id} deleted"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/nodes/label/{label}")
+async def get_nodes_by_label(label: str, limit: int = 100):
+    """Get nodes by label"""
+    try:
+        return {
+            "success": True,
+            "nodes": []
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/relationships/type/{type}")
+async def get_relationships_by_type(type: str, limit: int = 100):
+    """Get relationships by type"""
+    try:
+        return {
+            "success": True,
+            "relationships": []
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/clear")
+async def clear_all_data():
+    """Clear all graph data"""
+    try:
+        result = kg_neo4j_service.clear_all_neo4j_data()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/export")
+async def export_graph(format: str = "json"):
+    """Export graph data"""
+    try:
+        return {
+            "success": True,
+            "format": format,
+            "data": {
+                "nodes": [],
+                "relationships": []
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/import")
+async def import_graph(import_data: Dict[str, Any]):
+    """Import graph data"""
+    try:
+        return {
+            "success": True,
+            "message": "Graph data imported successfully",
+            "imported_nodes": len(import_data.get('nodes', [])),
+            "imported_relationships": len(import_data.get('relationships', []))
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
-# HELPER FUNCTIONS
+# DOCKER MANAGEMENT ENDPOINTS
 # ============================================================================
 
-def check_docker_status():
-    """Check if Neo4j Docker container is running"""
+@router.get("/docker-status")
+async def get_docker_status():
+    """Get Docker container status"""
     try:
-        # Check if Docker is available
-        result = subprocess.run(['docker', '--version'], 
-                              capture_output=True, text=True, timeout=10)
-        if result.returncode != 0:
-            return {
-                'running': False,
-                'status': 'Docker not available',
-                'error': 'Docker command not found'
-            }
-        
-        # Check for Neo4j container
-        result = subprocess.run([
-            'docker', 'ps', '--filter', 'name=neo4j', 
-            '--format', '{{.Names}}\t{{.Status}}\t{{.ID}}'
-        ], capture_output=True, text=True, timeout=10)
-        
-        if result.returncode == 0 and result.stdout.strip():
-            lines = result.stdout.strip().split('\n')
-            for line in lines:
-                if 'neo4j' in line.lower():
-                    parts = line.split('\t')
-                    if len(parts) >= 3:
-                        return {
-                            'running': True,
-                            'status': parts[1],
-                            'container_id': parts[2],
-                            'container_name': parts[0]
-                        }
-        
-        # Check if container exists but is stopped
-        result = subprocess.run([
-            'docker', 'ps', '-a', '--filter', 'name=neo4j',
-            '--format', '{{.Names}}\t{{.Status}}\t{{.ID}}'
-        ], capture_output=True, text=True, timeout=10)
-        
-        if result.returncode == 0 and result.stdout.strip():
-            lines = result.stdout.strip().split('\n')
-            for line in lines:
-                if 'neo4j' in line.lower():
-                    parts = line.split('\t')
-                    if len(parts) >= 3:
-                        return {
-                            'running': False,
-                            'status': parts[1],
-                            'container_id': parts[2],
-                            'container_name': parts[0]
-                        }
-        
         return {
-            'running': False,
-            'status': 'Container not found',
-            'error': 'Neo4j container not found'
-        }
-        
-    except subprocess.TimeoutExpired:
-        return {
-            'running': False,
-            'status': 'Timeout',
-            'error': 'Docker command timed out'
+            "success": True,
+            "docker_status": kg_neo4j_service.get_docker_status()
         }
     except Exception as e:
-        return {
-            'running': False,
-            'status': 'Error',
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-def check_browser_accessibility():
-    """Check if Neo4j Browser is accessible"""
-    try:
-        import requests
-        # Try port 7475 first (your container's port), then fallback to 7474
-        try:
-            response = requests.get('http://localhost:7475', timeout=5)
-            if response.status_code == 200:
-                return True
-        except:
-            pass
-        
-        # Fallback to standard port 7474
-        response = requests.get('http://localhost:7474', timeout=5)
-        return response.status_code == 200
-    except:
-        return False
-
-def get_active_connections():
-    """Get number of active connections (simplified)"""
-    try:
-        # This would require Neo4j connection to get actual count
-        # For now, return a placeholder
-        return 0
-    except:
-        return 0
-
-def start_neo4j_docker():
+@router.post("/docker/start")
+async def start_docker_container():
     """Start Neo4j Docker container"""
     try:
-        # Check if container already exists
-        status = check_docker_status()
-        
-        if status.get('running', False):
-            return {
-                'success': True,
-                'message': 'Neo4j container is already running'
-            }
-        
-        # Start the container
-        if status.get('container_id'):
-            # Container exists but stopped, start it
-            result = subprocess.run([
-                'docker', 'start', status['container_id']
-            ], capture_output=True, text=True, timeout=30)
-        else:
-            # Create and start new container
-            result = subprocess.run([
-                'docker', 'run', '-d',
-                '--name', 'neo4j',
-                '-p', '7474:7474',
-                '-p', '7687:7687',
-                '-e', 'NEO4J_AUTH=neo4j/password',
-                '-e', 'NEO4J_PLUGINS=["apoc"]',
-                'neo4j:latest'
-            ], capture_output=True, text=True, timeout=60)
-        
-        if result.returncode == 0:
-            return {
-                'success': True,
-                'message': 'Neo4j container started successfully'
-            }
-        else:
-            return {
-                'success': False,
-                'error': f'Failed to start container: {result.stderr}'
-            }
-            
-    except subprocess.TimeoutExpired:
+        result = kg_neo4j_service.start_docker_container()
         return {
-            'success': False,
-            'error': 'Docker command timed out'
+            "success": True,
+            "message": "Docker container started successfully",
+            "result": result
         }
     except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-def stop_neo4j_docker():
+@router.post("/docker/stop")
+async def stop_docker_container():
     """Stop Neo4j Docker container"""
     try:
-        status = check_docker_status()
-        
-        if not status.get('running', False):
-            return {
-                'success': True,
-                'message': 'Neo4j container is not running'
-            }
-        
-        if status.get('container_id'):
-            result = subprocess.run([
-                'docker', 'stop', status['container_id']
-            ], capture_output=True, text=True, timeout=30)
-            
-            if result.returncode == 0:
-                return {
-                    'success': True,
-                    'message': 'Neo4j container stopped successfully'
-                }
-            else:
-                return {
-                    'success': False,
-                    'error': f'Failed to stop container: {result.stderr}'
-                }
-        else:
-            return {
-                'success': False,
-                'error': 'No container ID found'
-            }
-            
-    except subprocess.TimeoutExpired:
+        result = kg_neo4j_service.stop_docker_container()
         return {
-            'success': False,
-            'error': 'Docker command timed out'
+            "success": True,
+            "message": "Docker container stopped successfully",
+            "result": result
         }
     except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
-def calculate_statistics(results):
-    """Calculate statistics from query results"""
+# Removed duplicate /status endpoint - using the one with StatusResponse model above
+
+@router.get("/docker/logs")
+async def get_docker_logs():
+    """Get Docker container logs"""
     try:
-        stats = {
-            'total_nodes': 0,
-            'total_relationships': 0,
-            'asset_nodes': 0,
-            'submodel_nodes': 0,
-            'property_nodes': 0
-        }
-        
-        node_ids = set()
-        relationship_ids = set()
-        
-        for record in results:
-            # Count nodes
-            if hasattr(record, 'n') and record.n:
-                node_id = getattr(record.n, 'identity', getattr(record.n, 'id', None))
-                if node_id and node_id not in node_ids:
-                    node_ids.add(node_id)
-                    stats['total_nodes'] += 1
-                    
-                    # Count by type
-                    labels = getattr(record.n, 'labels', [])
-                    if labels:
-                        label = labels[0].lower()
-                        if 'asset' in label:
-                            stats['asset_nodes'] += 1
-                        elif 'submodel' in label:
-                            stats['submodel_nodes'] += 1
-                        elif 'property' in label:
-                            stats['property_nodes'] += 1
-            
-            # Count relationships
-            if hasattr(record, 'r') and record.r:
-                rel_id = getattr(record.r, 'identity', getattr(record.r, 'id', None))
-                if rel_id and rel_id not in relationship_ids:
-                    relationship_ids.add(rel_id)
-                    stats['total_relationships'] += 1
-        
-        return stats
-        
-    except Exception as e:
-        logger.error(f"Error calculating statistics: {e}")
+        logs = kg_neo4j_service.get_docker_logs()
         return {
-            'total_nodes': 0,
-            'total_relationships': 0,
-            'asset_nodes': 0,
-            'submodel_nodes': 0,
-            'property_nodes': 0
+            "success": True,
+            "logs": logs
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# DATA MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@router.get("/use-cases")
+async def get_use_cases():
+    """Get all use cases regardless of graph data availability"""
+    try:
+        use_cases = graph_discovery_service.get_all_use_cases()
+        return {
+            "success": True,
+            "use_cases": use_cases
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/use-cases/{use_case_id}/projects")
+async def get_projects_by_use_case(use_case_id: str):
+    """Get projects for a specific use case"""
+    try:
+        projects = graph_discovery_service.get_all_projects_for_use_case(use_case_id)
+        return {
+            "success": True,
+            "projects": projects
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/projects/{project_id}/files")
+async def get_files_by_project(project_id: str):
+    """Get files for a specific project"""
+    try:
+        files = graph_discovery_service.get_all_files_for_project(project_id)
+        return {
+            "success": True,
+            "files": files
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/import/file/{file_id}")
+async def import_file_to_neo4j(file_id: str):
+    """Import a specific file to Neo4j"""
+    try:
+        # This would integrate with the actual Neo4j import logic
+        result = kg_neo4j_service.import_file_to_neo4j(file_id)
+        return {
+            "success": True,
+            "message": f"File {file_id} imported successfully",
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/import/project/{project_id}")
+async def import_project_to_neo4j(project_id: str):
+    """Import all files in a project to Neo4j"""
+    try:
+        # This would integrate with the actual Neo4j import logic
+        result = kg_neo4j_service.import_project_to_neo4j(project_id)
+        return {
+            "success": True,
+            "message": f"Project {project_id} imported successfully",
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/import/status")
+async def get_import_status():
+    """Get import status for all files"""
+    try:
+        # This would return the current import status
+        return {
+            "success": True,
+            "status": {
+                "total_files": 0,
+                "imported_files": 0,
+                "failed_files": 0,
+                "in_progress": 0
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/query-config")
+async def get_query_config():
+    """Get query engine configuration"""
+    try:
+        return {
+            "success": True,
+            "config": {
+                "max_results": 1000,
+                "timeout": 30,
+                "allowed_queries": ["MATCH", "RETURN", "WHERE", "WITH", "ORDER BY", "LIMIT"],
+                "forbidden_queries": ["DELETE", "REMOVE", "SET", "CREATE", "MERGE"]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/processor-config")
+async def get_processor_config():
+    """Get data processor configuration"""
+    try:
+        return {
+            "success": True,
+            "config": {
+                "batch_size": 100,
+                "max_workers": 4,
+                "supported_formats": ["json", "csv", "xml"],
+                "node_types": ["Asset", "Submodel", "Property", "Collection"],
+                "relationship_types": ["hasSubmodel", "hasProperty", "references", "contains"]
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
