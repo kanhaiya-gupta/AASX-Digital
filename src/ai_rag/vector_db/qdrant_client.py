@@ -224,15 +224,21 @@ class QdrantClient(VectorDBClient):
         try:
             collection_info = self.client.get_collection(collection_name)
             
+            # Calculate estimated storage size
+            points_count = collection_info.points_count or 0
+            vector_size = collection_info.config.params.vectors.size
+            estimated_storage_mb = (points_count * vector_size * 4) / (1024 * 1024)  # 4 bytes per float32
+            
             info = {
-                'name': collection_info.name,
-                'vectors_count': collection_info.vectors_count,
-                'points_count': collection_info.points_count,
-                'segments_count': collection_info.segments_count,
+                'name': collection_name,  # Use the collection name we passed in
+                'vectors_count': collection_info.vectors_count or 0,  # Handle None values
+                'points_count': points_count,  # Handle None values
+                'segments_count': collection_info.segments_count or 0,  # Handle None values
                 'config': {
-                    'vector_size': collection_info.config.params.vectors.size,
+                    'vector_size': vector_size,
                     'distance': str(collection_info.config.params.vectors.distance)
-                }
+                },
+                'storage_size_mb': round(estimated_storage_mb, 2)
             }
             
             return info
@@ -290,3 +296,37 @@ class QdrantClient(VectorDBClient):
     def get_collection_name(self) -> str:
         """Get the current collection name."""
         return self.collection_name
+
+    def get_all_documents(self, collection_name: str = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get all documents stored in Qdrant with their metadata"""
+        if not self.is_connected:
+            raise VectorDBConnectionError("Not connected to Qdrant")
+        
+        collection_name = collection_name or self.collection_name
+        
+        try:
+            # Get all points from the collection
+            points = self.client.scroll(
+                collection_name=collection_name,
+                limit=limit,
+                with_payload=True,
+                with_vectors=False  # Don't include vectors to save bandwidth
+            )
+            
+            documents = []
+            for point in points[0]:  # points[0] contains the actual points
+                doc = {
+                    'id': point.id,
+                    'file_id': point.payload.get('file_id', 'Unknown'),
+                    'project_id': point.payload.get('project_id', 'Unknown'),
+                    'document_type': point.payload.get('document_type', 'Unknown'),
+                    'content_type': point.payload.get('content_type', 'Unknown'),
+                    'metadata': point.payload.get('metadata', {}),
+                    'timestamp': point.payload.get('timestamp', 'Unknown')
+                }
+                documents.append(doc)
+            
+            return documents
+            
+        except Exception as e:
+            raise VectorDBOperationError(f"Failed to get documents: {e}")

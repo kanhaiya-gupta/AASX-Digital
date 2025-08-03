@@ -1,52 +1,89 @@
 /**
  * AI RAG Module Entry Point
  * Main entry point for AI Retrieval-Augmented Generation functionality
+ * Now with modular UI components
  */
 
+console.log('📦 AI RAG index.js: Module loading started...');
+
 // Import shared utilities
+console.log('📦 AI RAG index.js: Importing shared utilities...');
 import { initAlertSystem } from '../shared/alerts.js';
 import { formatFileSize, getFileStatusInfo } from '../shared/utils.js';
+console.log('✅ AI RAG index.js: Shared utilities imported');
 
-// Import AI RAG modules
+// Import AI RAG core modules
+console.log('📦 AI RAG index.js: Importing AI RAG core modules...');
 import AIRAGCore from './rag-management/core.js';
 import AIRAGQueryProcessor from './rag-management/query-processor.js';
 import AIRAGVectorStore from './rag-management/vector-store.js';
 import AIRAGGenerator from './rag-management/generator.js';
+console.log('✅ AI RAG index.js: AI RAG core modules imported');
+
+// Import UI component modules
+console.log('📦 AI RAG index.js: Importing UI component modules...');
+import { initSystemStatus } from './ui-components/system_status.js?v=2025-08-03-09-26';
+import { initQueryInterface } from './ui-components/query_interface.js?v=2025-08-03-09-29';
+import { initQuickActions } from './ui-components/quick_actions.js?v=2025-08-03-09-26';
+import { initStatistics } from './ui-components/statistics.js?v=2025-08-03-09-26';
+import { initVectorManagement } from './ui-components/vector_management.js?v=2025-08-03-09-26';
+import { initIntegration } from './ui-components/integration.js?v=2025-08-03-09-30';
+console.log('✅ AI RAG index.js: UI component modules imported');
 
 // Global instances
 let aiRAGCore = null;
 let aiRAGQueryProcessor = null;
 let aiRAGVectorStore = null;
 let aiRAGGenerator = null;
+let isInitialized = false;
 
 /**
  * Initialize AI RAG Module
- * Sets up all AI RAG components and functionality
+ * Sets up all AI RAG components and functionality including modular UI components
  */
 export async function initAIRAGModule() {
-    console.log('🚀 AI RAG Module initializing...');
+    if (isInitialized) {
+        console.log('⚠️ AI RAG module already initialized, skipping...');
+        return;
+    }
+    
+    console.log('🚀 AI RAG Module initializing with modular UI components...');
     
     try {
         // Initialize alert system first
         initAlertSystem();
         
-        // Initialize Core AI RAG
+        // Initialize Core AI RAG modules
         aiRAGCore = new AIRAGCore();
         await aiRAGCore.init();
         
-        // Initialize Query Processor
         aiRAGQueryProcessor = new AIRAGQueryProcessor();
         await aiRAGQueryProcessor.init();
         
-        // Initialize Vector Store
         aiRAGVectorStore = new AIRAGVectorStore();
         await aiRAGVectorStore.init();
         
-        // Initialize Generator
         aiRAGGenerator = new AIRAGGenerator();
         await aiRAGGenerator.init();
         
-        console.log('✅ AI RAG Module initialized');
+        // Make core modules globally accessible for HTML callbacks
+        window.aiRAGCore = aiRAGCore;
+        window.aiRAGQueryProcessor = aiRAGQueryProcessor;
+        window.aiRAGVectorStore = aiRAGVectorStore;
+        window.aiRAGGenerator = aiRAGGenerator;
+        
+        // Initialize UI component modules
+        console.log('🔧 Initializing UI component modules...');
+        
+        await initSystemStatus();
+        await initQueryInterface();
+        await initQuickActions();
+        await initStatistics();
+        await initVectorManagement();
+        await initIntegration();
+        
+        isInitialized = true;
+        console.log('✅ AI RAG Module initialized with all UI components');
         
         // Dispatch custom event for other modules
         window.dispatchEvent(new CustomEvent('aiRAGModuleReady', {
@@ -54,7 +91,15 @@ export async function initAIRAGModule() {
                 aiRAGCore,
                 aiRAGQueryProcessor,
                 aiRAGVectorStore,
-                aiRAGGenerator
+                aiRAGGenerator,
+                uiComponents: {
+                    systemStatus: true,
+                    queryInterface: true,
+                    quickActions: true,
+                    statistics: true,
+                    vectorManagement: true,
+                    integration: true
+                }
             }
         }));
         
@@ -123,7 +168,7 @@ export function cleanupAIRAGModule() {
  * Check if AI RAG Module is Ready
  */
 export function isAIRAGModuleReady() {
-    return aiRAGCore && aiRAGQueryProcessor && aiRAGVectorStore && aiRAGGenerator &&
+    return isInitialized && aiRAGCore && aiRAGQueryProcessor && aiRAGVectorStore && aiRAGGenerator &&
            aiRAGCore.isInitialized && aiRAGQueryProcessor.isInitialized && 
            aiRAGVectorStore.isInitialized && aiRAGGenerator.isInitialized;
 }
@@ -150,7 +195,7 @@ export async function refreshAIRAGData() {
 }
 
 // Auto-initialize when DOM is ready
-$(document).ready(() => {
+document.addEventListener('DOMContentLoaded', () => {
     // Check if we're on an AI RAG page
     if (window.location.pathname.includes('/ai-rag') || 
         window.location.pathname.includes('/rag')) {

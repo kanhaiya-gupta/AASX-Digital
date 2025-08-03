@@ -16,7 +16,7 @@
                     <p class="text-muted mb-0">Comprehensive management and monitoring of digital twins</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" onclick="refreshAllData()">
+                    <button class="btn btn-outline-primary" id="refreshAllBtn">
                         <i class="fas fa-sync-alt me-1"></i>
                         Refresh All
                     </button>
@@ -47,27 +47,37 @@
     <!-- System Configuration Panel -->
     {% include 'twin_registry/components/system_configuration.html' %}
 
-    <!-- Main Content Sections -->
+    <!-- Main Content Sections - Improved Layout -->
     <div class="row">
-        <!-- Left Column - Twin Management & Analytics -->
-        <div class="col-lg-8">
-            <!-- Twin Management Section -->
+        <!-- Twin Management Section - Full Width -->
+        <div class="col-12 mb-4">
             {% include 'twin_registry/components/twin_management.html' %}
-            
-            <!-- Analytics Section -->
+        </div>
+    </div>
+
+    <!-- Analytics and Monitoring Section - Balanced Layout -->
+    <div class="row">
+        <!-- Analytics Overview - Left Side -->
+        <div class="col-lg-6 mb-4">
             {% include 'twin_registry/components/analytics_section.html' %}
         </div>
         
-        <!-- Right Column - Monitoring & Widgets -->
-        <div class="col-lg-4">
-            <!-- Analytics Widget -->
-            {% include 'twin_registry/components/analytics_widget.html' %}
-            
-            <!-- Health Monitoring -->
+        <!-- Health Monitoring - Right Side -->
+        <div class="col-lg-6 mb-4">
             {% include 'twin_registry/components/health_monitoring.html' %}
-            
-            <!-- Performance Monitoring -->
+        </div>
+    </div>
+
+    <!-- Performance and Advanced Monitoring Section -->
+    <div class="row">
+        <!-- Performance Monitoring - Left Side -->
+        <div class="col-lg-6 mb-4">
             {% include 'twin_registry/components/performance_monitoring.html' %}
+        </div>
+        
+        <!-- Analytics Widget - Right Side -->
+        <div class="col-lg-6 mb-4">
+            {% include 'twin_registry/components/analytics_widget.html' %}
         </div>
     </div>
 
@@ -137,54 +147,105 @@
 
 <!-- Include All Modals -->
 {% include 'twin_registry/components/modals.html' %}
+{% endblock %}
 
-<!-- JavaScript -->
-<script>
-// Initialize the twin registry module
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize twin registry functionality
-    if (typeof TwinRegistryModule !== 'undefined') {
-        TwinRegistryModule.init();
+{% block extra_css %}
+<style>
+    /* Chart container styling to prevent layout shifts */
+    .chart-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
     }
     
-    // Setup auto-generation for twin forms
-    setupAutoGeneration();
-    
-    // Load initial data
-    refreshAllData();
-});
-
-// Global refresh function
-function refreshAllData() {
-    if (typeof TwinRegistryModule !== 'undefined') {
-        TwinRegistryModule.refreshTwinRegistryData();
+    .chart-container canvas {
+        max-height: 100%;
+        max-width: 100%;
     }
-}
+    
+    /* Ensure charts don't cause screen movement */
+    .card-body .chart-container {
+        margin-bottom: 1rem;
+    }
+    
+    /* Smooth transitions for chart updates */
+    .chart-container canvas {
+        transition: opacity 0.3s ease;
+    }
+</style>
+{% endblock %}
 
-// Auto-generation setup for twin forms
-function setupAutoGeneration() {
-    // Auto-generate Twin ID when name is entered
-    $('#createTwinName').on('input', function() {
-        var name = $(this).val();
-        if (name && !$('#createTwinId').val()) {
-            var twinId = 'DT-' + name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 8);
-            $('#createTwinId').val(twinId);
+{% block extra_scripts %}
+<script type="module">
+    console.log('🔍 Twin Registry Template: Loading modular Twin Registry system...');
+    
+    try {
+        const { initTwinRegistryModule, refreshTwinRegistryData } = await import("{{ url_for('static', path='/js/twin_registry/index.js') }}");
+        console.log('✅ Twin Registry Template: Modular system imported successfully');
+        
+        // Initialize the modular Twin Registry system
+        await initTwinRegistryModule();
+        console.log('✅ Twin Registry Template: Modular system initialized');
+        
+        // Setup event listeners after module is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup refresh button
+            const refreshBtn = document.getElementById('refreshAllBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', async () => {
+                    try {
+                        await refreshTwinRegistryData();
+                        console.log('✅ Twin Registry data refreshed');
+                    } catch (error) {
+                        console.error('❌ Failed to refresh twin registry data:', error);
+                    }
+                });
+            }
+            
+            // Setup auto-generation for twin forms
+            setupAutoGeneration();
+            
+            // Load initial data
+            refreshTwinRegistryData();
+        });
+        
+    } catch (error) {
+        console.error('❌ Twin Registry Template: Modular system failed to load:', error);
+    }
+    
+    // Auto-generation setup for twin forms
+    function setupAutoGeneration() {
+        // Auto-generate Twin ID when name is entered
+        const createTwinName = document.getElementById('createTwinName');
+        const createTwinId = document.getElementById('createTwinId');
+        
+        if (createTwinName && createTwinId) {
+            createTwinName.addEventListener('input', function() {
+                const name = this.value;
+                if (name && !createTwinId.value) {
+                    const twinId = 'DT-' + name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 8);
+                    createTwinId.value = twinId;
+                }
+            });
         }
-    });
-}
-
-// Toggle real-time monitoring panel
-function toggleRealtimePanel() {
-    const panelBody = document.getElementById('realtimePanelBody');
-    const toggleIcon = document.getElementById('realtimeToggleIcon');
-    
-    if (panelBody.style.display === 'none') {
-        panelBody.style.display = 'block';
-        toggleIcon.className = 'fas fa-chevron-up float-end';
-    } else {
-        panelBody.style.display = 'none';
-        toggleIcon.className = 'fas fa-chevron-down float-end';
     }
-}
+    
+    // Toggle real-time monitoring panel
+    window.toggleRealtimePanel = function() {
+        const panelBody = document.getElementById('realtimePanelBody');
+        const toggleIcon = document.getElementById('realtimeToggleIcon');
+        
+        if (panelBody && toggleIcon) {
+            if (panelBody.style.display === 'none') {
+                panelBody.style.display = 'block';
+                toggleIcon.className = 'fas fa-chevron-up float-end';
+            } else {
+                panelBody.style.display = 'none';
+                toggleIcon.className = 'fas fa-chevron-down float-end';
+            }
+        }
+    };
 </script>
 {% endblock %} 

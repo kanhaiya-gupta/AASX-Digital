@@ -878,7 +878,7 @@ export class DataManager {
         const useCase = projectDetails.use_case;
         
         const modalContent = `
-            <div class="row">
+            <div class="row mb-4">
                 <div class="col-md-8">
                     <h6>Description</h6>
                     <p class="text-muted">${projectDetails.description || 'No description available'}</p>
@@ -891,9 +891,6 @@ export class DataManager {
                         <li><strong>Created:</strong> ${new Date(projectDetails.created_at).toLocaleDateString()}</li>
                         <li><strong>Last Updated:</strong> ${new Date(projectDetails.updated_at).toLocaleDateString()}</li>
                     </ul>
-                    
-                    <h6 class="mt-4">Files in Project</h6>
-                    ${this.renderProjectFiles(files)}
                 </div>
                 <div class="col-md-4">
                     <h6>Use Case</h6>
@@ -908,6 +905,13 @@ export class DataManager {
                     <div class="mb-3">
                         ${this.renderMetadata(projectDetails.metadata)}
                     </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <h6>Files in Project</h6>
+                    ${this.renderProjectFiles(files)}
                 </div>
             </div>
         `;
@@ -941,15 +945,16 @@ export class DataManager {
             `;
         }
         
-        let filesHtml = '<div class="table-responsive"><table class="table table-sm table-hover">';
+        let filesHtml = '<div class="table-responsive"><table class="table table-hover">';
         filesHtml += `
             <thead class="table-light">
                 <tr>
-                    <th>File Name</th>
-                    <th>Status</th>
-                    <th>Size</th>
-                    <th>Upload Date</th>
-                    <th>Actions</th>
+                    <th style="min-width: 200px; color: #000; font-weight: 600;">File Name</th>
+                    <th style="min-width: 100px; color: #000; font-weight: 600;">Status</th>
+                    <th style="min-width: 140px; color: #000; font-weight: 600;">Federated Learning</th>
+                    <th style="min-width: 80px; color: #000; font-weight: 600;">Size</th>
+                    <th style="min-width: 100px; color: #000; font-weight: 600;">Upload Date</th>
+                    <th style="min-width: 120px; color: #000; font-weight: 600;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -957,24 +962,28 @@ export class DataManager {
         
         files.forEach(file => {
             const statusColor = this.getFileStatusColor(file.status);
+            const federatedLearningColor = this.getFederatedLearningColor(file.federated_learning);
             const fileSize = this.formatFileSize(file.size);
             const uploadDate = new Date(file.upload_date).toLocaleDateString();
             
             filesHtml += `
                 <tr>
                     <td>
-                        <div>
-                            <strong>${file.filename}</strong>
-                            ${file.original_filename !== file.filename ? `<br><small class="text-muted">Original: ${file.original_filename}</small>` : ''}
+                        <div class="d-flex flex-column">
+                            <strong class="text-break">${file.filename}</strong>
+                            ${file.original_filename !== file.filename ? `<small class="text-muted text-break">Original: ${file.original_filename}</small>` : ''}
                         </div>
                     </td>
                     <td>
-                        <span class="badge bg-${statusColor}">${file.status || 'unknown'}</span>
+                        <span class="badge bg-${statusColor} fs-6">${file.status || 'unknown'}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${federatedLearningColor} fs-6">${file.federated_learning || 'not_allowed'}</span>
                     </td>
                     <td>${fileSize}</td>
                     <td>${uploadDate}</td>
                     <td>
-                        <div class="btn-group btn-group-sm" role="group">
+                        <div class="d-flex gap-1">
                             <button class="btn btn-outline-primary btn-sm" onclick="dataManager.viewFileDetails('${file.file_id}')" title="View File Details">
                                 <i class="fas fa-eye"></i>
                             </button>
@@ -1001,6 +1010,16 @@ export class DataManager {
             'error': 'danger'
         };
         return colors[status] || 'secondary';
+    }
+    
+    // Get color for federated learning status
+    getFederatedLearningColor(federatedLearning) {
+        const colors = {
+            'allowed': 'success',
+            'not_allowed': 'danger',
+            'conditional': 'warning'
+        };
+        return colors[federatedLearning] || 'secondary';
     }
     
     // Format file size

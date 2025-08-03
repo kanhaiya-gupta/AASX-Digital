@@ -302,17 +302,17 @@ export default class TwinRegistryPerformance {
      */
     async collectRegistryMetrics() {
         try {
-            const response = await fetch('/api/twin-registry/performance/registry');
+                                const response = await fetch('/api/twin-registry/twins/statistics');
             if (response.ok) {
                 const data = await response.json();
                 
                 return {
                     value: {
-                        twinCount: data.twinCount,
-                        activeTwins: data.activeTwins,
-                        failedTwins: data.failedTwins,
-                        registrationRate: data.registrationRate,
-                        updateRate: data.updateRate
+                        twinCount: data.total_twins || 0,
+                        activeTwins: data.active_twins || 0,
+                        failedTwins: data.failed_twins || 0,
+                        registrationRate: data.registration_rate || 0,
+                        updateRate: data.update_rate || 0
                     },
                     status: 'good',
                     details: data

@@ -232,7 +232,7 @@ export default class TwinRegistryHealth {
     async checkAPIHealth() {
         try {
             const startTime = Date.now();
-            const response = await fetch('/api/twin-registry/health/api');
+            const response = await fetch('/api/twin-registry/health');
             const responseTime = Date.now() - startTime;
 
             if (response.ok) {
@@ -264,7 +264,7 @@ export default class TwinRegistryHealth {
      */
     async checkRegistryHealth() {
         try {
-            const response = await fetch('/api/twin-registry/health/registry');
+            const response = await fetch('/api/twin-registry/status');
             if (response.ok) {
                 const data = await response.json();
                 return {
@@ -293,7 +293,7 @@ export default class TwinRegistryHealth {
      */
     async checkNetworkHealth() {
         try {
-            const response = await fetch('/api/twin-registry/health/network');
+            const response = await fetch('/api/twin-registry/health');
             if (response.ok) {
                 const data = await response.json();
                 return {
@@ -322,7 +322,7 @@ export default class TwinRegistryHealth {
      */
     async checkStorageHealth() {
         try {
-            const response = await fetch('/api/twin-registry/health/storage');
+            const response = await fetch('/api/twin-registry/health');
             if (response.ok) {
                 const data = await response.json();
                 return {

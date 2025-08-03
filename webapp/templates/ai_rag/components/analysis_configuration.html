@@ -1,0 +1,140 @@
+<!-- Analysis Configuration Panel Component -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-info text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-cog me-2"></i>
+            Analysis Configuration
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- Data Source Selection -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-database text-primary me-1"></i>Project
+                </label>
+                <select class="form-select" id="project-select">
+                    <option value="">All Projects (Default)</option>
+                    <!-- Projects will be loaded dynamically -->
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-file-alt text-primary me-1"></i>Digital Twin
+                </label>
+                <select class="form-select" id="twin-select">
+                    <option value="">All Digital Twins (Default)</option>
+                    <!-- Digital twins will be loaded dynamically -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Model and Technique Selection -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-robot text-primary me-1"></i>AI Model
+                </label>
+                <select class="form-select" id="llm-model-select">
+                    <option value="gpt-4">GPT-4 (OpenAI)</option>
+                    <option value="gpt-3.5-turbo" selected>GPT-3.5 Turbo (OpenAI)</option>
+                    <option value="claude-3">Claude-3 (Anthropic)</option>
+                    <option value="gemini-pro">Gemini Pro (Google)</option>
+                    <option value="llama-2">Llama-2 (Local)</option>
+                    <option value="mistral">Mistral (Local)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-brain text-success me-1"></i>RAG Technique
+                </label>
+                <select class="form-select" id="rag-technique-select">
+                    <option value="">Auto-select (Recommended)</option>
+                    <option value="basic">Basic RAG</option>
+                    <option value="hybrid">Hybrid RAG</option>
+                    <option value="multi_step">Multi-Step RAG</option>
+                    <option value="graph">Graph RAG</option>
+                    <option value="advanced">Advanced RAG</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-bold">
+                    <i class="fas fa-chart-line text-warning me-1"></i>Analysis Type
+                </label>
+                <select class="form-select" id="analysis-type-select">
+                    <option value="general">General Analysis</option>
+                    <option value="quality">Quality Assessment</option>
+                    <option value="risk">Risk Analysis</option>
+                    <option value="optimization">Optimization</option>
+                    <option value="aasx_specific">AASX-Specific</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- RAG Technique Information -->
+        <div class="card bg-light border-0" id="rag-technique-info">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="text-success mb-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <span id="technique-title">Auto-select (Recommended)</span>
+                        </h6>
+                        <div id="technique-description">
+                            <p class="mb-1 small">System will automatically select the best RAG technique based on your query</p>
+                            <p class="mb-1 small"><strong>Best For:</strong> All query types, optimal performance</p>
+                            <p class="mb-0 small"><strong>Performance:</strong> Intelligent selection, balanced approach</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="technique-icon mb-2">
+                                <i class="fas fa-magic fa-2x text-success"></i>
+                            </div>
+                            <div class="technique-stats">
+                                <small class="text-muted">
+                                    <div><i class="fas fa-tachometer-alt me-1"></i>Speed: Optimal</div>
+                                    <div><i class="fas fa-memory me-1"></i>Memory: Balanced</div>
+                                    <div><i class="fas fa-brain me-1"></i>Complexity: Adaptive</div>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Source Information -->
+        <div class="card bg-light border-0 mt-3" id="data-source-info">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="text-info mb-2">
+                            <i class="fas fa-link me-1"></i>
+                            <span id="data-source-title">Connected to ETL Pipeline</span>
+                        </h6>
+                        <div id="data-source-description">
+                            <p class="mb-1 small"><strong>Data Source:</strong> Digital Twins from processed AASX files</p>
+                            <p class="mb-1 small"><strong>Integration:</strong> Automatic ETL pipeline processing</p>
+                            <p class="mb-0 small"><strong>Availability:</strong> Real-time query processing</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="data-source-icon mb-2">
+                                <i class="fas fa-cube fa-2x text-info"></i>
+                            </div>
+                            <div class="data-source-stats">
+                                <small class="text-muted">
+                                    <div><i class="fas fa-database me-1"></i>Vector DB: Populated</div>
+                                    <div><i class="fas fa-cube me-1"></i>Digital Twins: Available</div>
+                                    <div><i class="fas fa-search me-1"></i>Query: Ready</div>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

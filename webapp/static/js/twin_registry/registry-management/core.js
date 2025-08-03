@@ -9,18 +9,18 @@ export default class TwinRegistryCore {
         this.registryData = [];
         this.twinCache = new Map();
         this.registrationQueue = [];
-        this.config = {
-            apiBaseUrl: '/api/twin-registry',
-            endpoints: {
-                twins: '/twins',
-                register: '/register',
-                update: '/update',
-                delete: '/delete',
-                search: '/search',
-                status: '/status',
-                health: '/health',
-                performance: '/performance'
-            },
+                    this.config = {
+                apiBaseUrl: '/api/twin-registry',
+                endpoints: {
+                    twins: '/api/twin-registry/twins',
+                    register: '/api/twin-registry/twins',
+                    update: '/api/twin-registry/twins',
+                    delete: '/api/twin-registry/twins',
+                    search: '/api/twin-registry/twins/search',
+                    status: '/api/twin-registry/status',
+                    health: '/api/twin-registry/health',
+                    performance: '/api/twin-registry/twins/statistics'
+                },
             refreshInterval: 30000, // 30 seconds
             maxRetries: 3,
             retryDelay: 1000
@@ -62,13 +62,14 @@ export default class TwinRegistryCore {
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/config`);
+            const response = await fetch(this.config.endpoints.status);
             if (response.ok) {
-                const config = await response.json();
-                this.config = { ...this.config, ...config };
+                const status = await response.json();
+                // Use status data to update config if needed
+                console.log('✅ Registry status loaded:', status);
             }
         } catch (error) {
-            console.warn('⚠️ Could not load registry config, using defaults:', error);
+            console.warn('⚠️ Could not load registry status, using defaults:', error);
         }
     }
 
@@ -77,7 +78,7 @@ export default class TwinRegistryCore {
      */
     async loadRegistryData() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}${this.config.endpoints.twins}`);
+            const response = await fetch(this.config.endpoints.twins);
             if (response.ok) {
                 const data = await response.json();
                 this.registryData = data.twins || [];
@@ -85,7 +86,7 @@ export default class TwinRegistryCore {
                 // Update cache
                 this.twinCache.clear();
                 this.registryData.forEach(twin => {
-                    this.twinCache.set(twin.id, twin);
+                    this.twinCache.set(twin.twin_id || twin.id, twin);
                 });
 
                 console.log(`📊 Loaded ${this.registryData.length} twins from registry`);
@@ -120,7 +121,7 @@ export default class TwinRegistryCore {
         try {
             console.log('📝 Registering new twin:', twinData.id);
 
-            const response = await fetch(`${this.config.apiBaseUrl}${this.config.endpoints.register}`, {
+            const response = await fetch(this.config.endpoints.register, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -158,7 +159,7 @@ export default class TwinRegistryCore {
         try {
             console.log('🔄 Updating twin:', twinId);
 
-            const response = await fetch(`${this.config.apiBaseUrl}${this.config.endpoints.update}/${twinId}`, {
+            const response = await fetch(`${this.config.endpoints.update}/${twinId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -201,7 +202,7 @@ export default class TwinRegistryCore {
         try {
             console.log('🗑️ Deleting twin:', twinId);
 
-            const response = await fetch(`${this.config.apiBaseUrl}${this.config.endpoints.delete}/${twinId}`, {
+            const response = await fetch(`${this.config.endpoints.delete}/${twinId}`, {
                 method: 'DELETE'
             });
 
@@ -234,12 +235,11 @@ export default class TwinRegistryCore {
      */
     async searchTwins(searchCriteria) {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}${this.config.endpoints.search}`, {
-                method: 'POST',
+            const response = await fetch(this.config.endpoints.search, {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(searchCriteria)
+                }
             });
 
             if (response.ok) {
@@ -377,7 +377,7 @@ export default class TwinRegistryCore {
      */
     async getRegistryStatus() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}${this.config.endpoints.status}`);
+            const response = await fetch(`${this.config.apiBaseUrl}/status`);
             if (response.ok) {
                 return await response.json();
             }

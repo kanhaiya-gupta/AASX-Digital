@@ -92,6 +92,35 @@ export default class AIRAGQueryProcessor {
             template: 'Find troubleshooting information for {query}',
             filters: { category: 'troubleshooting' }
         });
+        
+        // AASX-specific query templates
+        this.queryTemplates.set('aasx_structure', {
+            name: 'AASX Structure Analysis',
+            description: 'Analyze asset structure in digital twins',
+            template: 'Analyze the asset structure in our digital twin for {query}',
+            filters: { type: 'digital_twin' }
+        });
+        
+        this.queryTemplates.set('aasx_submodels', {
+            name: 'Submodel Analysis',
+            description: 'Find submodels in AASX files',
+            template: 'What are the submodels in our AASX file for {query}',
+            filters: { type: 'digital_twin' }
+        });
+        
+        this.queryTemplates.set('aasx_properties', {
+            name: 'Asset Properties',
+            description: 'Show properties of manufacturing assets',
+            template: 'Show me the properties of our manufacturing assets for {query}',
+            filters: { type: 'digital_twin' }
+        });
+        
+        this.queryTemplates.set('aasx_quality', {
+            name: 'Data Quality Check',
+            description: 'Identify quality issues in asset data',
+            template: 'Identify quality issues in our asset data for {query}',
+            filters: { type: 'digital_twin' }
+        });
     }
 
     /**

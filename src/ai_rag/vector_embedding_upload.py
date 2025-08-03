@@ -33,16 +33,34 @@ class VectorEmbeddingUploader:
         self.config = config or {}
         
         # Initialize database connection and services
-        self.db_manager = DatabaseConnectionManager()
+        from pathlib import Path
+        from src.shared.database.base_manager import BaseDatabaseManager
+        from src.shared.repositories.project_repository import ProjectRepository
+        from src.shared.repositories.file_repository import FileRepository
+        from src.shared.repositories.use_case_repository import UseCaseRepository
+        from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
+        
+        data_dir = Path("data")
+        data_dir.mkdir(exist_ok=True)
+        db_path = data_dir / "aasx_database.db"
+        connection_manager = DatabaseConnectionManager(db_path)
+        self.db_manager = BaseDatabaseManager(connection_manager)
+        
+        # Initialize repositories
+        self.project_repo = ProjectRepository(self.db_manager)
+        self.file_repo = FileRepository(self.db_manager)
+        self.use_case_repo = UseCaseRepository(self.db_manager)
+        self.digital_twin_repo = DigitalTwinRepository(self.db_manager)
+        
         self.project_service = ProjectService(
             self.db_manager,
-            self.db_manager.get_use_case_repository(),
-            self.db_manager.get_file_repository()
+            self.use_case_repo,
+            self.file_repo
         )
         self.file_service = FileService(
             self.db_manager,
-            self.db_manager.get_project_repository(),
-            self.db_manager.get_digital_twin_repository()
+            self.project_repo,
+            self.digital_twin_repo
         )
         
         # Initialize AI/RAG components

@@ -17,8 +17,8 @@ export default class TwinRegistryRealtime {
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
-        this.config = {
-            websocketUrl: 'ws://localhost:8080/ws/twin-registry',
+                    this.config = {
+                websocketUrl: `ws://${window.location.host}/api/twin-registry/ws/twin-monitoring`,
             heartbeatInterval: 30000, // 30 seconds
             eventRetention: 1000, // Keep last 1000 events
             autoReconnect: true,

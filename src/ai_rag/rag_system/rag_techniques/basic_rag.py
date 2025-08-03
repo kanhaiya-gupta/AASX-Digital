@@ -48,7 +48,9 @@ class BasicRAGTechnique(BaseRAGTechnique):
             
             # Generate response
             llm_model = kwargs.get('llm_model', 'gpt-3.5-turbo')
-            response = self.generate_response(processed_query, combined_context, llm_model, **kwargs)
+            # Remove llm_model from kwargs to avoid duplicate parameter error
+            kwargs_without_llm = {k: v for k, v in kwargs.items() if k != 'llm_model'}
+            response = self.generate_response(processed_query, combined_context, llm_model=llm_model, **kwargs_without_llm)
             
             # Postprocess response
             final_response = self.postprocess_response(response)

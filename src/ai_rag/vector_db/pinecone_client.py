@@ -674,3 +674,5 @@ def normalize_vector(vector: List[float]) -> List[float]:
     except Exception as e:
         logger.error(f"Error normalizing vector: {e}")
         return vector
+
+

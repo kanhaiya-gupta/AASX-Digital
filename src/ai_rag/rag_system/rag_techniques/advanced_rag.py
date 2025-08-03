@@ -51,7 +51,7 @@ class AdvancedRAGTechnique(BaseRAGTechnique):
             
             # Generate response
             llm_model = kwargs.get('llm_model', 'gpt-4')
-            response = self.generate_response(processed_query, combined_context, llm_model, **kwargs)
+            response = self.generate_response(processed_query, combined_context, **kwargs)
             
             # Postprocess response
             final_response = self.postprocess_response(response)

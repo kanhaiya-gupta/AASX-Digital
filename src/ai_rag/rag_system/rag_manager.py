@@ -48,13 +48,17 @@ class RAGManager:
         """
         start_time = time.time()
         self.logger.info(f"🔍 Processing query: {query[:50]}...")
+        self.logger.info(f"🔧 RAG Manager: Received technique_id={technique_id}")
         
         try:
             # Get technique recommendations if not specified
             if not technique_id:
+                self.logger.info("🔧 RAG Manager: No technique_id provided, auto-selecting...")
                 recommendations = self.technique_manager.get_technique_recommendations(query)
                 technique_id = recommendations[0]['technique_id']
                 self.logger.info(f"🎯 Auto-selected technique: {technique_id}")
+            else:
+                self.logger.info(f"🔧 RAG Manager: Using provided technique_id: {technique_id}")
             
             # Validate technique
             if not self.technique_manager.is_technique_available(technique_id):
@@ -81,14 +85,22 @@ class RAGManager:
             
             # Add metadata
             execution_time = time.time() - start_time
-            result.update({
+            
+            # Preserve technique information from the executed technique
+            # Only override if the technique didn't set its own info
+            metadata_update = {
                 'query': query,
-                'technique_id': technique_id,
                 'project_id': project_id,
                 'execution_time': execution_time,
                 'search_results_count': len(search_results),
                 'timestamp': datetime.now().isoformat()
-            })
+            }
+            
+            # Only set technique_id if it's not already set by the technique
+            if 'technique_id' not in result:
+                metadata_update['technique_id'] = technique_id
+            
+            result.update(metadata_update)
             
             self.logger.info(f"✅ Query processed successfully in {execution_time:.2f}s")
             return result
