@@ -1,0 +1,49 @@
+/**
+ * AI RAG Module Main CSS File
+ * Imports all modular CSS components for the AI RAG Module
+ */
+
+/* ===== MODULAR CSS IMPORTS ===== */
+@import url('./modules/ai_rag/layout.css');
+@import url('./modules/ai_rag/dashboard.css');
+@import url('./modules/ai_rag/components.css');
+@import url('./modules/ai_rag/chat.css');
+@import url('./modules/ai_rag/results.css');
+
+/* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
+/* AI RAG-specific global styles and overrides */
+
+/* Animation keyframes for AI RAG module */
+@keyframes typing {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Global animation classes */
+.typing-indicator {
+    animation: typing 1.5s infinite;
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+} 

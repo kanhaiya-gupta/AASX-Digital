@@ -1,0 +1,425 @@
+<!-- Docker Management Component -->
+<div class="docker-management-container">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">
+                <i class="fab fa-docker"></i>
+                Neo4j Docker Management
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- Docker Status Overview -->
+            <div class="docker-status-overview mb-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="status-card">
+                            <div class="status-icon" id="docker-container-status">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div class="status-info">
+                                <h6>Container Status</h6>
+                                <span id="container-status-text">Unknown</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="status-card">
+                            <div class="status-icon" id="docker-connection-status">
+                                <i class="fas fa-plug"></i>
+                            </div>
+                            <div class="status-info">
+                                <h6>Connection</h6>
+                                <span id="connection-status-text">Unknown</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="status-card">
+                            <div class="status-icon" id="docker-port-status">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                            <div class="status-info">
+                                <h6>Port</h6>
+                                <span id="port-status-text">7474</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="status-card">
+                            <div class="status-icon" id="docker-health-status">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="status-info">
+                                <h6>Health</h6>
+                                <span id="health-status-text">Unknown</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Docker Control Actions -->
+            <div class="docker-controls mb-4">
+                <h6 class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    Container Controls
+                </h6>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <button id="docker-start-btn" class="btn btn-success btn-block">
+                            <i class="fas fa-play"></i>
+                            Start Container
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button id="docker-stop-btn" class="btn btn-danger btn-block">
+                            <i class="fas fa-stop"></i>
+                            Stop Container
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button id="docker-restart-btn" class="btn btn-warning btn-block">
+                            <i class="fas fa-redo"></i>
+                            Restart Container
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button id="docker-refresh-btn" class="btn btn-info btn-block">
+                            <i class="fas fa-sync"></i>
+                            Refresh Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Docker Details -->
+            <div class="docker-details mb-4">
+                <h6 class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Container Details
+                </h6>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <label>Container Name:</label>
+                            <span id="container-name">neo4j-aasx</span>
+                        </div>
+                        <div class="detail-group">
+                            <label>Image:</label>
+                            <span id="container-image">neo4j:latest</span>
+                        </div>
+                        <div class="detail-group">
+                            <label>Port Mapping:</label>
+                            <span id="port-mapping">7474:7474, 7687:7687</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-group">
+                            <label>Memory Usage:</label>
+                            <span id="memory-usage">--</span>
+                        </div>
+                        <div class="detail-group">
+                            <label>CPU Usage:</label>
+                            <span id="cpu-usage">--</span>
+                        </div>
+                        <div class="detail-group">
+                            <label>Uptime:</label>
+                            <span id="uptime">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Access Links -->
+            <div class="quick-access mb-4">
+                <h6 class="section-title">
+                    <i class="fas fa-external-link-alt"></i>
+                    Quick Access
+                </h6>
+                
+                <!-- Connection Details -->
+                <div class="connection-details mb-3">
+                    <div class="alert alert-info">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Username:</strong> neo4j<br>
+                                <strong>Password:</strong> Neo4j123<br>
+                                <strong>Bolt URL:</strong> <code>neo4j://localhost:7687</code>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>HTTP URL:</strong> <code>http://localhost:7474</code><br>
+                                <strong>Ports:</strong> 7474 (HTTP) / 7687 (Bolt)<br>
+                                <strong>Status:</strong> <span id="connection-status-badge">Unknown</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <a id="neo4j-browser-link" href="http://localhost:7474" target="_blank" class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-browser"></i>
+                            Neo4j Browser
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a id="neo4j-bloom-link" href="http://localhost:7474/bloom" target="_blank" class="btn btn-outline-success btn-block">
+                            <i class="fas fa-chart-network"></i>
+                            Neo4j Bloom
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <button id="test-connection-btn" class="btn btn-outline-info btn-block">
+                            <i class="fas fa-vial"></i>
+                            Test Connection
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Additional Tools -->
+                <div class="row mt-3">
+                    <div class="col-md-4">
+                        <button id="copy-connection-string-btn" class="btn btn-outline-secondary btn-block">
+                            <i class="fas fa-copy"></i>
+                            Copy Connection String
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button id="show-examples-btn" class="btn btn-outline-warning btn-block">
+                            <i class="fas fa-lightbulb"></i>
+                            Show Query Examples
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button id="open-cypher-shell-btn" class="btn btn-outline-dark btn-block">
+                            <i class="fas fa-terminal"></i>
+                            Cypher Shell Command
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logs Section -->
+            <div class="docker-logs">
+                <h6 class="section-title">
+                    <i class="fas fa-terminal"></i>
+                    Container Logs
+                </h6>
+                
+                <div class="logs-container">
+                    <div class="logs-header">
+                        <div class="logs-controls">
+                            <button id="refresh-logs-btn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-sync"></i>
+                                Refresh
+                            </button>
+                            <button id="clear-logs-btn" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-trash"></i>
+                                Clear
+                            </button>
+                            <label class="form-check-label">
+                                <input type="checkbox" id="auto-refresh-logs" class="form-check-input">
+                                Auto-refresh
+                            </label>
+                        </div>
+                    </div>
+                    <div class="logs-content">
+                        <pre id="container-logs" class="logs-text">Loading logs...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="docker-loading-indicator" class="loading-container" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <span class="loading-text ml-2"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.docker-management-container {
+    margin-bottom: 20px;
+}
+
+.section-title {
+    color: #495057;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.status-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.status-icon {
+    margin-right: 15px;
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.status-icon.running {
+    color: #28a745;
+}
+
+.status-icon.stopped {
+    color: #dc3545;
+}
+
+.status-icon.connecting {
+    color: #ffc107;
+}
+
+.status-info h6 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #495057;
+    font-weight: 600;
+}
+
+.status-info span {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.detail-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.detail-group:last-child {
+    border-bottom: none;
+}
+
+.detail-group label {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.detail-group span {
+    color: #6c757d;
+}
+
+.logs-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.logs-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+    background-color: #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.logs-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logs-controls .form-check-label {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.logs-content {
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.logs-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #495057;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.btn i {
+    margin-right: 5px;
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.quick-access .btn {
+    margin-bottom: 10px;
+}
+
+.connection-details .alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+}
+
+.connection-details code {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: #e83e8c;
+}
+
+#connection-status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+#connection-status-badge.connected {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+#connection-status-badge.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#connection-status-badge.unknown {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+@media (max-width: 768px) {
+    .status-card {
+        margin-bottom: 15px;
+    }
+    
+    .docker-controls .btn {
+        margin-bottom: 10px;
+    }
+}
+</style> 

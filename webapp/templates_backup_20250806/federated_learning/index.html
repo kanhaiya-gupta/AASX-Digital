@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Federated Learning - AASX Digital Twin Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Federated Learning Dashboard Styles */
+
+/* Gradient backgrounds */
+.bg-gradient-federated {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-collaborative {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-privacy {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.bg-gradient-insights {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* Card enhancements */
+.federated-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.federated-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.federated-card .card-header {
+    border-bottom: none;
+    border-radius: 15px 15px 0 0 !important;
+    font-weight: 600;
+    padding: 1.5rem;
+}
+
+/* Twin status indicators */
+.twin-status {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.twin-status.active {
+    background-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+    animation: pulse-green 2s infinite;
+}
+
+.twin-status.inactive {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+.twin-status.warning {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+    animation: pulse-yellow 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+@keyframes pulse-yellow {
+    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+/* Progress bars */
+.progress-federated {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-federated .progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Relationship visualization */
+.relationship-node {
+    display: inline-block;
+    padding: 8px 16px;
+    margin: 4px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+}
+
+.relationship-node.manufacturing {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.relationship-node.energy {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.relationship-node.hydrogen {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Real-time updates */
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #28a745;
+    animation: blink 1s infinite;
+    margin-right: 8px;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* Insight cards */
+.insight-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #667eea;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.insight-card .insight-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.insight-card .insight-content {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Button enhancements */
+.btn-federated {
+    border-radius: 25px;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-federated:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Loading animations */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Training Management Component -->
+    {% include 'federated_learning/components/training_management.html' %}
+    
+    <!-- Federation Status Component -->
+    {% include 'federated_learning/components/federation_status.html' %}
+    
+    <!-- Twin Performance Component -->
+    {% include 'federated_learning/components/twin_performance.html' %}
+    
+    <!-- Cross-Twin Insights and Privacy & Security -->
+    <div class="row mb-4">
+        {% include 'federated_learning/components/cross_twin_insights.html' %}
+        {% include 'federated_learning/components/privacy_security.html' %}
+    </div>
+    
+    <!-- Federation Metrics Component -->
+    {% include 'federated_learning/components/federation_metrics.html' %}
+    
+    <!-- Real-time Metrics Component -->
+    {% include 'federated_learning/components/real_time_metrics.html' %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+console.log('🔍 Debug: Federated Learning extra_scripts block loaded');
+console.log('🔍 Debug: Document ready state:', document.readyState);
+</script>
+<script type="module" src="{{ url_for('static', path='/js/federated_learning/index.js') }}?v={{ range(1, 1000) | random }}"></script>
+<script>
+console.log('🔍 Debug: Federated Learning modular script tag added');
+// Check if the script loaded
+setTimeout(() => {
+    console.log('🔍 Debug: Checking if Federated Learning module is available...');
+    console.log('🔍 Debug: Chart.js available:', typeof Chart !== 'undefined');
+}, 1000);
+</script>
+{% endblock %} 

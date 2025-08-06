@@ -1,0 +1,123 @@
+/**
+ * Twin Registry Charts CSS Module
+ * Dedicated styling for charts and plots in the Twin Registry
+ */
+
+/* ===== CHART CONTAINER STYLING ===== */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.chart-container canvas {
+    max-height: 100%;
+    max-width: 100%;
+}
+
+/* Chart wrapper for better containment */
+.chart-wrapper {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Chart loading states */
+.chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #dc3545;
+    font-weight: 500;
+}
+
+/* Chart tooltips */
+.chart-tooltip {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 12px;
+    pointer-events: none;
+}
+
+/* ===== SPECIFIC CHART TYPES ===== */
+.health-chart {
+    height: 250px;
+}
+
+.performance-chart {
+    height: 280px;
+}
+
+.analytics-chart {
+    height: 320px;
+}
+
+.trend-chart {
+    height: 200px;
+}
+
+/* ===== CHART LEGENDS ===== */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+}
+
+/* ===== RESPONSIVE CHART DESIGN ===== */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+    }
+    
+    .health-chart,
+    .performance-chart,
+    .analytics-chart {
+        height: 200px;
+    }
+    
+    .trend-chart {
+        height: 150px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chart-container {
+        height: 200px;
+    }
+    
+    .chart-legend {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+} 

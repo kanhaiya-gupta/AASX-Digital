@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}AASX Data Management & Processing{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/data-management.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/aasx.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-cube text-primary me-2"></i>
+                        AASX Data Management & Processing
+                    </h1>
+                    <p class="text-muted mb-0">Comprehensive AASX file management, processing, and analysis platform</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" id="refreshBtn">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                    <button class="btn btn-primary" id="headerCreateProjectBtn" data-bs-toggle="modal" data-bs-target="#projectCreationModal">
+                        <i class="fas fa-plus me-1"></i>New Project
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column - Data Management -->
+        <div class="col-lg-8">
+            <!-- Include Data Management Component -->
+            {% include 'aasx/components/data_management.html' %}
+            
+            <!-- File Upload Section -->
+            {% include 'aasx/components/file_upload.html' %}
+            
+            <!-- Processing Pipeline -->
+            {% include 'aasx/components/etl_pipeline.html' %}
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="col-lg-4">
+            {% include 'aasx/components/sidebar.html' %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% include 'aasx/components/modals.html' %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="module">
+    console.log('🔍 AASX Template: Loading modular AASX system...');
+    
+    try {
+        // Just import the module - initialization will happen automatically
+        await import("{{ url_for('static', path='/js/aasx/index.js') }}");
+        console.log('✅ AASX Template: Modular system imported successfully');
+        
+    } catch (error) {
+        console.error('❌ AASX Template: Modular system failed to load:', error);
+    }
+</script>
+{% endblock %}

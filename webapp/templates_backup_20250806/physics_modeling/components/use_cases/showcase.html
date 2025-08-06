@@ -1,0 +1,138 @@
+<!-- Use Cases Showcase Component -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-success text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-lightbulb me-2"></i>
+            Physics Modeling Use Cases
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- Use Case Categories -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Category</label>
+                <select class="form-select" id="use-case-category">
+                    <option value="all">All Categories</option>
+                    <option value="thermal">Thermal Analysis</option>
+                    <option value="structural">Structural Analysis</option>
+                    <option value="fluid">Fluid Dynamics</option>
+                    <option value="electromagnetic">Electromagnetic</option>
+                    <option value="multi_physics">Multi-Physics</option>
+                    <option value="optimization">Optimization</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Complexity</label>
+                <select class="form-select" id="use-case-complexity">
+                    <option value="all">All Levels</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="expert">Expert</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Industry</label>
+                <select class="form-select" id="use-case-industry">
+                    <option value="all">All Industries</option>
+                    <option value="automotive">Automotive</option>
+                    <option value="aerospace">Aerospace</option>
+                    <option value="energy">Energy</option>
+                    <option value="manufacturing">Manufacturing</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="biomedical">Biomedical</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Search</label>
+                <input type="text" class="form-control" id="use-case-search" placeholder="Search use cases...">
+            </div>
+        </div>
+
+        <!-- Featured Use Cases -->
+        <div class="card bg-light border-0 mb-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-star me-1"></i>
+                    Featured Use Cases
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary">
+                                    <i class="fas fa-fire me-1"></i>
+                                    Thermal Analysis - Heat Exchanger
+                                </h6>
+                                <p class="card-text small">Optimize heat exchanger performance with thermal analysis</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-success">Beginner</span>
+                                    <button class="btn btn-sm btn-outline-primary" data-use-case="heat_exchanger">
+                                        <i class="fas fa-play me-1"></i>Use Template
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-success">
+                                    <i class="fas fa-cog me-1"></i>
+                                    Structural Analysis - Bridge Design
+                                </h6>
+                                <p class="card-text small">Analyze structural integrity of bridge components</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-warning">Intermediate</span>
+                                    <button class="btn btn-sm btn-outline-success" data-use-case="bridge_design">
+                                        <i class="fas fa-play me-1"></i>Use Template
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title text-info">
+                                    <i class="fas fa-wind me-1"></i>
+                                    Fluid Dynamics - Airfoil Design
+                                </h6>
+                                <p class="card-text small">Optimize airfoil design for aerodynamic performance</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-danger">Advanced</span>
+                                    <button class="btn btn-sm btn-outline-info" data-use-case="airfoil_design">
+                                        <i class="fas fa-play me-1"></i>Use Template
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Use Cases Grid -->
+        <div class="row" id="use-cases-grid">
+            <!-- Use cases will be dynamically loaded here -->
+        </div>
+
+        <!-- Use Case Actions -->
+        <div class="d-flex gap-2 mt-3">
+            <button type="button" class="btn btn-outline-primary btn-sm" id="refresh-use-cases-btn">
+                <i class="fas fa-sync me-1"></i>Refresh
+            </button>
+            <button type="button" class="btn btn-outline-success btn-sm" id="create-custom-use-case-btn">
+                <i class="fas fa-plus me-1"></i>Create Custom
+            </button>
+            <button type="button" class="btn btn-outline-info btn-sm" id="import-use-case-btn">
+                <i class="fas fa-upload me-1"></i>Import
+            </button>
+            <button type="button" class="btn btn-outline-warning btn-sm" id="export-use-cases-btn">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+        </div>
+    </div>
+</div> 

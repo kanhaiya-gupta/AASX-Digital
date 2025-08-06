@@ -1,0 +1,473 @@
+/**
+ * Certificate Manager - Phase 5 Frontend
+ * Certificate-specific styles for certificate management interface
+ */
+
+/* Certificate Viewer */
+.certificate-manager .certificate-viewer {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.certificate-manager .certificate-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.certificate-manager .certificate-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.certificate-manager .certificate-header .certificate-id {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 1rem;
+}
+
+.certificate-manager .certificate-header .status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Certificate Content */
+.certificate-manager .certificate-content {
+    padding: 2rem;
+}
+
+.certificate-manager .certificate-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.certificate-manager .certificate-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.certificate-manager .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.certificate-manager .section-header .section-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.certificate-manager .section-header h3 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.certificate-manager .section-header .section-status {
+    margin-left: auto;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.certificate-manager .section-header .section-status.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.certificate-manager .section-header .section-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.certificate-manager .section-header .section-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Certificate Data Grid */
+.certificate-manager .certificate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.certificate-manager .certificate-field {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid #667eea;
+}
+
+.certificate-manager .certificate-field .field-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.certificate-manager .certificate-field .field-value {
+    font-size: 1rem;
+    color: #212529;
+    font-weight: 500;
+}
+
+.certificate-manager .certificate-field .field-value.empty {
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Certificate Metadata */
+.certificate-manager .certificate-metadata {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.certificate-manager .metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.certificate-manager .metadata-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.certificate-manager .metadata-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.certificate-manager .metadata-value {
+    font-size: 0.875rem;
+    color: #212529;
+    font-weight: 500;
+}
+
+/* Certificate Actions */
+.certificate-manager .certificate-actions {
+    background: white;
+    border-top: 1px solid #e9ecef;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.certificate-manager .certificate-actions .left-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.certificate-manager .certificate-actions .right-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Certificate Export Options */
+.certificate-manager .export-options {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 2rem;
+}
+
+.certificate-manager .export-options h3 {
+    margin: 0 0 1.5rem 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.certificate-manager .export-format-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.certificate-manager .export-format-option {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.certificate-manager .export-format-option:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.certificate-manager .export-format-option.selected {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.certificate-manager .export-format-option .format-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #667eea;
+}
+
+.certificate-manager .export-format-option .format-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.certificate-manager .export-format-option .format-description {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Certificate History */
+.certificate-manager .certificate-history {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 2rem;
+}
+
+.certificate-manager .history-timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.certificate-manager .history-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.certificate-manager .history-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.certificate-manager .history-item::before {
+    content: '';
+    position: absolute;
+    left: -0.75rem;
+    top: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background: #667eea;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #667eea;
+}
+
+.certificate-manager .history-item:last-child {
+    margin-bottom: 0;
+}
+
+.certificate-manager .history-content {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.certificate-manager .history-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.certificate-manager .history-description {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.certificate-manager .history-timestamp {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Certificate Validation */
+.certificate-manager .certificate-validation {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.certificate-manager .validation-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.certificate-manager .validation-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.certificate-manager .validation-icon.valid {
+    background: #28a745;
+}
+
+.certificate-manager .validation-icon.invalid {
+    background: #dc3545;
+}
+
+.certificate-manager .validation-icon.pending {
+    background: #ffc107;
+}
+
+.certificate-manager .validation-title {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.certificate-manager .validation-details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.certificate-manager .validation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.certificate-manager .validation-item:last-child {
+    border-bottom: none;
+}
+
+.certificate-manager .validation-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.certificate-manager .validation-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.certificate-manager .validation-status.valid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.certificate-manager .validation-status.invalid {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.certificate-manager .validation-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Responsive Certificate Styles */
+@media (max-width: 768px) {
+    .certificate-manager .certificate-header {
+        padding: 1.5rem;
+    }
+    
+    .certificate-manager .certificate-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .certificate-manager .certificate-content {
+        padding: 1.5rem;
+    }
+    
+    .certificate-manager .certificate-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .certificate-manager .metadata-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .certificate-manager .export-format-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .certificate-manager .certificate-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .certificate-manager .certificate-actions .left-actions,
+    .certificate-manager .certificate-actions .right-actions {
+        justify-content: center;
+    }
+    
+    .certificate-manager .history-timeline {
+        padding-left: 1.5rem;
+    }
+    
+    .certificate-manager .history-timeline::before {
+        left: 0.5rem;
+    }
+    
+    .certificate-manager .history-item::before {
+        left: -0.5rem;
+    }
+} 

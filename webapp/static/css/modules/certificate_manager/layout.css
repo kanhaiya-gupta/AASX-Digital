@@ -1,0 +1,303 @@
+/**
+ * Certificate Manager - Phase 5 Frontend
+ * Layout styles for certificate management interface
+ */
+
+/* Main Layout Container */
+.certificate-manager {
+    padding: 20px 0;
+    min-height: calc(100vh - 60px);
+}
+
+/* Page Header */
+.certificate-manager .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 15px 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.certificate-manager .page-header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2.5rem;
+}
+
+.certificate-manager .page-header .subtitle {
+    opacity: 0.9;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+}
+
+/* Container Layouts */
+.certificate-manager .container-fluid {
+    padding: 0 2rem;
+}
+
+.certificate-manager .row {
+    margin: 0 -15px;
+}
+
+.certificate-manager .col,
+.certificate-manager .col-md-6,
+.certificate-manager .col-lg-4,
+.certificate-manager .col-xl-3 {
+    padding: 0 15px;
+}
+
+/* Grid System */
+.certificate-manager .grid-container {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.certificate-manager .grid-item {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.certificate-manager .grid-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Flexbox Layouts */
+.certificate-manager .flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.certificate-manager .flex-item {
+    flex: 1 1 300px;
+    min-height: 200px;
+}
+
+/* Sidebar Layout */
+.certificate-manager .sidebar-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    min-height: calc(100vh - 120px);
+}
+
+.certificate-manager .sidebar {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.certificate-manager .main-content {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+/* Two Column Layout */
+.certificate-manager .two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.certificate-manager .three-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* Responsive Layout Adjustments */
+@media (max-width: 1200px) {
+    .certificate-manager .three-column {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .certificate-manager .container-fluid {
+        padding: 0 1rem;
+    }
+    
+    .certificate-manager .sidebar-layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .certificate-manager .sidebar {
+        position: static;
+        order: 2;
+    }
+    
+    .certificate-manager .main-content {
+        order: 1;
+    }
+    
+    .certificate-manager .two-column,
+    .certificate-manager .three-column {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .certificate-manager .page-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .certificate-manager {
+        padding: 10px 0;
+    }
+    
+    .certificate-manager .container-fluid {
+        padding: 0 0.5rem;
+    }
+    
+    .certificate-manager .page-header {
+        padding: 1.5rem 0;
+        margin-bottom: 1rem;
+    }
+    
+    .certificate-manager .page-header h1 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Layout Utilities */
+.certificate-manager .hidden {
+    display: none !important;
+}
+
+.certificate-manager .visible {
+    display: block !important;
+}
+
+.certificate-manager .d-none {
+    display: none !important;
+}
+
+.certificate-manager .d-block {
+    display: block !important;
+}
+
+.certificate-manager .d-flex {
+    display: flex !important;
+}
+
+.certificate-manager .d-grid {
+    display: grid !important;
+}
+
+.certificate-manager .justify-content-between {
+    justify-content: space-between !important;
+}
+
+.certificate-manager .justify-content-center {
+    justify-content: center !important;
+}
+
+.certificate-manager .align-items-center {
+    align-items: center !important;
+}
+
+.certificate-manager .align-items-start {
+    align-items: flex-start !important;
+}
+
+.certificate-manager .text-center {
+    text-align: center !important;
+}
+
+.certificate-manager .text-left {
+    text-align: left !important;
+}
+
+.certificate-manager .text-right {
+    text-align: right !important;
+}
+
+/* Spacing Utilities */
+.certificate-manager .m-0 { margin: 0 !important; }
+.certificate-manager .mt-0 { margin-top: 0 !important; }
+.certificate-manager .mb-0 { margin-bottom: 0 !important; }
+.certificate-manager .ml-0 { margin-left: 0 !important; }
+.certificate-manager .mr-0 { margin-right: 0 !important; }
+
+.certificate-manager .p-0 { padding: 0 !important; }
+.certificate-manager .pt-0 { padding-top: 0 !important; }
+.certificate-manager .pb-0 { padding-bottom: 0 !important; }
+.certificate-manager .pl-0 { padding-left: 0 !important; }
+.certificate-manager .pr-0 { padding-right: 0 !important; }
+
+.certificate-manager .m-1 { margin: 0.25rem !important; }
+.certificate-manager .mt-1 { margin-top: 0.25rem !important; }
+.certificate-manager .mb-1 { margin-bottom: 0.25rem !important; }
+.certificate-manager .ml-1 { margin-left: 0.25rem !important; }
+.certificate-manager .mr-1 { margin-right: 0.25rem !important; }
+
+.certificate-manager .p-1 { padding: 0.25rem !important; }
+.certificate-manager .pt-1 { padding-top: 0.25rem !important; }
+.certificate-manager .pb-1 { padding-bottom: 0.25rem !important; }
+.certificate-manager .pl-1 { padding-left: 0.25rem !important; }
+.certificate-manager .pr-1 { padding-right: 0.25rem !important; }
+
+.certificate-manager .m-2 { margin: 0.5rem !important; }
+.certificate-manager .mt-2 { margin-top: 0.5rem !important; }
+.certificate-manager .mb-2 { margin-bottom: 0.5rem !important; }
+.certificate-manager .ml-2 { margin-left: 0.5rem !important; }
+.certificate-manager .mr-2 { margin-right: 0.5rem !important; }
+
+.certificate-manager .p-2 { padding: 0.5rem !important; }
+.certificate-manager .pt-2 { padding-top: 0.5rem !important; }
+.certificate-manager .pb-2 { padding-bottom: 0.5rem !important; }
+.certificate-manager .pl-2 { padding-left: 0.5rem !important; }
+.certificate-manager .pr-2 { padding-right: 0.5rem !important; }
+
+.certificate-manager .m-3 { margin: 1rem !important; }
+.certificate-manager .mt-3 { margin-top: 1rem !important; }
+.certificate-manager .mb-3 { margin-bottom: 1rem !important; }
+.certificate-manager .ml-3 { margin-left: 1rem !important; }
+.certificate-manager .mr-3 { margin-right: 1rem !important; }
+
+.certificate-manager .p-3 { padding: 1rem !important; }
+.certificate-manager .pt-3 { padding-top: 1rem !important; }
+.certificate-manager .pb-3 { padding-bottom: 1rem !important; }
+.certificate-manager .pl-3 { padding-left: 1rem !important; }
+.certificate-manager .pr-3 { padding-right: 1rem !important; }
+
+.certificate-manager .m-4 { margin: 1.5rem !important; }
+.certificate-manager .mt-4 { margin-top: 1.5rem !important; }
+.certificate-manager .mb-4 { margin-bottom: 1.5rem !important; }
+.certificate-manager .ml-4 { margin-left: 1.5rem !important; }
+.certificate-manager .mr-4 { margin-right: 1.5rem !important; }
+
+.certificate-manager .p-4 { padding: 1.5rem !important; }
+.certificate-manager .pt-4 { padding-top: 1.5rem !important; }
+.certificate-manager .pb-4 { padding-bottom: 1.5rem !important; }
+.certificate-manager .pl-4 { padding-left: 1.5rem !important; }
+.certificate-manager .pr-4 { padding-right: 1.5rem !important; }
+
+.certificate-manager .m-5 { margin: 3rem !important; }
+.certificate-manager .mt-5 { margin-top: 3rem !important; }
+.certificate-manager .mb-5 { margin-bottom: 3rem !important; }
+.certificate-manager .ml-5 { margin-left: 3rem !important; }
+.certificate-manager .mr-5 { margin-right: 3rem !important; }
+
+.certificate-manager .p-5 { padding: 3rem !important; }
+.certificate-manager .pt-5 { padding-top: 3rem !important; }
+.certificate-manager .pb-5 { padding-bottom: 3rem !important; }
+.certificate-manager .pl-5 { padding-left: 3rem !important; }
+.certificate-manager .pr-5 { padding-right: 3rem !important; } 

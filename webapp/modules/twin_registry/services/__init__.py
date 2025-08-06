@@ -10,12 +10,10 @@ from .twin_registry_service import TwinRegistryService
 from .twin_operations_service import TwinOperationsService
 from .twin_monitoring_service import TwinMonitoringService
 from .twin_analytics_service import TwinAnalyticsService
-from .twin_integration_service import TwinIntegrationService
 
 __all__ = [
     'TwinRegistryService',
     'TwinOperationsService', 
     'TwinMonitoringService',
-    'TwinAnalyticsService',
-    'TwinIntegrationService'
+    'TwinAnalyticsService'
 ] 

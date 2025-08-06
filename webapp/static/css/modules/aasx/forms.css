@@ -1,0 +1,218 @@
+/**
+ * AASX Processing Module Forms CSS Module
+ * Dedicated styling for forms and input elements
+ */
+
+/* ===== FILE UPLOAD AREA ===== */
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+}
+
+.file-upload-area:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.file-upload-area.dragover {
+    border-color: #28a745;
+    background: #d4edda;
+    transform: scale(1.02);
+}
+
+.file-upload-area i {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.file-upload-area h5 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.file-upload-area p {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ===== FORM CONTROLS ===== */
+.aasx-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.aasx-form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.aasx-form-control {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.aasx-form-control:focus {
+    border-color: #007bff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.aasx-form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.aasx-form-control.is-valid {
+    border-color: #28a745;
+}
+
+/* ===== SELECT STYLING ===== */
+.aasx-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 2.5rem;
+}
+
+/* ===== CHECKBOX AND RADIO STYLING ===== */
+.aasx-form-check {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.aasx-form-check-input {
+    margin-right: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+}
+
+.aasx-form-check-label {
+    margin-bottom: 0;
+    cursor: pointer;
+    color: #495057;
+}
+
+/* ===== TEXTAREA STYLING ===== */
+.aasx-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* ===== FORM VALIDATION ===== */
+.aasx-invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+}
+
+.aasx-form-control.is-invalid + .aasx-invalid-feedback {
+    display: block;
+}
+
+.aasx-valid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #28a745;
+}
+
+.aasx-form-control.is-valid + .aasx-valid-feedback {
+    display: block;
+}
+
+/* ===== FORM SECTIONS ===== */
+.aasx-form-section {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.aasx-form-section-header {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-form-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+/* ===== FORM ACTIONS ===== */
+.aasx-form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+    margin-top: 2rem;
+}
+
+.aasx-form-actions .btn {
+    min-width: 120px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .file-upload-area {
+        padding: 2rem 1rem;
+    }
+    
+    .file-upload-area i {
+        font-size: 2.5rem;
+    }
+    
+    .aasx-form-actions {
+        flex-direction: column;
+    }
+    
+    .aasx-form-actions .btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .aasx-form-section {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .file-upload-area {
+        padding: 1.5rem 0.75rem;
+    }
+    
+    .file-upload-area h5 {
+        font-size: 1rem;
+    }
+    
+    .file-upload-area p {
+        font-size: 0.8rem;
+    }
+} 

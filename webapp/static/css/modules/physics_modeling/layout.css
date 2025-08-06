@@ -1,0 +1,229 @@
+/**
+ * Physics Modeling Module Layout CSS Module
+ * Dedicated styling for main layout and structure
+ */
+
+/* ===== MAIN LAYOUT STYLING ===== */
+.physics-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+/* ===== PAGE HEADER STYLING ===== */
+.physics-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.physics-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.physics-header .subtitle {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* ===== CONTENT AREA STYLING ===== */
+.physics-content {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.physics-content-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-content-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.physics-content-body {
+    padding: 2rem;
+}
+
+/* ===== SIDEBAR STYLING ===== */
+.physics-sidebar {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    height: fit-content;
+}
+
+.physics-sidebar-header {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.physics-sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+/* ===== NAVIGATION STYLING ===== */
+.physics-nav {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.physics-nav-item {
+    margin-bottom: 0.5rem;
+}
+
+.physics-nav-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #495057;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.physics-nav-link:hover {
+    background: #f8f9fa;
+    color: #20c997;
+    border-left-color: #20c997;
+    text-decoration: none;
+}
+
+.physics-nav-link.active {
+    background: #e3f2fd;
+    color: #20c997;
+    border-left-color: #20c997;
+    font-weight: 500;
+}
+
+/* ===== GRID LAYOUT STYLING ===== */
+.physics-grid {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.physics-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.physics-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.physics-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* ===== SECTION STYLING ===== */
+.physics-section {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.physics-section-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.physics-section-body {
+    padding: 1.5rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .physics-grid-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .physics-grid-3,
+    .physics-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .physics-container {
+        padding: 1rem 0;
+    }
+
+    .physics-header {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .physics-content-body {
+        padding: 1.5rem;
+    }
+
+    .physics-grid-2,
+    .physics-grid-3,
+    .physics-grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .physics-sidebar {
+        margin-bottom: 1.5rem;
+    }
+
+    .physics-section-body {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .physics-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .physics-header .subtitle {
+        font-size: 1rem;
+    }
+
+    .physics-content-body {
+        padding: 1rem;
+    }
+
+    .physics-sidebar {
+        padding: 1rem;
+    }
+
+    .physics-section-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .physics-section-body {
+        padding: 0.75rem;
+    }
+} 

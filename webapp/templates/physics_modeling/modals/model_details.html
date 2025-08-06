@@ -1,0 +1,192 @@
+<!-- Model Details Modal -->
+<div class="modal fade" id="modelDetailsModal" tabindex="-1" aria-labelledby="modelDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modelDetailsModalLabel">
+                    <i class="fas fa-cube me-2"></i>
+                    Model Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Model Information Tabs -->
+                <ul class="nav nav-tabs" id="modelDetailsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                            <i class="fas fa-info-circle me-1"></i>Overview
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="properties-tab" data-bs-toggle="tab" data-bs-target="#properties" type="button" role="tab">
+                            <i class="fas fa-cog me-1"></i>Properties
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="simulations-tab" data-bs-toggle="tab" data-bs-target="#simulations" type="button" role="tab">
+                            <i class="fas fa-play me-1"></i>Simulations
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="validation-tab" data-bs-toggle="tab" data-bs-target="#validation" type="button" role="tab">
+                            <i class="fas fa-check me-1"></i>Validation
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                            <i class="fas fa-history me-1"></i>History
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="modelDetailsTabContent">
+                    <!-- Overview Tab -->
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Basic Information</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Model ID:</strong></td>
+                                        <td id="model-id">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Name:</strong></td>
+                                        <td id="model-name">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Type:</strong></td>
+                                        <td id="model-type">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td id="model-status">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Created:</strong></td>
+                                        <td id="model-created">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Last Modified:</strong></td>
+                                        <td id="model-modified">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Configuration</h6>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Solver:</strong></td>
+                                        <td id="model-solver">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Geometry:</strong></td>
+                                        <td id="model-geometry">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Mesh Quality:</strong></td>
+                                        <td id="model-mesh">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>AI Integration:</strong></td>
+                                        <td id="model-ai">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Complexity:</strong></td>
+                                        <td id="model-complexity">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Accuracy:</strong></td>
+                                        <td id="model-accuracy">-</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Properties Tab -->
+                    <div class="tab-pane fade" id="properties" role="tabpanel">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Material Properties</h6>
+                                <div id="material-properties-details">
+                                    <!-- Material properties will be loaded here -->
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Boundary Conditions</h6>
+                                <div id="boundary-conditions-details">
+                                    <!-- Boundary conditions will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulations Tab -->
+                    <div class="tab-pane fade" id="simulations" role="tabpanel">
+                        <div class="mt-3">
+                            <h6>Simulation History</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover" id="simulations-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Started</th>
+                                            <th>Duration</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Simulation history will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validation Tab -->
+                    <div class="tab-pane fade" id="validation" role="tabpanel">
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h6>Validation Results</h6>
+                                <div id="validation-results">
+                                    <!-- Validation results will be loaded here -->
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Accuracy Metrics</h6>
+                                <div id="accuracy-metrics">
+                                    <!-- Accuracy metrics will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History Tab -->
+                    <div class="tab-pane fade" id="history" role="tabpanel">
+                        <div class="mt-3">
+                            <h6>Model History</h6>
+                            <div class="timeline" id="model-history-timeline">
+                                <!-- Model history timeline will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="edit-model-btn">
+                    <i class="fas fa-edit me-1"></i>Edit Model
+                </button>
+                <button type="button" class="btn btn-success" id="run-simulation-btn">
+                    <i class="fas fa-play me-1"></i>Run Simulation
+                </button>
+                <button type="button" class="btn btn-info" id="export-model-btn">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div> 

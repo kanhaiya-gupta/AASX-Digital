@@ -17,7 +17,7 @@ class ConnectionManager:
             "twin_registry": [],
             "ai_rag": [],
             "kg_neo4j": [],
-            "qi_analytics": [],
+
             "certificate_manager": [],
             "federated_learning": [],
             "physics_modeling": [],

@@ -1,0 +1,114 @@
+<!-- Simulation Progress Tracker -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-info text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            Simulation Progress Tracker
+        </h5>
+    </div>
+    <div class="card-body">
+        <!-- Progress Overview -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-primary mb-1" id="progress-percentage">0%</div>
+                    <small class="text-muted">Progress</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-success mb-1" id="elapsed-time">00:00:00</div>
+                    <small class="text-muted">Elapsed Time</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-warning mb-1" id="estimated-remaining">--:--:--</div>
+                    <small class="text-muted">Estimated Remaining</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-info mb-1" id="current-iteration">0</div>
+                    <small class="text-muted">Current Iteration</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span class="small text-muted">Simulation Progress</span>
+                <span class="small text-muted" id="progress-text">Initializing...</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     id="simulation-progress-bar" 
+                     role="progressbar" 
+                     style="width: 0%" 
+                     aria-valuenow="0" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                    0%
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="card bg-light border-0 mb-3">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-line me-1"></i>
+                    Performance Metrics
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label small">CPU Usage</label>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" id="cpu-usage-bar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted" id="cpu-usage-text">0%</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Memory Usage</label>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-info" id="memory-usage-bar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted" id="memory-usage-text">0 MB</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Convergence</label>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-warning" id="convergence-bar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted" id="convergence-text">1e-6</small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Speed (iter/s)</label>
+                        <div class="h6 text-primary mb-0" id="iteration-speed">0.0</div>
+                        <small class="text-muted">Iterations per second</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status and Logs -->
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="mb-2">Simulation Status</h6>
+                <div class="alert alert-info" id="simulation-status">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Ready to start simulation
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="mb-2">Recent Logs</h6>
+                <div class="bg-dark text-light p-2 rounded" style="height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.8rem;" id="simulation-logs">
+                    <div class="text-muted">No logs available</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

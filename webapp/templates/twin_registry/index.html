@@ -1,142 +1,137 @@
 {% extends "base.html" %}
 
-{% block title %}Digital Twin Registry - AASX Digital Twin Analytics Framework{% endblock %}
+{% block title %}Digital Twin Registry{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/twin_registry.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="tr-twin-registry twin-registry container-fluid">
     <!-- Page Header -->
-    <div class="row mb-4">
+    <div class="tr-page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="tr-page-title h3 mb-0">
+                <i class="fas fa-robot me-2"></i>Digital Twin Registry
+            </h1>
+            <p class="tr-page-subtitle text-muted mb-0">Comprehensive management and monitoring of digital twins</p>
+        </div>
+        <div class="tr-header-actions btn-group" role="group">
+            <button class="tr-btn tr-btn-refresh btn btn-outline-primary" onclick="refreshTwinRegistryData()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+            <button class="tr-btn tr-btn-export btn btn-outline-success" onclick="exportRegistryData()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Dashboard -->
+    {% include 'twin_registry/components/status_dashboard.html' %}
+
+    <!-- Main Content Tabs -->
+    <div class="tr-main-content row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-0 text-primary">
-                        <i class="fas fa-sync me-2"></i>
-                        Digital Twin Registry
-                    </h1>
-                    <p class="text-muted mb-0">Comprehensive management and monitoring of digital twins</p>
+            <div class="tr-main-card card">
+                <div class="tr-card-header card-header">
+                    <ul class="tr-nav-tabs nav nav-tabs card-header-tabs" id="registryTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="tr-tab-link nav-link active" id="management-tab" data-bs-toggle="tab" data-bs-target="#management" type="button" role="tab">
+                                <i class="fas fa-list me-2"></i>Management
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="tr-tab-link nav-link" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button" role="tab">
+                                <i class="fas fa-heartbeat me-2"></i>Health Monitoring
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="tr-tab-link nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                                <i class="fas fa-tachometer-alt me-2"></i>Performance
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="tr-tab-link nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                                <i class="fas fa-chart-bar me-2"></i>Analytics
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="tr-tab-link nav-link" id="lifecycle-tab" data-bs-toggle="tab" data-bs-target="#lifecycle" type="button" role="tab">
+                                <i class="fas fa-play-circle me-2"></i>Lifecycle
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="tr-tab-link nav-link" id="instances-tab" data-bs-toggle="tab" data-bs-target="#instances" type="button" role="tab">
+                                <i class="fas fa-code-branch me-2"></i>Instances
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="tr-tab-link nav-link" id="configuration-tab" data-bs-toggle="tab" data-bs-target="#configuration" type="button" role="tab">
+                                <i class="fas fa-cogs me-2"></i>Configuration
+                            </button>
+                        </li>
+                    </ul>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" id="refreshAllBtn">
-                        <i class="fas fa-sync-alt me-1"></i>
-                        Refresh All
-                    </button>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTwinModal">
-                        <i class="fas fa-plus me-1"></i>
-                        Add Twin
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+                <div class="tr-card-body card-body">
+                    <div class="tr-tab-content tab-content" id="registryTabContent">
+                        <!-- Management Tab -->
+                        <div class="tr-tab-pane tab-pane fade show active" id="management" role="tabpanel">
+                            {% include 'twin_registry/components/twin_table.html' %}
+                        </div>
 
-    <!-- System Status Dashboard - TOP PRIORITY -->
-    {% include 'twin_registry/components/system_status_dashboard.html' %}
+                        <!-- Health Monitoring Tab -->
+                        <div class="tr-tab-pane tab-pane fade" id="monitoring" role="tabpanel">
+                            {% include 'twin_registry/components/health_monitoring.html' %}
+                        </div>
 
-    <!-- Statistics Dashboard -->
-    {% include 'twin_registry/components/statistics_dashboard.html' %}
+                        <!-- Performance Tab -->
+                        <div class="tr-tab-pane tab-pane fade" id="performance" role="tabpanel">
+                            {% include 'twin_registry/components/performance_monitoring.html' %}
+                        </div>
 
-    <!-- AASX Integration Section - ALWAYS VISIBLE -->
-    {% include 'twin_registry/components/aasx_integration.html' %}
-
-    <!-- Enhanced Twin Management Panel -->
-    {% include 'twin_registry/components/enhanced_twin_management.html' %}
-
-    <!-- Real-time Monitoring Panel - Collapsible -->
-    {% include 'twin_registry/components/realtime_monitoring.html' %}
-
-    <!-- System Configuration Panel -->
-    {% include 'twin_registry/components/system_configuration.html' %}
-
-    <!-- Main Content Sections - Improved Layout -->
-    <div class="row">
-        <!-- Twin Management Section - Full Width -->
-        <div class="col-12 mb-4">
-            {% include 'twin_registry/components/twin_management.html' %}
-        </div>
-    </div>
-
-    <!-- Analytics and Monitoring Section - Balanced Layout -->
-    <div class="row">
-        <!-- Analytics Overview - Left Side -->
-        <div class="col-lg-6 mb-4">
-            {% include 'twin_registry/components/analytics_section.html' %}
-        </div>
-        
-        <!-- Health Monitoring - Right Side -->
-        <div class="col-lg-6 mb-4">
-            {% include 'twin_registry/components/health_monitoring.html' %}
-        </div>
-    </div>
-
-    <!-- Performance and Advanced Monitoring Section -->
-    <div class="row">
-        <!-- Performance Monitoring - Left Side -->
-        <div class="col-lg-6 mb-4">
-            {% include 'twin_registry/components/performance_monitoring.html' %}
-        </div>
-        
-        <!-- Analytics Widget - Right Side -->
-        <div class="col-lg-6 mb-4">
-            {% include 'twin_registry/components/analytics_widget.html' %}
-        </div>
-    </div>
-
-    <!-- Help & Documentation Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-gradient-secondary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-question-circle me-2"></i>
-                        Help & Documentation
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-play-circle me-2"></i>Quick Start Guide
-                            </h6>
-                            <div class="list-group list-group-flush">
-                                <div class="list-group-item">
-                                    <h6 class="mb-1">1. AASX Integration</h6>
-                                    <p class="mb-1 small text-muted">Use AASX Integration to automatically register twins from processed AASX files</p>
+                        <!-- Analytics Tab -->
+                        <div class="tr-tab-pane tab-pane fade" id="analytics" role="tabpanel">
+                            <div class="tr-analytics-content row">
+                                <div class="col-md-6">
+                                    <div class="tr-analytics-card card">
+                                        <div class="tr-card-header card-header">
+                                            <h6 class="tr-card-title mb-0">Twin Analytics Overview</h6>
+                                        </div>
+                                        <div class="tr-card-body card-body">
+                                            <div class="chart-container tall">
+                                                <canvas id="analyticsOverviewChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="list-group-item">
-                                    <h6 class="mb-1">2. Manual Twin Creation</h6>
-                                    <p class="mb-1 small text-muted">Create twins manually for testing and prototyping purposes</p>
-                                </div>
-                                <div class="list-group-item">
-                                    <h6 class="mb-1">3. Real-time Monitoring</h6>
-                                    <p class="mb-1 small text-muted">Monitor twin status, performance, and health in real-time</p>
-                                </div>
-                                <div class="list-group-item">
-                                    <h6 class="mb-1">4. Enhanced Management</h6>
-                                    <p class="mb-1 small text-muted">Use advanced features for bulk operations and detailed management</p>
+                                <div class="col-md-6">
+                                    <div class="tr-analytics-card card">
+                                        <div class="tr-card-header card-header">
+                                            <h6 class="tr-card-title mb-0">Quality Score</h6>
+                                        </div>
+                                        <div class="tr-card-body card-body">
+                                            <div class="chart-container tall">
+                                                <canvas id="qualityScoreChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-book me-2"></i>Documentation Links
-                            </h6>
-                            <div class="list-group list-group-flush">
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <i class="fas fa-file-pdf me-2"></i>AASX Integration Guide
-                                </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <i class="fas fa-file-pdf me-2"></i>Real-time Monitoring Manual
-                                </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <i class="fas fa-file-pdf me-2"></i>Performance Monitoring Guide
-                                </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <i class="fas fa-file-pdf me-2"></i>API Documentation
-                                </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <i class="fas fa-video me-2"></i>Video Tutorials
-                                </a>
-                            </div>
+
+                        <!-- Lifecycle Management Tab -->
+                        <div class="tr-tab-pane tab-pane fade" id="lifecycle" role="tabpanel">
+                            {% include 'twin_registry/components/lifecycle_management.html' %}
+                        </div>
+
+                        <!-- Instance Management Tab -->
+                        <div class="tr-tab-pane tab-pane fade" id="instances" role="tabpanel">
+                            {% include 'twin_registry/components/instance_management.html' %}
+                        </div>
+
+                        <!-- System Configuration Tab -->
+                        <div class="tr-tab-pane tab-pane fade" id="configuration" role="tabpanel">
+                            {% include 'twin_registry/components/system_configuration.html' %}
                         </div>
                     </div>
                 </div>
@@ -145,36 +140,28 @@
     </div>
 </div>
 
-<!-- Include All Modals -->
-{% include 'twin_registry/components/modals.html' %}
-{% endblock %}
+<!-- Include Modals -->
+{% include 'twin_registry/components/relationship_modal.html' %}
 
-{% block extra_css %}
-<style>
-    /* Chart container styling to prevent layout shifts */
-    .chart-container {
-        position: relative;
-        overflow: hidden;
-        border-radius: 8px;
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-    }
-    
-    .chart-container canvas {
-        max-height: 100%;
-        max-width: 100%;
-    }
-    
-    /* Ensure charts don't cause screen movement */
-    .card-body .chart-container {
-        margin-bottom: 1rem;
-    }
-    
-    /* Smooth transitions for chart updates */
-    .chart-container canvas {
-        transition: opacity 0.3s ease;
-    }
-</style>
+<!-- Twin Details Modal -->
+<div class="modal fade" id="twinDetailsModal" tabindex="-1" aria-labelledby="twinDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="twinDetailsModalLabel">
+                    <i class="fas fa-robot me-2"></i>Twin Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="twinDetailsContent">
+                <!-- Twin details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -182,70 +169,73 @@
     console.log('🔍 Twin Registry Template: Loading modular Twin Registry system...');
     
     try {
-        const { initTwinRegistryModule, refreshTwinRegistryData } = await import("{{ url_for('static', path='/js/twin_registry/index.js') }}");
+        const { initTwinRegistryModule } = await import("{{ url_for('static', path='/js/modules/twin_registry/index.js') }}");
         console.log('✅ Twin Registry Template: Modular system imported successfully');
         
         // Initialize the modular Twin Registry system
         await initTwinRegistryModule();
         console.log('✅ Twin Registry Template: Modular system initialized');
         
-        // Setup event listeners after module is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            // Setup refresh button
-            const refreshBtn = document.getElementById('refreshAllBtn');
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', async () => {
-                    try {
-                        await refreshTwinRegistryData();
-                        console.log('✅ Twin Registry data refreshed');
-                    } catch (error) {
-                        console.error('❌ Failed to refresh twin registry data:', error);
-                    }
-                });
-            }
-            
-            // Setup auto-generation for twin forms
-            setupAutoGeneration();
-            
-            // Load initial data
-            refreshTwinRegistryData();
-        });
-        
     } catch (error) {
         console.error('❌ Twin Registry Template: Modular system failed to load:', error);
     }
-    
-    // Auto-generation setup for twin forms
-    function setupAutoGeneration() {
-        // Auto-generate Twin ID when name is entered
-        const createTwinName = document.getElementById('createTwinName');
-        const createTwinId = document.getElementById('createTwinId');
-        
-        if (createTwinName && createTwinId) {
-            createTwinName.addEventListener('input', function() {
-                const name = this.value;
-                if (name && !createTwinId.value) {
-                    const twinId = 'DT-' + name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 8);
-                    createTwinId.value = twinId;
+</script>
+<script>
+    // Global functions for HTML onclick handlers
+    function refreshTwinRegistryData() {
+        // Trigger data refresh
+        document.dispatchEvent(new CustomEvent('twinRegistryRefresh'));
+        console.log('🔄 Refreshing Twin Registry data...');
+    }
+
+    function showRelationshipModal(twinId) {
+        // Populate modal with twin data
+        document.getElementById('sourceTwinId').value = twinId;
+        const modal = new bootstrap.Modal(document.getElementById('relationshipModal'));
+        modal.show();
+    }
+
+    function showRelationships(twinId) {
+        // Trigger relationship fetch
+        document.dispatchEvent(new CustomEvent('twinRelationshipFetch', { detail: { twinId } }));
+    }
+
+    function viewTwinDetails(twinId) {
+        // Show twin details modal
+        const modal = new bootstrap.Modal(document.getElementById('twinDetailsModal'));
+        modal.show();
+        // TODO: Populate twin details
+    }
+
+    function editTwin(twinId) {
+        // TODO: Implement twin editing
+        console.log('Edit twin:', twinId);
+    }
+
+    function exportRegistryData() {
+        // TODO: Implement data export
+        console.log('Export registry data');
+    }
+
+    // Handle relationship form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const relationshipForm = document.getElementById('relationshipForm');
+        if (relationshipForm) {
+            relationshipForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const sourceTwinId = document.getElementById('sourceTwinId').value;
+                const targetTwinId = document.getElementById('targetTwinId').value;
+                const relationshipType = document.getElementById('relationshipType').value;
+                const description = document.getElementById('relationshipDescription').value;
+
+                if (sourceTwinId && targetTwinId && relationshipType) {
+                    createRelationship(sourceTwinId, targetTwinId, relationshipType, { description });
+                    relationshipForm.reset();
+                    bootstrap.Modal.getInstance(document.getElementById('relationshipModal')).hide();
                 }
             });
         }
-    }
-    
-    // Toggle real-time monitoring panel
-    window.toggleRealtimePanel = function() {
-        const panelBody = document.getElementById('realtimePanelBody');
-        const toggleIcon = document.getElementById('realtimeToggleIcon');
-        
-        if (panelBody && toggleIcon) {
-            if (panelBody.style.display === 'none') {
-                panelBody.style.display = 'block';
-                toggleIcon.className = 'fas fa-chevron-up float-end';
-            } else {
-                panelBody.style.display = 'none';
-                toggleIcon.className = 'fas fa-chevron-down float-end';
-            }
-        }
-    };
+    });
 </script>
 {% endblock %} 

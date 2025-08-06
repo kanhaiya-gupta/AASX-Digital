@@ -1,0 +1,209 @@
+/**
+ * Federated Learning Module Layout CSS Module
+ * Dedicated styling for main layout and structure
+ */
+
+/* ===== MAIN LAYOUT STYLING ===== */
+.fl-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+/* ===== PAGE HEADER STYLING ===== */
+.fl-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.fl-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.fl-header .subtitle {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* ===== CONTENT AREA STYLING ===== */
+.fl-content {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* ===== SIDEBAR STYLING ===== */
+.fl-sidebar {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.fl-sidebar .card {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.fl-sidebar .card-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.fl-sidebar .card-body {
+    padding: 0;
+}
+
+/* ===== GRID LAYOUT STYLING ===== */
+.fl-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.fl-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.fl-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.fl-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ===== TRAINING WORKSPACE ===== */
+.fl-training-workspace {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.fl-workspace-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.fl-workspace-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.fl-workspace-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.fl-workspace-body {
+    padding: 1.5rem;
+}
+
+/* ===== MODEL WORKSPACE ===== */
+.fl-model-workspace {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.fl-model-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.fl-model-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.fl-model-body {
+    padding: 1.5rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .fl-header {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .fl-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .fl-header .subtitle {
+        font-size: 1rem;
+    }
+    
+    .fl-container {
+        padding: 1rem 0;
+    }
+    
+    .fl-sidebar {
+        position: static;
+        margin-bottom: 1.5rem;
+    }
+    
+    .fl-grid-2,
+    .fl-grid-3,
+    .fl-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .fl-workspace-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .fl-workspace-controls {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 576px) {
+    .fl-container {
+        padding: 0.5rem 0;
+    }
+    
+    .fl-header {
+        padding: 1rem 0;
+    }
+    
+    .fl-sidebar {
+        padding: 1rem;
+    }
+    
+    .fl-workspace-body,
+    .fl-model-body {
+        padding: 1rem;
+    }
+} 

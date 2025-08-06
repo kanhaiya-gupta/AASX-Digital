@@ -1,0 +1,277 @@
+<!-- Export Options Component -->
+<div class="export-options">
+    <h3><i class="fas fa-download"></i> Export Certificate</h3>
+    
+    <!-- Export Format Selection -->
+    <div class="export-format-grid">
+        <div class="export-format-option" data-format="html" onclick="selectExportFormat('html')">
+            <div class="format-icon">
+                <i class="fas fa-file-code"></i>
+            </div>
+            <div class="format-name">HTML</div>
+            <div class="format-description">Interactive web format with full styling</div>
+        </div>
+        
+        <div class="export-format-option" data-format="pdf" onclick="selectExportFormat('pdf')">
+            <div class="format-icon">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="format-name">PDF</div>
+            <div class="format-description">Professional document format</div>
+        </div>
+        
+        <div class="export-format-option" data-format="json" onclick="selectExportFormat('json')">
+            <div class="format-icon">
+                <i class="fas fa-file-code"></i>
+            </div>
+            <div class="format-name">JSON</div>
+            <div class="format-description">Machine-readable data format</div>
+        </div>
+        
+        <div class="export-format-option" data-format="xml" onclick="selectExportFormat('xml')">
+            <div class="format-icon">
+                <i class="fas fa-file-code"></i>
+            </div>
+            <div class="format-name">XML</div>
+            <div class="format-description">Structured markup format</div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="export-settings">
+        <h4>Export Settings</h4>
+        
+        <div class="form-group">
+            <label class="form-label">Include Sections</label>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-etl" checked>
+                <label class="form-check-label" for="include-etl">ETL Processing</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-ai" checked>
+                <label class="form-check-label" for="include-ai">AI Analysis</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-physics" checked>
+                <label class="form-check-label" for="include-physics">Physics Modeling</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-kg" checked>
+                <label class="form-check-label" for="include-kg">Knowledge Graph</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-quality" checked>
+                <label class="form-check-label" for="include-quality">Quality Metrics</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Include Security Features</label>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-signature" checked>
+                <label class="form-check-label" for="include-signature">Digital Signature</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-qr" checked>
+                <label class="form-check-label" for="include-qr">QR Code</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="include-validation" checked>
+                <label class="form-check-label" for="include-validation">Validation Status</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Template</label>
+            <select class="form-select" id="export-template">
+                <option value="default">Default Template</option>
+                <option value="professional">Professional</option>
+                <option value="minimal">Minimal</option>
+                <option value="detailed">Detailed</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">File Name</label>
+            <input type="text" class="form-control" id="export-filename" placeholder="certificate_export">
+        </div>
+    </div>
+
+    <!-- Export Preview -->
+    <div class="export-preview">
+        <h4>Preview</h4>
+        <div class="preview-container">
+            <div class="preview-placeholder" id="export-preview">
+                <i class="fas fa-eye"></i>
+                <p>Select a format to see preview</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Progress -->
+    <div class="export-progress" id="export-progress" style="display: none;">
+        <h4>Export Progress</h4>
+        <div class="progress">
+            <div class="progress-bar" id="export-progress-bar" style="width: 0%">0%</div>
+        </div>
+        <div class="progress-text" id="export-progress-text">Preparing export...</div>
+    </div>
+
+    <!-- Export Results -->
+    <div class="export-results" id="export-results" style="display: none;">
+        <h4>Export Complete</h4>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <div class="alert-content">
+                <div class="alert-title">Export Successful</div>
+                <div class="alert-message">Your certificate has been exported successfully.</div>
+            </div>
+        </div>
+        <div class="export-actions">
+            <button class="btn btn-primary" onclick="downloadExport()">
+                <i class="fas fa-download"></i> Download
+            </button>
+            <button class="btn btn-outline-secondary" onclick="shareExport()">
+                <i class="fas fa-share"></i> Share
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedFormat = 'html';
+let exportInProgress = false;
+
+function selectExportFormat(format) {
+    selectedFormat = format;
+    
+    // Update visual selection
+    document.querySelectorAll('.export-format-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.querySelector(`[data-format="${format}"]`).classList.add('selected');
+    
+    // Update preview
+    updateExportPreview();
+}
+
+function updateExportPreview() {
+    const preview = document.getElementById('export-preview');
+    const formatNames = {
+        'html': 'HTML Document',
+        'pdf': 'PDF Document',
+        'json': 'JSON Data',
+        'xml': 'XML Document'
+    };
+    
+    preview.innerHTML = `
+        <i class="fas fa-file-${selectedFormat === 'pdf' ? 'pdf' : 'code'}"></i>
+        <p>${formatNames[selectedFormat]} Preview</p>
+        <small class="text-muted">Format: ${selectedFormat.toUpperCase()}</small>
+    `;
+}
+
+function executeExport() {
+    if (exportInProgress) return;
+    
+    exportInProgress = true;
+    
+    // Show progress
+    document.getElementById('export-progress').style.display = 'block';
+    document.getElementById('export-results').style.display = 'none';
+    
+    // Get export settings
+    const settings = getExportSettings();
+    
+    // Simulate export process
+    simulateExport(settings);
+}
+
+function getExportSettings() {
+    return {
+        format: selectedFormat,
+        includeETL: document.getElementById('include-etl').checked,
+        includeAI: document.getElementById('include-ai').checked,
+        includePhysics: document.getElementById('include-physics').checked,
+        includeKG: document.getElementById('include-kg').checked,
+        includeQuality: document.getElementById('include-quality').checked,
+        includeSignature: document.getElementById('include-signature').checked,
+        includeQR: document.getElementById('include-qr').checked,
+        includeValidation: document.getElementById('include-validation').checked,
+        template: document.getElementById('export-template').value,
+        filename: document.getElementById('export-filename').value || 'certificate_export'
+    };
+}
+
+function simulateExport(settings) {
+    const progressBar = document.getElementById('export-progress-bar');
+    const progressText = document.getElementById('export-progress-text');
+    let progress = 0;
+    
+    const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = `${progress}%`;
+        progressBar.textContent = `${Math.round(progress)}%`;
+        
+        if (progress < 30) {
+            progressText.textContent = 'Preparing certificate data...';
+        } else if (progress < 60) {
+            progressText.textContent = 'Generating export...';
+        } else if (progress < 90) {
+            progressText.textContent = 'Applying template...';
+        } else if (progress < 100) {
+            progressText.textContent = 'Finalizing export...';
+        } else {
+            progressText.textContent = 'Export complete!';
+            clearInterval(interval);
+            
+            // Show results
+            setTimeout(() => {
+                document.getElementById('export-progress').style.display = 'none';
+                document.getElementById('export-results').style.display = 'block';
+                exportInProgress = false;
+            }, 500);
+        }
+    }, 200);
+}
+
+function downloadExport() {
+    // Implement actual download functionality
+    console.log('Downloading export...');
+    
+    // Create a dummy download link
+    const link = document.createElement('a');
+    link.href = '#';
+    link.download = `${document.getElementById('export-filename').value || 'certificate'}.${selectedFormat}`;
+    link.click();
+}
+
+function shareExport() {
+    // Implement sharing functionality
+    console.log('Sharing export...');
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Certificate Export',
+            text: 'Check out this digital certificate export',
+            url: window.location.href
+        });
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        alert('Sharing not supported in this browser');
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default filename
+    const now = new Date();
+    const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-');
+    document.getElementById('export-filename').value = `certificate_${timestamp}`;
+    
+    // Select default format
+    selectExportFormat('html');
+});
+</script> 

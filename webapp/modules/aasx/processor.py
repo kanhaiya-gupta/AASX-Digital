@@ -11,7 +11,7 @@ from src.shared.repositories.project_repository import ProjectRepository
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
 from src.shared.services.digital_twin_service import DigitalTwinService
-from src.shared.services.federated_learning_service import FederatedLearningService
+from src.federated_learning.core.federated_learning_service import FederatedLearningService
 
 class AASXProcessor:
     def __init__(self):

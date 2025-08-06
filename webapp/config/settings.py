@@ -90,7 +90,7 @@ class Settings(BaseSettings):
     ai_rag_enabled: bool = True
     twin_registry_enabled: bool = True
     certificate_manager_enabled: bool = True
-    qi_analytics_enabled: bool = True
+
     kg_neo4j_enabled: bool = True
     federated_learning_enabled: bool = True
     physics_modeling_enabled: bool = True

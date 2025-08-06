@@ -1,79 +1,307 @@
 {% extends "base.html" %}
 
-{% block title %}Physics Modeling - AASX Digital Twin Platform{% endblock %}
+{% block title %}Physics Modeling - Digital Twin Analytics{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/physics_modeling.css') }}">
+<link href="{{ url_for('static', path='/css/physics_modeling.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header Section -->
-    {% include 'physics_modeling/partials/header.html' %}
-
-    <!-- System Status Dashboard -->
-    {% include 'physics_modeling/partials/system_status.html' %}
-
-    <!-- Main Content Area -->
-    <div class="row">
-        <!-- Left Column - Model Creation and Management -->
-        <div class="col-lg-8">
-            <!-- Model Creation Panel -->
-            {% include 'physics_modeling/partials/model_creation.html' %}
-
-            <!-- Simulation Control Panel -->
-            {% include 'physics_modeling/partials/simulation_control.html' %}
-
-            <!-- Results Visualization -->
-            {% include 'physics_modeling/partials/results_visualization.html' %}
+<div class="pm-container container-fluid">
+    <!-- Page Header -->
+    <div class="pm-header d-flex justify-content-between align-items-center mb-4">
+        <div class="pm-header-info">
+            <h1 class="pm-title h3 mb-0">
+                <i class="fas fa-atom me-2"></i>Physics Modeling
+            </h1>
+            <p class="pm-subtitle text-muted mb-0">Advanced physics simulation and analysis for digital twins</p>
         </div>
+        <div class="pm-header-actions btn-group" role="group">
+            <button class="pm-btn pm-btn-refresh btn btn-outline-primary" onclick="refreshPhysicsData()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+            <button class="pm-btn pm-btn-export btn btn-outline-success" onclick="exportPhysicsData()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+        </div>
+    </div>
 
-        <!-- Right Column - Model Management and Status -->
-        <div class="col-lg-4">
-            <!-- Available Models -->
-            {% include 'physics_modeling/partials/available_models.html' %}
+    <!-- Status Dashboard -->
+    <div class="pm-status-dashboard row mb-4">
+        <div class="col-md-3">
+            <div class="pm-status-card card bg-primary text-white pm-card-hover">
+                <div class="pm-card-body card-body">
+                    <div class="pm-status-content d-flex justify-content-between">
+                        <div class="pm-status-info">
+                            <h4 class="pm-status-value mb-0" id="total-plugins">0</h4>
+                            <p class="pm-status-label mb-0">Available Plugins</p>
+                        </div>
+                        <div class="pm-status-icon align-self-center">
+                            <i class="fas fa-puzzle-piece fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="pm-status-card card bg-success text-white pm-card-hover">
+                <div class="pm-card-body card-body">
+                    <div class="pm-status-content d-flex justify-content-between">
+                        <div class="pm-status-info">
+                            <h4 class="pm-status-value mb-0" id="active-simulations">0</h4>
+                            <p class="pm-status-label mb-0">Active Simulations</p>
+                        </div>
+                        <div class="pm-status-icon align-self-center">
+                            <i class="fas fa-play-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="pm-status-card card bg-info text-white pm-card-hover">
+                <div class="pm-card-body card-body">
+                    <div class="pm-status-content d-flex justify-content-between">
+                        <div class="pm-status-info">
+                            <h4 class="pm-status-value mb-0" id="available-twins">0</h4>
+                            <p class="pm-status-label mb-0">Available Twins</p>
+                        </div>
+                        <div class="pm-status-icon align-self-center">
+                            <i class="fas fa-robot fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="pm-status-card card bg-warning text-white pm-card-hover">
+                <div class="pm-card-body card-body">
+                    <div class="pm-status-content d-flex justify-content-between">
+                        <div class="pm-status-info">
+                            <h4 class="pm-status-value mb-0" id="system-status">Healthy</h4>
+                            <p class="pm-status-label mb-0">System Status</p>
+                        </div>
+                        <div class="pm-status-icon align-self-center">
+                            <i class="fas fa-heartbeat fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <!-- Active Simulations -->
-            {% include 'physics_modeling/partials/active_simulations.html' %}
+    <!-- Main Content Tabs -->
+    <div class="pm-main-content row">
+        <div class="col-12">
+            <div class="pm-tabs-card card">
+                <div class="pm-card-header card-header">
+                    <ul class="pm-tabs nav nav-tabs card-header-tabs" id="physicsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="pm-tab-link nav-link active" id="simulation-tab" data-bs-toggle="tab" data-bs-target="#simulation" type="button" role="tab">
+                                <i class="fas fa-play me-2"></i>Simulation
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="pm-tab-link nav-link" id="plugins-tab" data-bs-toggle="tab" data-bs-target="#plugins" type="button" role="tab">
+                                <i class="fas fa-puzzle-piece me-2"></i>Plugin Management
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="pm-tab-link nav-link" id="visualization-tab" data-bs-toggle="tab" data-bs-target="#visualization" type="button" role="tab">
+                                <i class="fas fa-chart-line me-2"></i>Visualization
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="pm-tab-link nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button" role="tab">
+                                <i class="fas fa-microscope me-2"></i>Analysis
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="pm-tab-link nav-link" id="use-cases-tab" data-bs-toggle="tab" data-bs-target="#use-cases" type="button" role="tab">
+                                <i class="fas fa-lightbulb me-2"></i>Use Cases
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="pm-tab-link nav-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">
+                                <i class="fas fa-cogs me-2"></i>System
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="pm-card-body card-body">
+                    <div class="pm-tab-content tab-content" id="physicsTabContent">
+                        <!-- Simulation Tab (Consolidated) -->
+                        <div class="pm-tab-pane tab-pane fade show active" id="simulation" role="tabpanel">
+                            <div class="pm-loading-spinner loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Model Validation -->
-            {% include 'physics_modeling/partials/model_validation.html' %}
+                        <!-- Plugin Management Tab -->
+                        <div class="pm-tab-pane tab-pane fade" id="plugins" role="tabpanel">
+                            <div class="pm-loading-spinner loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- System Information -->
-            {% include 'physics_modeling/partials/system_information.html' %}
+                        <!-- Visualization Tab -->
+                        <div class="pm-tab-pane tab-pane fade" id="visualization" role="tabpanel">
+                            <div class="pm-loading-spinner loading-spinner">
+                                <div class="spinner-border text-info" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Tab -->
+                        <div class="pm-tab-pane tab-pane fade" id="analysis" role="tabpanel">
+                            <div class="pm-loading-spinner loading-spinner">
+                                <div class="spinner-border text-warning" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Use Cases Tab -->
+                        <div class="pm-tab-pane tab-pane fade" id="use-cases" role="tabpanel">
+                            <div class="pm-loading-spinner loading-spinner">
+                                <div class="spinner-border text-danger" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Tab -->
+                        <div class="pm-tab-pane tab-pane fade" id="system" role="tabpanel">
+                            <div class="pm-loading-spinner loading-spinner">
+                                <div class="spinner-border text-secondary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Modals -->
-{% include 'physics_modeling/partials/modals.html' %}
+<div class="pm-modal modal fade" id="modelDetailsModal" tabindex="-1" aria-labelledby="modelDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="pm-modal-content modal-content">
+            <div class="pm-modal-header modal-header">
+                <h5 class="pm-modal-title modal-title" id="modelDetailsModalLabel">
+                    <i class="fas fa-cube me-2"></i>Model Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="pm-modal-body modal-body" id="modelDetailsContent">
+                <!-- Model details will be populated here -->
+            </div>
+            <div class="pm-modal-footer modal-footer">
+                <button type="button" class="pm-btn pm-btn-close btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pm-modal modal fade" id="simulationResultsModal" tabindex="-1" aria-labelledby="simulationResultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="pm-modal-content modal-content">
+            <div class="pm-modal-header modal-header">
+                <h5 class="pm-modal-title modal-title" id="simulationResultsModalLabel">
+                    <i class="fas fa-chart-bar me-2"></i>Simulation Results
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="pm-modal-body modal-body" id="simulationResultsContent">
+                <!-- Simulation results will be populated here -->
+            </div>
+            <div class="pm-modal-footer modal-footer">
+                <button type="button" class="pm-btn pm-btn-close btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pm-modal modal fade" id="useCaseDetailsModal" tabindex="-1" aria-labelledby="useCaseDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="pm-modal-content modal-content">
+            <div class="pm-modal-header modal-header">
+                <h5 class="pm-modal-title modal-title" id="useCaseDetailsModalLabel">
+                    <i class="fas fa-lightbulb me-2"></i>Use Case Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="pm-modal-body modal-body" id="useCaseDetailsContent">
+                <!-- Use case details will be populated here -->
+            </div>
+            <div class="pm-modal-footer modal-footer">
+                <button type="button" class="pm-btn pm-btn-close btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="{{ url_for('static', path='/js/physics_modeling.js') }}"></script>
-<script>
-// Debug script for physics modeling
-console.log('🔧 Physics Modeling template loaded');
+<!-- CDN Libraries for Advanced Features -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-// Check if physicsUI is available
-function checkPhysicsUI() {
-    if (window.physicsUI) {
-        console.log('✅ physicsUI is available:', window.physicsUI);
-        return true;
-    } else {
-        console.log('❌ physicsUI is not available');
-        return false;
-    }
-}
-
-// Add click handlers with debugging
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 DOM Content Loaded - Setting up debug handlers');
+<script type="module">
+    console.log('🔧 Physics Modeling Template: Loading modular Physics Modeling system...');
     
-    // Check physicsUI after a short delay
-    setTimeout(() => {
-        checkPhysicsUI();
-    }, 1000);
-});
+    try {
+        const { initPhysicsModelingModule } = await import("{{ url_for('static', path='/js/modules/physics_modeling/index.js') }}?v={{ range(1, 1000) | random }}");
+        console.log('✅ Physics Modeling Template: Modular system imported successfully');
+        
+        // Initialize the modular Physics Modeling system
+        await initPhysicsModelingModule();
+        console.log('✅ Physics Modeling Template: Modular system initialized');
+        
+    } catch (error) {
+        console.error('❌ Physics Modeling Template: Modular system failed to load:', error);
+    }
+</script>
+<script>
+    // Global functions for HTML onclick handlers
+    function refreshPhysicsData() {
+        // Trigger data refresh
+        document.dispatchEvent(new CustomEvent('physicsDataRefresh'));
+        console.log('🔄 Refreshing Physics Modeling data...');
+    }
+
+    function exportPhysicsData() {
+        // Trigger data export
+        document.dispatchEvent(new CustomEvent('physicsDataExport'));
+        console.log('📤 Exporting Physics Modeling data...');
+    }
+
+    function showModelDetails(modelId) {
+        // Trigger model details fetch
+        document.dispatchEvent(new CustomEvent('modelDetailsFetch', { detail: { modelId } }));
+    }
+
+    function showSimulationResults(simulationId) {
+        // Trigger simulation results fetch
+        document.dispatchEvent(new CustomEvent('simulationResultsFetch', { detail: { simulationId } }));
+    }
+
+    function exploreUseCase(useCaseId) {
+        // Trigger use case exploration
+        document.dispatchEvent(new CustomEvent('useCaseExplore', { detail: { useCaseId } }));
+        console.log('🔍 Exploring use case:', useCaseId);
+    }
 </script>
 {% endblock %}

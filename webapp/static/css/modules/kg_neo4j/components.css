@@ -1,0 +1,627 @@
+/**
+ * Knowledge Graph Module Components CSS Module
+ * Dedicated styling for reusable components
+ */
+
+/* ===== TABLE STYLING ===== */
+.kg-table {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.kg-table .table {
+    margin-bottom: 0;
+}
+
+.kg-table .table th {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.kg-table .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.kg-table .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* ===== CARD STYLING ===== */
+.kg-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    background: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.kg-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.kg-card .card-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+.kg-card .card-body {
+    padding: 1.5rem;
+}
+
+/* ===== BUTTON STYLING ===== */
+.btn-kg {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-kg:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-kg-primary {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+}
+
+.btn-kg-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+}
+
+.btn-kg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+}
+
+.btn-kg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+/* ===== STATUS BADGES ===== */
+.kg-status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.kg-status-badge.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.kg-status-badge.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.kg-status-badge.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.kg-status-badge.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* ===== ALERT STYLING ===== */
+.kg-alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.kg-alert.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.kg-alert.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.kg-alert.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.kg-alert.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+/* ===== CHART CONTAINER STYLING ===== */
+.kg-chart-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.kg-chart-container.large { height: 250px; }
+.kg-chart-container.medium { height: 200px; }
+.kg-chart-container.small { height: 150px; }
+.kg-chart-container.tall { height: 300px; }
+
+/* ===== LOADING STATES ===== */
+.kg-loading-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.kg-loading-state.show { 
+    display: block; 
+}
+
+.kg-loading-state .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* ===== EMPTY STATES ===== */
+.kg-empty-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+    color: #6c757d;
+}
+
+.kg-empty-state.show { 
+    display: block; 
+}
+
+.kg-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* ===== PROGRESS BAR STYLING ===== */
+.kg-progress-container {
+    margin: 1rem 0;
+}
+
+.kg-progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.kg-progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    transition: width 0.3s ease;
+}
+
+.kg-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.kg-progress-label i {
+    margin-right: 0.5rem;
+    color: #17a2b8;
+}
+
+/* ===== TOOLTIP STYLING ===== */
+.kg-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    pointer-events: none;
+    z-index: 1001;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    max-width: 200px;
+}
+
+/* ===== MODAL STYLING ===== */
+.kg-modal .modal-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.kg-modal .modal-title {
+    font-weight: 600;
+}
+
+.kg-modal .modal-body {
+    padding: 1.5rem;
+}
+
+.kg-modal .modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+/* ===== ACCORDION STYLING ===== */
+.kg-accordion .accordion-button {
+    background-color: #f8f9fa;
+    border: none;
+    font-weight: 500;
+    color: #495057;
+}
+
+.kg-accordion .accordion-button:not(.collapsed) {
+    background-color: #e3f2fd;
+    color: #0d6efd;
+}
+
+.kg-accordion .accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(23, 162, 184, 0.25);
+}
+
+.kg-accordion .accordion-body {
+    background-color: #fff;
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .kg-table .table th,
+    .kg-table .table td {
+        padding: 0.75rem;
+    }
+    
+    .kg-card .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-kg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .kg-chart-container {
+        height: 150px;
+    }
+    
+    .kg-chart-container.large {
+        height: 200px;
+    }
+    
+    .kg-progress-label {
+        font-size: 0.8rem;
+    }
+    
+    .kg-tooltip {
+        max-width: 150px;
+        font-size: 0.8rem;
+        padding: 0.375rem 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .kg-modal .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .kg-modal .modal-body {
+        padding: 1rem;
+    }
+    
+    .kg-accordion .accordion-body {
+        padding: 1rem;
+        background-color: #f8f9fa;
+    }
+} 
+
+/* ===== DOCKER MANAGEMENT STYLES ===== */
+.kg-docker-management-container {
+    margin-bottom: 20px;
+}
+
+.kg-section-title {
+    color: #495057;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.kg-status-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.kg-status-icon {
+    margin-right: 15px;
+    font-size: 2rem;
+    color: #6c757d;
+}
+
+.kg-status-icon.running {
+    color: #28a745;
+}
+
+.kg-status-icon.stopped {
+    color: #dc3545;
+}
+
+.kg-status-icon.connecting {
+    color: #ffc107;
+}
+
+.kg-status-info h6 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #495057;
+    font-weight: 600;
+}
+
+.kg-status-info span {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.kg-detail-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.kg-detail-group:last-child {
+    border-bottom: none;
+}
+
+.kg-detail-group label {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.kg-detail-group span {
+    color: #6c757d;
+}
+
+.kg-logs-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.kg-logs-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+    background-color: #e9ecef;
+    border-radius: 8px 8px 0 0;
+}
+
+.kg-logs-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.kg-logs-controls .form-check-label {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ===== DATA MANAGEMENT STYLES ===== */
+.kg-data-management-container {
+    margin-bottom: 20px;
+}
+
+.kg-selection-display-container {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.kg-status-container {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+}
+
+.kg-status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.kg-status-item:last-child {
+    border-bottom: none;
+}
+
+.kg-status-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.kg-status-value {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.kg-loading-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.kg-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    animation: kg-slideIn 0.3s ease-out;
+}
+
+.kg-notification-success {
+    background-color: #28a745;
+}
+
+.kg-notification-error {
+    background-color: #dc3545;
+}
+
+@keyframes kg-slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.kg-form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.kg-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ===== GRAPH CONTAINER STYLES ===== */
+.kg-graph-container {
+    height: 600px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+/* ===== BUTTON ICON STYLES ===== */
+.kg-btn i {
+    margin-right: 5px;
+}
+
+/* ===== LOGS CONTENT STYLES ===== */
+.kg-logs-content {
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.kg-logs-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #495057;
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ===== QUICK ACCESS STYLES ===== */
+.kg-quick-access .kg-btn {
+    margin-bottom: 10px;
+}
+
+.kg-connection-details .kg-alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+}
+
+.kg-connection-details code {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: #e83e8c;
+}
+
+/* ===== CONNECTION STATUS BADGE ===== */
+#connection-status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+#connection-status-badge.connected {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+#connection-status-badge.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+#connection-status-badge.unknown {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* ===== RESPONSIVE DESIGN FOR DOCKER ===== */
+@media (max-width: 768px) {
+    .kg-status-card {
+        margin-bottom: 15px;
+    }
+    
+    .kg-docker-controls .kg-btn {
+        margin-bottom: 10px;
+    }
+} 

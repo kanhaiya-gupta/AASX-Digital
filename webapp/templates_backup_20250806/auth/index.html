@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Authentication - AASX Digital Twin Analytics Framework{% endblock %}
+
+{% block content %}
+<!-- Navigation Tabs -->
+<div class="container-fluid mb-4">
+    <div class="row">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="authTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="signup-tab" data-bs-toggle="tab" data-bs-target="#signup" type="button" role="tab">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">
+                        <i class="fas fa-user me-2"></i>Profile
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
+                        <i class="fas fa-users-cog me-2"></i>Admin Users
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Content -->
+<div class="tab-content" id="authTabContent">
+    <!-- Dashboard Tab -->
+    <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+        <div class="container-fluid">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-0 text-primary">
+                                <i class="fas fa-user-shield me-2"></i>
+                                Authentication & User Management
+                            </h1>
+                            <p class="text-muted mb-0">Secure access control and user administration</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary" onclick="refreshAuthData()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Refresh
+                            </button>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                                <i class="fas fa-user-plus me-1"></i>
+                                Add User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authentication Status Dashboard -->
+            {% include 'auth/components/status_dashboard.html' %}
+
+            <!-- User Management Section -->
+            {% include 'auth/components/user_management.html' %}
+
+            <!-- Role & Permission Management -->
+            {% include 'auth/components/role_management.html' %}
+
+            <!-- Security Settings -->
+            {% include 'auth/components/security_settings.html' %}
+
+            <!-- Authentication Logs -->
+            {% include 'auth/components/auth_logs.html' %}
+
+            <!-- Help & Documentation -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-gradient-secondary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-question-circle me-2"></i>
+                                Authentication Help & Documentation
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-play-circle me-2"></i>Quick Start Guide
+                                    </h6>
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item">
+                                            <h6 class="mb-1">1. User Registration</h6>
+                                            <p class="mb-1 small text-muted">Create new user accounts with appropriate roles and permissions</p>
+                                        </div>
+                                        <div class="list-group-item">
+                                            <h6 class="mb-1">2. Role Assignment</h6>
+                                            <p class="mb-1 small text-muted">Assign roles to users based on their responsibilities</p>
+                                        </div>
+                                        <div class="list-group-item">
+                                            <h6 class="mb-1">3. Security Configuration</h6>
+                                            <p class="mb-1 small text-muted">Configure password policies and security settings</p>
+                                        </div>
+                                        <div class="list-group-item">
+                                            <h6 class="mb-1">4. Access Monitoring</h6>
+                                            <p class="mb-1 small text-muted">Monitor user access and authentication logs</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="fas fa-book me-2"></i>Documentation Links
+                                    </h6>
+                                    <div class="list-group list-group-flush">
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="showLoginTab()">
+                                            <i class="fas fa-sign-in-alt me-2"></i>Login Page
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="showSignupTab()">
+                                            <i class="fas fa-user-plus me-2"></i>Sign Up Page
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="showProfileTab()">
+                                            <i class="fas fa-user me-2"></i>User Profile
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="showAdminTab()">
+                                            <i class="fas fa-users-cog me-2"></i>Admin Users
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action">
+                                            <i class="fas fa-file-pdf me-2"></i>Security Policy
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Tab -->
+    <div class="tab-pane fade" id="login" role="tabpanel">
+        {% include 'auth/components/login_section.html' %}
+    </div>
+
+    <!-- Signup Tab -->
+    <div class="tab-pane fade" id="signup" role="tabpanel">
+        {% include 'auth/components/signup_section.html' %}
+    </div>
+
+    <!-- Profile Tab -->
+    <div class="tab-pane fade" id="profile" role="tabpanel">
+        {% include 'auth/components/profile_section.html' %}
+    </div>
+
+    <!-- Admin Users Tab -->
+    <div class="tab-pane fade" id="admin" role="tabpanel">
+        {% include 'auth/components/admin_users_section.html' %}
+    </div>
+</div>
+
+<!-- Include All Modals -->
+{% include 'auth/components/modals.html' %}
+
+<!-- JavaScript -->
+<script>
+// Initialize the auth module
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize auth functionality
+    if (typeof AuthModule !== 'undefined') {
+        AuthModule.init();
+    }
+    
+    // Load initial data
+    refreshAuthData();
+});
+
+// Global refresh function
+function refreshAuthData() {
+    if (typeof AuthModule !== 'undefined') {
+        AuthModule.refreshAuthData();
+    }
+}
+
+// Tab navigation functions
+function showLoginTab() {
+    const loginTab = new bootstrap.Tab(document.getElementById('login-tab'));
+    loginTab.show();
+}
+
+function showSignupTab() {
+    const signupTab = new bootstrap.Tab(document.getElementById('signup-tab'));
+    signupTab.show();
+}
+
+function showProfileTab() {
+    const profileTab = new bootstrap.Tab(document.getElementById('profile-tab'));
+    profileTab.show();
+}
+
+function showAdminTab() {
+    const adminTab = new bootstrap.Tab(document.getElementById('admin-tab'));
+    adminTab.show();
+}
+
+// Section navigation functions (for internal links)
+function showLoginSection() {
+    const loginTab = new bootstrap.Tab(document.getElementById('login-tab'));
+    loginTab.show();
+}
+
+function showSignupSection() {
+    const signupTab = new bootstrap.Tab(document.getElementById('signup-tab'));
+    signupTab.show();
+}
+
+function showProfileSection() {
+    const profileTab = new bootstrap.Tab(document.getElementById('profile-tab'));
+    profileTab.show();
+}
+
+function showAdminSection() {
+    const adminTab = new bootstrap.Tab(document.getElementById('admin-tab'));
+    adminTab.show();
+}
+</script>
+{% endblock %} 

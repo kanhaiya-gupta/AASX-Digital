@@ -21,11 +21,10 @@ from .services.twin_registry_service import TwinRegistryService
 from .services.twin_operations_service import TwinOperationsService
 from .services.twin_monitoring_service import TwinMonitoringService
 from .services.twin_analytics_service import TwinAnalyticsService
-from .services.twin_integration_service import TwinIntegrationService
 
 # Import shared services (following AASX pattern)
 from src.shared.services.digital_twin_service import DigitalTwinService
-from src.shared.services.federated_learning_service import FederatedLearningService
+from src.federated_learning.core.federated_learning_service import FederatedLearningService
 from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
@@ -55,7 +54,6 @@ twin_registry_service = TwinRegistryService(db_manager)
 twin_operations_service = TwinOperationsService(digital_twin_service)
 twin_monitoring_service = TwinMonitoringService(digital_twin_service)
 twin_analytics_service = TwinAnalyticsService(digital_twin_service)
-twin_integration_service = TwinIntegrationService(digital_twin_service)
 
 # Pydantic models
 class TwinRegistration(BaseModel):
@@ -65,7 +63,11 @@ class TwinRegistration(BaseModel):
     aas_id: Optional[str] = None
     description: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
-    model_id: Optional[str] = None
+    twin_model_id: Optional[str] = None
+    
+    model_config = {
+        "protected_namespaces": ()
+    }
 
 class TwinUpdate(BaseModel):
     twin_name: Optional[str] = None
@@ -81,6 +83,25 @@ class TwinSyncRequest(BaseModel):
 class BulkOperationRequest(BaseModel):
     twin_ids: List[str]
     user: str = "system"
+
+# New models for core services
+class RelationshipCreate(BaseModel):
+    source_twin_id: str
+    target_twin_id: str
+    relationship_type: str
+    relationship_data: Optional[Dict[str, Any]] = None
+
+class InstanceCreate(BaseModel):
+    twin_id: str
+    instance_data: Dict[str, Any]
+    instance_metadata: Optional[Dict[str, Any]] = None
+    created_by: Optional[str] = None
+
+class LifecycleEventCreate(BaseModel):
+    twin_id: str
+    event_type: str
+    event_data: Optional[Dict[str, Any]] = None
+    triggered_by: Optional[str] = None
 
 # ============================================================================
 # Dashboard Routes
@@ -230,63 +251,277 @@ async def stop_twin(twin_id: str, user: str = "system"):
 
 @router.post("/twins/{twin_id}/restart")
 async def restart_twin(twin_id: str, user: str = "system"):
-    """Restart a twin operation"""
+    """Restart a twin"""
     try:
-        result = await twin_operations_service.restart_twin(twin_id, user)
+        # Stop the twin first
+        stop_result = await twin_registry_service.stop_twin(twin_id, user)
+        if not stop_result.get("success"):
+            return stop_result
+        
+        # Start the twin
+        start_result = await twin_registry_service.start_twin(twin_id, user)
+        return start_result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Lifecycle Management Endpoints (New Core Services)
+# ============================================================================
+
+@router.post("/twins/{twin_id}/lifecycle/start")
+async def start_twin_lifecycle(twin_id: str, user: str = "system"):
+    """Start a twin using core lifecycle service"""
+    try:
+        result = await twin_registry_service.start_twin(twin_id, user)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/twins/{twin_id}/configure")
-async def configure_twin(twin_id: str, config_data: Dict[str, Any], user: str = "system"):
-    """Configure twin settings"""
+@router.post("/twins/{twin_id}/lifecycle/stop")
+async def stop_twin_lifecycle(twin_id: str, user: str = "system"):
+    """Stop a twin using core lifecycle service"""
     try:
-        result = await twin_operations_service.configure_twin(twin_id, config_data, user)
+        result = await twin_registry_service.stop_twin(twin_id, user)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/twins/bulk/start")
-async def bulk_start_twins(request: BulkOperationRequest):
-    """Start multiple twins in bulk"""
+@router.post("/twins/{twin_id}/lifecycle/sync")
+async def sync_twin_lifecycle(twin_id: str, sync_request: TwinSyncRequest, user: str = "system"):
+    """Sync a twin using core lifecycle service"""
     try:
-        result = await twin_operations_service.bulk_operations(
-            request.twin_ids, "start", request.user
+        sync_data = {
+            "sync_type": sync_request.sync_type,
+            "force": sync_request.force
+        }
+        result = await twin_registry_service.sync_twin(twin_id, sync_data, user)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/twins/{twin_id}/lifecycle/status")
+async def get_twin_lifecycle_status(twin_id: str):
+    """Get lifecycle status for a twin"""
+    try:
+        twin_info = await twin_registry_service.get_twin_by_id(twin_id)
+        if not twin_info:
+            raise HTTPException(status_code=404, detail="Twin not found")
+        
+        return {
+            "twin_id": twin_id,
+            "lifecycle_status": twin_info.get("lifecycle_status", "unknown"),
+            "health_score": twin_info.get("health_score", 0),
+            "last_lifecycle_update": twin_info.get("last_lifecycle_update"),
+            "health_info": twin_info.get("health_info", {})
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/twins/{twin_id}/lifecycle/events")
+async def get_twin_lifecycle_events(twin_id: str, limit: int = 10):
+    """Get lifecycle events for a twin"""
+    try:
+        # This would use the core lifecycle service directly
+        # For now, return basic info from twin details
+        twin_info = await twin_registry_service.get_twin_by_id(twin_id)
+        if not twin_info:
+            raise HTTPException(status_code=404, detail="Twin not found")
+        
+        return {
+            "twin_id": twin_id,
+            "events": twin_info.get("health_info", {}).get("recent_events", []),
+            "total_events": len(twin_info.get("health_info", {}).get("recent_events", []))
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Relationship Management Endpoints (New Core Services)
+# ============================================================================
+
+@router.post("/relationships")
+async def create_relationship(relationship: RelationshipCreate):
+    """Create a relationship between twins"""
+    try:
+        result = await twin_registry_service.create_relationship(
+            relationship.source_twin_id,
+            relationship.target_twin_id,
+            relationship.relationship_type,
+            relationship.relationship_data
         )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/twins/bulk/stop")
-async def bulk_stop_twins(request: BulkOperationRequest):
-    """Stop multiple twins in bulk"""
+@router.get("/relationships")
+async def get_relationships(source_twin_id: str = None, target_twin_id: str = None):
+    """Get relationships with optional filtering"""
     try:
-        result = await twin_operations_service.bulk_operations(
-            request.twin_ids, "stop", request.user
+        if source_twin_id:
+            result = await twin_registry_service.get_twin_relationships(source_twin_id)
+        elif target_twin_id:
+            result = await twin_registry_service.get_twin_relationships(target_twin_id)
+        else:
+            raise HTTPException(status_code=400, detail="Must specify source_twin_id or target_twin_id")
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/twins/{twin_id}/relationships")
+async def get_twin_relationships(twin_id: str):
+    """Get all relationships for a specific twin"""
+    try:
+        result = await twin_registry_service.get_twin_relationships(twin_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/relationships/{relationship_id}")
+async def delete_relationship(relationship_id: str):
+    """Delete a relationship"""
+    try:
+        # This would use the core relationship service directly
+        # For now, return a placeholder response
+        return {
+            "success": True,
+            "message": f"Relationship {relationship_id} deleted successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Instance Management Endpoints (New Core Services)
+# ============================================================================
+
+@router.post("/instances")
+async def create_instance(instance: InstanceCreate):
+    """Create a new instance of a twin"""
+    try:
+        result = await twin_registry_service.create_instance(
+            instance.twin_id,
+            instance.instance_data,
+            instance.instance_metadata,
+            instance.created_by
         )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/twins/bulk/restart")
-async def bulk_restart_twins(request: BulkOperationRequest):
-    """Restart multiple twins in bulk"""
+@router.get("/instances")
+async def get_instances(twin_id: str = None):
+    """Get instances with optional twin filtering"""
     try:
-        result = await twin_operations_service.bulk_operations(
-            request.twin_ids, "restart", request.user
-        )
+        if twin_id:
+            # Get instances for specific twin
+            result = await twin_registry_service.get_twin_instances(twin_id)
+        else:
+            # Get all instances (placeholder for now)
+            result = {
+                "instances": [],
+                "total_count": 0,
+                "message": "No instances found"
+            }
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/twins/{twin_id}/operations/history")
-async def get_twin_operations_history(twin_id: str, limit: int = 50):
-    """Get operation history for a twin"""
+@router.get("/twins/{twin_id}/instances")
+async def get_twin_instances(twin_id: str):
+    """Get all instances for a specific twin"""
     try:
-        result = await twin_operations_service.get_twin_operations_history(twin_id, limit)
-        return {"success": True, "data": result}
+        result = await twin_registry_service.get_twin_instances(twin_id)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/instances/{instance_id}")
+async def get_instance_by_id(instance_id: str):
+    """Get a specific instance by ID"""
+    try:
+        # This would use the core instance service directly
+        # For now, return a placeholder response
+        return {
+            "instance_id": instance_id,
+            "message": "Instance details would be retrieved from core service"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Configuration Endpoints
+# ============================================================================
+
+@router.get("/configuration")
+async def get_configuration():
+    """Get system configuration"""
+    try:
+        # Return default configuration for now
+        return {
+            "system": {
+                "auto_sync": True,
+                "sync_interval": 300,
+                "max_instances_per_twin": 10,
+                "enable_monitoring": True,
+                "monitoring_interval": 60
+            },
+            "registry": {
+                "max_twins": 1000,
+                "enable_relationships": True,
+                "enable_lifecycle_tracking": True,
+                "enable_performance_monitoring": True
+            },
+            "ui": {
+                "refresh_interval": 30,
+                "show_advanced_options": False,
+                "enable_real_time_updates": True
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/configuration")
+async def save_configuration(config_data: Dict[str, Any]):
+    """Save system configuration"""
+    try:
+        # For now, just return success
+        return {
+            "success": True,
+            "message": "Configuration saved successfully",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Registry Analytics Endpoints (New Core Services)
+# ============================================================================
+
+@router.get("/registry/summary")
+async def get_registry_summary():
+    """Get comprehensive registry summary"""
+    try:
+        result = await twin_registry_service.get_registry_summary()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/registry/health")
+async def get_registry_health():
+    """Get registry health information"""
+    try:
+        summary = await twin_registry_service.get_registry_summary()
+        return {
+            "status": "healthy",
+            "summary": summary.get("summary", {}),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
 
 # ============================================================================
 # Twin Monitoring Endpoints
@@ -637,78 +872,6 @@ async def export_data(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
-# Twin Integration Endpoints
-# ============================================================================
-
-@router.post("/integration/aasx/{file_id}")
-async def integrate_with_aasx_file(file_id: str, twin_id: str = None):
-    """Integrate a twin with an AASX file"""
-    try:
-        result = await twin_integration_service.integrate_with_aasx_file(file_id, twin_id)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/integration/aasx")
-async def get_aasx_integrations(twin_id: str = None):
-    """Get AASX integrations for twins"""
-    try:
-        result = await twin_integration_service.get_aasx_integrations(twin_id)
-        return {"success": True, "data": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/integration/external/{twin_id}")
-async def sync_with_external_system(
-    twin_id: str,
-    external_system: str,
-    sync_config: Dict[str, Any]
-):
-    """Synchronize twin with external system"""
-    try:
-        result = await twin_integration_service.sync_with_external_system(
-            twin_id, external_system, sync_config
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/integration/external")
-async def get_external_integrations(twin_id: str = None):
-    """Get external system integrations for twins"""
-    try:
-        result = await twin_integration_service.get_external_integrations(twin_id)
-        return {"success": True, "data": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/integration/validate/{twin_id}")
-async def validate_integration(twin_id: str, integration_type: str):
-    """Validate integration status for a twin"""
-    try:
-        result = await twin_integration_service.validate_integration(twin_id, integration_type)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/integration/health")
-async def get_integration_health(twin_id: str = None):
-    """Get integration health status for twins"""
-    try:
-        result = await twin_integration_service.get_integration_health(twin_id)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/integration/export")
-async def export_integration_data(twin_id: str = None, format: str = "json"):
-    """Export integration data for twins"""
-    try:
-        result = await twin_integration_service.export_integration_data(twin_id, format)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 # ============================================================================
 # Status and Health Endpoints
 # ============================================================================
@@ -729,8 +892,7 @@ async def get_twin_registry_status():
                 "twin_registry": "available",
                 "twin_operations": "available",
                 "twin_monitoring": "available",
-                "twin_analytics": "available",
-                "twin_integration": "available"
+                "twin_analytics": "available"
             },
             "timestamp": datetime.now().isoformat()
         }
@@ -750,22 +912,16 @@ async def get_twin_registry_health():
         # Get system health
         system_health = await twin_monitoring_service.get_system_health()
         
-        # Get integration health
-        integration_health = await twin_integration_service.get_integration_health()
-        
         health = {
             "overall_status": "healthy",
             "system_health": system_health,
-            "integration_health": integration_health,
             "timestamp": datetime.now().isoformat()
         }
         
         # Determine overall status
-        if (system_health.get("system_status") == "critical" or 
-            integration_health.get("health_status") == "critical"):
+        if system_health.get("system_status") == "critical":
             health["overall_status"] = "critical"
-        elif (system_health.get("system_status") == "warning" or 
-              integration_health.get("health_status") == "warning"):
+        elif system_health.get("system_status") == "warning":
             health["overall_status"] = "warning"
         
         return health

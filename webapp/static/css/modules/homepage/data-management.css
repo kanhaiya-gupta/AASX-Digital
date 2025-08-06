@@ -1,0 +1,108 @@
+/* Data Management Section Styles */
+
+.homepage-data-management {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.homepage-data-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.homepage-data-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color);
+}
+
+.homepage-data-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+}
+
+.homepage-data-card:nth-child(1) .homepage-data-icon {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+}
+
+.homepage-data-card:nth-child(2) .homepage-data-icon {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+}
+
+.homepage-data-card:nth-child(3) .homepage-data-icon {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+}
+
+.homepage-data-card h4 {
+    color: var(--dark-color);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.homepage-data-card p {
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.homepage-data-card ul {
+    margin-bottom: 0;
+}
+
+.homepage-data-card li {
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.homepage-data-card li i {
+    font-size: 0.8rem;
+}
+
+.homepage-data-highlight {
+    border: 2px solid rgba(13, 110, 253, 0.1);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.homepage-data-highlight h4 {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.homepage-data-highlight .lead {
+    color: var(--text-color);
+    font-weight: 400;
+}
+
+.homepage-data-highlight h5 {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.homepage-data-highlight small {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .homepage-data-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .homepage-data-highlight {
+        padding: 1.5rem !important;
+    }
+    
+    .homepage-data-highlight .row > div {
+        margin-bottom: 1rem;
+    }
+} 

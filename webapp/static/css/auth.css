@@ -1,0 +1,129 @@
+/* ===== AUTH MODULE - MAIN CSS FILE ===== */
+
+/* Import modular CSS components */
+@import url('./modules/auth/layout.css');
+@import url('./modules/auth/forms.css');
+@import url('./modules/auth/components.css');
+
+/* ===== AUTH MODULE - GLOBAL STYLES ===== */
+
+/* CSS Custom Properties for Auth Module */
+:root {
+    /* Auth-specific color variables */
+    --auth-primary: #667eea;
+    --auth-secondary: #764ba2;
+    --auth-success: #51cf66;
+    --auth-danger: #ff6b6b;
+    --auth-warning: #ffc107;
+    --auth-info: #17a2b8;
+    
+    /* Auth-specific spacing */
+    --auth-spacing-xs: 0.5rem;
+    --auth-spacing-sm: 1rem;
+    --auth-spacing-md: 1.5rem;
+    --auth-spacing-lg: 2rem;
+    --auth-spacing-xl: 3rem;
+    
+    /* Auth-specific border radius */
+    --auth-border-radius-sm: 8px;
+    --auth-border-radius-md: 10px;
+    --auth-border-radius-lg: 15px;
+    --auth-border-radius-xl: 20px;
+    
+    /* Auth-specific shadows */
+    --auth-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --auth-shadow-md: 0 5px 15px rgba(0, 0, 0, 0.1);
+    --auth-shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Global auth module styles */
+.auth-module {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Auth-specific utility classes */
+.auth-text-primary { color: var(--auth-primary) !important; }
+.auth-text-secondary { color: var(--auth-secondary) !important; }
+.auth-text-success { color: var(--auth-success) !important; }
+.auth-text-danger { color: var(--auth-danger) !important; }
+.auth-text-warning { color: var(--auth-warning) !important; }
+.auth-text-info { color: var(--auth-info) !important; }
+
+.auth-bg-primary { background-color: var(--auth-primary) !important; }
+.auth-bg-secondary { background-color: var(--auth-secondary) !important; }
+.auth-bg-success { background-color: var(--auth-success) !important; }
+.auth-bg-danger { background-color: var(--auth-danger) !important; }
+.auth-bg-warning { background-color: var(--auth-warning) !important; }
+.auth-bg-info { background-color: var(--auth-info) !important; }
+
+/* Auth-specific spacing utilities */
+.auth-m-0 { margin: 0 !important; }
+.auth-m-1 { margin: var(--auth-spacing-xs) !important; }
+.auth-m-2 { margin: var(--auth-spacing-sm) !important; }
+.auth-m-3 { margin: var(--auth-spacing-md) !important; }
+.auth-m-4 { margin: var(--auth-spacing-lg) !important; }
+.auth-m-5 { margin: var(--auth-spacing-xl) !important; }
+
+.auth-p-0 { padding: 0 !important; }
+.auth-p-1 { padding: var(--auth-spacing-xs) !important; }
+.auth-p-2 { padding: var(--auth-spacing-sm) !important; }
+.auth-p-3 { padding: var(--auth-spacing-md) !important; }
+.auth-p-4 { padding: var(--auth-spacing-lg) !important; }
+.auth-p-5 { padding: var(--auth-spacing-xl) !important; }
+
+/* Auth-specific border radius utilities */
+.auth-rounded-sm { border-radius: var(--auth-border-radius-sm) !important; }
+.auth-rounded-md { border-radius: var(--auth-border-radius-md) !important; }
+.auth-rounded-lg { border-radius: var(--auth-border-radius-lg) !important; }
+.auth-rounded-xl { border-radius: var(--auth-border-radius-xl) !important; }
+
+/* Auth-specific shadow utilities */
+.auth-shadow-sm { box-shadow: var(--auth-shadow-sm) !important; }
+.auth-shadow-md { box-shadow: var(--auth-shadow-md) !important; }
+.auth-shadow-lg { box-shadow: var(--auth-shadow-lg) !important; }
+
+/* Responsive utilities for auth module */
+@media (max-width: 768px) {
+    .auth-container {
+        padding: 10px;
+    }
+    
+    .auth-card {
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stats-card {
+        margin-bottom: 15px;
+    }
+    
+    .profile-info {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .auth-card {
+        padding: 15px;
+        border-radius: 15px;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .nav-tabs .nav-link {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+} 

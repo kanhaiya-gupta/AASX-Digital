@@ -1,0 +1,153 @@
+<!-- Advanced Filters Component -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-gradient-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-filter me-2"></i>
+                        Advanced Analytics Filters
+                    </h6>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm" onclick="resetAllFilters()">
+                            <i class="fas fa-undo me-1"></i>
+                            Reset All
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="saveFilterPreset()">
+                            <i class="fas fa-save me-1"></i>
+                            Save Preset
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="loadFilterPreset()">
+                            <i class="fas fa-folder-open me-1"></i>
+                            Load Preset
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <form id="advancedFiltersForm">
+                    <div class="row">
+                        <!-- Date Range Filter -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Date Range</label>
+                            <select class="form-select" id="dateRangeFilter">
+                                <option value="7">Last 7 days</option>
+                                <option value="14">Last 14 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                                <option value="365">Last year</option>
+                                <option value="custom">Custom range</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Date Range (hidden by default) -->
+                        <div class="col-md-6 mb-3" id="customDateRange" style="display: none;">
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="startDate">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="endDate">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Facility Filter -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Facility</label>
+                            <select class="form-select" id="facilityFilter">
+                                <option value="">All Facilities</option>
+                                <option value="additive">Additive Manufacturing</option>
+                                <option value="hydrogen">Hydrogen Filling Station</option>
+                                <option value="servo">Servo DC Motor Assembly</option>
+                            </select>
+                        </div>
+
+                        <!-- Metric Type Filter -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Metric Type</label>
+                            <select class="form-select" id="metricTypeFilter">
+                                <option value="">All Metrics</option>
+                                <option value="quality_metrics">Quality Metrics</option>
+                                <option value="performance_metrics">Performance Metrics</option>
+                                <option value="safety_metrics">Safety Metrics</option>
+                                <option value="efficiency_metrics">Efficiency Metrics</option>
+                            </select>
+                        </div>
+
+                        <!-- Performance Threshold -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Performance Threshold</label>
+                            <div class="d-flex align-items-center">
+                                <input type="range" class="form-range me-2" id="performanceThreshold" 
+                                       min="0" max="100" value="80" style="flex: 1;">
+                                <span class="badge bg-primary" id="thresholdValue">80%</span>
+                            </div>
+                        </div>
+
+                        <!-- Search Box -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Search</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchFilter" 
+                                       placeholder="Search twins, metrics, or descriptions...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="excellent">Excellent</option>
+                                <option value="good">Good</option>
+                                <option value="average">Average</option>
+                                <option value="poor">Poor</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Options -->
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Sort By</label>
+                            <select class="form-select" id="sortFilter">
+                                <option value="date_desc">Date (Newest First)</option>
+                                <option value="date_asc">Date (Oldest First)</option>
+                                <option value="performance_desc">Performance (High to Low)</option>
+                                <option value="performance_asc">Performance (Low to High)</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Filter Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button type="button" class="btn btn-primary" onclick="applyAdvancedFilters()">
+                                        <i class="fas fa-filter me-1"></i>
+                                        Apply Filters
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary ms-2" onclick="exportFilteredData()">
+                                        <i class="fas fa-download me-1"></i>
+                                        Export Filtered Data
+                                    </button>
+                                </div>
+                                <div class="text-muted small">
+                                    <span id="filteredResultsCount">0</span> results found
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> 

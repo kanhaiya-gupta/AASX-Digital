@@ -1,0 +1,646 @@
+{% extends "base.html" %}
+
+{% block title %}AASX Digital Twin Analytics Framework - Advanced Asset Management{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Advanced Asset Management with Digital Twin Analytics
+                </h1>
+                <p class="lead mb-4">
+                    Transform your AASX files into actionable insights with our comprehensive digital twin framework. 
+                    From intelligent ETL processing to AI-powered analytics and real-time monitoring, unlock the full potential of your asset data.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="/aasx" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>
+                        Get Started
+                    </a>
+                    <a href="/analytics" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        View Analytics
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="hero-visual">
+                    <i class="fas fa-cube fa-6x text-light opacity-75"></i>
+                    <div class="floating-elements">
+                        <i class="fas fa-robot fa-2x text-warning"></i>
+                        <i class="fas fa-project-diagram fa-2x text-info"></i>
+                        <i class="fas fa-chart-line fa-2x text-success"></i>
+                        <i class="fas fa-sync fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Welcome Section for Authenticated Users -->
+<div class="container mt-4" id="welcomeSection" style="display: none;">
+    <div class="alert alert-info border-0 shadow-sm">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-user-circle fa-2x me-3 text-primary"></i>
+            <div>
+                <h5 class="mb-1">Welcome back, <span id="welcomeUserName">User</span>!</h5>
+                <p class="mb-0">You're logged in as <span id="welcomeUserRole">User</span>. Continue managing your digital twins and analytics.</p>
+            </div>
+            <div class="ms-auto">
+                <a href="/auth/profile" class="btn btn-outline-primary btn-sm me-2">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+                <a href="/auth/admin/users" class="btn btn-outline-secondary btn-sm" id="adminLink" style="display: none;">
+                    <i class="fas fa-users-cog"></i> User Management
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <h2 class="display-5 fw-bold mb-3">Why Choose Our Framework?</h2>
+            <p class="lead text-muted">Comprehensive, scalable, and intelligent asset management solution</p>
+        </div>
+    </div>
+    
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="feature-card text-center p-4 h-100">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-cogs fa-3x text-primary"></i>
+                </div>
+                <h4>Intelligent ETL Processing</h4>
+                <p class="text-muted">
+                    Advanced Extract, Transform, Load pipeline with project-based organization, 
+                    real-time progress tracking, and multi-format output support including SQLite integration.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card text-center p-4 h-100">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-sync fa-3x text-success"></i>
+                </div>
+                <h4>Real-Time Twin Registry</h4>
+                <p class="text-muted">
+                    Advanced digital twin management with real-time monitoring, performance tracking, 
+                    health analytics, and automated AASX integration with WebSocket connectivity.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card text-center p-4 h-100">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-chart-bar fa-3x text-info"></i>
+                </div>
+                <h4>Advanced Analytics Dashboard</h4>
+                <p class="text-muted">
+                    Comprehensive analytics with quality trends, performance monitoring, 
+                    predictive analysis, and cross-module integration for complete asset insights.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AASX Package Explorer Section -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="display-5 fw-bold mb-4">Create & Edit AASX Files</h2>
+                <p class="lead text-muted mb-4">
+                    Use the Eclipse AASX Package Explorer to create, edit, and validate your AASX files before processing them through our framework.
+                </p>
+                <div class="feature-list mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-check-circle text-success me-3"></i>
+                        <span>Create new AASX packages from scratch</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-check-circle text-success me-3"></i>
+                        <span>Edit existing AASX files and submodels</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-check-circle text-success me-3"></i>
+                        <span>Validate AASX structure and compliance</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-check-circle text-success me-3"></i>
+                        <span>Export files in various formats</span>
+                    </div>
+                </div>
+                
+                <!-- License Information -->
+                <div class="license-info bg-white p-3 rounded border mb-4">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle text-info me-2 mt-1"></i>
+                        <div>
+                            <h6 class="mb-2">License Information</h6>
+                            <p class="small text-muted mb-2">
+                                <strong>Eclipse AASX Package Explorer</strong> is licensed under the 
+                                <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" class="text-decoration-none">
+                                    Apache License 2.0
+                                </a>.
+                            </p>
+                            <p class="small text-muted mb-2">
+                                This C# based viewer and editor for the Asset Administration Shell is developed by the 
+                                <a href="https://github.com/eclipse-aaspe/package-explorer" target="_blank" class="text-decoration-none">
+                                    Eclipse AASPE project
+                                </a>.
+                            </p>
+                            <p class="small text-muted mb-0">
+                                The implementation uses concepts from "Details of the Asset Administration Shell" 
+                                published on <a href="https://www.plattform-i40.de" target="_blank" class="text-decoration-none">www.plattform-i40.de</a> 
+                                under Creative Commons CC BY-ND 3.0 DE.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-3">
+                    <button onclick="launchAASXExplorer()" class="btn btn-primary btn-lg">
+                        <i class="fas fa-play me-2"></i>
+                        Launch AASX Package Explorer
+                    </button>
+                    <a href="/aasx-explorer" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Learn More
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="explorer-visual">
+                    <div class="explorer-window">
+                        <div class="explorer-header">
+                            <div class="explorer-buttons">
+                                <span class="explorer-btn red"></span>
+                                <span class="explorer-btn yellow"></span>
+                                <span class="explorer-btn green"></span>
+                            </div>
+                            <div class="explorer-title">AASX Package Explorer</div>
+                        </div>
+                        <div class="explorer-content">
+                            <div class="explorer-sidebar">
+                                <div class="explorer-item active">
+                                    <i class="fas fa-cube me-2"></i>
+                                    Asset Administration Shell
+                                </div>
+                                <div class="explorer-item">
+                                    <i class="fas fa-layer-group me-2"></i>
+                                    Submodels
+                                </div>
+                                <div class="explorer-item">
+                                    <i class="fas fa-tag me-2"></i>
+                                    Properties
+                                </div>
+                                <div class="explorer-item">
+                                    <i class="fas fa-link me-2"></i>
+                                    Relationships
+                                </div>
+                            </div>
+                            <div class="explorer-main">
+                                <div class="explorer-preview">
+                                    <i class="fas fa-file-archive fa-3x text-primary mb-3"></i>
+                                    <h5>AM5000_3D_Printer.aasx</h5>
+                                    <p class="text-muted">Ready for processing</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modules Section -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Complete Solution Modules</h2>
+                <p class="lead text-muted">Everything you need for comprehensive asset management</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            {% for module in modules %}
+            <div class="col-lg-6 col-xl-4">
+                <div class="module-card card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="module-icon me-3">
+                                <i class="{{ module.icon }} fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title mb-1">{{ module.name }}</h5>
+                                <p class="card-text text-muted small">{{ module.description }}</p>
+                            </div>
+                        </div>
+                        <a href="{{ module.url }}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            Explore Module
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="container py-5">
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <h2 class="display-5 fw-bold mb-3">Framework Performance</h2>
+            <p class="lead text-muted">Trusted by organizations worldwide</p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="stat-card text-center p-4">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-file-archive fa-3x text-primary"></i>
+                </div>
+                <h2 class="fw-bold text-primary mb-2">9+</h2>
+                <p class="text-muted mb-0">AASX Files Processed</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center p-4">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-sync fa-3x text-success"></i>
+                </div>
+                <h2 class="fw-bold text-success mb-2">1</h2>
+                <p class="text-muted mb-0">Active Digital Twins</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center p-4">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-chart-line fa-3x text-info"></i>
+                </div>
+                <h2 class="fw-bold text-info mb-2">6</h2>
+                <p class="text-muted mb-0">Analytics Modules</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center p-4">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-robot fa-3x text-warning"></i>
+                </div>
+                <h2 class="fw-bold text-warning mb-2">5</h2>
+                <p class="text-muted mb-0">RAG Techniques</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Section -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h3 class="fw-bold mb-4">
+                    <i class="fas fa-clock text-primary me-2"></i>
+                    Recent Activity
+                </h3>
+                <div class="activity-timeline">
+                    <div class="activity-item d-flex align-items-center mb-3">
+                        <div class="activity-icon me-3">
+                            <i class="fas fa-sync text-success"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6 class="mb-1">Digital Twin Registry Updated</h6>
+                            <p class="text-muted mb-0">Real-time monitoring active - 2 minutes ago</p>
+                        </div>
+                    </div>
+                    <div class="activity-item d-flex align-items-center mb-3">
+                        <div class="activity-icon me-3">
+                            <i class="fas fa-chart-bar text-info"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6 class="mb-1">Analytics Dashboard Enhanced</h6>
+                            <p class="text-muted mb-0">Advanced analytics with cross-module integration - 15 minutes ago</p>
+                        </div>
+                    </div>
+                    <div class="activity-item d-flex align-items-center mb-3">
+                        <div class="activity-icon me-3">
+                            <i class="fas fa-cogs text-primary"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6 class="mb-1">AASX Integration Completed</h6>
+                            <p class="text-muted mb-0">Project-based file discovery and auto-registration - 1 hour ago</p>
+                        </div>
+                    </div>
+                    <div class="activity-item d-flex align-items-center mb-3">
+                        <div class="activity-icon me-3">
+                            <i class="fas fa-robot text-warning"></i>
+                        </div>
+                        <div class="activity-content">
+                            <h6 class="mb-1">AI Analysis Completed</h6>
+                            <p class="text-muted mb-0">Quality assessment for AM5000 3D printer - 2 hours ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-line text-primary me-2"></i>
+                            Quick Actions
+                        </h5>
+                        <div class="d-grid gap-2">
+                            <a href="/aasx" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>
+                                Upload AASX File
+                            </a>
+                            <a href="/twin-registry" class="btn btn-success">
+                                <i class="fas fa-sync me-2"></i>
+                                Manage Digital Twins
+                            </a>
+                            <a href="/analytics" class="btn btn-info">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                View Analytics
+                            </a>
+                            <button onclick="launchAASXExplorer()" class="btn btn-outline-primary">
+                                <i class="fas fa-play me-2"></i>
+                                Launch AASX Package Explorer
+                            </button>
+                            <a href="/aasx-explorer/download-zip" class="btn btn-outline-success">
+                                <i class="fas fa-download me-2"></i>
+                                Download AASX Explorer
+                            </a>
+                            <a href="/ai-rag" class="btn btn-outline-primary">
+                                <i class="fas fa-robot me-2"></i>
+                                Start AI Analysis
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <h2 class="display-5 fw-bold mb-4">Ready to Transform Your Asset Management?</h2>
+            <p class="lead text-muted mb-4">
+                Join organizations worldwide who are leveraging the power of digital twin analytics 
+                to optimize their operations and drive innovation with real-time monitoring and advanced analytics.
+            </p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a href="/aasx" class="btn btn-primary btn-lg">
+                    <i class="fas fa-rocket me-2"></i>
+                    Start Your Journey
+                </a>
+                <a href="/analytics" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    View Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-visual {
+    position: relative;
+}
+
+.floating-elements {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-elements i {
+    position: absolute;
+    animation: float 4s ease-in-out infinite;
+}
+
+.floating-elements i:nth-child(1) { top: -30px; left: -30px; animation-delay: 0s; }
+.floating-elements i:nth-child(2) { top: -30px; right: -30px; animation-delay: 1s; }
+.floating-elements i:nth-child(3) { bottom: -30px; left: 0; animation-delay: 2s; }
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+.feature-card {
+    transition: transform 0.3s ease;
+    border-radius: 15px;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.module-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 15px;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+}
+
+.stat-card {
+    transition: transform 0.3s ease;
+    border-radius: 15px;
+}
+
+.stat-card:hover {
+    transform: scale(1.05);
+}
+
+.activity-timeline .activity-item {
+    padding: 15px;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.activity-timeline .activity-item:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* AASX Package Explorer Styles */
+.explorer-window {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.explorer-header {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+}
+
+.explorer-buttons {
+    display: flex;
+    gap: 8px;
+    margin-right: 15px;
+}
+
+.explorer-btn {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.explorer-btn.red { background: #ff5f56; }
+.explorer-btn.yellow { background: #ffbd2e; }
+.explorer-btn.green { background: #27ca3f; }
+
+.explorer-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.explorer-content {
+    display: flex;
+    height: 300px;
+}
+
+.explorer-sidebar {
+    width: 200px;
+    background: #f8f9fa;
+    border-right: 1px solid #dee2e6;
+    padding: 15px 0;
+}
+
+.explorer-item {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #6c757d;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.explorer-item:hover {
+    background: #e9ecef;
+}
+
+.explorer-item.active {
+    background: #007bff;
+    color: white;
+}
+
+.explorer-main {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.explorer-preview {
+    text-align: center;
+}
+
+.feature-list .fas {
+    width: 20px;
+}
+</style>
+
+<script>
+async function launchAASXExplorer() {
+    // Store button reference at the start
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    try {
+        // Show loading state
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Launching...';
+        button.disabled = true;
+        
+        // Call the launch API
+        const response = await fetch('/aasx-explorer/launch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            // Show success message
+            if (window.AASXFramework && window.AASXFramework.showNotification) {
+                window.AASXFramework.showNotification(result.message, 'success');
+            } else {
+                alert(result.message);
+            }
+        } else {
+            // Show error message
+            const errorMessage = result.detail || result.error || 'Failed to launch AASX Package Explorer';
+            if (window.AASXFramework && window.AASXFramework.showNotification) {
+                window.AASXFramework.showNotification(errorMessage, 'error');
+            } else {
+                alert('Error: ' + errorMessage);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error launching AASX Explorer:', error);
+        const errorMessage = 'Failed to launch AASX Package Explorer. Please try again.';
+        if (window.AASXFramework && window.AASXFramework.showNotification) {
+            window.AASXFramework.showNotification(errorMessage, 'error');
+        } else {
+            alert('Error: ' + errorMessage);
+        }
+    } finally {
+        // Restore button state using stored reference
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+}
+</script>
+
+{% endblock %}

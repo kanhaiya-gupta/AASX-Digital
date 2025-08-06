@@ -1,0 +1,451 @@
+/**
+ * Federated Learning Module Components CSS Module
+ * Dedicated styling for reusable components
+ */
+
+/* ===== TABLE STYLING ===== */
+.fl-table {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.fl-table .table {
+    margin-bottom: 0;
+}
+
+.fl-table .table th {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.fl-table .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.fl-table .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* ===== CARD STYLING ===== */
+.fl-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    background: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.fl-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.fl-card .card-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+.fl-card .card-body {
+    padding: 1.5rem;
+}
+
+/* ===== BUTTON STYLING ===== */
+.btn-fl {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-fl:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-fl-primary {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+}
+
+.btn-fl-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+}
+
+.btn-fl-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+}
+
+.btn-fl-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+/* ===== STATUS BADGES ===== */
+.fl-status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.fl-status-badge.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.fl-status-badge.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.fl-status-badge.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.fl-status-badge.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* ===== ALERT STYLING ===== */
+.fl-alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.fl-alert.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.fl-alert.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.fl-alert.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.fl-alert.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+/* ===== CHART CONTAINER STYLING ===== */
+.fl-chart-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.fl-chart-container.large { height: 250px; }
+.fl-chart-container.medium { height: 200px; }
+.fl-chart-container.small { height: 150px; }
+.fl-chart-container.tall { height: 300px; }
+
+/* ===== LOADING STATES ===== */
+.fl-loading-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.fl-loading-state.show { 
+    display: block; 
+}
+
+.fl-loading-state .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* ===== EMPTY STATES ===== */
+.fl-empty-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+    color: #6c757d;
+}
+
+.fl-empty-state.show { 
+    display: block; 
+}
+
+.fl-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* ===== PROGRESS BAR STYLING ===== */
+.fl-progress-container {
+    margin: 1rem 0;
+}
+
+.fl-progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.fl-progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    transition: width 0.3s ease;
+}
+
+.fl-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.fl-progress-label i {
+    margin-right: 0.5rem;
+    color: #fd7e14;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .fl-table .table th,
+    .fl-table .table td {
+        padding: 0.75rem;
+    }
+    
+    .fl-card .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-fl {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .fl-chart-container {
+        height: 150px;
+    }
+    
+    .fl-chart-container.large {
+        height: 200px;
+    }
+    
+    .fl-progress-label {
+        font-size: 0.8rem;
+    }
+} 
+
+/* ===== GRADIENT BACKGROUNDS ===== */
+.fl-bg-gradient-federated {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.fl-bg-gradient-collaborative {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.fl-bg-gradient-privacy {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.fl-bg-gradient-insights {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+/* ===== CARD ENHANCEMENTS ===== */
+.fl-federated-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.fl-federated-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.fl-federated-card .fl-card-header {
+    border-bottom: none;
+    border-radius: 15px 15px 0 0 !important;
+    font-weight: 600;
+    padding: 1.5rem;
+}
+
+/* ===== TWIN STATUS INDICATORS ===== */
+.fl-twin-status {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.fl-twin-status.active {
+    background-color: #28a745;
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+    animation: fl-pulse-green 2s infinite;
+}
+
+.fl-twin-status.inactive {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+.fl-twin-status.warning {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.3);
+    animation: fl-pulse-yellow 2s infinite;
+}
+
+@keyframes fl-pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+@keyframes fl-pulse-yellow {
+    0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+/* ===== PROGRESS BARS ===== */
+.fl-progress-federated {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.fl-progress-federated .progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* ===== RELATIONSHIP VISUALIZATION ===== */
+.fl-relationship-node {
+    display: inline-block;
+    padding: 8px 16px;
+    margin: 4px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
+}
+
+.fl-relationship-node.manufacturing {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.fl-relationship-node.energy {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.fl-relationship-node.hydrogen {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* ===== REAL-TIME UPDATES ===== */
+.fl-real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #28a745;
+    animation: fl-blink 1s infinite;
+    margin-right: 8px;
+}
+
+@keyframes fl-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* ===== INSIGHT CARDS ===== */
+.fl-insight-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #667eea;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.fl-insight-card .fl-insight-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.fl-insight-card .fl-insight-content {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* ===== BUTTON ENHANCEMENTS ===== */
+.fl-btn-federated {
+    border-radius: 25px;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.fl-btn-federated:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* ===== LOADING ANIMATIONS ===== */
+.fl-loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: fl-spin 1s linear infinite;
+}
+
+@keyframes fl-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 

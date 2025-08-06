@@ -1,176 +1,234 @@
 """
-Physics Modeling Framework
+Physics Modeling Framework - Main Entry Point
 
-A comprehensive framework for physics-based modeling and simulation,
-integrating with digital twins and AI/RAG systems for enhanced insights.
-
-This package provides:
-- Core physics modeling components (materials, geometry, boundary conditions)
-- Integration with digital twins and AI/RAG systems
-- Real-world use cases and examples
-- Multi-physics simulation capabilities
+A minimal, static framework that provides plugin templates for users to create 
+custom physics types and solvers. Integrates with existing shared database infrastructure.
 """
 
-from .core import PhysicsModel, Material, Geometry, BoundaryConditions
-from .integration import TwinConnector, AIRAGConnector, RealTimeConnector
-from .use_cases import (
-    ThermalAnalysisUseCases,
-    StructuralAnalysisUseCases,
-    FluidDynamicsUseCases,
-    MultiPhysicsUseCases,
-    IndustrialUseCases
-)
+import os
+import logging
+from pathlib import Path
+from typing import Dict, Any, Optional, List
 
-class PhysicsModelingFramework:
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class DynamicPhysicsModelingFramework:
     """
-    Main integration class for physics modeling framework
+    Main entry point for physics modeling framework.
     
-    This class provides a unified interface for creating, managing, and
-    analyzing physics-based models with integration to digital twins
-    and AI/RAG systems.
+    This framework provides:
+    - Plugin management and discovery
+    - Model creation from digital twins
+    - Common simulation infrastructure
+    - Integration with existing shared database
     """
     
-    def __init__(self):
-        """Initialize the physics modeling framework"""
-        self.core_components = {
-            'physics_model': PhysicsModel,
-            'material': Material,
-            'geometry': Geometry,
-            'boundary_conditions': BoundaryConditions
-        }
+    def __init__(self, db_path: Optional[str] = None):
+        """
+        Initialize the physics modeling framework.
         
-        self.integration_components = {
-            'twin_connector': TwinConnector,
-            'ai_rag_connector': AIRAGConnector,
-            'realtime_connector': RealTimeConnector
-        }
-        
-        self.use_cases = {
-            'thermal': ThermalAnalysisUseCases,
-            'structural': StructuralAnalysisUseCases,
-            'fluid_dynamics': FluidDynamicsUseCases,
-            'multi_physics': MultiPhysicsUseCases,
-            'industrial': IndustrialUseCases
-        }
+        Args:
+            db_path: Optional path to database. If None, uses default from environment.
+        """
+        try:
+            # Use existing shared database infrastructure
+            from src.shared.database.connection_manager import DatabaseConnectionManager
+            from src.shared.database.base_manager import BaseDatabaseManager
+            
+            # Get database path from environment if not provided
+            if db_path is None:
+                db_path = os.getenv('DATABASE_PATH', 'data/aasx_database.db')
+            
+            # Convert to Path object
+            db_path = Path(db_path)
+            
+            # Initialize database connection
+            connection_manager = DatabaseConnectionManager(db_path)
+            self.db_manager = BaseDatabaseManager(connection_manager)
+            
+            # Use existing repositories
+            from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
+            from src.shared.repositories.file_repository import FileRepository
+            from src.shared.repositories.project_repository import ProjectRepository
+            from src.shared.repositories.use_case_repository import UseCaseRepository
+            
+            self.digital_twin_repo = DigitalTwinRepository(self.db_manager)
+            self.file_repo = FileRepository(self.db_manager)
+            self.project_repo = ProjectRepository(self.db_manager)
+            self.use_case_repo = UseCaseRepository(self.db_manager)
+            
+            # Initialize core components
+            from .core.plugin_manager import PluginManager
+            from .core.model_factory import ModelFactory
+            from .core.registry import Registry
+            from .simulation.simulation_engine import SimulationEngine
+            
+            self.plugin_manager = PluginManager(self.use_case_repo)
+            self.model_factory = ModelFactory(self.digital_twin_repo, self.plugin_manager, self.file_repo)
+            self.registry = Registry()
+            self.simulation_engine = SimulationEngine(
+                self.digital_twin_repo, 
+                self.plugin_manager,
+                self.file_repo
+            )
+            
+            # Discover and register plugins for existing use cases
+            self.plugin_manager.discover_and_register_plugins()
+            
+            logger.info("Physics Modeling Framework initialized successfully")
+            
+        except ImportError as e:
+            logger.error(f"Failed to import required modules: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to initialize Physics Modeling Framework: {e}")
+            raise
     
-    def get_available_use_cases(self) -> dict:
-        """Get all available use cases organized by category"""
-        use_case_categories = {}
+    def get_available_plugins(self, twin_id: str = None) -> Dict[str, Any]:
+        """
+        Get available physics plugins, optionally filtered by digital twin.
         
-        for category, use_case_class in self.use_cases.items():
-            use_case_categories[category] = use_case_class.get_all_use_cases()
-        
-        return use_case_categories
+        Args:
+            twin_id: Optional digital twin ID to filter plugins by use case/project
+            
+        Returns:
+            Dictionary of plugin_id -> plugin_info
+        """
+        if twin_id:
+            # Get plugins specific to this twin's use case/project
+            plugins = self.plugin_manager.get_plugins_for_twin(twin_id)
+            return {plugin['plugin_id']: plugin for plugin in plugins}
+        else:
+            # Get all plugins
+            return self.plugin_manager.get_all_plugins_info()
     
-    def get_use_case_by_name(self, name: str) -> dict:
-        """Get a specific use case by name across all categories"""
-        for category, use_case_class in self.use_cases.items():
-            try:
-                return use_case_class.get_use_case_by_name(name)
-            except ValueError:
-                continue
-        raise ValueError(f"Use case '{name}' not found in any category")
+    def get_twin_trace_info(self, twin_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get trace information for a digital twin (use case, project, file).
+        
+        Args:
+            twin_id: Digital twin ID (which equals file_id)
+            
+        Returns:
+            Trace information or None if not found
+        """
+        try:
+            trace_info = self.file_repo.get_file_trace_info(twin_id)
+            return trace_info
+        except Exception as e:
+            logger.error(f"Failed to get trace info for twin {twin_id}: {e}")
+            return None
     
-    def get_use_cases_by_industry(self, industry: str) -> list:
-        """Get all use cases for a specific industry"""
-        matching_use_cases = []
+    def get_plugins_for_use_case(self, use_case_name: str) -> List[Dict[str, Any]]:
+        """
+        Get plugins available for a specific use case.
         
-        for category, use_case_class in self.use_cases.items():
-            use_cases = use_case_class.get_all_use_cases()
-            for use_case in use_cases:
-                if use_case.get('industry', '').lower() == industry.lower():
-                    matching_use_cases.append(use_case)
-        
-        return matching_use_cases
+        Args:
+            use_case_name: Name of the use case
+            
+        Returns:
+            List of plugin information
+        """
+        try:
+            plugins = self.plugin_manager.get_plugins_for_use_case(use_case_name)
+            return plugins
+        except Exception as e:
+            logger.error(f"Failed to get plugins for use case {use_case_name}: {e}")
+            return []
     
-    def get_use_cases_by_physics_type(self, physics_type: str) -> list:
-        """Get all use cases for a specific physics type"""
-        matching_use_cases = []
+    def create_model(self, twin_id: str, physics_type: str, 
+                    parameters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Create a physics model from digital twin.
         
-        for category, use_case_class in self.use_cases.items():
-            use_cases = use_case_class.get_all_use_cases()
-            for use_case in use_cases:
-                if use_case.get('physics_focus', '').lower().find(physics_type.lower()) != -1:
-                    matching_use_cases.append(use_case)
-        
-        return matching_use_cases
+        Args:
+            twin_id: Digital twin ID
+            physics_type: Type of physics plugin to use
+            parameters: Model parameters
+            
+        Returns:
+            Model information or None if creation failed
+        """
+        try:
+            model = self.model_factory.create_model_from_twin(
+                twin_id, physics_type, parameters
+            )
+            return model
+        except Exception as e:
+            logger.error(f"Failed to create model: {e}")
+            return None
     
-    def create_model_from_use_case(self, use_case_name: str) -> PhysicsModel:
-        """Create a physics model from a predefined use case"""
-        use_case = self.get_use_case_by_name(use_case_name)
+    def run_simulation(self, twin_id: str, plugin_id: str, 
+                      parameters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Run a physics simulation using a specific plugin.
         
-        # Create physics model with use case data
-        model = PhysicsModel(
-            name=use_case['name'],
-            physics_type=use_case.get('physics_focus', 'multi_physics'),
-            description=use_case['description']
-        )
-        
-        # Add materials from use case
-        for material_name, material_data in use_case.get('materials', {}).items():
-            model.add_material(material_name, material_data)
-        
-        # Add geometry from use case
-        for geometry_name, geometry_data in use_case.get('geometry', {}).items():
-            model.add_geometry(geometry_name, geometry_data)
-        
-        # Add boundary conditions from use case
-        if 'boundary_conditions' in use_case:
-            model.set_boundary_conditions(use_case['boundary_conditions'])
-        
-        return model
+        Args:
+            twin_id: Digital twin ID
+            plugin_id: Plugin ID to use for simulation
+            parameters: Simulation parameters
+            
+        Returns:
+            Simulation results or None if simulation failed
+        """
+        try:
+            # Get plugin by ID
+            plugin_info = self.plugin_manager.get_plugin_by_id(plugin_id)
+            if not plugin_info:
+                logger.error(f"Plugin {plugin_id} not found")
+                return None
+            
+            # Run simulation using the plugin
+            results = self.simulation_engine.run_simulation_with_plugin(
+                twin_id, plugin_id, parameters
+            )
+            return results
+        except Exception as e:
+            logger.error(f"Failed to run simulation: {e}")
+            return None
     
-    def get_famous_examples(self) -> dict:
-        """Get famous examples organized by industry"""
-        famous_examples = {}
+    def get_simulation_history(self, twin_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get simulation history for a digital twin.
         
-        for category, use_case_class in self.use_cases.items():
-            use_cases = use_case_class.get_all_use_cases()
-            for use_case in use_cases:
-                industry = use_case.get('industry', 'Other')
-                if industry not in famous_examples:
-                    famous_examples[industry] = []
-                
-                examples = use_case.get('famous_examples', [])
-                famous_examples[industry].extend(examples)
-        
-        # Remove duplicates
-        for industry in famous_examples:
-            famous_examples[industry] = list(set(famous_examples[industry]))
-        
-        return famous_examples
-    
-    def get_optimization_targets(self) -> dict:
-        """Get optimization targets organized by category"""
-        optimization_targets = {}
-        
-        for category, use_case_class in self.use_cases.items():
-            use_cases = use_case_class.get_all_use_cases()
-            for use_case in use_cases:
-                targets = use_case.get('optimization_targets', [])
-                if targets:
-                    optimization_targets[use_case['name']] = targets
-        
-        return optimization_targets
+        Args:
+            twin_id: Digital twin ID
+            
+        Returns:
+            Simulation history or None if not found
+        """
+        try:
+            twin = self.digital_twin_repo.get_by_id(twin_id)
+            if twin and twin.simulation_history:
+                return twin.simulation_history
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get simulation history: {e}")
+            return None
 
-# Version information
-__version__ = "1.0.0"
-__author__ = "Physics Modeling Team"
-__description__ = "Comprehensive physics-based modeling framework with real-world use cases"
 
-# Export main classes and functions
-__all__ = [
-    'PhysicsModelingFramework',
-    'PhysicsModel',
-    'Material',
-    'Geometry', 
-    'BoundaryConditions',
-    'TwinConnector',
-    'AIRAGConnector',
-    'RealTimeConnector',
-    'ThermalAnalysisUseCases',
-    'StructuralAnalysisUseCases',
-    'FluidDynamicsUseCases',
-    'MultiPhysicsUseCases',
-    'IndustrialUseCases'
-]
+# Create a singleton instance
+_physics_framework = None
+
+
+def get_physics_framework(db_path: Optional[str] = None) -> DynamicPhysicsModelingFramework:
+    """
+    Get the singleton instance of the physics modeling framework.
+    
+    Args:
+        db_path: Optional database path
+        
+    Returns:
+        Physics modeling framework instance
+    """
+    global _physics_framework
+    if _physics_framework is None:
+        _physics_framework = DynamicPhysicsModelingFramework(db_path)
+    return _physics_framework
+
+
+# Export main class
+__all__ = ['DynamicPhysicsModelingFramework', 'get_physics_framework'] 

@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block head %}
+<style>
+/* Advanced Chart Interactions Styling */
+.chart-control-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-control-panel .btn {
+    border-radius: 6px;
+    font-size: 0.875rem;
+    padding: 6px 12px;
+    transition: all 0.3s ease;
+}
+
+.chart-control-panel .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.chart-status {
+    font-weight: 500;
+    color: #6c757d;
+    background: rgba(255,255,255,0.8);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+/* Enhanced tooltip styling */
+.chartjs-tooltip {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
+}
+
+/* Filter modal enhancements */
+.filter-modal .form-range {
+    height: 6px;
+    border-radius: 3px;
+}
+
+.filter-modal .form-range::-webkit-slider-thumb {
+    background: #007bff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}
+
+.filter-modal .form-range::-moz-range-thumb {
+    background: #007bff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}
+
+/* Chart interaction feedback */
+.chart-container {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.chart-container:hover {
+    transform: scale(1.01);
+}
+
+.chart-container canvas {
+    cursor: pointer;
+}
+
+/* Drill-down animation */
+.chart-drill-down {
+    animation: drillDown 0.3s ease-in-out;
+}
+
+@keyframes drillDown {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.95); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Export button animation */
+.btn-export {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-export::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-export:hover::before {
+    left: 100%;
+}
+
+/* Performance indicators */
+.performance-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.performance-excellent { background-color: #28a745; }
+.performance-good { background-color: #17a2b8; }
+.performance-average { background-color: #ffc107; }
+.performance-poor { background-color: #dc3545; }
+
+/* Responsive chart controls */
+@media (max-width: 768px) {
+    .chart-control-panel .d-flex {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .chart-control-panel .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .chart-status {
+        text-align: center;
+        margin-top: 8px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Component -->
+    {% include 'qi_analytics/components/header.html' %}
+
+    <!-- Advanced Filters Component -->
+    {% include 'qi_analytics/components/advanced_filters.html' %}
+
+    <!-- Custom Dashboard Builder Component -->
+    {% include 'qi_analytics/components/dashboard_builder.html' %}
+
+    <!-- KPI Cards Component -->
+    {% include 'qi_analytics/components/kpi_cards.html' %}
+
+    <!-- Twin Registry Summary Component -->
+    {% include 'qi_analytics/components/twin_registry_summary.html' %}
+
+    <!-- Advanced Analytics Charts -->
+    <div class="row mb-4">
+        <!-- Quality Trends Chart Component -->
+        {% include 'qi_analytics/components/quality_trends_chart.html' %}
+        
+        <!-- Performance Distribution Chart Component -->
+        {% include 'qi_analytics/components/performance_distribution_chart.html' %}
+    </div>
+
+    <!-- Twin Performance Analytics -->
+    <div class="row mb-4">
+        <!-- Twin Performance Chart Component -->
+        {% include 'qi_analytics/components/twin_performance_chart.html' %}
+        
+        <!-- Twin Health Chart Component -->
+        {% include 'qi_analytics/components/twin_health_chart.html' %}
+    </div>
+
+    <!-- Performance Metrics Grid Component -->
+    {% include 'qi_analytics/components/performance_metrics_grid.html' %}
+
+    <!-- Analytics Tables Component -->
+    {% include 'qi_analytics/components/analytics_tables.html' %}
+
+    <!-- Advanced Analytics Actions Component -->
+    {% include 'qi_analytics/components/advanced_actions.html' %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Debug script loading -->
+<script>
+console.log('🔍 Debug: Extra scripts block loaded');
+console.log('🔍 Debug: Chart.js loaded:', typeof Chart !== 'undefined');
+</script>
+<!-- Advanced Filters JavaScript -->
+<script src="{{ url_for('static', path='/js/advanced_filters.js') }}?v={{ range(1, 1000) | random }}"></script>
+<!-- Dashboard Builder JavaScript -->
+<script src="{{ url_for('static', path='/js/dashboard_builder.js') }}?v={{ range(1, 1000) | random }}"></script>
+<!-- Analytics Integration JavaScript -->
+<script src="{{ url_for('static', path='/js/analytics_integration.js') }}?v={{ range(1, 1000) | random }}"></script>
+<!-- QI Analytics JavaScript with cache busting -->
+<script src="{{ url_for('static', path='/js/qi_analytics.js') }}?v={{ range(1, 1000) | random }}"></script>
+<script>
+console.log('🔍 Debug: QI Analytics script tag added');
+// Check if the script loaded
+setTimeout(() => {
+    console.log('🔍 Debug: Checking if QI Analytics functions are available...');
+    console.log('🔍 Debug: initializeQIAnalytics available:', typeof initializeQIAnalytics !== 'undefined');
+    console.log('🔍 Debug: setupEventListeners available:', typeof setupEventListeners !== 'undefined');
+    console.log('🔍 Debug: setupAdvancedChartInteractions available:', typeof setupAdvancedChartInteractions !== 'undefined');
+}, 1000);
+</script>
+{% endblock %} 

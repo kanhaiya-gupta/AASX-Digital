@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.aax-digital.com; style-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://code.jquery.com 'unsafe-inline' 'unsafe-eval'; img-src 'self' https://www.aax-digital.com data: https:; font-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.aax-digital.com; style-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com 'unsafe-inline' 'unsafe-eval'; img-src 'self' https://www.aax-digital.com data: https:; font-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/favicon.ico') }}">
     <title>{% block title %}AASX Digital Twin Analytics Framework{% endblock %}</title>
     
@@ -19,443 +19,20 @@
     <!-- Chart.js for Performance Monitoring -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Custom CSS -->
-    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
-    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- Base CSS -->
+    <link href="{{ url_for('static', path='/css/base.css') }}" rel="stylesheet">
+    
     <!-- Additional CSS blocks -->
     {% block extra_css %}{% endblock %}
-    
-    <!-- Additional CSS for this template -->
-    <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-light: #3b82f6;
-            --secondary-color: #64748b;
-            --accent-color: #8b5cf6;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --background-light: #f8fafc;
-            --background-white: #ffffff;
-            --border-color: #e2e8f0;
-            --shadow-light: 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-medium: 0 4px 6px rgba(0,0,0,0.1);
-            --shadow-heavy: 0 10px 15px rgba(0,0,0,0.1);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Modern Navbar */
-        .navbar {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            box-shadow: var(--shadow-medium);
-            padding: 0.75rem 0;
-            border-bottom: none;
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: white !important;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .navbar-brand i {
-            font-size: 1.8rem;
-            color: #bfdbfe;
-        }
-
-        .navbar-nav .nav-link {
-            color: rgba(255, 255, 255, 0.9) !important;
-            font-weight: 500;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin: 0 0.25rem;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .navbar-nav .nav-link:hover {
-            color: white !important;
-            background-color: rgba(255, 255, 255, 0.1);
-            transform: translateY(-1px);
-        }
-
-        .navbar-nav .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white !important;
-        }
-
-        .navbar-toggler {
-            border: none;
-            padding: 0.5rem;
-        }
-
-        .navbar-toggler:focus {
-            box-shadow: none;
-        }
-
-        /* Dropdown Styling */
-        .dropdown-menu {
-            border: none;
-            border-radius: 12px;
-            box-shadow: var(--shadow-heavy);
-            padding: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .dropdown-item {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--background-light);
-            transform: translateX(4px);
-        }
-
-        /* Main Content */
-        .main-content {
-            min-height: calc(100vh - 80px);
-            padding: 2rem 0;
-        }
-
-        .container-fluid {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 1.5rem;
-        }
-
-        /* Cards and Components */
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: var(--shadow-light);
-            transition: all 0.3s ease;
-            background: var(--background-white);
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-medium);
-            transform: translateY(-2px);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            border-radius: 12px 12px 0 0 !important;
-            border: none;
-            padding: 1.25rem 1.5rem;
-        }
-
-        /* Buttons */
-        .btn {
-            border-radius: 8px;
-            font-weight: 500;
-            padding: 0.75rem 1.5rem;
-            transition: all 0.3s ease;
-            border: none;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-medium);
-        }
-
-        /* Authentication Button Styling */
-        .navbar-nav .btn {
-            margin: 0 0.25rem;
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            border-radius: 6px;
-        }
-
-        .navbar-nav .btn-outline-light {
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .navbar-nav .btn-outline-light:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.5);
-            color: white;
-        }
-
-        .navbar-nav .btn-primary {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .navbar-nav .btn-primary:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
-        }
-
-        /* User dropdown styling */
-        #authDropdown .dropdown-toggle::after {
-            margin-left: 0.5rem;
-        }
-
-        #userDisplayName {
-            font-weight: 600;
-        }
-
-        /* User Tab Styling */
-        #userTab .dropdown-toggle {
-            color: rgba(255, 255, 255, 0.9) !important;
-            font-weight: 500;
-        }
-
-        #userTab .dropdown-toggle:hover {
-            color: white !important;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        #userTab .dropdown-header {
-            font-weight: 600;
-            color: var(--primary-color);
-            background-color: var(--background-light);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        #userTab .dropdown-item {
-            padding: 0.75rem 1rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        #userTab .dropdown-item:hover {
-            background-color: var(--background-light);
-            transform: translateX(4px);
-        }
-
-        #userTab .dropdown-item i {
-            width: 1rem;
-            margin-right: 0.5rem;
-            text-align: center;
-        }
-
-        /* Footer */
-        .footer {
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 2rem 0;
-            margin-top: 3rem;
-        }
-
-        .footer h5 {
-            color: white;
-            margin-bottom: 1rem;
-        }
-
-        .footer p {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .navbar-nav {
-                margin-top: 1rem;
-            }
-            
-            .navbar-nav .nav-link {
-                margin: 0.25rem 0;
-            }
-            
-            .dropdown-menu {
-                border: none;
-                box-shadow: none;
-                background: rgba(255, 255, 255, 0.1);
-            }
-            
-            .dropdown-item {
-                color: white;
-            }
-            
-            .dropdown-item:hover {
-                background: rgba(255, 255, 255, 0.2);
-                color: white;
-            }
-        }
-
-        /* Enhanced Professional Styling */
-        .display-4, .display-5 {
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
-        .lead {
-            font-weight: 400;
-            line-height: 1.6;
-        }
-
-        /* Improved spacing for professional layout */
-        .py-5 {
-            padding-top: 3rem !important;
-            padding-bottom: 3rem !important;
-        }
-
-        .mb-5 {
-            margin-bottom: 3rem !important;
-        }
-
-        /* Enhanced button styling */
-        .btn-lg {
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .btn-outline-primary {
-            border: 2px solid var(--primary-color);
-            color: var(--primary-color);
-            background: transparent;
-        }
-
-        .btn-outline-primary:hover {
-            background: var(--primary-color);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
-        }
-
-        /* Enhanced card styling */
-        .card {
-            border: none;
-            border-radius: 16px;
-            box-shadow: var(--shadow-light);
-            transition: all 0.3s ease;
-            background: var(--background-white);
-            overflow: hidden;
-        }
-
-        .card:hover {
-            box-shadow: var(--shadow-heavy);
-            transform: translateY(-4px);
-        }
-
-        /* Professional text styling */
-        .text-muted {
-            color: var(--text-secondary) !important;
-        }
-
-        .fw-bold {
-            font-weight: 700 !important;
-        }
-
-        /* Enhanced navbar branding */
-        .navbar-brand {
-            font-weight: 800;
-            font-size: 1.6rem;
-            letter-spacing: -0.5px;
-        }
-
-        /* Professional footer enhancement */
-        .footer {
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 3rem 0 2rem 0;
-            margin-top: 4rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .footer h5 {
-            color: white;
-            margin-bottom: 1.5rem;
-            font-weight: 700;
-        }
-
-        .footer p {
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.6;
-        }
-
-        .footer a {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer a:hover {
-            color: white;
-        }
-
-        /* Enhanced modal styling */
-        .modal-content {
-            border: none;
-            border-radius: 16px;
-            box-shadow: var(--shadow-heavy);
-        }
-
-        .modal-header {
-            border-bottom: 1px solid var(--border-color);
-            padding: 1.5rem 2rem;
-        }
-
-        .modal-body {
-            padding: 2rem;
-        }
-
-        /* Professional section backgrounds */
-        .bg-light {
-            background-color: #f8fafc !important;
-        }
-
-        /* Gradient backgrounds */
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
-        }
-
-        /* Enhanced list styling */
-        .list-group-item {
-            border: none;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            transition: background-color 0.3s ease;
-        }
-
-        .list-group-item:hover {
-            background-color: var(--background-light);
-        }
-    </style>
     
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     <!-- Notification System -->
-    <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+    <div id="notification-container" class="notification-container"></div>
 
     <!-- Global JavaScript -->
     <script>
@@ -500,6 +77,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
+            <!-- Brand -->
             <a class="navbar-brand" href="/">
                 <i class="fas fa-cube"></i>
                 AASX Digital
@@ -509,76 +87,171 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             
+            <!-- Main Navigation -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                    <!-- Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link" href="/">
                             <i class="fas fa-home"></i> Dashboard
                         </a>
                     </li>
+                    
+                    <!-- Smart Applications Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-cogs"></i> Applications
                         </a>
+                        <ul class="dropdown-menu mega-dropdown">
+                            <!-- Quick Access Section -->
+                            <div class="row g-0">
+                                <div class="col-lg-8">
+                                    <div class="row g-0">
+                                        <!-- Core Processing -->
+                                        <div class="col-md-6">
+                                            <h6 class="dropdown-header">Core Processing</h6>
+                                            <a class="dropdown-item" href="/aasx-etl">
+                                                <i class="fas fa-cogs text-primary"></i> ETL Pipeline
+                                            </a>
+                                            <a class="dropdown-item" href="/twin-registry">
+                                                <i class="fas fa-sync text-success"></i> Twin Registry
+                                            </a>
+                                        </div>
+                                        <!-- Intelligence -->
+                                        <div class="col-md-6">
+                                            <h6 class="dropdown-header">Intelligence</h6>
+                                            <a class="dropdown-item" href="/ai-rag">
+                                                <i class="fas fa-robot text-info"></i> AI/RAG System
+                                            </a>
+                                            <a class="dropdown-item" href="/kg-neo4j">
+                                                <i class="fas fa-project-diagram text-warning"></i> Knowledge Graph
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="row g-0 mt-2">
+                                        <!-- Advanced Features -->
+                                        <div class="col-md-6">
+                                            <h6 class="dropdown-header">Advanced Features</h6>
+                                            <a class="dropdown-item" href="/federated-learning">
+                                                <i class="fas fa-network-wired text-secondary"></i> Federated Learning
+                                            </a>
+                                            <a class="dropdown-item" href="/physics-modeling">
+                                                <i class="fas fa-atom text-dark"></i> Physics Modeling
+                                            </a>
+                                        </div>
+                                        <!-- Management -->
+                                        <div class="col-md-6">
+                                            <h6 class="dropdown-header">Management</h6>
+                                            <a class="dropdown-item" href="/certificate-manager">
+                                                <i class="fas fa-certificate text-danger"></i> Certificate Manager
+                                            </a>
+                                            <a class="dropdown-item" href="/auth">
+                                                <i class="fas fa-users-cog text-muted"></i> User Management
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Quick Stats Panel -->
+                                <div class="col-lg-4 bg-light">
+                                    <div class="p-3">
+                                        <h6 class="text-muted">Quick Stats</h6>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <small>Active Twins</small>
+                                            <span class="badge bg-success">247</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <small>Processing</small>
+                                            <span class="badge bg-warning">12</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <small>Certificates</small>
+                                            <span class="badge bg-info">89</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ul>
+                    </li>
+                    
+                    <!-- Quick Actions -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bolt"></i> Quick Actions
+                        </a>
                         <ul class="dropdown-menu">
-                            <!-- Core Processing -->
-                            <li><h6 class="dropdown-header">Core Processing</h6></li>
-                            <li><a class="dropdown-item" href="/aasx">
-                                <i class="fas fa-cogs"></i> AASX ETL Pipeline
+                            <li><a class="dropdown-item" href="/aasx-etl">
+                                <i class="fas fa-upload text-primary"></i> Upload AASX
                             </a></li>
-                            <li><a class="dropdown-item" href="/kg-neo4j">
-                                <i class="fas fa-project-diagram"></i> Knowledge Graph
-                            </a></li>
-                            
-                            <li><hr class="dropdown-divider"></li>
-                            
-                            <!-- Analysis & Intelligence -->
-                            <li><h6 class="dropdown-header">Analysis & Intelligence</h6></li>
-                            <li><a class="dropdown-item" href="/ai-rag">
-                                <i class="fas fa-robot"></i> AI/RAG System
-                            </a></li>
-                            <li><a class="dropdown-item" href="/analytics">
-                                <i class="fas fa-chart-bar"></i> Analytics Dashboard
-                            </a></li>
-                            <li><a class="dropdown-item" href="/federated-learning">
-                                <i class="fas fa-brain"></i> Federated Learning
-                            </a></li>
-                            
-                            <li><hr class="dropdown-divider"></li>
-                            
-                            <!-- Management -->
-                            <li><h6 class="dropdown-header">Management</h6></li>
                             <li><a class="dropdown-item" href="/twin-registry">
-                                <i class="fas fa-sync"></i> Digital Twin Registry
+                                <i class="fas fa-plus text-success"></i> Create Twin
                             </a></li>
-                            <li><a class="dropdown-item" href="/certificates">
-                                <i class="fas fa-certificate"></i> Certificate Manager
+                            <li><a class="dropdown-item" href="/ai-rag">
+                                <i class="fas fa-search text-info"></i> Analyze File
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/certificate-manager">
+                                <i class="fas fa-certificate text-warning"></i> Generate Certificate
                             </a></li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/docs" target="_blank">
-                            <i class="fas fa-code"></i> API Docs
+                    
+                    <!-- Resources -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-book"></i> Resources
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#helpModal">
+                                <i class="fas fa-question-circle"></i> Help & Support
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                                <i class="fas fa-info-circle"></i> About Framework
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#contactModal">
+                                <i class="fas fa-envelope"></i> Contact Us
+                            </a></li>
+                        </ul>
                     </li>
                 </ul>
                 
+                <!-- Right Side Actions -->
                 <ul class="navbar-nav">
+                    <!-- Search -->
                     <li class="nav-item">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#helpModal">
-                            <i class="fas fa-question-circle"></i> Help
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">
-                            <i class="fas fa-info-circle"></i> About
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#searchModal">
+                            <i class="fas fa-search"></i>
                         </a>
                     </li>
                     
-                    <!-- User Tab with Dropdown -->
+                    <!-- Notifications -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">3</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item" href="#">
+                                <small class="text-muted">Processing complete</small><br>
+                                <strong>ETL Pipeline</strong> finished processing 50 files
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <small class="text-muted">New twin registered</small><br>
+                                <strong>Twin Registry</strong> added new digital twin
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <small class="text-muted">Certificate ready</small><br>
+                                <strong>Certificate Manager</strong> generated new certificate
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="/notifications">View All</a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- User Menu -->
                     <li class="nav-item dropdown" id="userTab">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle"></i> User
+                            <i class="fas fa-user-circle"></i>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <!-- Unauthenticated State -->
@@ -594,9 +267,12 @@
                             
                             <!-- Authenticated State -->
                             <div id="authenticatedMenu" style="display: none;">
-                                <li><h6 class="dropdown-header">Welcome, <span id="userDisplayName">User</span></h6></li>
+                                <li><h6 class="dropdown-header">Welcome back, <span id="userDisplayName">User</span>!</h6></li>
                                 <li><a class="dropdown-item" href="/auth/profile">
-                                    <i class="fas fa-user"></i> My Profile
+                                    <i class="fas fa-user"></i> Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="/settings">
+                                    <i class="fas fa-cog"></i> Settings
                                 </a></li>
                                 <li><a class="dropdown-item" href="#" id="adminUsersLink" style="display: none;">
                                     <i class="fas fa-users-cog"></i> User Management
@@ -755,13 +431,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
-    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
-    <!-- API Client -->
-    <script src="{{ url_for('static', path='/js/api.js') }}"></script>
-
-    <!-- Authentication Scripts -->
-    <script src="{{ url_for('static', path='/js/auth.js') }}"></script>
+    
+    <!-- Core Module (replaces main.js and api.js) -->
+    <script type="module" src="{{ url_for('static', path='/js/core/index.js') }}"></script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

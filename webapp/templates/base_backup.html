@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.aax-digital.com; style-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com 'unsafe-inline' 'unsafe-eval'; img-src 'self' https://www.aax-digital.com data: https:; font-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/favicon.ico') }}">
+    <title>{% block title %}AASX Digital Twin Analytics Framework{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Mermaid.js for flowcharts -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    
+    <!-- Chart.js for Performance Monitoring -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Base CSS -->
+    <link href="{{ url_for('static', path='/css/base.css') }}" rel="stylesheet">
+    
+    <!-- Additional CSS blocks -->
+    {% block extra_css %}{% endblock %}
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Notification System -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Global JavaScript -->
+    <script>
+        // Global notification system
+        window.AASXFramework = {
+            showNotification: function(message, type = 'info') {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                
+                // Set notification styles
+                notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+                notification.style.minWidth = '300px';
+                notification.style.marginBottom = '10px';
+                notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                notification.style.border = 'none';
+                notification.style.borderRadius = '8px';
+                
+                // Set icon based on type
+                let icon = 'info-circle';
+                if (type === 'success') icon = 'check-circle';
+                else if (type === 'warning') icon = 'exclamation-triangle';
+                else if (type === 'error') icon = 'times-circle';
+                
+                notification.innerHTML = `
+                    <i class="fas fa-${icon} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                container.appendChild(notification);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+        };
+    </script>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-cube"></i>
+                AASX Digital
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cogs"></i> Applications
+                        </a>
+                        <ul class="dropdown-menu">
+                            <!-- Core Processing -->
+                            <li><h6 class="dropdown-header">Core Processing</h6></li>
+                            <li><a class="dropdown-item" href="/aasx">
+                                <i class="fas fa-cogs"></i> AASX ETL Pipeline
+                            </a></li>
+                            <li><a class="dropdown-item" href="/kg-neo4j">
+                                <i class="fas fa-project-diagram"></i> Knowledge Graph
+                            </a></li>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <!-- Analysis & Intelligence -->
+                            <li><h6 class="dropdown-header">Analysis & Intelligence</h6></li>
+                            <li><a class="dropdown-item" href="/ai-rag">
+                                <i class="fas fa-robot"></i> AI/RAG System
+                            </a></li>
+                            <li><a class="dropdown-item" href="/analytics">
+                                <i class="fas fa-chart-bar"></i> Analytics Dashboard
+                            </a></li>
+                            <li><a class="dropdown-item" href="/federated-learning">
+                                <i class="fas fa-brain"></i> Federated Learning
+                            </a></li>
+                            
+                            <li><hr class="dropdown-divider"></li>
+                            
+                            <!-- Management -->
+                            <li><h6 class="dropdown-header">Management</h6></li>
+                            <li><a class="dropdown-item" href="/twin-registry">
+                                <i class="fas fa-sync"></i> Digital Twin Registry
+                            </a></li>
+                            <li><a class="dropdown-item" href="/certificates">
+                                <i class="fas fa-certificate"></i> Certificate Manager
+                            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/docs" target="_blank">
+                            <i class="fas fa-code"></i> API Docs
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#helpModal">
+                            <i class="fas fa-question-circle"></i> Help
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                            <i class="fas fa-info-circle"></i> About
+                        </a>
+                    </li>
+                    
+                    <!-- User Tab with Dropdown -->
+                    <li class="nav-item dropdown" id="userTab">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i> User
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <!-- Unauthenticated State -->
+                            <div id="unauthenticatedMenu">
+                                <li><h6 class="dropdown-header">Account</h6></li>
+                                <li><a class="dropdown-item" href="/auth/login">
+                                    <i class="fas fa-sign-in-alt"></i> Login
+                                </a></li>
+                                <li><a class="dropdown-item" href="/auth/signup">
+                                    <i class="fas fa-user-plus"></i> Sign Up
+                                </a></li>
+                            </div>
+                            
+                            <!-- Authenticated State -->
+                            <div id="authenticatedMenu" style="display: none;">
+                                <li><h6 class="dropdown-header">Welcome, <span id="userDisplayName">User</span></h6></li>
+                                <li><a class="dropdown-item" href="/auth/profile">
+                                    <i class="fas fa-user"></i> My Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" id="adminUsersLink" style="display: none;">
+                                    <i class="fas fa-users-cog"></i> User Management
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a></li>
+                            </div>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>AASX Digital Twin Analytics Framework</h5>
+                    <p>Comprehensive framework for processing AASX files and building digital twin analytics</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p>&copy; 2024 AASX Framework. Built with FastAPI and Bootstrap.</p>
+                    <p><a href="https://github.com/kanhaiya-gupta/aas-data-modeling" target="_blank" class="text-light">
+                        <i class="fab fa-github"></i> GitHub Repository
+                    </a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-question-circle"></i> AASX Framework Help
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6><i class="fas fa-cube"></i> What is AASX Digital Twin Analytics Framework?</h6>
+                    <p>The AASX Digital Twin Analytics Framework is a comprehensive platform for processing AASX (Asset Administration Shell) files and building digital twin analytics with ETL, Knowledge Graph, and AI/RAG capabilities.</p>
+                    
+                    <h6><i class="fas fa-route"></i> How to use this framework:</h6>
+                    <ol>
+                        <li>Start with <strong>AASX ETL Pipeline</strong> to process your AASX files</li>
+                        <li>Explore the <strong>Knowledge Graph</strong> to understand relationships</li>
+                        <li>Use the <strong>AI/RAG System</strong> for intelligent analysis</li>
+                        <li>Manage digital twins in the <strong>Twin Registry</strong></li>
+                        <li>Handle compliance with <strong>Certificate Manager</strong></li>
+                        <li>View insights in the <strong>Analytics Dashboard</strong></li>
+                    </ol>
+                    
+                    <h6><i class="fas fa-cogs"></i> Available Applications:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Core Processing</h6>
+                            <ul>
+                                <li><strong>AASX ETL Pipeline:</strong> Extract, Transform, Load AASX files</li>
+                                <li><strong>Knowledge Graph:</strong> Neo4j-based relationship analysis</li>
+                            </ul>
+                            
+                            <h6>Analysis & Intelligence</h6>
+                            <ul>
+                                <li><strong>AI/RAG System:</strong> AI-powered analysis and insights</li>
+                                <li><strong>Analytics Dashboard:</strong> Visualization and analytics</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Management</h6>
+                            <ul>
+                                <li><strong>Digital Twin Registry:</strong> Manage digital twin assets</li>
+                                <li><strong>Certificate Manager:</strong> Handle compliance and certification</li>
+                            </ul>
+                            
+                            <h6>Supported Infrastructure</h6>
+                            <ul>
+                                <li>Additive Manufacturing Facilities</li>
+                                <li>Hydrogen Filling Stations</li>
+                                <li>Smart Grid Substations</li>
+                                <li>Wastewater Treatment Plants</li>
+                                <li>And more critical infrastructure</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h6><i class="fas fa-lightbulb"></i> Tips:</h6>
+                    <ul>
+                        <li>Upload AASX files through the ETL Pipeline first</li>
+                        <li>Use the Knowledge Graph to explore relationships between assets</li>
+                        <li>Ask natural language questions in the AI/RAG System</li>
+                        <li>Monitor digital twin health in the Analytics Dashboard</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal fade" id="aboutModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle"></i> About AASX Framework
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6><i class="fas fa-cube"></i> Framework Overview</h6>
+                    <p>The AASX Digital Twin Analytics Framework provides a complete solution for processing AASX files and building digital twin analytics with ETL, Knowledge Graph, and AI/RAG capabilities.</p>
+                    
+                    <h6><i class="fas fa-cogs"></i> Core Components</h6>
+                    <ul>
+                        <li><strong>ETL Pipeline:</strong> Automated processing of AASX files</li>
+                        <li><strong>Knowledge Graph:</strong> Neo4j-based relationship analysis</li>
+                        <li><strong>AI/RAG System:</strong> OpenAI-powered intelligent analysis</li>
+                        <li><strong>Vector Database:</strong> Qdrant for semantic search</li>
+                        <li><strong>Digital Twin Registry:</strong> Asset management and monitoring</li>
+                        <li><strong>Certificate Manager:</strong> Compliance and certification</li>
+                    </ul>
+                    
+                    <h6><i class="fas fa-code"></i> Technology Stack</h6>
+                    <ul>
+                        <li><strong>Backend:</strong> FastAPI, Python 3.8+</li>
+                        <li><strong>Database:</strong> Neo4j, Qdrant</li>
+                        <li><strong>AI:</strong> OpenAI GPT-4.1-mini</li>
+                        <li><strong>Frontend:</strong> Bootstrap 5, JavaScript</li>
+                        <li><strong>Deployment:</strong> Docker, Docker Compose</li>
+                    </ul>
+                    
+                    <h6><i class="fas fa-github"></i> Open Source</h6>
+                    <p>This framework is open source and available on GitHub:</p>
+                    <a href="https://github.com/kanhaiya-gupta/aas-data-modeling" target="_blank" class="btn btn-primary">
+                        <i class="fab fa-github"></i> View on GitHub
+                    </a>
+                    
+                    <h6><i class="fas fa-heart"></i> Contributing</h6>
+                    <p>Contributions are welcome! Please feel free to submit issues and pull requests.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery (needed for some components) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Core Module (replaces main.js and api.js) -->
+    <script type="module" src="{{ url_for('static', path='/js/core/index.js') }}"></script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

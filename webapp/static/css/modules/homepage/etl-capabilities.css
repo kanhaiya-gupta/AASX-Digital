@@ -1,0 +1,180 @@
+/* ETL Capabilities Section Styles */
+
+.homepage-etl-capabilities {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e8 100%);
+}
+
+.homepage-etl-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.homepage-etl-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--success-color);
+}
+
+.homepage-etl-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+}
+
+.homepage-etl-card:nth-child(1) .homepage-etl-icon {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(13, 110, 253, 0.05) 100%);
+}
+
+.homepage-etl-card:nth-child(2) .homepage-etl-icon {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(25, 135, 84, 0.05) 100%);
+}
+
+.homepage-format-item {
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.homepage-format-item:hover {
+    background: rgba(25, 135, 84, 0.05);
+    border-color: var(--success-color);
+    transform: translateX(2px);
+}
+
+.homepage-format-item strong {
+    color: var(--dark-color);
+    font-size: 0.9rem;
+}
+
+.homepage-format-item small {
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+.homepage-format-item .badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.homepage-etl-card ul li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.homepage-etl-card ul li:last-child {
+    border-bottom: none;
+}
+
+.homepage-etl-card ul li strong {
+    color: var(--dark-color);
+    font-size: 0.9rem;
+}
+
+.homepage-etl-card ul li small {
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.homepage-etl-highlight {
+    background: linear-gradient(135deg, var(--success-color) 0%, #198754 100%) !important;
+    border: none;
+    box-shadow: 0 8px 32px rgba(25, 135, 84, 0.3);
+}
+
+.homepage-etl-highlight h4 {
+    color: white;
+    font-weight: 600;
+}
+
+.homepage-etl-highlight .lead {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+}
+
+.homepage-etl-highlight h5 {
+    color: white;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.homepage-etl-highlight small {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.homepage-etl-stats {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+}
+
+.homepage-etl-stat-item h3 {
+    color: white;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.homepage-etl-stat-item small {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .homepage-etl-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .homepage-format-item {
+        margin-bottom: 0.75rem;
+    }
+    
+    .homepage-etl-highlight {
+        padding: 1.5rem !important;
+    }
+    
+    .homepage-etl-stats {
+        margin-top: 1rem;
+    }
+    
+    .homepage-etl-highlight .row > div {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Animation for format items */
+.homepage-format-item {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.homepage-format-item:nth-child(1) { animation-delay: 0.1s; }
+.homepage-format-item:nth-child(2) { animation-delay: 0.2s; }
+.homepage-format-item:nth-child(3) { animation-delay: 0.3s; }
+.homepage-format-item:nth-child(4) { animation-delay: 0.4s; }
+.homepage-format-item:nth-child(5) { animation-delay: 0.5s; }
+.homepage-format-item:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+} 

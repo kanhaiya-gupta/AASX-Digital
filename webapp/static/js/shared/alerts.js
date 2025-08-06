@@ -267,7 +267,6 @@ export function showToast(message, type = 'info', duration = 3000) {
     
     return toastId;
 }
-
 // Export all alert functions
 export default {
     initAlertSystem,

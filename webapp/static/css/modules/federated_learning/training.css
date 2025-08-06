@@ -1,0 +1,420 @@
+/**
+ * Federated Learning Module Training CSS Module
+ * Dedicated styling for training interface and federated rounds
+ */
+
+/* ===== TRAINING CONTAINER ===== */
+.fl-training-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.fl-training-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.fl-training-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.fl-training-subtitle {
+    opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+/* ===== TRAINING PROGRESS ===== */
+.fl-training-progress {
+    padding: 2rem;
+}
+
+.fl-progress-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.fl-progress-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.fl-progress-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.fl-progress-title i {
+    margin-right: 0.5rem;
+    color: #fd7e14;
+}
+
+/* ===== ROUND PROGRESS ===== */
+.fl-round-progress {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl-round-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.fl-round-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fl-round-number {
+    background: #fd7e14;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.fl-round-details h4 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.fl-round-details p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.fl-round-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fl-status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.fl-status-indicator.running {
+    background: #fd7e14;
+}
+
+.fl-status-indicator.completed {
+    background: #28a745;
+}
+
+.fl-status-indicator.failed {
+    background: #dc3545;
+}
+
+.fl-status-text {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* ===== PROGRESS BARS ===== */
+.fl-progress-container {
+    margin: 1rem 0;
+}
+
+.fl-progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: #e9ecef;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.fl-progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    transition: width 0.3s ease;
+    border-radius: 5px;
+}
+
+.fl-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.fl-progress-label i {
+    margin-right: 0.5rem;
+    color: #fd7e14;
+}
+
+/* ===== CLIENT MANAGEMENT ===== */
+.fl-clients-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl-clients-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.fl-clients-title {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.fl-clients-count {
+    background: #fd7e14;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.fl-clients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.fl-client-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.fl-client-card:hover {
+    border-color: #fd7e14;
+    box-shadow: 0 2px 8px rgba(253, 126, 20, 0.1);
+}
+
+.fl-client-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.fl-client-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+.fl-client-info h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.fl-client-info p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.fl-client-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.fl-client-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+}
+
+.fl-client-indicator.offline {
+    background: #6c757d;
+}
+
+.fl-client-indicator.training {
+    background: #fd7e14;
+    animation: pulse 1s infinite;
+}
+
+.fl-client-status-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* ===== TRAINING METRICS ===== */
+.fl-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl-metric-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.fl-metric-card:hover {
+    border-color: #fd7e14;
+    box-shadow: 0 2px 8px rgba(253, 126, 20, 0.1);
+}
+
+.fl-metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fd7e14;
+    margin-bottom: 0.25rem;
+}
+
+.fl-metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ===== TRAINING CONTROLS ===== */
+.fl-training-controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.fl-control-btn {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fl-control-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(253, 126, 20, 0.2);
+}
+
+.fl-control-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.fl-control-btn.secondary {
+    background: #6c757d;
+}
+
+.fl-control-btn.success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.fl-control-btn.danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .fl-training-progress {
+        padding: 1.5rem;
+    }
+    
+    .fl-round-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .fl-clients-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .fl-clients-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .fl-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .fl-training-controls {
+        flex-direction: column;
+    }
+    
+    .fl-control-btn {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .fl-training-header {
+        padding: 1rem;
+    }
+    
+    .fl-training-title {
+        font-size: 1.25rem;
+    }
+    
+    .fl-training-progress {
+        padding: 1rem;
+    }
+    
+    .fl-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .fl-metric-value {
+        font-size: 1.5rem;
+    }
+} 

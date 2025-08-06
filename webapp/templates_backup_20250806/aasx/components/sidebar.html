@@ -1,0 +1,228 @@
+<!-- Statistics Dashboard -->
+{% include 'aasx/components/statistics.html' %}
+
+<!-- Data Management Hierarchy -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-primary text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-sitemap me-2"></i>
+            Data Management Hierarchy
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="mermaid-flowchart">
+            <div class="mermaid">
+                flowchart TD
+                    A[Data Management] --> B[Use Cases]
+                    B --> C[Projects]
+                    C --> D[AASX Files]
+                    
+                    A1[📊 Central Management] --> A
+                    B1[🔥 Thermal Analysis] --> B
+                    B2[🏗️ Structural Analysis] --> B
+                    B3[💧 Fluid Dynamics] --> B
+                    B4[🔗 Multi-Physics] --> B
+                    B5[🏭 Industrial Applications] --> B
+                    B6[🔬 Other Projects Analysis] --> B
+                    
+                    C1[📁 Project 1] --> C
+                    C2[📁 Project 2] --> C
+                    C3[📁 Project N] --> C
+                    
+                    D1[📄 file1.aasx] --> D
+                    D2[📄 file2.aasx] --> D
+                    D3[📄 fileN.aasx] --> D
+                    
+                    style A fill:#007bff,stroke:#0056b3,stroke-width:3px,color:#fff
+                    style B fill:#28a745,stroke:#1e7e34,stroke-width:2px,color:#fff
+                    style C fill:#ffc107,stroke:#e0a800,stroke-width:2px,color:#000
+                    style D fill:#dc3545,stroke:#c82333,stroke-width:2px,color:#fff
+                    
+                    style A1 fill:#6c757d,stroke:#545b62,stroke-width:1px,color:#fff
+                    style B1 fill:#dc3545,stroke:#c82333,stroke-width:1px,color:#fff
+                    style B2 fill:#fd7e14,stroke:#e55a00,stroke-width:1px,color:#fff
+                    style B3 fill:#17a2b8,stroke:#138496,stroke-width:1px,color:#fff
+                    style B4 fill:#28a745,stroke:#1e7e34,stroke-width:1px,color:#fff
+                    style B5 fill:#6f42c1,stroke:#5a2d91,stroke-width:1px,color:#fff
+                    style B6 fill:#20c997,stroke:#1a9f7a,stroke-width:1px,color:#fff
+                    
+                    style C1 fill:#f8f9fa,stroke:#dee2e6,stroke-width:1px,color:#000
+                    style C2 fill:#f8f9fa,stroke:#dee2e6,stroke-width:1px,color:#000
+                    style C3 fill:#f8f9fa,stroke:#dee2e6,stroke-width:1px,color:#000
+                    
+                    style D1 fill:#e9ecef,stroke:#ced4da,stroke-width:1px,color:#000
+                    style D2 fill:#e9ecef,stroke:#ced4da,stroke-width:1px,color:#000
+                    style D3 fill:#e9ecef,stroke:#ced4da,stroke-width:1px,color:#000
+            </div>
+        </div>
+        
+        <!-- Hierarchy Explanation -->
+        <div class="hierarchy-explanation mt-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-2">
+                        <i class="fas fa-sitemap me-1"></i>Hierarchy Levels
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li><strong>Data Management:</strong> Central control and organization</li>
+                        <li><strong>Use Cases:</strong> Physics analysis categories</li>
+                        <li><strong>Projects:</strong> Individual analysis projects</li>
+                        <li><strong>AASX Files:</strong> Digital twin data files</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-success mb-2">
+                        <i class="fas fa-info-circle me-1"></i>Benefits
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li>✅ Organized by physics type</li>
+                        <li>✅ Easy data management</li>
+                        <li>✅ Scalable structure</li>
+                        <li>✅ Clear relationships</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Data Management Flow Chart -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-success text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-route me-2"></i>
+            Data Management Flow
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="project-flow-chart">
+            <!-- Step 1: Create Use Case & Project -->
+            <div class="flow-step">
+                <div class="flow-icon bg-primary text-white">
+                    <i class="fas fa-folder-plus"></i>
+                </div>
+                <div class="flow-content">
+                    <h6 class="mb-1">1. Create Use Case & Project</h6>
+                    <small class="text-muted">Define category and organize structure</small>
+                </div>
+            </div>
+            
+            <!-- Arrow -->
+            <div class="flow-arrow">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            
+            <!-- Step 2: Upload Files -->
+            <div class="flow-step">
+                <div class="flow-icon bg-success text-white">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <div class="flow-content">
+                    <h6 class="mb-1">2. Upload AASX Files</h6>
+                    <small class="text-muted">Drag & drop or browse files</small>
+                </div>
+            </div>
+            
+            <!-- Arrow -->
+            <div class="flow-arrow">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            
+            <!-- Step 3: Process -->
+            <div class="flow-step">
+                <div class="flow-icon bg-warning text-white">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="flow-content">
+                    <h6 class="mb-1">3. Process Files</h6>
+                    <small class="text-muted">Extract, transform, load</small>
+                </div>
+            </div>
+            
+            <!-- Arrow -->
+            <div class="flow-arrow">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            
+            <!-- Step 4: Auto-Organize -->
+            <div class="flow-step">
+                <div class="flow-icon bg-info text-white">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="flow-content">
+                    <h6 class="mb-1">4. Auto-Organize</h6>
+                    <small class="text-muted">Group by physics type</small>
+                </div>
+            </div>
+            
+            <!-- Arrow -->
+            <div class="flow-arrow">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            
+            <!-- Step 5: Results -->
+            <div class="flow-step">
+                <div class="flow-icon bg-danger text-white">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="flow-content">
+                    <h6 class="mb-1">5. View Results</h6>
+                    <small class="text-muted">Analytics & insights</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Panel -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-primary text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-bolt me-2"></i>
+            Quick Actions
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="d-grid gap-2">
+            <button type="button" class="btn btn-primary" id="sidebarCreateProjectBtn" data-bs-toggle="modal" data-bs-target="#projectCreationModal">
+                <i class="fas fa-plus me-2"></i>
+                Create New Project
+            </button>
+            <button id="launchExplorer" class="btn btn-outline-primary" {% if not explorer_available %}disabled{% endif %}>
+                <i class="fas fa-external-link-alt me-2"></i>
+                Launch AASX Explorer
+            </button>
+            <button id="refreshFiles" class="btn btn-outline-secondary">
+                <i class="fas fa-sync-alt me-2"></i>
+                Refresh Files
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ETL Progress -->
+<div class="card border-0 shadow-sm" id="etlProgress" style="display: none;">
+    <div class="card-header bg-gradient-warning text-white">
+        <h6 class="mb-0">
+            <i class="fas fa-cogs me-2"></i>
+            ETL Pipeline Progress
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="text-center mb-3">
+            <div class="progress-circle" id="overallProgress" data-progress="0">
+                <span class="progress-text">0%</span>
+            </div>
+            <h6 class="mt-2">Overall Progress</h6>
+        </div>
+        <div class="progress mb-3">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                 id="overallProgressBar" role="progressbar" style="width: 0%">
+            </div>
+        </div>
+        <div class="text-center">
+            <span id="etlStatusText" class="text-muted">Ready to start ETL pipeline...</span>
+        </div>
+    </div>
+</div>

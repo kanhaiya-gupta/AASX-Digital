@@ -18,7 +18,7 @@ from .processor import aasx_processor
 
 # Import existing services from src/shared
 from src.shared.services.digital_twin_service import DigitalTwinService
-from src.shared.services.federated_learning_service import FederatedLearningService
+from src.federated_learning.core.federated_learning_service import FederatedLearningService
 from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
@@ -405,6 +405,17 @@ async def get_file_by_path(use_case_name: str, project_name: str, filename: str)
 @router.get("/files/{file_id}/path-info")
 async def get_file_path_info(file_id: str):
     """Get logical path information for a file (usecase/project/filename)"""
+    try:
+        path_info = file_service.get_file_path_info(file_id)
+        if not path_info:
+            raise HTTPException(status_code=404, detail="File not found")
+        return path_info
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/files/{file_id}/path")
+async def get_file_path(file_id: str):
+    """Get file hierarchy path from file_id (alias for path-info)"""
     try:
         path_info = file_service.get_file_path_info(file_id)
         if not path_info:

@@ -1,0 +1,58 @@
+/**
+ * Federated Learning Module Main CSS File
+ * Imports all modular CSS components for the Federated Learning Module
+ */
+
+/* ===== MODULAR CSS IMPORTS ===== */
+@import url('./modules/federated_learning/layout.css');
+@import url('./modules/federated_learning/dashboard.css');
+@import url('./modules/federated_learning/components.css');
+@import url('./modules/federated_learning/training.css');
+@import url('./modules/federated_learning/models.css');
+
+/* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
+/* Federated Learning-specific global styles and overrides */
+
+/* Animation keyframes for Federated Learning module */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes progress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+/* Global animation classes */
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+.spin-animation {
+    animation: spin 1s linear infinite;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.progress-animation {
+    animation: progress 2s ease-in-out;
+} 

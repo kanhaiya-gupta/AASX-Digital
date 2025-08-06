@@ -1,0 +1,93 @@
+<!-- File Upload Panel -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-gradient-success text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-upload me-2"></i>
+            File Upload & Management
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card bg-light border-0">
+                    <div class="card-body">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-file-upload me-2"></i>
+                            Upload AASX File
+                        </h6>
+                        <form id="fileUploadForm">
+                            <div class="dropdown-section">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Select Use Case:</label>
+                                    <select class="form-select use-case-select" id="uploadUseCaseSelect" required>
+                                        <option value="">Choose a use case...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Select Project:</label>
+                                    <select class="form-select project-select" id="uploadProjectSelect" required>
+                                        <option value="">Choose a project...</option>
+                                        <option value="" disabled>Select a use case first to see available projects</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">AASX File:</label>
+                                <input type="file" class="form-control" id="aasxFileInput" accept=".aasx" required>
+                                <small class="form-text text-muted">Only .aasx files are allowed</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Description (Optional):</label>
+                                <textarea class="form-control" id="fileDescription" rows="2" placeholder="Describe the AASX file content..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-upload me-2"></i>
+                                Upload File
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light border-0">
+                    <div class="card-body">
+                        <h6 class="text-warning mb-3">
+                            <i class="fas fa-link me-2"></i>
+                            Upload from URL
+                        </h6>
+                        <form id="urlUploadForm">
+                            <div class="dropdown-section">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Select Use Case:</label>
+                                    <select class="form-select use-case-select" id="urlUseCaseSelect" required>
+                                        <option value="">Choose a use case...</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Select Project:</label>
+                                    <select class="form-select project-select" id="urlProjectSelect" required>
+                                        <option value="">Choose a project...</option>
+                                        <option value="" disabled>Select a use case first to see available projects</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">AASX File URL:</label>
+                                <input type="url" class="form-control" id="aasxFileUrl" placeholder="https://example.com/file.aasx" required>
+                                <small class="form-text text-muted">Direct link to .aasx file</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Description (Optional):</label>
+                                <textarea class="form-control" id="urlFileDescription" rows="2" placeholder="Describe the AASX file content..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fas fa-download me-2"></i>
+                                Download & Upload
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

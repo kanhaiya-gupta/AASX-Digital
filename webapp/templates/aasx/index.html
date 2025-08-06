@@ -2,29 +2,28 @@
 
 {% block title %}AASX Data Management & Processing{% endblock %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/data-management.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', path='/css/aasx.css') }}">
+{% block extra_css %}
+<link href="{{ url_for('static', path='/css/aasx.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="aasx-container container-fluid">
     <!-- Header -->
-    <div class="row mb-4">
+    <div class="aasx-header row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-0">
+            <div class="aasx-header-content d-flex justify-content-between align-items-center">
+                <div class="aasx-header-info">
+                    <h1 class="aasx-title h3 mb-0">
                         <i class="fas fa-cube text-primary me-2"></i>
                         AASX Data Management & Processing
                     </h1>
-                    <p class="text-muted mb-0">Comprehensive AASX file management, processing, and analysis platform</p>
+                    <p class="aasx-subtitle text-muted mb-0">Comprehensive AASX file management, processing, and analysis platform</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" id="refreshBtn">
+                <div class="aasx-header-actions d-flex gap-2">
+                    <button class="aasx-btn aasx-btn-refresh btn btn-outline-primary" id="refreshBtn">
                         <i class="fas fa-sync-alt me-1"></i>Refresh
                     </button>
-                    <button class="btn btn-primary" id="headerCreateProjectBtn" data-bs-toggle="modal" data-bs-target="#projectCreationModal">
+                    <button class="aasx-btn aasx-btn-primary btn btn-primary" id="headerCreateProjectBtn" data-bs-toggle="modal" data-bs-target="#projectCreationModal">
                         <i class="fas fa-plus me-1"></i>New Project
                     </button>
                 </div>
@@ -33,9 +32,9 @@
     </div>
 
     <!-- Main Content -->
-    <div class="row">
+    <div class="aasx-main-content row">
         <!-- Left Column - Data Management -->
-        <div class="col-lg-8">
+        <div class="aasx-content-left col-lg-8">
             <!-- Include Data Management Component -->
             {% include 'aasx/components/data_management.html' %}
             
@@ -47,7 +46,7 @@
         </div>
 
         <!-- Right Column - Sidebar -->
-        <div class="col-lg-4">
+        <div class="aasx-sidebar col-lg-4">
             {% include 'aasx/components/sidebar.html' %}
         </div>
     </div>
@@ -64,7 +63,7 @@
     
     try {
         // Just import the module - initialization will happen automatically
-        await import("{{ url_for('static', path='/js/aasx/index.js') }}");
+        await import("{{ url_for('static', path='/js/modules/aasx/index.js') }}");
         console.log('✅ AASX Template: Modular system imported successfully');
         
     } catch (error) {

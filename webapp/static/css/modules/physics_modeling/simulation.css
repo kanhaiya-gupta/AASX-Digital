@@ -1,0 +1,403 @@
+/**
+ * Physics Modeling Module Simulation CSS Module
+ * Dedicated styling for simulation components and controls
+ */
+
+/* ===== SIMULATION CONTAINER ===== */
+.physics-simulation-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.physics-simulation-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-simulation-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.physics-simulation-subtitle {
+    opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+/* ===== SIMULATION CONTROLS ===== */
+.physics-simulation-controls {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-control-panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.physics-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.physics-control-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.physics-control-input {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.physics-control-input:focus {
+    border-color: #20c997;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+}
+
+.physics-control-slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #dee2e6;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.physics-control-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #20c997;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.physics-control-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #20c997;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== SIMULATION BUTTONS ===== */
+.physics-simulation-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.physics-sim-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.physics-sim-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.physics-sim-btn.play {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+}
+
+.physics-sim-btn.pause {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+}
+
+.physics-sim-btn.stop {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+.physics-sim-btn.reset {
+    background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+    color: white;
+}
+
+.physics-sim-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ===== SIMULATION CANVAS ===== */
+.physics-simulation-canvas {
+    background: #000000;
+    width: 100%;
+    height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.physics-simulation-canvas.large { height: 500px; }
+.physics-simulation-canvas.medium { height: 400px; }
+.physics-simulation-canvas.small { height: 300px; }
+
+/* ===== SIMULATION OVERLAY ===== */
+.physics-simulation-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 500;
+    z-index: 10;
+}
+
+.physics-simulation-overlay.hidden {
+    display: none;
+}
+
+/* ===== SIMULATION STATUS ===== */
+.physics-simulation-status {
+    background: #ffffff;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.physics-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.physics-status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #6c757d;
+}
+
+.physics-status-dot.running {
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.physics-status-dot.paused {
+    background: #ffc107;
+}
+
+.physics-status-dot.stopped {
+    background: #dc3545;
+}
+
+.physics-status-text {
+    font-weight: 500;
+    color: #495057;
+}
+
+.physics-simulation-time {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    color: #495057;
+    font-weight: 600;
+}
+
+/* ===== SIMULATION PARAMETERS ===== */
+.physics-simulation-params {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.physics-param-group {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+}
+
+.physics-param-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.physics-param-value {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    color: #20c997;
+    font-weight: 600;
+}
+
+.physics-param-unit {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-left: 0.25rem;
+}
+
+/* ===== SIMULATION RESULTS ===== */
+.physics-simulation-results {
+    padding: 1.5rem;
+}
+
+.physics-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-results-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.physics-results-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.physics-results-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #495057;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.physics-results-btn:hover {
+    background: #f8f9fa;
+    border-color: #20c997;
+    color: #20c997;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .physics-simulation-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .physics-simulation-title {
+        font-size: 1.25rem;
+    }
+
+    .physics-control-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .physics-simulation-controls {
+        padding: 1rem;
+    }
+
+    .physics-simulation-buttons {
+        justify-content: center;
+    }
+
+    .physics-sim-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .physics-simulation-canvas {
+        height: 300px;
+    }
+
+    .physics-simulation-canvas.large {
+        height: 400px;
+    }
+
+    .physics-simulation-status {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .physics-params-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .physics-simulation-results {
+        padding: 1rem;
+    }
+
+    .physics-results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .physics-simulation-canvas {
+        height: 250px;
+    }
+
+    .physics-simulation-canvas.large {
+        height: 300px;
+    }
+
+    .physics-simulation-canvas.medium {
+        height: 250px;
+    }
+
+    .physics-simulation-canvas.small {
+        height: 200px;
+    }
+
+    .physics-simulation-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .physics-sim-btn {
+        width: 100%;
+        justify-content: center;
+    }
+} 

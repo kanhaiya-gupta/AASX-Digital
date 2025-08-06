@@ -1,0 +1,182 @@
+/**
+ * Knowledge Graph Module Layout CSS Module
+ * Dedicated styling for main layout and structure
+ */
+
+/* ===== MAIN LAYOUT STYLING ===== */
+.kg-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+/* ===== PAGE HEADER STYLING ===== */
+.kg-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.kg-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.kg-header .subtitle {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* ===== CONTENT AREA STYLING ===== */
+.kg-content {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* ===== SIDEBAR STYLING ===== */
+.kg-sidebar {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.kg-sidebar .card {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.kg-sidebar .card-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.kg-sidebar .card-body {
+    padding: 0;
+}
+
+/* ===== GRID LAYOUT STYLING ===== */
+.kg-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.kg-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.kg-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.kg-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ===== GRAPH WORKSPACE ===== */
+.kg-graph-workspace {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.kg-workspace-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.kg-workspace-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.kg-workspace-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.kg-workspace-body {
+    padding: 1.5rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .kg-header {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .kg-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .kg-header .subtitle {
+        font-size: 1rem;
+    }
+    
+    .kg-container {
+        padding: 1rem 0;
+    }
+    
+    .kg-sidebar {
+        position: static;
+        margin-bottom: 1.5rem;
+    }
+    
+    .kg-grid-2,
+    .kg-grid-3,
+    .kg-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .kg-workspace-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .kg-workspace-controls {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 576px) {
+    .kg-container {
+        padding: 0.5rem 0;
+    }
+    
+    .kg-header {
+        padding: 1rem 0;
+    }
+    
+    .kg-sidebar {
+        padding: 1rem;
+    }
+    
+    .kg-workspace-body {
+        padding: 1rem;
+    }
+} 

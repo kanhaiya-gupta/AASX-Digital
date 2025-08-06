@@ -1,0 +1,150 @@
+/**
+ * AASX Processing Module Layout CSS Module
+ * Dedicated styling for main layout and structure
+ */
+
+/* ===== MAIN LAYOUT STYLING ===== */
+.aasx-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+/* ===== PAGE HEADER STYLING ===== */
+.aasx-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.aasx-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.aasx-header .subtitle {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* ===== CONTENT AREA STYLING ===== */
+.aasx-content {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* ===== SIDEBAR STYLING ===== */
+.aasx-sidebar {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.aasx-sidebar .card {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.aasx-sidebar .card-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.aasx-sidebar .card-body {
+    padding: 0;
+}
+
+/* ===== GRID LAYOUT STYLING ===== */
+.aasx-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.aasx-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.aasx-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.aasx-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ===== PROCESSING INTERFACE LAYOUT ===== */
+.processing-interface {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.processing-interface .card-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .aasx-header {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .aasx-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .aasx-header .subtitle {
+        font-size: 1rem;
+    }
+    
+    .processing-interface {
+        padding: 1.5rem;
+    }
+    
+    .aasx-sidebar {
+        position: static;
+        margin-bottom: 1.5rem;
+    }
+    
+    .aasx-grid-2,
+    .aasx-grid-3,
+    .aasx-grid-4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .aasx-container {
+        padding: 1rem 0;
+    }
+    
+    .aasx-header {
+        padding: 1rem 0;
+    }
+    
+    .processing-interface {
+        padding: 1rem;
+    }
+} 

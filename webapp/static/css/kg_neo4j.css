@@ -1,172 +1,22 @@
-/* Neo4j Knowledge Graph Additional Styles */
+/**
+ * Knowledge Graph (Neo4j) Module Main CSS File
+ * Imports all modular CSS components for the Knowledge Graph Module
+ */
 
-/* Graph visualization enhancements */
-.graph-container {
-    position: relative;
-    overflow: hidden;
-}
+/* ===== MODULAR CSS IMPORTS ===== */
+@import url('./modules/kg_neo4j/layout.css');
+@import url('./modules/kg_neo4j/dashboard.css');
+@import url('./modules/kg_neo4j/components.css');
+@import url('./modules/kg_neo4j/graph.css');
+@import url('./modules/kg_neo4j/queries.css');
 
-#graphVisualization {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: 12px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
+/* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
+/* Knowledge Graph-specific global styles and overrides */
 
-/* Node styling */
-.node {
-    transition: all 0.3s ease;
-}
-
-.node:hover {
-    stroke-width: 3px;
-    stroke: #007bff;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-}
-
-/* Link styling */
-.link {
-    transition: stroke-opacity 0.3s ease;
-}
-
-.link:hover {
-    stroke-opacity: 1;
-    stroke-width: 3px;
-}
-
-/* Cypher editor enhancements */
-.cypher-editor {
-    font-size: 14px;
-    line-height: 1.5;
-    resize: vertical;
-    border: 2px solid #e2e8f0;
-    transition: border-color 0.3s ease;
-}
-
-.cypher-editor:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-}
-
-/* Query results styling */
-.query-result {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.query-result table {
-    font-size: 12px;
-}
-
-.query-result th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 11px;
-    letter-spacing: 0.5px;
-}
-
-/* Stats cards animations */
-.stats-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.stats-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-/* Tab styling */
-.nav-tabs .nav-link {
-    border: none;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.nav-tabs .nav-link:hover {
-    border-bottom-color: #dee2e6;
-    background-color: #f8f9fa;
-}
-
-.nav-tabs .nav-link.active {
-    border-bottom-color: #007bff;
-    background-color: #fff;
-    font-weight: 600;
-}
-
-/* Button enhancements */
-.btn-group .btn {
-    transition: all 0.3s ease;
-}
-
-.btn-group .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-/* Status indicator animations */
-.status-indicator {
-    animation: pulse 2s infinite;
-}
-
+/* Animation keyframes for Knowledge Graph module */
 @keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
-    }
-}
-
-/* Tooltip enhancements */
-.tooltip {
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.2);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-
-/* Chart container styling */
-canvas {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* Import form styling */
-#importForm {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #e9ecef;
-}
-
-/* Alert styling */
-.alert {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-/* Loading states */
-.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.loading::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid #f3f3f3;
-    border-top: 2px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 @keyframes spin {
@@ -174,190 +24,26 @@ canvas {
     100% { transform: rotate(360deg); }
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .stats-card {
-        margin-bottom: 15px;
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
     }
-    
-    .graph-container {
-        margin: 10px 0;
-    }
-    
-    #graphVisualization {
-        height: 400px;
-    }
-    
-    .cypher-editor {
-        min-height: 150px;
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
     }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .cypher-editor {
-        background-color: #1a202c;
-        color: #e2e8f0;
-        border-color: #4a5568;
-    }
-    
-    .query-result {
-        background-color: #2d3748;
-        color: #e2e8f0;
-    }
-    
-    .query-result th {
-        background-color: #4a5568;
-    }
+/* Global animation classes */
+.pulse-animation {
+    animation: pulse 2s infinite;
 }
 
-/* Examples Modal Styles */
-.example-query {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    transition: all 0.3s ease;
-    cursor: pointer;
+.spin-animation {
+    animation: spin 1s linear infinite;
 }
 
-.example-query:hover {
-    border-color: #007bff;
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
-    transform: translateY(-1px);
-}
-
-.example-query h6 {
-    color: #495057;
-    margin-bottom: 8px;
-    font-weight: 600;
-}
-
-.example-query code {
-    display: block;
-    padding: 12px;
-    background-color: #f8f9fa;
-    border-radius: 6px;
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    line-height: 1.4;
-    border: 1px solid #e9ecef;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    user-select: all;
-}
-
-.example-query code:hover {
-    background-color: #e9ecef;
-    border-color: #007bff;
-}
-
-.example-query code.selected-query {
-    background-color: #007bff !important;
-    color: white !important;
-    border-color: #0056b3;
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
-}
-
-.example-query small {
-    display: block;
-    margin-top: 8px;
-    color: #6c757d;
-    font-style: italic;
-}
-
-/* Connection Details Styling */
-#examplesModal .alert-info {
-    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-    border: 1px solid #bee5eb;
-    border-radius: 8px;
-}
-
-#examplesModal .alert-info h6 {
-    color: #0c5460;
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-#examplesModal .alert-info code {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 12px;
-    color: #e83e8c;
-}
-
-#examplesModal .alert-info a {
-    color: #0c5460;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-#examplesModal .alert-info a:hover {
-    color: #062c33;
-    text-decoration: underline;
-}
-
-/* Modal Enhancements */
-#examplesModal .modal-header {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-}
-
-#examplesModal .accordion-button {
-    background-color: #f8f9fa;
-    border: none;
-    font-weight: 500;
-}
-
-#examplesModal .accordion-button:not(.collapsed) {
-    background-color: #e3f2fd;
-    color: #0d6efd;
-}
-
-#examplesModal .accordion-button:focus {
-    box-shadow: 0 0 0 0.25rem rgba(23, 162, 184, 0.25);
-}
-
-#examplesModal .accordion-body {
-    background-color: #fff;
-    border-top: 1px solid #e9ecef;
-}
-
-/* Copy Button States */
-#copy-query-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-#copy-query-btn:not(:disabled):hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
-}
-
-/* Danger Query Styling */
-.example-query code.bg-danger {
-    background-color: #dc3545 !important;
-    color: white !important;
-    border-color: #c82333;
-}
-
-.example-query code.bg-danger:hover {
-    background-color: #c82333 !important;
-}
-
-/* Responsive Modal */
-@media (max-width: 768px) {
-    #examplesModal .modal-dialog {
-        margin: 10px;
-    }
-    
-    .example-query code {
-        font-size: 12px;
-        padding: 10px;
-    }
-    
-    .example-query h6 {
-        font-size: 14px;
-    }
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
 } 

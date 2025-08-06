@@ -2,23 +2,27 @@
 
 {% block title %}AI/RAG Analytics - AASX Digital Twin Platform{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', path='/css/ai_rag.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
+<div class="ai-rag-container container-fluid">
     <!-- Header Section -->
-    <div class="row mb-4">
+    <div class="ai-rag-header row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-1">
+            <div class="ai-rag-header-content d-flex justify-content-between align-items-center">
+                <div class="ai-rag-header-info">
+                    <h2 class="ai-rag-title mb-1">
                         <i class="fas fa-brain text-primary me-2"></i>
                         AI/RAG Analytics Platform
                     </h2>
-                    <p class="text-muted mb-0">Advanced AI-powered analysis with modular RAG techniques - Integrated with ETL Pipeline</p>
+                    <p class="ai-rag-subtitle text-muted mb-0">Advanced AI-powered analysis with modular RAG techniques - Integrated with ETL Pipeline</p>
                 </div>
-                <div class="text-end">
-                    <span class="badge bg-success fs-6">ETL Integrated</span>
+                <div class="ai-rag-header-badge text-end">
+                    <span class="ai-rag-badge badge bg-success fs-6">ETL Integrated</span>
                     <br>
-                    <small class="text-muted">v3.0 - Enhanced with Digital Twins</small>
+                    <small class="ai-rag-version text-muted">v3.0 - Enhanced with Digital Twins</small>
                 </div>
             </div>
         </div>
@@ -28,9 +32,9 @@
     {% include "ai_rag/components/system_status.html" %}
 
     <!-- Main Content Area -->
-    <div class="row">
+    <div class="ai-rag-main-content row">
         <!-- Left Column - Analysis Interface -->
-        <div class="col-lg-8">
+        <div class="ai-rag-content-left col-lg-8">
             <!-- Analysis Configuration Panel - Using Modular Component -->
             {% include "ai_rag/components/analysis_configuration.html" %}
 
@@ -39,7 +43,7 @@
         </div>
 
         <!-- Right Column - Tools & Information -->
-        <div class="col-lg-4">
+        <div class="ai-rag-sidebar col-lg-4">
             <!-- Quick Actions - Using Modular Component -->
             {% include "ai_rag/components/quick_actions.html" %}
 
@@ -59,7 +63,7 @@
     console.log('🔍 AI/RAG Template: Loading modular AI/RAG system...');
     
     try {
-        const { initAIRAGModule } = await import("{{ url_for('static', path='/js/ai_rag/index.js') }}?v=2025-08-03-09-26");
+        const { initAIRAGModule } = await import("{{ url_for('static', path='/js/modules/ai_rag/index.js') }}?v=2025-08-03-09-26");
         console.log('✅ AI/RAG Template: Modular system imported successfully');
         
         // Initialize the modular AI/RAG system

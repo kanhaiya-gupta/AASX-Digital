@@ -56,8 +56,8 @@ def include_routers(app: FastAPI) -> None:
         "aasx": {"enabled": settings.aasx_enabled, "prefix": "/api/aasx", "tags": ["AASX"]},
         "ai_rag": {"enabled": settings.ai_rag_enabled, "prefix": "/api/ai-rag", "tags": ["AI/RAG"]},
         "twin_registry": {"enabled": settings.twin_registry_enabled, "prefix": "/api/twin-registry", "tags": ["Twin Registry"]},
-        "certificate_manager": {"enabled": settings.certificate_manager_enabled, "prefix": "/api/certificates", "tags": ["Certificate Manager"]},
-        "qi_analytics": {"enabled": settings.qi_analytics_enabled, "prefix": "/api/qi-analytics", "tags": ["QI Analytics"]},
+        "certificate_manager": {"enabled": settings.certificate_manager_enabled, "prefix": "/api/certificate-manager", "tags": ["Certificate Manager"]},
+
         "kg_neo4j": {"enabled": settings.kg_neo4j_enabled, "prefix": "/api/kg-neo4j", "tags": ["Knowledge Graph"]},
         "federated_learning": {"enabled": settings.federated_learning_enabled, "prefix": "/api/federated-learning", "tags": ["Federated Learning"]},
         "physics_modeling": {"enabled": settings.physics_modeling_enabled, "prefix": "/api/physics-modeling", "tags": ["Physics Modeling"]}

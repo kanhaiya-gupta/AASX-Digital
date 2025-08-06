@@ -46,12 +46,7 @@ async def dashboard_home(request: Request):
             "icon": "fas fa-project-diagram",
             "url": "/kg-neo4j"
         },
-        {
-            "name": "QI Analytics",
-            "description": "Quality intelligence and performance analytics",
-            "icon": "fas fa-chart-bar",
-            "url": "/qi-analytics"
-        },
+
         {
             "name": "Certificate Manager",
             "description": "Manage digital certificates and security",
@@ -109,12 +104,7 @@ async def dashboard(request: Request):
             "icon": "fas fa-project-diagram",
             "url": "/kg-neo4j"
         },
-        {
-            "name": "QI Analytics",
-            "description": "Quality intelligence and performance analytics",
-            "icon": "fas fa-chart-bar",
-            "url": "/qi-analytics"
-        },
+
         {
             "name": "Certificate Manager",
             "description": "Manage digital certificates and security",
@@ -162,11 +152,7 @@ async def kg_neo4j_page(request: Request):
     return templates.TemplateResponse("kg_neo4j/index.html", {"request": request})
 
 
-@router.get("/qi-analytics", response_class=HTMLResponse)
-async def qi_analytics_page(request: Request):
-    """QI Analytics page"""
-    templates = get_templates()
-    return templates.TemplateResponse("qi_analytics/index.html", {"request": request})
+
 
 
 @router.get("/certificate-manager", response_class=HTMLResponse)

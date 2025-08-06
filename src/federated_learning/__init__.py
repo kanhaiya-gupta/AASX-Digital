@@ -1,22 +1,19 @@
 """
 Federated Learning Module
-Privacy-preserving collaborative AI for digital twins
+=========================
+
+A modular federated learning system that contains all FL-specific logic
+while using shared infrastructure from `src/shared/`.
 """
 
-from .federated_engine import FederatedLearningEngine
-from .twin_processors import (
-    AdditiveManufacturingProcessor,
-    SmartGridProcessor, 
-    HydrogenStationProcessor
-)
-from .cross_twin_learning import CrossTwinLearning
-from .federation_server import FederationServer
+from .core.federation_engine import FederationEngine
+from .core.local_trainer import LocalTrainer
+from .core.aggregation_server import AggregationServer
+from .core.federated_learning_service import FederatedLearningService
 
 __all__ = [
-    'FederatedLearningEngine',
-    'AdditiveManufacturingProcessor',
-    'SmartGridProcessor',
-    'HydrogenStationProcessor', 
-    'CrossTwinLearning',
-    'FederationServer'
+    'FederationEngine',
+    'LocalTrainer', 
+    'AggregationServer',
+    'FederatedLearningService'
 ] 

@@ -1,0 +1,119 @@
+<!-- System Status Dashboard Component -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    System Status Dashboard
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-qdrant">
+                                <i class="fas fa-database fa-2x text-muted"></i>
+                            </div>
+                            <small class="d-block mt-1">Vector DB</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-neo4j">
+                                <i class="fas fa-project-diagram fa-2x text-muted"></i>
+                            </div>
+                            <small class="d-block mt-1">Knowledge Graph</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-openai">
+                                <i class="fas fa-robot fa-2x text-muted"></i>
+                            </div>
+                            <small class="d-block mt-1">AI Models</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-etl">
+                                <i class="fas fa-cogs fa-2x text-muted"></i>
+                            </div>
+                            <small class="d-block mt-1">ETL Pipeline</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-system">
+                                <i class="fas fa-server fa-2x text-muted"></i>
+                            </div>
+                            <small class="d-block mt-1">System</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-rag-techniques">
+                                <i class="fas fa-magic fa-2x text-muted"></i>
+                            </div>
+                            <small class="d-block mt-1">RAG Techniques</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Integration Status Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>
+                    Integration Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-etl-integration">
+                                <i class="fas fa-exchange-alt fa-2x text-success"></i>
+                            </div>
+                            <small class="d-block mt-1">ETL Integration</small>
+                            <small class="text-success fw-bold">✅ Active</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-digital-twins">
+                                <i class="fas fa-cube fa-2x text-success"></i>
+                            </div>
+                            <small class="d-block mt-1">Digital Twins</small>
+                            <small class="text-success fw-bold">✅ Auto-Created</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-vector-data">
+                                <i class="fas fa-cube fa-2x text-success"></i>
+                            </div>
+                            <small class="d-block mt-1">Vector Data</small>
+                            <small class="text-success fw-bold">✅ Populated</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="text-center">
+                            <div class="status-indicator" id="status-query-processing">
+                                <i class="fas fa-search fa-2x text-success"></i>
+                            </div>
+                            <small class="d-block mt-1">Query Processing</small>
+                            <small class="text-success fw-bold">✅ Ready</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

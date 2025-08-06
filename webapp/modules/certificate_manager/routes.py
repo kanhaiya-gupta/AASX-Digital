@@ -1,149 +1,214 @@
+#!/usr/bin/env python3
 """
-Certificate Manager Routes
-FastAPI router for digital certificate management functionality.
+Certificate Manager Routes - Phase 1 Frontend
+
+Basic web routes for certificate management interface.
 """
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from typing import List, Optional
-from datetime import datetime
-import json
-import os
+from pathlib import Path
+import logging
+
+# Import services
+from .services.certificate_service import CertificateService
+from .services.export_service import ExportService
+from .services.template_service import TemplateService
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 # Create router
-router = APIRouter(prefix="/certificates", tags=["certificates"])
+router = APIRouter(prefix="/certificate-manager", tags=["Certificate Manager"])
 
 # Setup templates
-current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
+templates_path = Path(__file__).parent / "templates"
+templates = Jinja2Templates(directory=str(templates_path))
 
-# Pydantic models
-class CertificateCreate(BaseModel):
-    name: str
-    type: str
-    issuer: str
-    digitalTwinId: str
-    expiryDate: str
-    description: Optional[str] = None
+# Initialize services
+certificate_service = CertificateService()
+export_service = ExportService()
+template_service = TemplateService()
 
-class CertificateResponse(BaseModel):
-    id: str
-    name: str
-    type: str
-    status: str
-    issuedDate: str
-    expiryDate: str
-    issuer: str
-    digitalTwinId: str
-    description: Optional[str] = None
 
-# Mock data storage (replace with database)
-CERTIFICATES_DB = [
-    {
-        "id": "cert-001",
-        "name": "Quality Certificate - Additive Manufacturing",
-        "type": "quality_certificate",
-        "status": "active",
-        "issuedDate": "2024-01-15",
-        "expiryDate": "2025-01-15",
-        "issuer": "QI Authority",
-        "digitalTwinId": "dt-001",
-        "description": "Quality certification for additive manufacturing processes"
-    },
-    {
-        "id": "cert-002",
-        "name": "Safety Certificate - Hydrogen Station",
-        "type": "safety_certificate",
-        "status": "active",
-        "issuedDate": "2024-02-20",
-        "expiryDate": "2025-02-20",
-        "issuer": "Safety Authority",
-        "digitalTwinId": "dt-002",
-        "description": "Safety certification for hydrogen filling station operations"
-    }
-]
-
+# HTML Page Routes
 @router.get("/", response_class=HTMLResponse)
 async def certificate_dashboard(request: Request):
-    """Certificate management dashboard"""
-    return templates.TemplateResponse(
-        "certificate_manager/index.html",
-        {
-            "request": request,
-            "title": "Certificate Manager - QI Digital Platform",
-            "certificates": CERTIFICATES_DB
-        }
-    )
-
-@router.get("/api/certificates", response_model=List[CertificateResponse])
-async def get_certificates():
-    """Get all certificates"""
-    return CERTIFICATES_DB
-
-@router.post("/api/certificates", response_model=CertificateResponse)
-async def create_certificate(certificate: CertificateCreate):
-    """Create a new certificate"""
-    new_certificate = {
-        "id": f"cert-{int(datetime.now().timestamp())}",
-        "name": certificate.name,
-        "type": certificate.type,
-        "status": "active",
-        "issuedDate": datetime.now().strftime("%Y-%m-%d"),
-        "expiryDate": certificate.expiryDate,
-        "issuer": certificate.issuer,
-        "digitalTwinId": certificate.digitalTwinId,
-        "description": certificate.description
-    }
-    
-    CERTIFICATES_DB.append(new_certificate)
-    return new_certificate
-
-@router.get("/api/certificates/{certificate_id}", response_model=CertificateResponse)
-async def get_certificate(certificate_id: str):
-    """Get certificate by ID"""
-    for cert in CERTIFICATES_DB:
-        if cert["id"] == certificate_id:
-            return cert
-    
-    raise HTTPException(status_code=404, detail="Certificate not found")
-
-@router.put("/api/certificates/{certificate_id}", response_model=CertificateResponse)
-async def update_certificate(certificate_id: str, certificate: CertificateCreate):
-    """Update certificate"""
-    for i, cert in enumerate(CERTIFICATES_DB):
-        if cert["id"] == certificate_id:
-            updated_cert = {
-                **cert,
-                "name": certificate.name,
-                "type": certificate.type,
-                "issuer": certificate.issuer,
-                "digitalTwinId": certificate.digitalTwinId,
-                "expiryDate": certificate.expiryDate,
-                "description": certificate.description
+    """Main certificate dashboard page."""
+    try:
+        logger.info("Loading certificate dashboard")
+        return templates.TemplateResponse(
+            "index.html",
+            {
+                "request": request,
+                "title": "Certificate Manager Dashboard",
+                "module": "certificate_manager"
             }
-            CERTIFICATES_DB[i] = updated_cert
-            return updated_cert
-    
-    raise HTTPException(status_code=404, detail="Certificate not found")
+        )
+    except Exception as e:
+        logger.error(f"Failed to load certificate dashboard: {e}")
+        raise HTTPException(status_code=500, detail="Failed to load dashboard")
 
-@router.delete("/api/certificates/{certificate_id}")
+
+@router.get("/viewer/{certificate_id}", response_class=HTMLResponse)
+async def certificate_viewer(request: Request, certificate_id: str):
+    """Certificate viewer page."""
+    try:
+        logger.info(f"Loading certificate viewer for {certificate_id}")
+        return templates.TemplateResponse(
+            "viewer.html",
+            {
+                "request": request,
+                "title": f"Certificate Viewer - {certificate_id}",
+                "certificate_id": certificate_id,
+                "module": "certificate_manager"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to load certificate viewer: {e}")
+        raise HTTPException(status_code=500, detail="Failed to load certificate viewer")
+
+
+@router.get("/export", response_class=HTMLResponse)
+async def export_page(request: Request):
+    """Export options page."""
+    try:
+        logger.info("Loading export page")
+        return templates.TemplateResponse(
+            "export.html",
+            {
+                "request": request,
+                "title": "Certificate Export",
+                "module": "certificate_manager"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to load export page: {e}")
+        raise HTTPException(status_code=500, detail="Failed to load export page")
+
+
+# API Routes
+@router.get("/certificates")
+async def get_certificates():
+    """Get all certificates."""
+    try:
+        return await certificate_service.get_all_certificates()
+    except Exception as e:
+        logger.error(f"Failed to get certificates: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get certificates")
+
+
+@router.get("/certificates/{certificate_id}")
+async def get_certificate(certificate_id: str):
+    """Get specific certificate by ID."""
+    try:
+        certificate = await certificate_service.get_certificate_by_id(certificate_id)
+        if not certificate:
+            raise HTTPException(status_code=404, detail="Certificate not found")
+        return certificate
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get certificate {certificate_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get certificate")
+
+
+@router.post("/certificates")
+async def create_certificate(certificate_data: dict):
+    """Create a new certificate."""
+    try:
+        return await certificate_service.create_certificate(certificate_data)
+    except Exception as e:
+        logger.error(f"Failed to create certificate: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create certificate")
+
+
+@router.put("/certificates/{certificate_id}")
+async def update_certificate(certificate_id: str, updates: dict):
+    """Update certificate data."""
+    try:
+        return await certificate_service.update_certificate(certificate_id, updates)
+    except Exception as e:
+        logger.error(f"Failed to update certificate {certificate_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update certificate")
+
+
+@router.delete("/certificates/{certificate_id}")
 async def delete_certificate(certificate_id: str):
-    """Delete certificate"""
-    for i, cert in enumerate(CERTIFICATES_DB):
-        if cert["id"] == certificate_id:
-            del CERTIFICATES_DB[i]
-            return {"message": "Certificate deleted successfully"}
-    
-    raise HTTPException(status_code=404, detail="Certificate not found")
+    """Delete a certificate."""
+    try:
+        return await certificate_service.delete_certificate(certificate_id)
+    except Exception as e:
+        logger.error(f"Failed to delete certificate {certificate_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete certificate")
 
-@router.get("/api/certificates/twin/{twin_id}", response_model=List[CertificateResponse])
-async def get_certificates_by_twin(twin_id: str):
-    """Get certificates for a specific digital twin"""
-    return [cert for cert in CERTIFICATES_DB if cert["digitalTwinId"] == twin_id]
 
-@router.get("/api/certificates/type/{cert_type}", response_model=List[CertificateResponse])
-async def get_certificates_by_type(cert_type: str):
-    """Get certificates by type"""
-    return [cert for cert in CERTIFICATES_DB if cert["type"] == cert_type] 
+@router.get("/certificates/stats")
+async def get_certificate_stats():
+    """Get certificate statistics."""
+    try:
+        return await certificate_service.get_certificate_stats()
+    except Exception as e:
+        logger.error(f"Failed to get certificate stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get certificate stats")
+
+
+@router.get("/certificates/search")
+async def search_certificates(query: str, status: str = None, visibility: str = None):
+    """Search certificates with filters."""
+    try:
+        filters = {"query": query}
+        if status:
+            filters["status"] = status
+        if visibility:
+            filters["visibility"] = visibility
+        return await certificate_service.search_certificates(filters)
+    except Exception as e:
+        logger.error(f"Failed to search certificates: {e}")
+        raise HTTPException(status_code=500, detail="Failed to search certificates")
+
+
+@router.post("/certificates/{certificate_id}/export")
+async def export_certificate(certificate_id: str, format: str = "html", template: str = "default"):
+    """Export certificate in specified format."""
+    try:
+        return await export_service.export_certificate(certificate_id, format, template)
+    except Exception as e:
+        logger.error(f"Failed to export certificate {certificate_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to export certificate")
+
+
+@router.get("/export/formats")
+async def get_export_formats():
+    """Get available export formats."""
+    try:
+        return await export_service.get_available_formats()
+    except Exception as e:
+        logger.error(f"Failed to get export formats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get export formats")
+
+
+@router.get("/templates")
+async def get_templates():
+    """Get all available templates."""
+    try:
+        return await template_service.get_all_templates()
+    except Exception as e:
+        logger.error(f"Failed to get templates: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get templates")
+
+
+@router.get("/templates/{template_id}")
+async def get_template(template_id: str):
+    """Get specific template by ID."""
+    try:
+        template = await template_service.get_template_by_id(template_id)
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        return template
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get template {template_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get template") 

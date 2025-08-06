@@ -1,0 +1,276 @@
+<!-- Status Indicator Component -->
+<div class="cm-status-indicator status-indicator">
+    <!-- Status Overview -->
+    <div class="cm-status-overview status-overview">
+        <div class="cm-status-header status-header">
+            <h4 class="cm-status-title"><i class="fas fa-info-circle"></i> Certificate Status</h4>
+        </div>
+        
+        <div class="cm-status-grid status-grid">
+            <div class="cm-status-item status-item">
+                <div class="cm-status-icon status-icon active">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="cm-status-content status-content">
+                    <div class="cm-status-label status-label">Overall Status</div>
+                    <div class="cm-status-value status-value" id="overall-status">Active</div>
+                </div>
+            </div>
+            
+            <div class="cm-status-item status-item">
+                <div class="cm-status-icon status-icon verified">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="cm-status-content status-content">
+                    <div class="cm-status-label status-label">Verification</div>
+                    <div class="cm-status-value status-value" id="verification-status">Verified</div>
+                </div>
+            </div>
+            
+            <div class="cm-status-item status-item">
+                <div class="cm-status-icon status-icon completed">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="cm-status-content status-content">
+                    <div class="cm-status-label status-label">Last Updated</div>
+                    <div class="cm-status-value status-value" id="last-updated">2 hours ago</div>
+                </div>
+            </div>
+            
+            <div class="cm-status-item status-item">
+                <div class="cm-status-icon status-icon info">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <div class="cm-status-content status-content">
+                    <div class="cm-status-label status-label">Expires</div>
+                    <div class="cm-status-value status-value" id="expiry-date">2024-12-31</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Status -->
+    <div class="cm-detailed-status detailed-status">
+        <h5 class="cm-detailed-title">Section Status</h5>
+        
+        <div class="cm-section-status-list section-status-list">
+            <div class="cm-section-status-item section-status-item">
+                <div class="cm-section-info section-info">
+                    <div class="cm-section-name section-name">ETL Processing</div>
+                    <div class="cm-section-description section-description">Data extraction and transformation</div>
+                </div>
+                <div class="cm-section-status section-status completed">
+                    <i class="fas fa-check"></i>
+                    <span>Completed</span>
+                </div>
+            </div>
+            
+            <div class="cm-section-status-item section-status-item">
+                <div class="cm-section-info section-info">
+                    <div class="cm-section-name section-name">AI Analysis</div>
+                    <div class="cm-section-description section-description">Machine learning analysis</div>
+                </div>
+                <div class="cm-section-status section-status completed">
+                    <i class="fas fa-check"></i>
+                    <span>Completed</span>
+                </div>
+            </div>
+            
+            <div class="cm-section-status-item section-status-item">
+                <div class="cm-section-info section-info">
+                    <div class="cm-section-name section-name">Physics Modeling</div>
+                    <div class="cm-section-description section-description">Simulation and modeling</div>
+                </div>
+                <div class="cm-section-status section-status pending">
+                    <i class="fas fa-clock"></i>
+                    <span>In Progress</span>
+                </div>
+            </div>
+            
+            <div class="cm-section-status-item section-status-item">
+                <div class="cm-section-info section-info">
+                    <div class="cm-section-name section-name">Knowledge Graph</div>
+                    <div class="cm-section-description section-description">Graph database integration</div>
+                </div>
+                <div class="cm-section-status section-status completed">
+                    <i class="fas fa-check"></i>
+                    <span>Completed</span>
+                </div>
+            </div>
+            
+            <div class="cm-section-status-item section-status-item">
+                <div class="cm-section-info section-info">
+                    <div class="cm-section-name section-name">Quality Metrics</div>
+                    <div class="cm-section-description section-description">Quality assessment</div>
+                </div>
+                <div class="cm-section-status section-status completed">
+                    <i class="fas fa-check"></i>
+                    <span>Completed</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Timeline -->
+    <div class="status-timeline">
+        <h5>Status History</h5>
+        
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-marker completed"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">Certificate Created</div>
+                    <div class="timeline-time">2024-01-15 10:30:00</div>
+                    <div class="timeline-description">Initial certificate created for Digital Twin</div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-marker completed"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">ETL Processing Complete</div>
+                    <div class="timeline-time">2024-01-15 10:32:15</div>
+                    <div class="timeline-description">Data extraction and transformation completed successfully</div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-marker completed"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">AI Analysis Complete</div>
+                    <div class="timeline-time">2024-01-15 10:35:42</div>
+                    <div class="timeline-description">Machine learning analysis completed with 87% confidence</div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-marker pending"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">Physics Modeling Started</div>
+                    <div class="timeline-time">2024-01-15 10:40:00</div>
+                    <div class="timeline-description">Simulation process initiated</div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-marker completed"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">Knowledge Graph Updated</div>
+                    <div class="timeline-time">2024-01-15 11:15:30</div>
+                    <div class="timeline-description">Graph database updated with new relationships</div>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-marker completed"></div>
+                <div class="timeline-content">
+                    <div class="timeline-title">Quality Assessment Complete</div>
+                    <div class="timeline-time">2024-01-15 12:00:00</div>
+                    <div class="timeline-description">Overall quality score: 92/100</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Alerts -->
+    <div class="status-alerts">
+        <h5>Alerts & Notifications</h5>
+        
+        <div class="alert-list">
+            <div class="alert-item info">
+                <div class="alert-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="alert-content">
+                    <div class="alert-title">Certificate Updated</div>
+                    <div class="alert-message">Physics modeling section is currently in progress</div>
+                    <div class="alert-time">2 hours ago</div>
+                </div>
+            </div>
+            
+            <div class="alert-item success">
+                <div class="alert-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="alert-content">
+                    <div class="alert-title">Verification Successful</div>
+                    <div class="alert-message">Digital signature validation completed successfully</div>
+                    <div class="alert-time">1 hour ago</div>
+                </div>
+            </div>
+            
+            <div class="alert-item warning">
+                <div class="alert-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="alert-content">
+                    <div class="alert-title">Performance Notice</div>
+                    <div class="alert-message">Physics simulation is taking longer than expected</div>
+                    <div class="alert-time">30 minutes ago</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Actions -->
+    <div class="status-actions">
+        <button class="btn btn-primary" onclick="refreshStatus()">
+            <i class="fas fa-sync-alt"></i> Refresh Status
+        </button>
+        <button class="btn btn-outline-secondary" onclick="viewStatusHistory()">
+            <i class="fas fa-history"></i> View History
+        </button>
+        <button class="btn btn-outline-info" onclick="exportStatus()">
+            <i class="fas fa-download"></i> Export Status
+        </button>
+    </div>
+</div>
+
+<script>
+// Status indicator functionality
+function updateStatusIndicator(certificateId) {
+    console.log('Updating status for certificate:', certificateId);
+    
+    // Simulate status update
+    setTimeout(() => {
+        document.getElementById('overall-status').textContent = 'Active';
+        document.getElementById('verification-status').textContent = 'Verified';
+        document.getElementById('last-updated').textContent = 'Just now';
+        document.getElementById('expiry-date').textContent = '2024-12-31';
+    }, 500);
+}
+
+function refreshStatus() {
+    console.log('Refreshing status...');
+    
+    // Show loading state
+    const refreshBtn = event.target;
+    const originalText = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+    refreshBtn.disabled = true;
+    
+    // Simulate refresh
+    setTimeout(() => {
+        updateStatusIndicator(currentCertificateId);
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
+    }, 2000);
+}
+
+function viewStatusHistory() {
+    console.log('Viewing status history...');
+    // This would open a modal or navigate to history page
+}
+
+function exportStatus() {
+    console.log('Exporting status...');
+    // This would generate a status report
+}
+
+// Initialize status indicator
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up real-time status updates if needed
+    console.log('Status indicator initialized');
+});
+</script>
+ 

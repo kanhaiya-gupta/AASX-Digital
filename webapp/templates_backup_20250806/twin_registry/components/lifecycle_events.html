@@ -1,0 +1,172 @@
+<!-- Lifecycle Events Component -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-history me-2"></i>Lifecycle Events
+        </h5>
+        <div class="d-flex gap-2">
+            <select class="form-select form-select-sm" id="eventTypeFilter">
+                <option value="">All Event Types</option>
+                <option value="created">Created</option>
+                <option value="started">Started</option>
+                <option value="stopped">Stopped</option>
+                <option value="syncing">Syncing</option>
+                <option value="error">Error</option>
+            </select>
+            <select class="form-select form-select-sm" id="eventStatusFilter">
+                <option value="">All Status</option>
+                <option value="completed">Completed</option>
+                <option value="in_progress">In Progress</option>
+                <option value="failed">Failed</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary" onclick="refreshLifecycleEvents()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Event Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-primary mb-1" id="totalEvents">0</div>
+                    <div class="text-muted">Total Events</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-success mb-1" id="completedEvents">0</div>
+                    <div class="text-muted">Completed</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-warning mb-1" id="inProgressEvents">0</div>
+                    <div class="text-muted">In Progress</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <div class="h4 text-danger mb-1" id="failedEvents">0</div>
+                    <div class="text-muted">Failed</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Timeline -->
+        <div class="timeline-container">
+            <div id="lifecycleTimeline">
+                <!-- Timeline events will be populated here -->
+            </div>
+        </div>
+
+        <!-- Event Details Modal -->
+        <div class="modal fade" id="eventDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-info-circle me-2"></i>Event Details
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="eventDetailsContent">
+                        <!-- Event details will be populated here -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.timeline-item {
+    position: relative;
+    padding: 1rem;
+    border-left: 3px solid #dee2e6;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.25rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 1.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #6c757d;
+}
+
+.timeline-item.completed {
+    border-left-color: #28a745;
+}
+
+.timeline-item.completed::before {
+    background: #28a745;
+}
+
+.timeline-item.in-progress {
+    border-left-color: #ffc107;
+}
+
+.timeline-item.in-progress::before {
+    background: #ffc107;
+}
+
+.timeline-item.failed {
+    border-left-color: #dc3545;
+}
+
+.timeline-item.failed::before {
+    background: #dc3545;
+}
+
+.event-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.event-type {
+    font-weight: bold;
+    color: #495057;
+}
+
+.event-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.event-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.event-status.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.event-status.in-progress {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.event-status.failed {
+    background: #f8d7da;
+    color: #721c24;
+}
+</style> 

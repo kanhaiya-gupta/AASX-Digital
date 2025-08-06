@@ -1,0 +1,225 @@
+/**
+ * Homepage Module Main CSS File
+ * Imports all modular CSS components for the Homepage Module
+ */
+
+/* ===== MODULAR CSS IMPORTS ===== */
+@import url('./modules/homepage/layout.css');
+@import url('./modules/homepage/hero.css');
+@import url('./modules/homepage/features.css');
+@import url('./modules/homepage/projects.css');
+@import url('./modules/homepage/components.css');
+
+/* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
+/* Homepage-specific global styles and overrides */
+
+/* Animation keyframes for Homepage module */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Global animation classes */
+.fade-in {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.6s ease-out;
+}
+
+.bounce-animation {
+    animation: bounce 2s infinite;
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+.spin-animation {
+    animation: spin 1s linear infinite;
+}
+
+/* Global utility classes */
+.hover-shadow {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Hero Section Enhancements */
+.homepage-hero-capabilities {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.homepage-capability-item {
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.homepage-capability-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.homepage-capability-item i {
+    font-size: 1.5rem;
+}
+
+/* Module Integration Section */
+.homepage-module-integration {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.homepage-integration-flow {
+    position: relative;
+}
+
+.homepage-flow-step {
+    padding: 20px 10px;
+    transition: all 0.3s ease;
+}
+
+.homepage-flow-step:hover {
+    transform: translateY(-5px);
+}
+
+.homepage-flow-icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.homepage-flow-step:hover .homepage-flow-icon {
+    transform: scale(1.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.homepage-integration-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.homepage-integration-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--bs-primary);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.homepage-integration-card .card-body {
+    text-align: center;
+}
+
+.homepage-integration-card ul {
+    text-align: left;
+    margin-top: 15px;
+}
+
+.homepage-integration-card li {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments for module integration */
+@media (max-width: 768px) {
+    .homepage-flow-step {
+        margin-bottom: 20px;
+    }
+    
+    .homepage-flow-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .homepage-flow-icon i {
+        font-size: 1.5rem !important;
+    }
+    
+    .homepage-integration-flow .fas.fa-arrow-right {
+        transform: rotate(90deg);
+        margin: 10px 0;
+    }
+} 

@@ -1,0 +1,483 @@
+/**
+ * Physics Modeling Module Components CSS Module
+ * Dedicated styling for reusable components
+ */
+
+/* ===== TABLE STYLING ===== */
+.physics-table {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.physics-table .table {
+    margin-bottom: 0;
+}
+
+.physics-table .table th {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.physics-table .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.physics-table .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* ===== CARD STYLING ===== */
+.physics-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    background: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.physics-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.physics-card .card-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+.physics-card .card-body {
+    padding: 1.5rem;
+}
+
+/* ===== BUTTON STYLING ===== */
+.btn-physics {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-physics:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-physics-primary {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+}
+
+.btn-physics-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+}
+
+.btn-physics-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+}
+
+.btn-physics-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+/* ===== STATUS BADGES ===== */
+.physics-status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.physics-status-badge.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.physics-status-badge.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.physics-status-badge.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.physics-status-badge.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* ===== ALERT STYLING ===== */
+.physics-alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.physics-alert.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.physics-alert.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.physics-alert.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.physics-alert.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+/* ===== CHART CONTAINER STYLING ===== */
+.physics-chart-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.physics-chart-container.large { height: 250px; }
+.physics-chart-container.medium { height: 200px; }
+.physics-chart-container.small { height: 150px; }
+.physics-chart-container.tall { height: 300px; }
+
+/* ===== LOADING STATES ===== */
+.physics-loading-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.physics-loading-state.show {
+    display: block;
+}
+
+.physics-loading-state .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* ===== EMPTY STATES ===== */
+.physics-empty-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+    color: #6c757d;
+}
+
+.physics-empty-state.show {
+    display: block;
+}
+
+.physics-empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* ===== PROGRESS BAR STYLING ===== */
+.physics-progress-container {
+    margin: 1rem 0;
+}
+
+.physics-progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.physics-progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    transition: width 0.3s ease;
+}
+
+.physics-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.physics-progress-label i {
+    margin-right: 0.5rem;
+    color: #20c997;
+}
+
+/* ===== TOOLTIP STYLING ===== */
+.physics-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    pointer-events: none;
+    z-index: 1001;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    max-width: 200px;
+}
+
+/* ===== MODAL STYLING ===== */
+.physics-modal .modal-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    border-bottom: none;
+}
+
+.physics-modal .modal-title {
+    font-weight: 600;
+}
+
+.physics-modal .modal-body {
+    padding: 1.5rem;
+}
+
+.physics-modal .modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+/* ===== ACCORDION STYLING ===== */
+.physics-accordion .accordion-button {
+    background-color: #f8f9fa;
+    border: none;
+    font-weight: 500;
+    color: #495057;
+}
+
+.physics-accordion .accordion-button:not(.collapsed) {
+    background-color: #e3f2fd;
+    color: #20c997;
+}
+
+.physics-accordion .accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.25);
+}
+
+.physics-accordion .accordion-body {
+    background-color: #fff;
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+/* ===== FORM CONTROLS ===== */
+.physics-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.physics-form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.physics-form-control {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.physics-form-control:focus {
+    border-color: #20c997;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+}
+
+.physics-form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.physics-form-control.is-valid {
+    border-color: #28a745;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .physics-table .table th,
+    .physics-table .table td {
+        padding: 0.75rem;
+    }
+
+    .physics-card .card-body {
+        padding: 1rem;
+    }
+
+    .btn-physics {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .physics-chart-container {
+        height: 150px;
+    }
+
+    .physics-chart-container.large {
+        height: 200px;
+    }
+
+    .physics-progress-label {
+        font-size: 0.8rem;
+    }
+
+    .physics-tooltip {
+        max-width: 150px;
+        font-size: 0.8rem;
+        padding: 0.375rem 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .physics-modal .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .physics-modal .modal-body {
+        padding: 1rem;
+    }
+
+    .physics-accordion .accordion-body {
+        padding: 0.75rem 1rem;
+    }
+} 
+
+/* ===== STATUS INDICATORS ===== */
+.pm-status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* ===== CHART CONTAINERS ===== */
+.pm-chart-container {
+    position: relative;
+    height: 300px;
+}
+
+.pm-chart-container.tall {
+    height: 400px;
+}
+
+/* ===== PROGRESS BARS ===== */
+.pm-progress-thin {
+    height: 4px;
+}
+
+/* ===== CARD HOVER EFFECTS ===== */
+.pm-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+/* ===== TAB CONTENT ===== */
+.pm-tab-content {
+    min-height: 500px;
+}
+
+/* ===== LOADING SPINNER ===== */
+.pm-loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+}
+
+/* ===== TAB STYLING ===== */
+.pm-tabs .pm-tab-link {
+    color: white !important;
+}
+
+.pm-tabs .pm-tab-link:hover {
+    color: #f8f9fa !important;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.pm-tabs .pm-tab-link.active {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== PROGRESS BAR STYLES ===== */
+.pm-progress-bar-container {
+    height: 20px;
+}
+
+.pm-metric-progress {
+    height: 8px;
+}
+
+/* ===== LOGS CONTAINER ===== */
+.pm-logs-container {
+    height: 100px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+/* ===== SYSTEM LOGS ===== */
+.pm-system-logs {
+    height: 150px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+/* ===== PERFORMANCE PROGRESS BARS ===== */
+.pm-performance-progress {
+    height: 8px;
+} 

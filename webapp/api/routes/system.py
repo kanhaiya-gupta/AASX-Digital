@@ -114,7 +114,7 @@ async def list_modules():
         "ai_rag": {"enabled": True, "status": "active"},
         "twin_registry": {"enabled": True, "status": "active"},
         "certificate_manager": {"enabled": True, "status": "active"},
-        "qi_analytics": {"enabled": True, "status": "active"},
+
         "kg_neo4j": {"enabled": True, "status": "active"},
         "federated_learning": {"enabled": True, "status": "active"},
         "physics_modeling": {"enabled": True, "status": "active"}

@@ -1,0 +1,145 @@
+/**
+ * AI RAG Module Layout CSS Module
+ * Dedicated styling for main layout and structure
+ */
+
+/* ===== MAIN LAYOUT STYLING ===== */
+.ai-rag-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+    padding: 1.5rem 0;
+}
+
+/* ===== PAGE HEADER STYLING ===== */
+.ai-rag-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.ai-rag-header h1 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.ai-rag-header .subtitle {
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* ===== CONTENT AREA STYLING ===== */
+.ai-rag-content {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+/* ===== CHAT LAYOUT ===== */
+.ai-rag-chat-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    height: calc(100vh - 200px);
+    min-height: 600px;
+}
+
+.ai-rag-chat-main {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ai-rag-chat-sidebar {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+/* ===== GRID LAYOUT STYLING ===== */
+.ai-rag-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.ai-rag-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.ai-rag-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.ai-rag-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ===== DASHBOARD LAYOUT ===== */
+.ai-rag-dashboard {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: 100vh;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+    .ai-rag-chat-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    
+    .ai-rag-chat-sidebar {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .ai-rag-header {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .ai-rag-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .ai-rag-header .subtitle {
+        font-size: 1rem;
+    }
+    
+    .ai-rag-container {
+        padding: 1rem 0;
+    }
+    
+    .ai-rag-grid-2,
+    .ai-rag-grid-3,
+    .ai-rag-grid-4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .ai-rag-container {
+        padding: 0.5rem 0;
+    }
+    
+    .ai-rag-header {
+        padding: 1rem 0;
+    }
+    
+    .ai-rag-chat-sidebar {
+        padding: 1rem;
+    }
+} 

@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+
+{% block title %}User Guide - AASX Package Explorer{% endblock %}
+
+{% block content %}
+<!-- Guide Header -->
+<div class="bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-graduation-cap me-3"></i>
+                    User Guide
+                </h1>
+                <p class="lead">
+                    Complete guide to creating, editing, and managing AASX packages with the Eclipse AASX Package Explorer
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Start Section -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm mb-5">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-rocket me-2"></i>
+                        Quick Start Guide
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Getting Started</h5>
+                            <ol class="text-muted">
+                                <li class="mb-2">Download and install AASX Package Explorer</li>
+                                <li class="mb-2">Launch the application</li>
+                                <li class="mb-2">Create a new AASX package or open existing file</li>
+                                <li class="mb-2">Add your first asset</li>
+                                <li class="mb-2">Configure submodels and properties</li>
+                                <li class="mb-2">Validate and save your package</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>System Requirements</h5>
+                            <ul class="text-muted">
+                                <li><strong>OS:</strong> Windows 10/11</li>
+                                <li><strong>.NET:</strong> .NET Framework 4.7.2 or later</li>
+                                <li><strong>RAM:</strong> 4GB minimum, 8GB recommended</li>
+                                <li><strong>Storage:</strong> 500MB free space</li>
+                                <li><strong>Display:</strong> 1024x768 minimum resolution</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Step-by-Step Tutorial -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Step-by-Step Tutorial</h2>
+                <p class="lead text-muted">Learn how to create your first AASX package</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Step 1 -->
+            <div class="col-lg-6">
+                <div class="tutorial-card card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="step-number mb-3">1</div>
+                        <h5>Create New AASX Package</h5>
+                        <p class="text-muted">
+                            Start by creating a new AASX package to represent your asset.
+                        </p>
+                        <div class="tutorial-steps">
+                            <ol class="text-muted">
+                                <li>Click "File" → "New" → "AASX Package"</li>
+                                <li>Enter a name for your package</li>
+                                <li>Choose a save location</li>
+                                <li>Click "Create" to initialize the package</li>
+                            </ol>
+                        </div>
+                        <div class="tutorial-tip">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            <strong>Tip:</strong> Use descriptive names that reflect your asset type
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="col-lg-6">
+                <div class="tutorial-card card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="step-number mb-3">2</div>
+                        <h5>Add Asset Administration Shell</h5>
+                        <p class="text-muted">
+                            Create the main Asset Administration Shell for your asset.
+                        </p>
+                        <div class="tutorial-steps">
+                            <ol class="text-muted">
+                                <li>Right-click on "Asset Administration Shells"</li>
+                                <li>Select "Add Asset Administration Shell"</li>
+                                <li>Enter asset identification details</li>
+                                <li>Configure asset type and description</li>
+                            </ol>
+                        </div>
+                        <div class="tutorial-tip">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            <strong>Tip:</strong> Use unique identifiers for your assets
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="col-lg-6">
+                <div class="tutorial-card card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="step-number mb-3">3</div>
+                        <h5>Create Submodels</h5>
+                        <p class="text-muted">
+                            Add submodels to organize different aspects of your asset.
+                        </p>
+                        <div class="tutorial-steps">
+                            <ol class="text-muted">
+                                <li>Right-click on your AAS</li>
+                                <li>Select "Add Submodel"</li>
+                                <li>Choose submodel type (Technical Data, Operational Data, etc.)</li>
+                                <li>Configure submodel properties</li>
+                            </ol>
+                        </div>
+                        <div class="tutorial-tip">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            <strong>Tip:</strong> Use standard submodel templates when available
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4 -->
+            <div class="col-lg-6">
+                <div class="tutorial-card card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="step-number mb-3">4</div>
+                        <h5>Add Properties and Elements</h5>
+                        <p class="text-muted">
+                            Define properties and other elements within your submodels.
+                        </p>
+                        <div class="tutorial-steps">
+                            <ol class="text-muted">
+                                <li>Select a submodel</li>
+                                <li>Right-click and choose "Add Property"</li>
+                                <li>Define property name, type, and value</li>
+                                <li>Add additional elements as needed</li>
+                            </ol>
+                        </div>
+                        <div class="tutorial-tip">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            <strong>Tip:</strong> Use appropriate data types for your properties
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 5 -->
+            <div class="col-lg-6">
+                <div class="tutorial-card card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="step-number mb-3">5</div>
+                        <h5>Validate Your Package</h5>
+                        <p class="text-muted">
+                            Ensure your AASX package complies with the specification.
+                        </p>
+                        <div class="tutorial-steps">
+                            <ol class="text-muted">
+                                <li>Click "Tools" → "Validate Package"</li>
+                                <li>Review validation results</li>
+                                <li>Fix any errors or warnings</li>
+                                <li>Re-validate until all issues are resolved</li>
+                            </ol>
+                        </div>
+                        <div class="tutorial-tip">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            <strong>Tip:</strong> Address all validation errors before proceeding
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 6 -->
+            <div class="col-lg-6">
+                <div class="tutorial-card card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="step-number mb-3">6</div>
+                        <h5>Save and Export</h5>
+                        <p class="text-muted">
+                            Save your AASX package and export for use in other systems.
+                        </p>
+                        <div class="tutorial-steps">
+                            <ol class="text-muted">
+                                <li>Click "File" → "Save" to save your work</li>
+                                <li>Use "File" → "Export" for additional formats</li>
+                                <li>Choose export format (JSON, XML, etc.)</li>
+                                <li>Select destination and export</li>
+                            </ol>
+                        </div>
+                        <div class="tutorial-tip">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                            <strong>Tip:</strong> Keep backup copies of your AASX files
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Features -->
+<div class="container py-5">
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <h2 class="display-5 fw-bold mb-3">Advanced Features</h2>
+            <p class="lead text-muted">Explore advanced capabilities for complex asset modeling</p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-sitemap fa-3x text-primary"></i>
+                    </div>
+                    <h5>Submodel Templates</h5>
+                    <p class="text-muted">
+                        Use predefined submodel templates for common asset types like machines, sensors, and equipment.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-link fa-3x text-success"></i>
+                    </div>
+                    <h5>Reference Management</h5>
+                    <p class="text-muted">
+                        Create and manage references between different elements within your AASX package.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-file-import fa-3x text-info"></i>
+                    </div>
+                    <h5>Import/Export</h5>
+                    <p class="text-muted">
+                        Import data from various sources and export to multiple formats for integration.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-search fa-3x text-warning"></i>
+                    </div>
+                    <h5>Search & Filter</h5>
+                    <p class="text-muted">
+                        Quickly find and filter elements within large AASX packages for efficient navigation.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-copy fa-3x text-danger"></i>
+                    </div>
+                    <h5>Copy & Paste</h5>
+                    <p class="text-muted">
+                        Efficiently duplicate elements and structures within your AASX package.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4 text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-eye fa-3x text-secondary"></i>
+                    </div>
+                    <h5>Visual Preview</h5>
+                    <p class="text-muted">
+                        Preview your AASX package structure and relationships in a visual format.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Best Practices -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-star me-2"></i>
+                            Best Practices
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Naming Conventions</h5>
+                                <ul class="text-muted">
+                                    <li>Use descriptive, consistent names</li>
+                                    <li>Follow industry standards when available</li>
+                                    <li>Avoid special characters in identifiers</li>
+                                    <li>Use camelCase for property names</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Organization</h5>
+                                <ul class="text-muted">
+                                    <li>Group related properties in submodels</li>
+                                    <li>Use standard submodel templates</li>
+                                    <li>Maintain logical hierarchy</li>
+                                    <li>Document your structure</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5>Data Quality</h5>
+                                <ul class="text-muted">
+                                    <li>Use appropriate data types</li>
+                                    <li>Include units of measurement</li>
+                                    <li>Validate data regularly</li>
+                                    <li>Keep data up to date</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Integration</h5>
+                                <ul class="text-muted">
+                                    <li>Plan for system integration</li>
+                                    <li>Use standard identifiers</li>
+                                    <li>Consider scalability</li>
+                                    <li>Test with target systems</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<div class="container py-4">
+    <div class="row text-center">
+        <div class="col-12">
+            <a href="/aasx-explorer" class="btn btn-primary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to AASX Explorer
+            </a>
+            <a href="/aasx-explorer/download" class="btn btn-success btn-lg ms-3">
+                <i class="fas fa-download me-2"></i>
+                Download Now
+            </a>
+            <a href="/aasx-explorer/license" class="btn btn-outline-secondary btn-lg ms-3">
+                <i class="fas fa-gavel me-2"></i>
+                View License
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    margin: 0 auto;
+}
+
+.tutorial-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tutorial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.tutorial-tip {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.feature-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important;
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.tutorial-steps ol {
+    padding-left: 20px;
+}
+
+.tutorial-steps li {
+    margin-bottom: 8px;
+}
+</style>
+{% endblock %} 

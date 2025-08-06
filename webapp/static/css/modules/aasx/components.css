@@ -1,0 +1,393 @@
+/**
+ * AASX Processing Module Components CSS Module
+ * Dedicated styling for reusable components
+ */
+
+/* ===== GRADIENT BACKGROUNDS ===== */
+.aasx-bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.aasx-bg-gradient-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.aasx-bg-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.aasx-bg-gradient-warning {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* ===== STATUS INDICATORS ===== */
+.aasx-status-indicator {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.aasx-status-indicator:hover {
+    transform: scale(1.1);
+}
+
+.aasx-status-indicator.status-success {
+    background: rgba(40, 167, 69, 0.1);
+    border-color: #28a745;
+}
+
+.aasx-status-indicator.status-error {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+}
+
+.aasx-status-indicator.status-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: #ffc107;
+}
+
+/* ===== WORKFLOW ICONS ===== */
+.aasx-workflow-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+/* ===== PROGRESS CIRCLES ===== */
+.aasx-progress-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(#007bff 0deg, #e9ecef 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+}
+
+.aasx-progress-text {
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* ===== TABLE STYLING ===== */
+.aasx-table {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-table .table {
+    margin-bottom: 0;
+}
+
+.aasx-table .table th {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.aasx-table .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.aasx-table .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* ===== CARD STYLING ===== */
+.aasx-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.aasx-card .card-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1rem 1.5rem;
+}
+
+.aasx-card .card-body {
+    padding: 1.5rem;
+}
+
+/* ===== BUTTON STYLING ===== */
+.btn-aasx {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-aasx:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-aasx-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+}
+
+.btn-aasx-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+}
+
+.btn-aasx-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+}
+
+.btn-aasx-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+/* ===== STATUS BADGES ===== */
+.status-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.status-badge.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-badge.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-badge.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* ===== PROCESSING STATUS ===== */
+.processing-status {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #dee2e6;
+}
+
+.processing-status.success {
+    background-color: #d4edda;
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.processing-status.error {
+    background-color: #f8d7da;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.processing-status.warning {
+    background-color: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+/* ===== ALERT STYLING ===== */
+.aasx-alert {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    position: relative;
+}
+
+.aasx-alert.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.aasx-alert.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.aasx-alert.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.aasx-alert.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+/* ===== CHART CONTAINER STYLING ===== */
+.chart-container {
+    position: relative;
+    height: 200px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.chart-container.large { height: 250px; }
+.chart-container.medium { height: 200px; }
+.chart-container.small { height: 150px; }
+.chart-container.tall { height: 300px; }
+
+/* ===== LOADING STATES ===== */
+.loading-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.loading-state.show { 
+    display: block; 
+}
+
+.loading-state .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* ===== EMPTY STATES ===== */
+.empty-state {
+    display: none;
+    text-align: center;
+    padding: 2rem 0;
+    color: #6c757d;
+}
+
+.empty-state.show { 
+    display: block; 
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* ===== PROGRESS BAR STYLING ===== */
+.progress-container {
+    margin: 1rem 0;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    transition: width 0.3s ease;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.progress-label i {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .aasx-table .table th,
+    .aasx-table .table td {
+        padding: 0.75rem;
+    }
+    
+    .aasx-card .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-aasx {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .chart-container {
+        height: 150px;
+    }
+    
+    .chart-container.large {
+        height: 200px;
+    }
+    
+    .progress-label {
+        font-size: 0.8rem;
+    }
+} 
+
+/* ===== FORM CONTROLS ===== */
+.aasx-form-control, .aasx-form-select {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.aasx-form-control:focus, .aasx-form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+} 

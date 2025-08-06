@@ -1,0 +1,898 @@
+/**
+ * Certificate Manager - Phase 5 Frontend
+ * Component styles for certificate management interface
+ */
+
+/* Cards */
+.certificate-manager .card {
+    background: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.certificate-manager .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.certificate-manager .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.certificate-manager .card-body {
+    padding: 1.5rem;
+}
+
+.certificate-manager .card-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+/* Buttons */
+.certificate-manager .btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.certificate-manager .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.certificate-manager .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.certificate-manager .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.certificate-manager .btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+.certificate-manager .btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.certificate-manager .btn-secondary:hover {
+    background: #5a6268;
+}
+
+.certificate-manager .btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.certificate-manager .btn-success:hover {
+    background: #218838;
+}
+
+.certificate-manager .btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.certificate-manager .btn-danger:hover {
+    background: #c82333;
+}
+
+.certificate-manager .btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.certificate-manager .btn-warning:hover {
+    background: #e0a800;
+}
+
+.certificate-manager .btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.certificate-manager .btn-info:hover {
+    background: #138496;
+}
+
+.certificate-manager .btn-outline-primary {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.certificate-manager .btn-outline-primary:hover {
+    background: #667eea;
+    color: white;
+}
+
+.certificate-manager .btn-outline-secondary {
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #6c757d;
+}
+
+.certificate-manager .btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.certificate-manager .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.certificate-manager .btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+.certificate-manager .btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Button Groups */
+.certificate-manager .btn-group {
+    display: inline-flex;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.certificate-manager .btn-group .btn {
+    border-radius: 0;
+    margin: 0;
+}
+
+.certificate-manager .btn-group .btn:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.certificate-manager .btn-group .btn:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.certificate-manager .btn-group .btn:not(:last-child) {
+    border-right: 1px solid rgba(255,255,255,0.2);
+}
+
+/* Forms */
+.certificate-manager .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.certificate-manager .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.certificate-manager .form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.certificate-manager .form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.certificate-manager .form-control:disabled {
+    background: #e9ecef;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.certificate-manager .form-text {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.certificate-manager .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.certificate-manager .form-check-input {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+}
+
+.certificate-manager .form-check-label {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Select */
+.certificate-manager .form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background: white url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e") no-repeat right 0.75rem center/16px 12px;
+    appearance: none;
+    transition: all 0.2s ease;
+}
+
+.certificate-manager .form-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Textarea */
+.certificate-manager .form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Input Groups */
+.certificate-manager .input-group {
+    display: flex;
+    align-items: stretch;
+}
+
+.certificate-manager .input-group .form-control {
+    border-radius: 0;
+    flex: 1;
+}
+
+.certificate-manager .input-group .form-control:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.certificate-manager .input-group .form-control:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.certificate-manager .input-group .btn {
+    border-radius: 0;
+    margin: 0;
+}
+
+.certificate-manager .input-group .btn:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.certificate-manager .input-group .btn:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+/* Alerts */
+.certificate-manager .alert {
+    padding: 1rem 1.5rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.certificate-manager .alert-success {
+    background: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.certificate-manager .alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-color: #bee5eb;
+}
+
+.certificate-manager .alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffeaa7;
+}
+
+.certificate-manager .alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.certificate-manager .alert-dismissible {
+    position: relative;
+    padding-right: 3rem;
+}
+
+.certificate-manager .alert-dismissible .close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1rem 1.5rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.certificate-manager .alert-dismissible .close:hover {
+    opacity: 1;
+}
+
+/* Badges */
+.certificate-manager .badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.certificate-manager .badge-primary {
+    background: #667eea;
+    color: white;
+}
+
+.certificate-manager .badge-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.certificate-manager .badge-success {
+    background: #28a745;
+    color: white;
+}
+
+.certificate-manager .badge-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.certificate-manager .badge-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.certificate-manager .badge-info {
+    background: #17a2b8;
+    color: white;
+}
+
+/* Tooltips */
+.certificate-manager .tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.certificate-manager .tooltip .tooltip-text {
+    visibility: hidden;
+    background: #333;
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+}
+
+.certificate-manager .tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.certificate-manager .tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Progress Bars */
+.certificate-manager .progress {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.certificate-manager .progress-bar {
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Spinners */
+.certificate-manager .spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.certificate-manager .spinner-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 2px;
+}
+
+.certificate-manager .spinner-lg {
+    width: 3rem;
+    height: 3rem;
+    border-width: 4px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Components */
+@media (max-width: 768px) {
+    .certificate-manager .modal-dialog {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .certificate-manager .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .certificate-manager .btn-group .btn {
+        border-radius: 6px !important;
+        margin-bottom: 0.25rem;
+    }
+    
+    .certificate-manager .input-group {
+        flex-direction: column;
+    }
+    
+    .certificate-manager .input-group .form-control,
+    .certificate-manager .input-group .btn {
+        border-radius: 6px !important;
+        margin-bottom: 0.25rem;
+    }
+} 
+
+/* Modal Styles */
+.certificate-manager .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.certificate-manager .modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.certificate-manager .modal-dialog {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.8);
+    transition: transform 0.3s ease;
+    margin: 0 auto;
+}
+
+.certificate-manager .modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+.certificate-manager .modal-content {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    overflow: hidden;
+}
+
+.certificate-manager .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+}
+
+.certificate-manager .modal-title {
+    margin: 0;
+    font-weight: 600;
+    color: #495057;
+    font-size: 1.25rem;
+}
+
+.certificate-manager .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.certificate-manager .modal-close:hover {
+    opacity: 1;
+}
+
+.certificate-manager .btn-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.certificate-manager .btn-close:hover {
+    opacity: 1;
+}
+
+.certificate-manager .modal-body {
+    padding: 1.5rem;
+    background: white;
+}
+
+.certificate-manager .modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    background: #f8f9fa;
+}
+
+/* Bootstrap Modal Overrides */
+.modal.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+.modal.fade.show {
+    opacity: 1;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+}
+
+.modal-backdrop.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+.modal-backdrop.show {
+    opacity: 1;
+}
+
+/* Ensure modals are visible */
+.modal.show {
+    display: block !important;
+}
+
+.modal.show .modal-dialog {
+    transform: none !important;
+}
+
+/* Modal sizes */
+.modal-dialog.modal-lg {
+    max-width: 800px;
+}
+
+.modal-dialog.modal-xl {
+    max-width: 1140px;
+} 
+
+/* ===== STATUS INDICATOR SPECIFIC STYLES ===== */
+.cm-status-indicator {
+    padding: 1rem;
+}
+
+.cm-status-overview {
+    margin-bottom: 2rem;
+}
+
+.cm-status-header h4 {
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.cm-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.cm-status-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.cm-status-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.cm-status-icon.active { background: #28a745; }
+.cm-status-icon.verified { background: #17a2b8; }
+.cm-status-icon.completed { background: #28a745; }
+.cm-status-icon.pending { background: #ffc107; }
+.cm-status-icon.info { background: #6c757d; }
+
+.cm-status-content {
+    flex: 1;
+}
+
+.cm-status-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.cm-status-value {
+    font-size: 1rem;
+    color: #212529;
+    font-weight: 500;
+}
+
+.cm-detailed-status {
+    margin-bottom: 2rem;
+}
+
+.cm-detailed-status h5 {
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.cm-section-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.cm-section-status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.cm-section-info {
+    flex: 1;
+}
+
+.cm-section-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.cm-section-description {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.cm-section-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.cm-section-status.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.cm-section-status.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.cm-section-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* ===== VERSION HISTORY SPECIFIC STYLES ===== */
+.cm-version-history {
+    padding: 1rem;
+}
+
+.cm-version-overview {
+    margin-bottom: 2rem;
+}
+
+.cm-version-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.cm-version-header h4 {
+    margin: 0;
+    color: #495057;
+}
+
+.cm-version-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.cm-version-count {
+    font-weight: 600;
+}
+
+.cm-version-current {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.cm-version-timeline {
+    margin-bottom: 2rem;
+}
+
+.cm-timeline-container {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.cm-timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.cm-version-item {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-left: 1.5rem;
+}
+
+.cm-version-item::before {
+    content: '';
+    position: absolute;
+    left: -0.75rem;
+    top: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #667eea;
+}
+
+.cm-version-marker {
+    position: absolute;
+    left: -0.75rem;
+    top: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #667eea;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.5rem;
+}
+
+.cm-version-marker.current {
+    background: #28a745;
+    font-size: 0.75rem;
+} 

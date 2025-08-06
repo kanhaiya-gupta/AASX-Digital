@@ -1,0 +1,463 @@
+/**
+ * Federated Learning Module Models CSS Module
+ * Dedicated styling for model management and deployment
+ */
+
+/* ===== MODEL CONTAINER ===== */
+.fl-model-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.fl-model-header {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.fl-model-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.fl-model-subtitle {
+    opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+/* ===== MODEL CONTENT ===== */
+.fl-model-content {
+    padding: 2rem;
+}
+
+.fl-model-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.fl-model-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.fl-model-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.fl-model-section-title i {
+    margin-right: 0.5rem;
+    color: #fd7e14;
+}
+
+/* ===== MODEL VERSIONS ===== */
+.fl-model-versions {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl-version-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.fl-version-item:hover {
+    border-color: #fd7e14;
+    box-shadow: 0 2px 8px rgba(253, 126, 20, 0.1);
+}
+
+.fl-version-item:last-child {
+    margin-bottom: 0;
+}
+
+.fl-version-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fl-version-number {
+    background: #fd7e14;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.fl-version-details h4 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.fl-version-details p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.fl-version-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.fl-version-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ===== MODEL DEPLOYMENT ===== */
+.fl-deployment-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl-deployment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.fl-deployment-title {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.fl-deployment-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fl-deployment-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.fl-deployment-indicator.deployed {
+    background: #28a745;
+}
+
+.fl-deployment-indicator.pending {
+    background: #ffc107;
+}
+
+.fl-deployment-indicator.failed {
+    background: #dc3545;
+}
+
+.fl-deployment-text {
+    font-weight: 500;
+    color: #495057;
+}
+
+.fl-deployment-targets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.fl-deployment-target {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.fl-deployment-target:hover {
+    border-color: #fd7e14;
+    box-shadow: 0 2px 8px rgba(253, 126, 20, 0.1);
+}
+
+.fl-target-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.fl-target-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.fl-target-info h5 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.fl-target-info p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.fl-target-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.fl-target-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+}
+
+.fl-target-indicator.pending {
+    background: #ffc107;
+}
+
+.fl-target-indicator.failed {
+    background: #dc3545;
+}
+
+.fl-target-status-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* ===== MODEL PERFORMANCE ===== */
+.fl-performance-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl-performance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.fl-performance-title {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.fl-performance-period {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.fl-period-btn {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.fl-period-btn:hover {
+    background: #e9ecef;
+    border-color: #fd7e14;
+    color: #fd7e14;
+}
+
+.fl-period-btn.active {
+    background: #fd7e14;
+    border-color: #fd7e14;
+    color: white;
+}
+
+.fl-performance-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.fl-performance-metric {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.fl-performance-metric:hover {
+    border-color: #fd7e14;
+    box-shadow: 0 2px 8px rgba(253, 126, 20, 0.1);
+}
+
+.fl-performance-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fd7e14;
+    margin-bottom: 0.25rem;
+}
+
+.fl-performance-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ===== MODEL ACTIONS ===== */
+.fl-model-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.fl-model-btn {
+    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.fl-model-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(253, 126, 20, 0.2);
+}
+
+.fl-model-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.fl-model-btn.secondary {
+    background: #6c757d;
+}
+
+.fl-model-btn.success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.fl-model-btn.danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .fl-model-content {
+        padding: 1.5rem;
+    }
+    
+    .fl-version-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .fl-version-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .fl-deployment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .fl-deployment-targets {
+        grid-template-columns: 1fr;
+    }
+    
+    .fl-performance-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .fl-performance-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .fl-model-actions {
+        flex-direction: column;
+    }
+    
+    .fl-model-btn {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .fl-model-header {
+        padding: 1rem;
+    }
+    
+    .fl-model-title {
+        font-size: 1.25rem;
+    }
+    
+    .fl-model-content {
+        padding: 1rem;
+    }
+    
+    .fl-performance-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .fl-performance-value {
+        font-size: 1.5rem;
+    }
+} 

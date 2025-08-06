@@ -1,0 +1,111 @@
+<!-- System Status Dashboard -->
+<div class="pm-system-status-card card border-0 shadow-sm mb-4">
+    <div class="pm-card-header card-header bg-gradient-primary text-white">
+        <h5 class="pm-card-title mb-0">
+            <i class="fas fa-server me-2"></i>
+            System Status Dashboard
+        </h5>
+    </div>
+    <div class="pm-card-body card-body">
+        <!-- Connection Status -->
+        <div class="pm-connection-status mb-4">
+            <h6 class="pm-section-title mb-3">Connection Status</h6>
+            <div class="pm-connections-grid row">
+                <div class="col-md-4">
+                    <div class="pm-connection-item d-flex align-items-center mb-2">
+                        <div class="pm-status-indicator status-indicator bg-success me-2"></div>
+                        <span class="pm-connection-label small">Physics Engine</span>
+                        <span class="pm-connection-badge badge bg-success ms-auto">Active</span>
+                    </div>
+                    <div class="pm-connection-item d-flex align-items-center mb-2">
+                        <div class="pm-status-indicator status-indicator bg-success me-2"></div>
+                        <span class="pm-connection-label small">Knowledge Graph</span>
+                        <span class="pm-connection-badge badge bg-success ms-auto">Connected</span>
+                    </div>
+                    <div class="pm-connection-item d-flex align-items-center mb-2">
+                        <div class="pm-status-indicator status-indicator bg-warning me-2"></div>
+                        <span class="pm-connection-label small">Federated Learning</span>
+                        <span class="pm-connection-badge badge bg-warning ms-auto">Standby</span>
+                    </div>
+                    <div class="pm-connection-item d-flex align-items-center mb-2">
+                        <div class="pm-status-indicator status-indicator bg-success me-2"></div>
+                        <span class="pm-connection-label small">Database</span>
+                        <span class="pm-connection-badge badge bg-success ms-auto">Healthy</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pm-connection-item d-flex align-items-center mb-2">
+                        <div class="pm-status-indicator status-indicator bg-success me-2"></div>
+                        <span class="pm-connection-label small">File Storage</span>
+                        <span class="pm-connection-badge badge bg-success ms-auto">Available</span>
+                    </div>
+                    <div class="pm-connection-item d-flex align-items-center mb-2">
+                        <div class="pm-status-indicator status-indicator bg-success me-2"></div>
+                        <span class="pm-connection-label small">API Gateway</span>
+                        <span class="pm-connection-badge badge bg-success ms-auto">Responding</span>
+                    </div>
+                    <div class="pm-connection-item d-flex align-items-center mb-2">
+                        <div class="pm-status-indicator status-indicator bg-success me-2"></div>
+                        <span class="pm-connection-label small">Web Interface</span>
+                        <span class="pm-connection-badge badge bg-success ms-auto">Active</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="pm-performance-metrics row">
+            <div class="col-md-6">
+                <h6 class="pm-section-title mb-2">System Performance</h6>
+                <div class="pm-performance-item mb-2">
+                    <label class="pm-form-label form-label small">CPU Usage</label>
+                    <div class="pm-performance-progress progress mb-1">
+                        <div class="pm-performance-bar progress-bar bg-success" id="system-cpu-usage"></div>
+                    </div>
+                    <small class="pm-performance-value text-muted">25% - Normal</small>
+                </div>
+                <div class="pm-performance-item mb-2">
+                    <label class="pm-form-label form-label small">Memory Usage</label>
+                    <div class="pm-performance-progress progress mb-1">
+                        <div class="pm-performance-bar progress-bar bg-info" id="system-memory-usage"></div>
+                    </div>
+                    <small class="pm-performance-value text-muted">45% - 2.3 GB / 5.0 GB</small>
+                </div>
+                <div class="pm-performance-item mb-2">
+                    <label class="pm-form-label form-label small">Disk Usage</label>
+                    <div class="pm-performance-progress progress mb-1">
+                        <div class="pm-performance-bar progress-bar bg-warning" id="system-disk-usage"></div>
+                    </div>
+                    <small class="pm-performance-value text-muted">60% - 120 GB / 200 GB</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="pm-section-title mb-2">Recent Activity</h6>
+                <div class="pm-system-logs bg-dark text-light p-2 rounded" id="system-logs">
+                    <div class="text-success">[2024-01-15 10:30:15] System startup completed</div>
+                    <div class="text-info">[2024-01-15 10:30:20] Physics framework initialized</div>
+                    <div class="text-info">[2024-01-15 10:30:25] Twin registry connection established</div>
+                    <div class="text-info">[2024-01-15 10:30:30] AI/RAG system activated</div>
+                    <div class="text-warning">[2024-01-15 10:35:12] Simulation started: thermal_analysis_001</div>
+                    <div class="text-success">[2024-01-15 10:40:45] Model created: structural_bridge_v2</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Actions -->
+        <div class="pm-system-actions d-flex gap-2 mt-3">
+            <button type="button" class="pm-btn pm-btn-refresh btn btn-outline-primary btn-sm" id="refresh-system-status-btn">
+                <i class="fas fa-sync me-1"></i>Refresh Status
+            </button>
+            <button type="button" class="pm-btn pm-btn-diagnostics btn btn-outline-info btn-sm" id="system-diagnostics-btn">
+                <i class="fas fa-stethoscope me-1"></i>Run Diagnostics
+            </button>
+            <button type="button" class="pm-btn pm-btn-maintenance btn btn-outline-warning btn-sm" id="system-maintenance-btn">
+                <i class="fas fa-tools me-1"></i>Maintenance Mode
+            </button>
+            <button type="button" class="pm-btn pm-btn-emergency btn btn-outline-danger btn-sm" id="emergency-stop-btn">
+                <i class="fas fa-stop-circle me-1"></i>Emergency Stop
+            </button>
+        </div>
+    </div>
+</div> 

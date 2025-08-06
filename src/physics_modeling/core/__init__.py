@@ -1,16 +1,33 @@
 """
-Core Physics Modeling Components
+Core components for the Physics Modeling Framework.
 
-This module contains the fundamental classes for physics-based modeling:
-- PhysicsModel: Base class for all physics models
-- Material: Material properties and characteristics
-- Geometry: Geometric representation and processing
-- BoundaryConditions: Boundary conditions and constraints
+This module contains the essential components that form the foundation
+of the physics modeling framework. These components are static and never change.
 """
 
-from .base_model import PhysicsModel
-from .material import Material
-from .geometry import Geometry
-from .constraints import BoundaryConditions
+from .dynamic_types import (
+    PhysicsParameter,
+    PhysicsEquation,
+    SolverCapability,
+    DynamicPhysicsType,
+    PhysicsPlugin
+)
 
-__all__ = ['PhysicsModel', 'Material', 'Geometry', 'BoundaryConditions']
+from .plugin_manager import PluginManager
+from .model_factory import ModelFactory, PhysicsModel
+from .registry import Registry
+
+__all__ = [
+    # Dynamic types
+    'PhysicsParameter',
+    'PhysicsEquation', 
+    'SolverCapability',
+    'DynamicPhysicsType',
+    'PhysicsPlugin',
+    
+    # Core components
+    'PluginManager',
+    'ModelFactory',
+    'PhysicsModel',
+    'Registry'
+] 

@@ -1,0 +1,433 @@
+/**
+ * Physics Modeling Module Analysis CSS Module
+ * Dedicated styling for analysis and visualization components
+ */
+
+/* ===== ANALYSIS CONTAINER ===== */
+.physics-analysis-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.physics-analysis-header {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-analysis-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.physics-analysis-subtitle {
+    opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+/* ===== ANALYSIS CONTENT ===== */
+.physics-analysis-content {
+    padding: 2rem;
+}
+
+.physics-analysis-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-analysis-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.physics-analysis-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.physics-analysis-section-title i {
+    margin-right: 0.5rem;
+    color: #20c997;
+}
+
+/* ===== CHART STYLING ===== */
+.physics-chart {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.physics-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.physics-chart-title {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.physics-chart-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.physics-chart-btn {
+    padding: 0.25rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #495057;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.physics-chart-btn:hover {
+    background: #f8f9fa;
+    border-color: #20c997;
+    color: #20c997;
+}
+
+.physics-chart-btn.active {
+    background: #20c997;
+    border-color: #20c997;
+    color: white;
+}
+
+.physics-chart-canvas {
+    width: 100%;
+    height: 300px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.physics-chart-canvas.large { height: 400px; }
+.physics-chart-canvas.medium { height: 300px; }
+.physics-chart-canvas.small { height: 200px; }
+
+/* ===== METRICS DISPLAY ===== */
+.physics-metrics-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.physics-metric-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.physics-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.physics-metric-icon {
+    font-size: 2rem;
+    color: #20c997;
+    margin-bottom: 0.5rem;
+}
+
+.physics-metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.physics-metric-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.physics-metric-trend {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.physics-metric-trend.positive {
+    color: #28a745;
+}
+
+.physics-metric-trend.negative {
+    color: #dc3545;
+}
+
+.physics-metric-trend.neutral {
+    color: #6c757d;
+}
+
+/* ===== DATA TABLE ===== */
+.physics-data-table {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.physics-data-table .table {
+    margin-bottom: 0;
+}
+
+.physics-data-table .table th {
+    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    color: white;
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.physics-data-table .table td {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.physics-data-table .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.physics-data-table .table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ===== STATISTICAL SUMMARY ===== */
+.physics-statistical-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.physics-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.physics-summary-item {
+    text-align: center;
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.physics-summary-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.physics-summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #495057;
+    margin: 0;
+}
+
+/* ===== COMPARISON CHART ===== */
+.physics-comparison-chart {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.physics-comparison-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.physics-comparison-title {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.physics-comparison-legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.physics-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.physics-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* ===== EXPORT OPTIONS ===== */
+.physics-export-options {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.physics-export-header {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.physics-export-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.physics-export-btn {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #495057;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.physics-export-btn:hover {
+    background: #e9ecef;
+    border-color: #20c997;
+    color: #20c997;
+    text-decoration: none;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .physics-analysis-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .physics-analysis-title {
+        font-size: 1.25rem;
+    }
+
+    .physics-analysis-content {
+        padding: 1.5rem;
+    }
+
+    .physics-chart {
+        padding: 1rem;
+    }
+
+    .physics-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .physics-chart-canvas {
+        height: 250px;
+    }
+
+    .physics-chart-canvas.large {
+        height: 300px;
+    }
+
+    .physics-metrics-display {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .physics-metric-card {
+        padding: 1rem;
+    }
+
+    .physics-metric-value {
+        font-size: 1.25rem;
+    }
+
+    .physics-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .physics-export-buttons {
+        flex-direction: column;
+    }
+
+    .physics-export-btn {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .physics-analysis-content {
+        padding: 1rem;
+    }
+
+    .physics-chart-canvas {
+        height: 200px;
+    }
+
+    .physics-chart-canvas.large {
+        height: 250px;
+    }
+
+    .physics-chart-canvas.medium {
+        height: 200px;
+    }
+
+    .physics-metrics-display {
+        grid-template-columns: 1fr;
+    }
+
+    .physics-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .physics-comparison-legend {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+} 

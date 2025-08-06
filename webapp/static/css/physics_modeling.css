@@ -1,180 +1,30 @@
-/* Physics Modeling Module Styles */
+/**
+ * Physics Modeling Module Main CSS File
+ * Imports all modular CSS components for the Physics Modeling Module
+ */
 
-/* Use Cases Section */
-.use-case-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border: 1px solid rgba(0, 0, 0, 0.125);
-}
+/* ===== MODULAR CSS IMPORTS ===== */
+@import url('./modules/physics_modeling/layout.css');
+@import url('./modules/physics_modeling/dashboard.css');
+@import url('./modules/physics_modeling/components.css');
+@import url('./modules/physics_modeling/simulation.css');
+@import url('./modules/physics_modeling/analysis.css');
 
-.use-case-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
+/* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
+/* Physics Modeling-specific global styles and overrides */
 
-.use-case-card .card-header {
-    border-bottom: none;
-    font-weight: 600;
-}
-
-.use-case-card .card-body {
-    padding: 1rem;
-}
-
-.use-case-card .card-footer {
-    border-top: 1px solid rgba(0, 0, 0, 0.125);
-    background-color: #f8f9fa;
-}
-
-/* Category-specific colors */
-.use-case-card .card-header.bg-danger {
-    background: linear-gradient(135deg, #dc3545, #c82333) !important;
-}
-
-.use-case-card .card-header.bg-primary {
-    background: linear-gradient(135deg, #007bff, #0056b3) !important;
-}
-
-.use-case-card .card-header.bg-info {
-    background: linear-gradient(135deg, #17a2b8, #138496) !important;
-}
-
-.use-case-card .card-header.bg-success {
-    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
-}
-
-.use-case-card .card-header.bg-warning {
-    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
-}
-
-/* Badge styling */
-.badge.bg-outline-secondary {
-    background-color: transparent;
-    border: 1px solid #6c757d;
-    color: #6c757d;
-}
-
-.badge.bg-outline-success {
-    background-color: transparent;
-    border: 1px solid #28a745;
-    color: #28a745;
-}
-
-.badge.bg-outline-primary {
-    background-color: transparent;
-    border: 1px solid #007bff;
-    color: #007bff;
-}
-
-.badge.bg-outline-warning {
-    background-color: transparent;
-    border: 1px solid #ffc107;
-    color: #856404;
-}
-
-.badge.bg-outline-info {
-    background-color: transparent;
-    border: 1px solid #17a2b8;
-    color: #17a2b8;
-}
-
-/* Tab styling */
-.nav-tabs .nav-link {
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: #6c757d;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.nav-tabs .nav-link:hover {
-    border-color: transparent;
-    color: #495057;
-    background-color: rgba(0, 123, 255, 0.1);
-}
-
-.nav-tabs .nav-link.active {
-    border-bottom: 2px solid #007bff;
-    color: #007bff;
-    background-color: transparent;
-}
-
-/* Quick action buttons */
-.btn-outline-primary:hover,
-.btn-outline-success:hover,
-.btn-outline-info:hover,
-.btn-outline-warning:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Status indicators */
-.status-indicator {
-    transition: all 0.3s ease;
-}
-
-.status-indicator:hover {
-    transform: scale(1.1);
-}
-
-/* Loading spinner */
-.loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 1s ease-in-out infinite;
+/* Animation keyframes for Physics Modeling module */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* Modal enhancements */
-.modal-content {
-    border: none;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.modal-header {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-}
-
-/* Hydrogen Economy special styling */
-.hydrogen-economy-card {
-    border: 2px solid #28a745;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
-}
-
-.hydrogen-economy-card .card-header {
-    background: linear-gradient(135deg, #28a745, #20c997) !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .use-case-card .card-body {
-        padding: 0.75rem;
-    }
-    
-    .nav-tabs .nav-link {
-        font-size: 0.875rem;
-        padding: 0.5rem 0.75rem;
-    }
-    
-    .btn-sm {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
-}
-
-/* Animation for use case cards */
-.use-case-card {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
+@keyframes fadeIn {
     from {
         opacity: 0;
         transform: translateY(20px);
@@ -185,78 +35,33 @@
     }
 }
 
-/* Stagger animation for multiple cards */
-.use-case-card:nth-child(1) { animation-delay: 0.1s; }
-.use-case-card:nth-child(2) { animation-delay: 0.2s; }
-.use-case-card:nth-child(3) { animation-delay: 0.3s; }
-.use-case-card:nth-child(4) { animation-delay: 0.4s; }
-.use-case-card:nth-child(5) { animation-delay: 0.5s; }
-.use-case-card:nth-child(6) { animation-delay: 0.6s; }
-
-/* Toast notifications */
-.toast-container {
-    z-index: 9999;
+@keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
-.toast {
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+@keyframes particle {
+    0% { transform: translateX(0) translateY(0); opacity: 1; }
+    100% { transform: translateX(100px) translateY(-50px); opacity: 0; }
 }
 
-/* Progress bar styling */
-.progress {
-    height: 6px;
-    border-radius: 3px;
-    background-color: #e9ecef;
+/* Global animation classes */
+.pulse-animation {
+    animation: pulse 2s infinite;
 }
 
-.progress-bar {
-    border-radius: 3px;
-    transition: width 0.3s ease;
+.spin-animation {
+    animation: spin 1s linear infinite;
 }
 
-/* Form enhancements */
-.form-control:focus,
-.form-select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
 }
 
-/* Card shadows */
-.card {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.2s ease;
+.wave-animation {
+    animation: wave 2s ease-in-out infinite;
 }
 
-.card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-/* Gradient backgrounds */
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #007bff, #0056b3) !important;
-}
-
-.bg-gradient-success {
-    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
-}
-
-.bg-gradient-info {
-    background: linear-gradient(135deg, #17a2b8, #138496) !important;
-}
-
-.bg-gradient-warning {
-    background: linear-gradient(135deg, #ffc107, #e0a800) !important;
-}
-
-.bg-gradient-danger {
-    background: linear-gradient(135deg, #dc3545, #c82333) !important;
-}
-
-.bg-gradient-secondary {
-    background: linear-gradient(135deg, #6c757d, #545b62) !important;
-}
-
-.bg-gradient-dark {
-    background: linear-gradient(135deg, #343a40, #212529) !important;
+.particle-animation {
+    animation: particle 3s ease-out infinite;
 }

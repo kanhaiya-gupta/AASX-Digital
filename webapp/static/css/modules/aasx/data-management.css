@@ -1,0 +1,568 @@
+/**
+ * AASX Processing Module Data Management CSS Module
+ * Dedicated styling for data management components and workflows
+ */
+
+/* ===== DATA MANAGEMENT CONTAINER ===== */
+.aasx-data-management {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.aasx-data-management-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.aasx-data-management-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.aasx-data-management-subtitle {
+    opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+/* ===== DATA MANAGEMENT CONTENT ===== */
+.aasx-data-management-content {
+    padding: 2rem;
+}
+
+.aasx-data-management-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.aasx-data-management-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.aasx-data-management-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.aasx-data-management-section-title i {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+/* ===== DATA SOURCE MANAGEMENT ===== */
+.aasx-data-sources {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-data-source-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border-left: 4px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.aasx-data-source-item:hover {
+    border-left-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.aasx-data-source-item.active {
+    border-left-color: #28a745;
+    background: #f8fff9;
+}
+
+.aasx-data-source-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+    color: white;
+    background: #6c757d;
+}
+
+.aasx-data-source-item.database .aasx-data-source-icon {
+    background: #007bff;
+}
+
+.aasx-data-source-item.file .aasx-data-source-icon {
+    background: #28a745;
+}
+
+.aasx-data-source-item.api .aasx-data-source-icon {
+    background: #ffc107;
+    color: #212529;
+}
+
+.aasx-data-source-item.cloud .aasx-data-source-icon {
+    background: #17a2b8;
+}
+
+.aasx-data-source-content {
+    flex: 1;
+}
+
+.aasx-data-source-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-data-source-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.aasx-data-source-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.aasx-data-source-status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.aasx-data-source-status-indicator.disconnected {
+    background: #dc3545;
+}
+
+.aasx-data-source-status-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* ===== DATA TRANSFORMATION ===== */
+.aasx-data-transformation {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.aasx-transformation-step {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.aasx-transformation-step:hover {
+    border-left-color: #007bff;
+    background: #e3f2fd;
+}
+
+.aasx-transformation-step.completed {
+    border-left-color: #28a745;
+    background: #f8fff9;
+}
+
+.aasx-transformation-step.processing {
+    border-left-color: #ffc107;
+    background: #fffbf0;
+}
+
+.aasx-transformation-step.error {
+    border-left-color: #dc3545;
+    background: #fff5f5;
+}
+
+.aasx-transformation-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.25rem;
+    color: white;
+    background: #6c757d;
+}
+
+.aasx-transformation-step.completed .aasx-transformation-icon {
+    background: #28a745;
+}
+
+.aasx-transformation-step.processing .aasx-transformation-icon {
+    background: #ffc107;
+    color: #212529;
+    animation: spin 1s linear infinite;
+}
+
+.aasx-transformation-step.error .aasx-transformation-icon {
+    background: #dc3545;
+}
+
+.aasx-transformation-content {
+    flex: 1;
+}
+
+.aasx-transformation-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-transformation-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.aasx-transformation-progress {
+    margin-top: 0.5rem;
+}
+
+.aasx-transformation-progress-bar {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.aasx-transformation-progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    transition: width 0.3s ease;
+}
+
+/* ===== DATA VALIDATION ===== */
+.aasx-data-validation {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.aasx-validation-rule {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.aasx-validation-rule.passed {
+    border-left-color: #28a745;
+    background: #f8fff9;
+}
+
+.aasx-validation-rule.failed {
+    border-left-color: #dc3545;
+    background: #fff5f5;
+}
+
+.aasx-validation-rule.warning {
+    border-left-color: #ffc107;
+    background: #fffbf0;
+}
+
+.aasx-validation-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    font-size: 0.875rem;
+    color: white;
+    background: #6c757d;
+}
+
+.aasx-validation-rule.passed .aasx-validation-icon {
+    background: #28a745;
+}
+
+.aasx-validation-rule.failed .aasx-validation-icon {
+    background: #dc3545;
+}
+
+.aasx-validation-rule.warning .aasx-validation-icon {
+    background: #ffc107;
+    color: #212529;
+}
+
+.aasx-validation-content {
+    flex: 1;
+}
+
+.aasx-validation-name {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.125rem;
+    font-size: 0.9rem;
+}
+
+.aasx-validation-message {
+    color: #6c757d;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* ===== DATA EXPORT ===== */
+.aasx-data-export {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.aasx-export-format {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.aasx-export-format:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.aasx-export-format.selected {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.aasx-export-format-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.25rem;
+    color: white;
+    background: #6c757d;
+}
+
+.aasx-export-format.json .aasx-export-format-icon {
+    background: #28a745;
+}
+
+.aasx-export-format.xml .aasx-export-format-icon {
+    background: #007bff;
+}
+
+.aasx-export-format.csv .aasx-export-format-icon {
+    background: #ffc107;
+    color: #212529;
+}
+
+.aasx-export-format.sqlite .aasx-export-format-icon {
+    background: #17a2b8;
+}
+
+.aasx-export-format-content {
+    flex: 1;
+}
+
+.aasx-export-format-name {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-export-format-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.aasx-export-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.aasx-export-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.aasx-export-btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+}
+
+.aasx-export-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
+.aasx-export-btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.aasx-export-btn-secondary:hover {
+    background: #545b62;
+    transform: translateY(-1px);
+}
+
+/* ===== DATA STATISTICS ===== */
+.aasx-data-statistics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-data-stat {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.aasx-data-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.aasx-data-stat-icon {
+    font-size: 2rem;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.aasx-data-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-data-stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .aasx-data-management-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .aasx-data-management-title {
+        font-size: 1.25rem;
+    }
+
+    .aasx-data-management-content {
+        padding: 1.5rem;
+    }
+
+    .aasx-data-source-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .aasx-data-source-icon {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .aasx-transformation-step {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .aasx-transformation-icon {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .aasx-export-format {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .aasx-export-format-icon {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .aasx-export-actions {
+        flex-direction: column;
+    }
+
+    .aasx-data-statistics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .aasx-data-management-content {
+        padding: 1rem;
+    }
+
+    .aasx-data-statistics {
+        grid-template-columns: 1fr;
+    }
+
+    .aasx-data-stat {
+        padding: 1rem;
+    }
+
+    .aasx-data-stat-value {
+        font-size: 1.25rem;
+    }
+} 

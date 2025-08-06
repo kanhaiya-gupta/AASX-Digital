@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}AASX Auto Integration Flowchart - Digital Twin Analytics Framework{% endblock %}
+
+{% block extra_head %}
+<style>
+    .flowchart-container {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 30px;
+        margin: 20px 0;
+        min-height: 600px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .mermaid {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 1400px;
+    }
+    .mermaid svg {
+        width: 100% !important;
+        height: auto !important;
+        min-width: 1000px !important;
+    }
+    .description {
+        background: #ecf0f1;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border-left: 5px solid #2563eb;
+    }
+    .description h3 {
+        color: #1e293b;
+        margin-top: 0;
+    }
+    .description p {
+        margin: 10px 0;
+        line-height: 1.6;
+    }
+    .flow-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    .flow-step {
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #2563eb;
+    }
+    .flow-step h4 {
+        color: #1e293b;
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .flow-step p {
+        margin: 10px 0 0 0;
+        color: #64748b;
+    }
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .page-header h1 {
+        color: #1e293b;
+        margin-bottom: 10px;
+    }
+    .page-header p {
+        color: #64748b;
+        font-size: 1.1em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-header">
+        <h1>
+            <i class="fas fa-link text-primary me-3"></i>
+            AASX Auto Integration Flowchart
+        </h1>
+        <p>Complete workflow for automatic digital twin registration from ETL-processed AASX files</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram me-2"></i>
+                        AASX Auto Integration Process Flow
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="flowchart-container">
+                        <div class="mermaid" id="aasx-integration-flowchart">
+                            graph TD
+                                %% ETL Output Discovery
+                                A1[ETL Output Discovery] --> B1[Scan Project Directories]
+                                A2[User Interface] --> B1
+                                
+                                %% Project Discovery
+                                B1 --> C1[Project List]
+                                C1 --> D1[File Discovery]
+                                
+                                %% AASX Integration Module
+                                D1 --> E1[AASX Integration Module]
+                                E1 --> F1[SQLite Database Scan]
+                                E1 --> F2[File Format Detection]
+                                
+                                %% Twin Information Extraction
+                                F1 --> G1[Twin Metadata]
+                                F1 --> G2[Asset Information]
+                                F1 --> G3[Project Context]
+                                
+                                %% Twin Registration Process
+                                G1 --> H1[Twin Validation]
+                                G2 --> H1
+                                G3 --> H1
+                                
+                                %% Database Operations
+                                H1 --> I1[Register Twin]
+                                H1 --> I2[Update Sync Status]
+                                H1 --> I3[Link AASX File]
+                                
+                                %% Twin Registry Database
+                                I1 --> J1[Twin Registry DB]
+                                I2 --> J1
+                                I3 --> J1
+                                
+                                %% API Endpoints
+                                J1 --> K1[API Endpoints]
+                                K1 --> L1[Project Discovery API]
+                                K1 --> L2[File Discovery API]
+                                K1 --> L3[Twin Registration API]
+                                K1 --> L4[Sync Status API]
+                                
+                                %% Frontend Integration
+                                L1 --> M1[Twin Registry UI]
+                                L2 --> M1
+                                L3 --> M1
+                                L4 --> M1
+                                
+                                %% User Actions
+                                M1 --> N1[Load Projects]
+                                M1 --> N2[Discover Files]
+                                M1 --> N3[Register Twins]
+                                M1 --> N4[View Sync Status]
+                                
+                                %% Feedback Loop
+                                N1 --> C1
+                                N2 --> D1
+                                N3 --> E1
+                                N4 --> J1
+                                
+                                %% Error Handling
+                                H1 --> O1[Error Handling]
+                                O1 --> P1[Error Logging]
+                                P1 --> Q1[User Notification]
+                                
+                                %% Styling
+                                classDef discoveryNode fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+                                classDef processNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+                                classDef databaseNode fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+                                classDef apiNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+                                classDef uiNode fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+                                classDef errorNode fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+                                
+                                class A1,A2 discoveryNode
+                                class B1,C1,D1,E1,F1,F2,G1,G2,G3,H1,I1,I2,I3 processNode
+                                class J1 databaseNode
+                                class K1,L1,L2,L3,L4 apiNode
+                                class M1,N1,N2,N3,N4 uiNode
+                                class O1,P1,Q1 errorNode
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        AASX Auto Integration Description
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="description">
+                        <h3>AASX Auto Integration Flow Description</h3>
+                        <p>This flowchart illustrates the automated process for discovering ETL-processed AASX files and registering them as digital twins in the Twin Registry. It shows how the system scans project directories, extracts twin information, and provides a seamless integration between AASX data and digital twin management.</p>
+                    </div>
+
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <h4><i class="fas fa-search text-primary"></i> ETL Output Discovery</h4>
+                            <p>Scans the ETL output directory structure to discover processed AASX files organized by project, enabling automatic twin registration from existing data.</p>
+                        </div>
+                        <div class="flow-step">
+                            <h4><i class="fas fa-link text-warning"></i> Twin Information Extraction</h4>
+                            <p>Extracts twin metadata, asset information, and project context from SQLite databases and export files generated by the ETL pipeline.</p>
+                        </div>
+                        <div class="flow-step">
+                            <h4><i class="fas fa-database text-success"></i> Twin Registration</h4>
+                            <p>Registers discovered twins in the Twin Registry database with proper validation, sync status tracking, and AASX file associations.</p>
+                        </div>
+                        <div class="flow-step">
+                            <h4><i class="fas fa-cogs text-info"></i> API & UI Integration</h4>
+                            <p>Provides REST API endpoints and user interface for project discovery, file browsing, twin registration, and sync status monitoring.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Process Steps Breakdown
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-play me-2"></i>Discovery Phase</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Scan ETL output directories</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Identify project structure</li>
+                                <li><i class="fas fa-check text-success me-2"></i>List available files per project</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Detect file formats (JSON/YAML/CSV)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-warning"><i class="fas fa-cogs me-2"></i>Processing Phase</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Extract twin metadata</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Parse asset information</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Validate twin data</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Check for duplicates</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6 class="text-success"><i class="fas fa-database me-2"></i>Registration Phase</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Register twins in database</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Update sync timestamps</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Link AASX source files</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Store project associations</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info"><i class="fas fa-globe me-2"></i>Integration Phase</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Expose REST API endpoints</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Provide UI dashboard</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Enable user interactions</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Monitor sync status</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        flowchart: {
+            useMaxWidth: true,
+            htmlLabels: true,
+            curve: 'basis',
+            nodeSpacing: 50,
+            rankSpacing: 70,
+            diagramPadding: 20
+        },
+        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+        fontSize: 12
+    });
+</script>
+{% endblock %} 

@@ -1,1 +1,5 @@
-# Certificate Manager module for AASX Digital Twin Analytics Framework 
+"""Certificate Manager Module - Phase 1 Frontend"""
+
+from .routes import router
+
+__all__ = ['router'] 
