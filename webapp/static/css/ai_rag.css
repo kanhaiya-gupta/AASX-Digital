@@ -1,6 +1,7 @@
 /**
- * AI RAG Module Main CSS File
- * Imports all modular CSS components for the AI RAG Module
+ * Enhanced AI RAG Module Main CSS File
+ * Premium, world-class design with uniform color scheme
+ * Matches AASX and Twin Registry color palette
  */
 
 /* ===== MODULAR CSS IMPORTS ===== */
@@ -13,7 +14,7 @@
 /* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
 /* AI RAG-specific global styles and overrides */
 
-/* Animation keyframes for AI RAG module */
+/* Enhanced Animation keyframes for AI RAG module */
 @keyframes typing {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
@@ -35,6 +36,40 @@
     50% { opacity: 0.7; }
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes loadingDots {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
 /* Global animation classes */
 .typing-indicator {
     animation: typing 1.5s infinite;
@@ -46,4 +81,352 @@
 
 .pulse-animation {
     animation: pulse 2s infinite;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Enhanced loading animation */
+.ai-rag-loading-animation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.ai-rag-loading-dots {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ai-rag-loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #1e3c72, #2a5298);
+    animation: loadingDots 1.4s infinite ease-in-out both;
+}
+
+.ai-rag-loading-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.ai-rag-loading-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+/* Uniform gradient backgrounds - matching AASX and Twin Registry */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Enhanced card shadows */
+.shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(30, 60, 114, 0.175) !important;
+}
+
+/* Enhanced button styles */
+.ai-rag-btn {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-rag-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.15);
+}
+
+.ai-rag-btn:active {
+    transform: translateY(0);
+}
+
+/* Enhanced form controls */
+.ai-rag-form-select,
+.ai-rag-query-input {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.ai-rag-form-select:focus,
+.ai-rag-query-input:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+}
+
+/* Enhanced status indicators */
+.ai-rag-status-indicator {
+    position: relative;
+    display: inline-block;
+}
+
+.ai-rag-status-icon {
+    position: relative;
+    z-index: 1;
+}
+
+.ai-rag-status-dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    border: 2px solid #fff;
+    animation: pulse 2s infinite;
+}
+
+.ai-rag-status-dot-success {
+    background: #28a745;
+}
+
+.ai-rag-status-dot-warning {
+    background: #ffd700;
+}
+
+.ai-rag-status-dot-danger {
+    background: #dc3545;
+}
+
+/* Enhanced section cards */
+.ai-rag-section-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.ai-rag-section-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.1);
+}
+
+/* Enhanced button content */
+.ai-rag-btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ai-rag-btn-desc {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+/* Enhanced suggestion links */
+.ai-rag-suggestion-link {
+    color: #1e3c72;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+.ai-rag-suggestion-link:hover {
+    color: #2a5298;
+}
+
+/* Enhanced query input wrapper */
+.ai-rag-query-input-wrapper {
+    position: relative;
+}
+
+.ai-rag-query-input-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* Enhanced stat items */
+.ai-rag-stat-item {
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+/* Enhanced health indicators */
+.ai-rag-health-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.ai-rag-health-item:last-child {
+    border-bottom: none;
+}
+
+.ai-rag-health-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.ai-rag-health-status {
+    font-weight: 600;
+}
+
+/* Enhanced warning text */
+.ai-rag-warning-text {
+    padding: 0.5rem;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #dc3545;
+}
+
+/* Enhanced section titles */
+.ai-rag-section-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+/* Enhanced form labels */
+.ai-rag-form-label {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.ai-rag-form-help {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Enhanced config sections */
+.ai-rag-config-section {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+/* Enhanced feature badges */
+.ai-rag-feature-badges .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* Enhanced header content */
+.ai-rag-header-content {
+    padding: 2rem 0;
+}
+
+.ai-rag-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ai-rag-subtitle {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Enhanced status badge */
+.ai-rag-status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* Enhanced version info */
+.ai-rag-version-info {
+    font-size: 0.875rem;
+}
+
+/* Enhanced loading progress */
+.ai-rag-loading-progress .progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.ai-rag-loading-progress .progress-bar {
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    border-radius: 10px;
+}
+
+/* Enhanced modal styles */
+.modal-header.bg-gradient-primary {
+    border-bottom: none;
+}
+
+.modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* Enhanced responsive design */
+@media (max-width: 768px) {
+    .ai-rag-title {
+        font-size: 2rem;
+    }
+    
+    .ai-rag-feature-badges {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .ai-rag-header-main {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .ai-rag-header-status {
+        text-align: center;
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .ai-rag-title {
+        font-size: 1.75rem;
+    }
+    
+    .ai-rag-subtitle {
+        font-size: 1rem;
+    }
+    
+    .ai-rag-config-section {
+        padding: 1rem;
+    }
 } 

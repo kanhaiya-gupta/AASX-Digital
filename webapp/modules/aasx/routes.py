@@ -24,7 +24,7 @@ from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.project_repository import ProjectRepository
 
-router = APIRouter(tags=["aasx"])
+router = APIRouter(tags=["aasx-etl"])
 
 # Template setup
 current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -1,99 +1,151 @@
 <!-- Instance Management Component -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="fas fa-code-branch me-2"></i>Instance Management
-        </h5>
-        <div class="d-flex gap-2">
-            <select class="form-select form-select-sm" id="instanceTwinFilter">
-                <option value="">All Twins</option>
-            </select>
-            <button class="btn btn-sm btn-outline-primary" onclick="refreshInstanceData()">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+<div class="tr-instance-management">
+    <!-- Premium Header -->
+    <div class="tr-instance-header">
+        <div class="tr-header-content">
+            <div class="tr-header-info">
+                <h5 class="tr-header-title">
+                    <i class="fas fa-code-branch"></i>
+                    Instance Management
+                </h5>
+                <p class="tr-header-subtitle">Manage digital twin instances and versions</p>
+            </div>
+            <div class="tr-header-actions">
+                <select class="tr-time-filter" id="instanceTwinFilter">
+                    <option value="">All Twins</option>
+                </select>
+                <button class="tr-btn tr-btn-refresh" onclick="refreshInstanceData()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
         </div>
     </div>
-    <div class="card-body">
-        <!-- Instance Summary -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-primary mb-1" id="totalInstances">0</div>
-                    <div class="text-muted">Total Instances</div>
+
+    <!-- Instance Summary -->
+    <div class="tr-health-grid">
+        <div class="tr-health-card tr-health-primary">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="totalInstances">0</div>
+                    <div class="tr-health-label">Total Instances</div>
+                    <div class="tr-health-range">All versions</div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-success mb-1" id="activeInstances">0</div>
-                    <div class="text-muted">Active Instances</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-info mb-1" id="latestVersion">v1</div>
-                    <div class="text-muted">Latest Version</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-warning mb-1" id="instanceHistory">0</div>
-                    <div class="text-muted">History Items</div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-cubes"></i>
                 </div>
             </div>
         </div>
-
-        <!-- Instance Creation -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-plus me-2"></i>Create New Instance
-                </h6>
-            </div>
-            <div class="card-body">
-                <form id="instanceCreationForm">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label for="instanceTwinSelect" class="form-label">Select Twin</label>
-                            <select class="form-select" id="instanceTwinSelect" required>
-                                <option value="">Choose a twin...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="instanceType" class="form-label">Instance Type</label>
-                            <select class="form-select" id="instanceType" required>
-                                <option value="snapshot">Snapshot</option>
-                                <option value="backup">Backup</option>
-                                <option value="version">Version</option>
-                                <option value="branch">Branch</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="instanceDescription" class="form-label">Description</label>
-                            <input type="text" class="form-control" id="instanceDescription" placeholder="Instance description">
-                        </div>
-                    </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="btn-group" role="group">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-plus me-2"></i>Create Instance
-                                </button>
-                                <button type="button" class="btn btn-success" onclick="createSnapshot()">
-                                    <i class="fas fa-camera me-2"></i>Quick Snapshot
-                                </button>
-                                <button type="button" class="btn btn-warning" onclick="createBackup()">
-                                    <i class="fas fa-save me-2"></i>Create Backup
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+        
+        <div class="tr-health-card tr-health-excellent">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="activeInstances">0</div>
+                    <div class="tr-health-label">Active Instances</div>
+                    <div class="tr-health-range">Currently running</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
             </div>
         </div>
+        
+        <div class="tr-health-card tr-health-good">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="latestVersion">v1</div>
+                    <div class="tr-health-label">Latest Version</div>
+                    <div class="tr-health-range">Most recent</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-tag"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tr-health-card tr-health-warning">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="instanceHistory">0</div>
+                    <div class="tr-health-label">History Items</div>
+                    <div class="tr-health-range">Past versions</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Instance List -->
-        <div class="table-responsive">
-            <table class="table table-hover" id="instanceTable">
+    <!-- Instance Creation -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-plus"></i>
+                Create New Instance
+            </h6>
+        </div>
+        <div class="tr-card-body">
+            <form id="instanceCreationForm">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="instanceTwinSelect" class="form-label">Select Twin</label>
+                        <select class="form-select" id="instanceTwinSelect" required>
+                            <option value="">Choose a twin...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="instanceType" class="form-label">Instance Type</label>
+                        <select class="form-select" id="instanceType" required>
+                            <option value="snapshot">Snapshot</option>
+                            <option value="backup">Backup</option>
+                            <option value="version">Version</option>
+                            <option value="branch">Branch</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="instanceDescription" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="instanceDescription" placeholder="Instance description">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="btn-group" role="group">
+                            <button type="submit" class="tr-btn tr-btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Create Instance
+                            </button>
+                            <button type="button" class="tr-btn tr-btn-success" onclick="createSnapshot()">
+                                <i class="fas fa-camera"></i>
+                                Quick Snapshot
+                            </button>
+                            <button type="button" class="tr-btn tr-btn-warning" onclick="createBackup()">
+                                <i class="fas fa-save"></i>
+                                Create Backup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Instance List -->
+    <div class="tr-table-section">
+        <div class="tr-section-header">
+            <h6 class="tr-section-title">
+                <i class="fas fa-list"></i>
+                Instance Registry
+            </h6>
+            <div class="tr-section-actions">
+                <button class="tr-btn tr-btn-outline" onclick="exportInstanceData()">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+        
+        <div class="tr-table-container">
+            <table class="tr-twin-table" id="instanceTable">
                 <thead>
                     <tr>
                         <th>Version</th>
@@ -112,38 +164,40 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
-        <!-- Instance Comparison -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-exchange-alt me-2"></i>Instance Comparison
-                </h6>
+    <!-- Instance Comparison -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-exchange-alt"></i>
+                Instance Comparison
+            </h6>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <label for="instance1Select" class="form-label">Instance 1</label>
+                    <select class="form-select" id="instance1Select">
+                        <option value="">Select Instance</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label for="instance2Select" class="form-label">Instance 2</label>
+                    <select class="form-select" id="instance2Select">
+                        <option value="">Select Instance</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button class="tr-btn tr-btn-primary w-100" onclick="compareInstances()">
+                        <i class="fas fa-search"></i>
+                        Compare
+                    </button>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-5">
-                        <label for="instance1Select" class="form-label">Instance 1</label>
-                        <select class="form-select" id="instance1Select">
-                            <option value="">Select Instance</option>
-                        </select>
-                    </div>
-                    <div class="col-md-5">
-                        <label for="instance2Select" class="form-label">Instance 2</label>
-                        <select class="form-select" id="instance2Select">
-                            <option value="">Select Instance</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">&nbsp;</label>
-                        <button class="btn btn-primary w-100" onclick="compareInstances()">
-                            <i class="fas fa-search me-2"></i>Compare
-                        </button>
-                    </div>
-                </div>
-                <div id="comparisonResults" class="mt-3">
-                    <!-- Comparison results will be shown here -->
-                </div>
+            <div id="comparisonResults" class="mt-3">
+                <!-- Comparison results will be shown here -->
             </div>
         </div>
     </div>
@@ -155,7 +209,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-cube me-2"></i>Instance Details
+                    <i class="fas fa-cube"></i>
+                    Instance Details
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -164,9 +219,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success" onclick="activateInstance()">Activate</button>
-                <button type="button" class="btn btn-warning" onclick="restoreInstance()">Restore</button>
-                <button type="button" class="btn btn-danger" onclick="deleteInstance()">Delete</button>
+                <button type="button" class="tr-btn tr-btn-success" onclick="activateInstance()">Activate</button>
+                <button type="button" class="tr-btn tr-btn-warning" onclick="restoreInstance()">Restore</button>
+                <button type="button" class="tr-btn tr-btn-danger" onclick="deleteInstance()">Delete</button>
             </div>
         </div>
     </div>
@@ -178,7 +233,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-exchange-alt me-2"></i>Instance Comparison
+                    <i class="fas fa-exchange-alt"></i>
+                    Instance Comparison
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

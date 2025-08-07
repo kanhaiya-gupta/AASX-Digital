@@ -7,22 +7,27 @@
 {% endblock %}
 
 {% block content %}
-<div class="tr-twin-registry twin-registry container-fluid">
-    <!-- Page Header -->
-    <div class="tr-page-header d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="tr-page-title h3 mb-0">
-                <i class="fas fa-robot me-2"></i>Digital Twin Registry
-            </h1>
-            <p class="tr-page-subtitle text-muted mb-0">Comprehensive management and monitoring of digital twins</p>
-        </div>
-        <div class="tr-header-actions btn-group" role="group">
-            <button class="tr-btn tr-btn-refresh btn btn-outline-primary" onclick="refreshTwinRegistryData()">
-                <i class="fas fa-sync-alt me-2"></i>Refresh
-            </button>
-            <button class="tr-btn tr-btn-export btn btn-outline-success" onclick="exportRegistryData()">
-                <i class="fas fa-download me-2"></i>Export
-            </button>
+<div class="tr-container container-fluid">
+    <!-- Header -->
+    <div class="tr-header row">
+        <div class="col-12">
+            <div class="tr-header-content d-flex justify-content-between align-items-center">
+                <div class="tr-header-info">
+                    <h1 class="tr-title">
+                        <i class="fas fa-robot"></i>
+                        Digital Twin Registry
+                    </h1>
+                    <p class="tr-subtitle">Comprehensive management and monitoring of digital twins</p>
+                </div>
+                <div class="tr-header-actions d-flex gap-2">
+                    <button class="tr-btn tr-btn-refresh" onclick="refreshTwinRegistryData()">
+                        <i class="fas fa-sync-alt"></i>Refresh
+                    </button>
+                    <button class="tr-btn tr-btn-export" onclick="exportRegistryData()">
+                        <i class="fas fa-download"></i>Export
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -37,37 +42,37 @@
                     <ul class="tr-nav-tabs nav nav-tabs card-header-tabs" id="registryTabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="tr-tab-link nav-link active" id="management-tab" data-bs-toggle="tab" data-bs-target="#management" type="button" role="tab">
-                                <i class="fas fa-list me-2"></i>Management
+                                <i class="fas fa-list"></i>Management
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="tr-tab-link nav-link" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button" role="tab">
-                                <i class="fas fa-heartbeat me-2"></i>Health Monitoring
+                                <i class="fas fa-heartbeat"></i>Health Monitoring
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="tr-tab-link nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
-                                <i class="fas fa-tachometer-alt me-2"></i>Performance
+                                <i class="fas fa-tachometer-alt"></i>Performance
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="tr-tab-link nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
-                                <i class="fas fa-chart-bar me-2"></i>Analytics
+                                <i class="fas fa-chart-bar"></i>Analytics
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="tr-tab-link nav-link" id="lifecycle-tab" data-bs-toggle="tab" data-bs-target="#lifecycle" type="button" role="tab">
-                                <i class="fas fa-play-circle me-2"></i>Lifecycle
+                                <i class="fas fa-play-circle"></i>Lifecycle
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="tr-tab-link nav-link" id="instances-tab" data-bs-toggle="tab" data-bs-target="#instances" type="button" role="tab">
-                                <i class="fas fa-code-branch me-2"></i>Instances
+                                <i class="fas fa-code-branch"></i>Instances
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="tr-tab-link nav-link" id="configuration-tab" data-bs-toggle="tab" data-bs-target="#configuration" type="button" role="tab">
-                                <i class="fas fa-cogs me-2"></i>Configuration
+                                <i class="fas fa-cogs"></i>Configuration
                             </button>
                         </li>
                     </ul>
@@ -76,7 +81,7 @@
                     <div class="tr-tab-content tab-content" id="registryTabContent">
                         <!-- Management Tab -->
                         <div class="tr-tab-pane tab-pane fade show active" id="management" role="tabpanel">
-                            {% include 'twin_registry/components/twin_table.html' %}
+                            {% include 'twin_registry/components/twin_management.html' %}
                         </div>
 
                         <!-- Health Monitoring Tab -->

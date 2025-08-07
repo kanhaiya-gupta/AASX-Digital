@@ -3,7 +3,7 @@
  * Handles real-time monitoring display and WebSocket updates
  */
 
-import { showAlert } from '../../shared/alerts.js';
+import { showAlert } from '/static/js/shared/alerts.js';
 
 export default class RealTimeMetricsComponent {
     constructor() {

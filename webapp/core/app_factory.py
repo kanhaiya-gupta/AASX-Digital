@@ -53,7 +53,7 @@ def include_routers(app: FastAPI) -> None:
     
     # Import and include module routes (with error handling)
     modules_config = {
-        "aasx": {"enabled": settings.aasx_enabled, "prefix": "/api/aasx", "tags": ["AASX"]},
+        "aasx": {"enabled": settings.aasx_enabled, "prefix": "/api/aasx-etl", "tags": ["AASX"]},
         "ai_rag": {"enabled": settings.ai_rag_enabled, "prefix": "/api/ai-rag", "tags": ["AI/RAG"]},
         "twin_registry": {"enabled": settings.twin_registry_enabled, "prefix": "/api/twin-registry", "tags": ["Twin Registry"]},
         "certificate_manager": {"enabled": settings.certificate_manager_enabled, "prefix": "/api/certificate-manager", "tags": ["Certificate Manager"]},

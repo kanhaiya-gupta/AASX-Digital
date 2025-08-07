@@ -1,0 +1,582 @@
+<!-- Enhanced Use Cases Component -->
+<div class="pm-use-cases">
+    <!-- Use Cases Overview -->
+    <div class="pm-use-cases-overview row mb-4">
+        <div class="col-12">
+            <div class="pm-overview-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Use Cases Management Platform
+                        </h5>
+                        <div class="pm-header-actions">
+                            <button class="pm-btn pm-btn-refresh btn btn-outline-light btn-sm me-2" onclick="refreshUseCases()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button class="pm-btn pm-btn-create btn btn-outline-light btn-sm" onclick="createUseCase()">
+                                <i class="fas fa-plus me-1"></i>Create Use Case
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-use-cases-stats row g-4">
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-project-diagram fa-3x text-primary mb-3"></i>
+                                <h3 class="text-primary mb-2 fw-bold">24</h3>
+                                <p class="text-muted mb-0 fw-semibold">Total Use Cases</p>
+                                <small class="text-success">+5 this month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-play-circle fa-3x text-success mb-3"></i>
+                                <h3 class="text-success mb-2 fw-bold">18</h3>
+                                <p class="text-muted mb-0 fw-semibold">Active Scenarios</p>
+                                <small class="text-success">75% active rate</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-database fa-3x text-info mb-3"></i>
+                                <h3 class="text-info mb-2 fw-bold">1,247</h3>
+                                <p class="text-muted mb-0 fw-semibold">Data Nodes</p>
+                                <small class="text-info">Connected</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-link fa-3x text-warning mb-3"></i>
+                                <h3 class="text-warning mb-2 fw-bold">3,456</h3>
+                                <p class="text-muted mb-0 fw-semibold">Relationships</p>
+                                <small class="text-warning">Complex network</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Hierarchy Tree -->
+    <div class="pm-data-hierarchy row mb-4">
+        <div class="col-lg-8">
+            <div class="pm-hierarchy-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-info text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-sitemap me-2"></i>Data Hierarchy Tree
+                        </h5>
+                        <div class="pm-hierarchy-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="expandAll()" title="Expand All">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="collapseAll()" title="Collapse All">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="searchHierarchy()" title="Search">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-hierarchy-container" style="height: 400px; overflow-y: auto;">
+                        <div class="pm-tree-structure">
+                            <!-- Root Node -->
+                            <div class="pm-tree-node pm-root-node p-3 bg-primary text-white rounded mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-cube me-2"></i>
+                                    <span class="fw-bold">Physics Modeling Framework</span>
+                                    <span class="badge bg-light text-primary ms-auto">Root</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Level 1: Simulation Types -->
+                            <div class="pm-tree-level ms-4 mb-3">
+                                <div class="pm-tree-node p-2 bg-success text-white rounded mb-2" onclick="viewNodeDetails('thermal')">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-thermometer-half me-2"></i>
+                                        <span>Thermal Analysis</span>
+                                        <span class="badge bg-light text-success ms-auto">3 Use Cases</span>
+                                    </div>
+                                </div>
+                                <div class="pm-tree-node p-2 bg-info text-white rounded mb-2" onclick="viewNodeDetails('structural')">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-cube me-2"></i>
+                                        <span>Structural Analysis</span>
+                                        <span class="badge bg-light text-info ms-auto">4 Use Cases</span>
+                                    </div>
+                                </div>
+                                <div class="pm-tree-node p-2 bg-warning text-white rounded mb-2" onclick="viewNodeDetails('fluid')">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-water me-2"></i>
+                                        <span>Fluid Dynamics</span>
+                                        <span class="badge bg-light text-warning ms-auto">2 Use Cases</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Level 2: Specific Use Cases -->
+                            <div class="pm-tree-level ms-5 mb-3">
+                                <div class="pm-tree-branch ms-4">
+                                    <div class="pm-tree-node p-2 bg-light border rounded mb-1" onclick="viewNodeDetails('heat-transfer')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-fire me-2 text-danger"></i>
+                                            <span>Heat Transfer Analysis</span>
+                                            <span class="badge bg-success ms-auto">Active</span>
+                                        </div>
+                                    </div>
+                                    <div class="pm-tree-node p-2 bg-light border rounded mb-1" onclick="viewNodeDetails('thermal-stress')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                                            <span>Thermal Stress Analysis</span>
+                                            <span class="badge bg-success ms-auto">Active</span>
+                                        </div>
+                                    </div>
+                                    <div class="pm-tree-node p-2 bg-light border rounded mb-1" onclick="viewNodeDetails('conduction')">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-arrow-right me-2 text-primary"></i>
+                                            <span>Heat Conduction</span>
+                                            <span class="badge bg-secondary ms-auto">Draft</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="pm-hierarchy-info-card card border-0 shadow-lg h-100">
+                <div class="pm-card-header card-header bg-gradient-warning text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Hierarchy Information
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-hierarchy-summary">
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-primary fw-bold">Selected Node</h6>
+                            <p class="text-muted mb-0">Physics Modeling Framework</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-success fw-bold">Node Type</h6>
+                            <p class="text-muted mb-0">Root Framework</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-info fw-bold">Child Nodes</h6>
+                            <p class="text-muted mb-0">3 Simulation Types</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-warning fw-bold">Total Use Cases</h6>
+                            <p class="text-muted mb-0">24 Active Use Cases</p>
+                        </div>
+                        <div class="pm-summary-item">
+                            <h6 class="text-danger fw-bold">Last Modified</h6>
+                            <p class="text-muted mb-0">2 hours ago</p>
+                        </div>
+                    </div>
+                    <div class="pm-hierarchy-actions mt-4">
+                        <button class="btn btn-outline-primary btn-sm w-100 mb-2" onclick="editNode()">
+                            <i class="fas fa-edit me-1"></i>Edit Node
+                        </button>
+                        <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="addChildNode()">
+                            <i class="fas fa-plus me-1"></i>Add Child
+                        </button>
+                        <button class="btn btn-outline-info btn-sm w-100" onclick="viewNodeDetails('current')">
+                            <i class="fas fa-eye me-1"></i>View Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Use Cases List -->
+    <div class="pm-use-cases-list row mb-4">
+        <div class="col-12">
+            <div class="pm-list-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-success text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-list me-2"></i>Use Cases Library
+                        </h5>
+                        <div class="pm-search-box">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" class="form-control border-0" placeholder="Search use cases..." id="use-case-search">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-0">
+                    <div class="pm-use-cases-table">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="px-4 py-3">Use Case Name</th>
+                                        <th class="px-4 py-3">Category</th>
+                                        <th class="px-4 py-3">Status</th>
+                                        <th class="px-4 py-3">Complexity</th>
+                                        <th class="px-4 py-3">Last Run</th>
+                                        <th class="px-4 py-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="use-cases-table-body">
+                                    <tr class="align-middle">
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="pm-use-case-icon me-3">
+                                                    <i class="fas fa-fire fa-2x text-danger"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">Heat Transfer Analysis</h6>
+                                                    <p class="text-muted mb-0 small">Advanced thermal simulation for heat transfer analysis</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3"><span class="badge bg-primary fs-6">Thermal</span></td>
+                                        <td class="px-4 py-3"><span class="badge bg-success fs-6">Active</span></td>
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-warning" style="width: 75%"></div>
+                                                </div>
+                                                <small class="text-muted">High</small>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3"><small class="text-muted">2 hours ago</small></td>
+                                        <td class="px-4 py-3">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="viewUseCase('heat-transfer')" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success" onclick="runUseCase('heat-transfer')" title="Run">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" onclick="editUseCase('heat-transfer')" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="exportUseCase('heat-transfer')" title="Export">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="align-middle">
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="pm-use-case-icon me-3">
+                                                    <i class="fas fa-cube fa-2x text-success"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">Structural Stress Analysis</h6>
+                                                    <p class="text-muted mb-0 small">Comprehensive structural mechanics simulation</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3"><span class="badge bg-success fs-6">Structural</span></td>
+                                        <td class="px-4 py-3"><span class="badge bg-success fs-6">Active</span></td>
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-danger" style="width: 90%"></div>
+                                                </div>
+                                                <small class="text-muted">Very High</small>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3"><small class="text-muted">1 day ago</small></td>
+                                        <td class="px-4 py-3">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="viewUseCase('structural-stress')" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success" onclick="runUseCase('structural-stress')" title="Run">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" onclick="editUseCase('structural-stress')" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="exportUseCase('structural-stress')" title="Export">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="align-middle">
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="pm-use-case-icon me-3">
+                                                    <i class="fas fa-water fa-2x text-info"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">Fluid Flow Simulation</h6>
+                                                    <p class="text-muted mb-0 small">Advanced CFD simulation with turbulence modeling</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3"><span class="badge bg-info fs-6">Fluid</span></td>
+                                        <td class="px-4 py-3"><span class="badge bg-success fs-6">Active</span></td>
+                                        <td class="px-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-info" style="width: 60%"></div>
+                                                </div>
+                                                <small class="text-muted">Medium</small>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3"><small class="text-muted">3 days ago</small></td>
+                                        <td class="px-4 py-3">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="viewUseCase('fluid-flow')" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success" onclick="runUseCase('fluid-flow')" title="Run">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" onclick="editUseCase('fluid-flow')" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info" onclick="exportUseCase('fluid-flow')" title="Export">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scenario Analysis -->
+    <div class="pm-scenario-analysis row">
+        <div class="col-12">
+            <div class="pm-scenario-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-danger text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Scenario Performance Comparison
+                        </h5>
+                        <div class="pm-scenario-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="updateScenarioChart()" title="Update">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="exportScenarioData()" title="Export">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-lg-8">
+                            <div class="pm-scenario-chart" style="height: 300px;">
+                                <canvas id="scenario-chart" width="800" height="300"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="pm-scenario-comparison">
+                                <h6 class="fw-bold text-primary mb-3">Scenario Comparison</h6>
+                                <div class="pm-comparison-table">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Scenario</th>
+                                                    <th>Performance</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Heat Transfer</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 6px;">
+                                                            <div class="progress-bar bg-success" style="width: 85%"></div>
+                                                        </div>
+                                                    </td>
+                                                    <td><span class="badge bg-success">Optimal</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Structural</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 6px;">
+                                                            <div class="progress-bar bg-warning" style="width: 72%"></div>
+                                                        </div>
+                                                    </td>
+                                                    <td><span class="badge bg-warning">Good</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Fluid Flow</td>
+                                                    <td>
+                                                        <div class="progress" style="height: 6px;">
+                                                            <div class="progress-bar bg-info" style="width: 68%"></div>
+                                                        </div>
+                                                    </td>
+                                                    <td><span class="badge bg-info">Acceptable</span></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize Scenario Chart
+function initializeScenarioChart() {
+    const ctx = document.getElementById('scenario-chart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Heat Transfer',
+                data: [85, 87, 89, 88, 90, 92],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.4
+            }, {
+                label: 'Structural',
+                data: [72, 74, 76, 75, 78, 80],
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.4
+            }, {
+                label: 'Fluid Flow',
+                data: [68, 70, 72, 71, 73, 75],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Use Case Performance Over Time'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    return chart;
+}
+
+function refreshUseCases() {
+    console.log('🔄 Refreshing use cases...');
+    // Trigger refresh event
+    document.dispatchEvent(new CustomEvent('useCasesRefresh'));
+}
+
+function createUseCase() {
+    console.log('➕ Creating new use case...');
+    // Trigger create event
+    document.dispatchEvent(new CustomEvent('createUseCase'));
+}
+
+function expandAll() {
+    console.log('📈 Expanding all nodes...');
+    // Implement expand all functionality
+}
+
+function collapseAll() {
+    console.log('📉 Collapsing all nodes...');
+    // Implement collapse all functionality
+}
+
+function searchHierarchy() {
+    console.log('🔍 Searching hierarchy...');
+    // Implement search functionality
+}
+
+function viewNodeDetails(nodeId) {
+    console.log('👁️ Viewing node details:', nodeId);
+    // Implement view node details
+}
+
+function editNode() {
+    console.log('✏️ Editing node...');
+    // Implement edit node functionality
+}
+
+function addChildNode() {
+    console.log('➕ Adding child node...');
+    // Implement add child node functionality
+}
+
+function viewUseCase(useCaseId) {
+    console.log('👁️ Viewing use case:', useCaseId);
+    // Implement view use case functionality
+}
+
+function runUseCase(useCaseId) {
+    console.log('▶️ Running use case:', useCaseId);
+    // Implement run use case functionality
+}
+
+function editUseCase(useCaseId) {
+    console.log('✏️ Editing use case:', useCaseId);
+    // Implement edit use case functionality
+}
+
+function exportUseCase(useCaseId) {
+    console.log('📤 Exporting use case:', useCaseId);
+    // Implement export use case functionality
+}
+
+function updateScenarioChart() {
+    console.log('📊 Updating scenario chart...');
+    // Implement chart update functionality
+}
+
+function exportScenarioData() {
+    console.log('📊 Exporting scenario data...');
+    // Implement export functionality
+}
+
+// Use case search functionality
+document.getElementById('use-case-search').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#use-cases-table-body tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Initialize chart when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeScenarioChart();
+});
+</script> 
+});
+</script> 

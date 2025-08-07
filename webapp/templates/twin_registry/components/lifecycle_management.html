@@ -1,52 +1,106 @@
 <!-- Lifecycle Management Component -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="fas fa-play-circle me-2"></i>Lifecycle Management
-        </h5>
-        <div class="d-flex gap-2">
-            <select class="form-select form-select-sm" id="lifecycleTwinFilter">
-                <option value="">All Twins</option>
-            </select>
-            <button class="btn btn-sm btn-outline-primary" onclick="refreshLifecycleData()">
-                <i class="fas fa-sync-alt"></i>
-            </button>
+<div class="tr-lifecycle-management">
+    <!-- Premium Header -->
+    <div class="tr-lifecycle-header">
+        <div class="tr-header-content">
+            <div class="tr-header-info">
+                <h5 class="tr-header-title">
+                    <i class="fas fa-play-circle"></i>
+                    Lifecycle Management
+                </h5>
+                <p class="tr-header-subtitle">Monitor and control digital twin lifecycles</p>
+            </div>
+            <div class="tr-header-actions">
+                <select class="tr-time-filter" id="lifecycleTwinFilter">
+                    <option value="">All Twins</option>
+                </select>
+                <button class="tr-btn tr-btn-refresh" onclick="refreshLifecycleData()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
         </div>
     </div>
-    <div class="card-body">
-        <!-- Lifecycle Status Overview -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-success mb-1" id="runningTwins">0</div>
-                    <div class="text-muted">Running</div>
+
+    <!-- Lifecycle Status Overview -->
+    <div class="tr-health-grid">
+        <div class="tr-health-card tr-health-excellent">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="runningTwins">0</div>
+                    <div class="tr-health-label">Running</div>
+                    <div class="tr-health-range">Active twins</div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-warning mb-1" id="stoppedTwins">0</div>
-                    <div class="text-muted">Stopped</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-info mb-1" id="syncingTwins">0</div>
-                    <div class="text-muted">Syncing</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-danger mb-1" id="errorTwins">0</div>
-                    <div class="text-muted">Error</div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-play"></i>
                 </div>
             </div>
         </div>
+        
+        <div class="tr-health-card tr-health-warning">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="stoppedTwins">0</div>
+                    <div class="tr-health-label">Stopped</div>
+                    <div class="tr-health-range">Inactive twins</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-stop"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tr-health-card tr-health-good">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="syncingTwins">0</div>
+                    <div class="tr-health-label">Syncing</div>
+                    <div class="tr-health-range">Data sync in progress</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-sync"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tr-health-card tr-health-critical">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="errorTwins">0</div>
+                    <div class="tr-health-label">Error</div>
+                    <div class="tr-health-range">Failed twins</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Twin Lifecycle Table -->
-        <div class="table-responsive">
-            <table class="table table-hover" id="lifecycleTable">
+    <!-- Twin Lifecycle Table -->
+    <div class="tr-table-section">
+        <div class="tr-section-header">
+            <h6 class="tr-section-title">
+                <i class="fas fa-list"></i>
+                Twin Lifecycle Status
+            </h6>
+            <div class="tr-section-actions">
+                <button class="tr-btn tr-btn-outline" onclick="exportLifecycleData()">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+        
+        <div class="tr-table-container">
+            <table class="tr-twin-table" id="lifecycleTable">
                 <thead>
                     <tr>
+                        <th class="tr-checkbox-column">
+                            <div class="tr-checkbox-wrapper">
+                                <input type="checkbox" class="tr-select-all" id="selectAllLifecycle">
+                                <label class="tr-checkbox-label" for="selectAllLifecycle"></label>
+                            </div>
+                        </th>
                         <th>Twin ID</th>
                         <th>Name</th>
                         <th>Status</th>
@@ -61,56 +115,61 @@
                 </tbody>
             </table>
         </div>
+    </div>
 
-        <!-- Bulk Operations -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-layer-group me-2"></i>Bulk Operations
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="selectAllTwins">
-                            <label class="form-check-label" for="selectAllTwins">
-                                Select All Twins
-                            </label>
-                        </div>
-                        <div class="mt-2">
-                            <small class="text-muted">Selected: <span id="selectedCount">0</span> twins</small>
-                        </div>
+    <!-- Bulk Operations -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-layer-group"></i>
+                Bulk Operations
+            </h6>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAllTwins">
+                        <label class="form-check-label" for="selectAllTwins">
+                            Select All Twins
+                        </label>
                     </div>
-                    <div class="col-md-6">
-                        <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-success" onclick="bulkStartTwins()" disabled id="bulkStartBtn">
-                                <i class="fas fa-play me-2"></i>Start All
-                            </button>
-                            <button class="btn btn-sm btn-warning" onclick="bulkStopTwins()" disabled id="bulkStopBtn">
-                                <i class="fas fa-stop me-2"></i>Stop All
-                            </button>
-                            <button class="btn btn-sm btn-info" onclick="bulkSyncTwins()" disabled id="bulkSyncBtn">
-                                <i class="fas fa-sync me-2"></i>Sync All
-                            </button>
-                        </div>
+                    <div class="mt-2">
+                        <small class="text-muted">Selected: <span id="selectedCount">0</span> twins</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="btn-group" role="group">
+                        <button class="tr-btn tr-btn-success" onclick="bulkStartTwins()" disabled id="bulkStartBtn">
+                            <i class="fas fa-play"></i>
+                            Start All
+                        </button>
+                        <button class="tr-btn tr-btn-warning" onclick="bulkStopTwins()" disabled id="bulkStopBtn">
+                            <i class="fas fa-stop"></i>
+                            Stop All
+                        </button>
+                        <button class="tr-btn tr-btn-info" onclick="bulkSyncTwins()" disabled id="bulkSyncBtn">
+                            <i class="fas fa-sync"></i>
+                            Sync All
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Lifecycle Events Timeline -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-history me-2"></i>Recent Lifecycle Events
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="timeline-container">
-                    <div id="lifecycleTimeline">
-                        <!-- Timeline events will be populated here -->
-                    </div>
+    <!-- Lifecycle Events Timeline -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-history"></i>
+                Recent Lifecycle Events
+            </h6>
+        </div>
+        <div class="tr-card-body">
+            <div class="tr-timeline-container">
+                <div id="lifecycleTimeline">
+                    <!-- Timeline events will be populated here -->
                 </div>
             </div>
         </div>
@@ -123,7 +182,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="lifecycleOperationTitle">
-                    <i class="fas fa-cog me-2"></i>Lifecycle Operation
+                    <i class="fas fa-cog"></i>
+                    Lifecycle Operation
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

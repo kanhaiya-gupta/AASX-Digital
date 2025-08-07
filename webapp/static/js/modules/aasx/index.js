@@ -8,17 +8,17 @@ console.log('📦 AASX index.js: Module loading started...');
 
 // Import shared utilities
 console.log('📦 AASX index.js: Importing shared utilities...');
-import { initAlertSystem } from '../shared/alerts.js';
-import { formatFileSize, getFileStatusInfo } from '../shared/utils.js';
+import { initAlertSystem } from '/static/js/shared/alerts.js';
+import { formatFileSize, getFileStatusInfo } from '/static/js/shared/utils.js';
 console.log('✅ AASX index.js: Shared utilities imported');
 
 // Import AASX modules
 console.log('📦 AASX index.js: Importing AASX modules...');
-import DataManager from './data-manager/core.js';
+import { DataManager } from './data-manager/core.js';
 import { AASXETLPipeline } from './etl-pipeline/core.js';
 import { dropdownManager } from './shared/dropdown-manager.js';
-import ProjectCreator from './project-creator.js';
-import FileUploadHandler from './file-upload-handler.js';
+import ProjectCreator from './data-manager/project-creator.js';
+import { FileUploadHandler } from './etl-pipeline/file-upload-handler.js';
 console.log('✅ AASX index.js: AASX modules imported');
 
 // Global instances
@@ -130,7 +130,7 @@ export async function initETLConfigurationManager() {
         }
         
         // Dynamically import ETL Configuration Manager
-        const { default: ETLConfigurationManager } = await import('./etl-configuration.js');
+        const { default: ETLConfigurationManager } = await import('./etl-pipeline/etl_configuration.js');
         
         // Initialize ETL Configuration Manager
         etlConfigManager = new ETLConfigurationManager();
@@ -194,7 +194,8 @@ export async function refreshAASXData() {
 
 // Auto-initialize when DOM is ready
 let autoInitCalled = false;
-$(document).ready(() => {
+
+function initializeWhenReady() {
     // Check if we're on an AASX page and not already initialized
     if (window.location.pathname.includes('/aasx') && !autoInitCalled) {
         autoInitCalled = true;
@@ -203,7 +204,21 @@ $(document).ready(() => {
             autoInitCalled = false; // Reset flag on error
         });
     }
-});
+}
+
+// Try to initialize when DOM is ready
+if (typeof $ !== 'undefined') {
+    // jQuery is available, use it
+    $(document).ready(initializeWhenReady);
+} else {
+    // jQuery not available, use native DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeWhenReady);
+    } else {
+        // DOM is already ready
+        initializeWhenReady();
+    }
+}
 
 // Export for global access
 window.AASXModule = {

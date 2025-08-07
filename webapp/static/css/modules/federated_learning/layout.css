@@ -1,6 +1,7 @@
 /**
- * Federated Learning Module Layout CSS Module
- * Dedicated styling for main layout and structure
+ * Enhanced Federated Learning Module Layout CSS Module
+ * Premium, world-class design with uniform color scheme
+ * Matches AASX, Twin Registry, AI/RAG, and Knowledge Graph color palette
  */
 
 /* ===== MAIN LAYOUT STYLING ===== */
@@ -10,14 +11,28 @@
     padding: 1.5rem 0;
 }
 
-/* ===== PAGE HEADER STYLING ===== */
+/* ===== ENHANCED PAGE HEADER STYLING ===== */
 .fl-header {
-    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 2rem 0;
     margin-bottom: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.fl-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+    pointer-events: none;
 }
 
 .fl-header h1 {
@@ -30,7 +45,7 @@
     font-size: 1.1rem;
 }
 
-/* ===== CONTENT AREA STYLING ===== */
+/* ===== ENHANCED CONTENT AREA STYLING ===== */
 .fl-content {
     background: #ffffff;
     border-radius: 12px;
@@ -39,11 +54,11 @@
     margin-bottom: 2rem;
 }
 
-/* ===== SIDEBAR STYLING ===== */
+/* ===== ENHANCED SIDEBAR STYLING ===== */
 .fl-sidebar {
     background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.1);
     padding: 1.5rem;
     height: fit-content;
     position: sticky;
@@ -57,7 +72,7 @@
 }
 
 .fl-sidebar .card-header {
-    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     border-radius: 8px;
     padding: 1rem;
@@ -68,7 +83,7 @@
     padding: 0;
 }
 
-/* ===== GRID LAYOUT STYLING ===== */
+/* ===== ENHANCED GRID LAYOUT STYLING ===== */
 .fl-grid {
     display: grid;
     gap: 1.5rem;
@@ -87,17 +102,17 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-/* ===== TRAINING WORKSPACE ===== */
+/* ===== ENHANCED TRAINING WORKSPACE ===== */
 .fl-training-workspace {
     background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.1);
     overflow: hidden;
     margin-bottom: 2rem;
 }
 
 .fl-workspace-header {
-    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #dee2e6;
@@ -121,17 +136,17 @@
     padding: 1.5rem;
 }
 
-/* ===== MODEL WORKSPACE ===== */
+/* ===== ENHANCED MODEL WORKSPACE ===== */
 .fl-model-workspace {
     background: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.1);
     overflow: hidden;
     margin-bottom: 2rem;
 }
 
 .fl-model-header {
-    background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #dee2e6;
@@ -147,7 +162,7 @@
     padding: 1.5rem;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* ===== ENHANCED RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
     .fl-header {
         padding: 1.5rem 0;

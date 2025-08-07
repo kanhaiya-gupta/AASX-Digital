@@ -8,8 +8,8 @@ console.log('📦 AI RAG index.js: Module loading started...');
 
 // Import shared utilities
 console.log('📦 AI RAG index.js: Importing shared utilities...');
-import { initAlertSystem } from '../shared/alerts.js';
-import { formatFileSize, getFileStatusInfo } from '../shared/utils.js';
+import { initAlertSystem } from '/static/js/shared/alerts.js';
+import { formatFileSize, getFileStatusInfo } from '/static/js/shared/utils.js';
 console.log('✅ AI RAG index.js: Shared utilities imported');
 
 // Import AI RAG core modules

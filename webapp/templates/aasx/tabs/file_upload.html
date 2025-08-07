@@ -1,0 +1,221 @@
+<!-- File Upload Tab - Full Width Layout -->
+<div class="aasx-tab-content">
+    <!-- File Upload Section -->
+    {% include 'aasx/components/file_upload.html' %}
+    
+    <!-- Upload Statistics & Quick Actions Row -->
+    <div class="row g-4 mt-4">
+        <!-- Upload Statistics -->
+        <div class="col-lg-8">
+            <div class="aasx-card aasx-card-premium h-100">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Upload Statistics
+                        </h3>
+                        <p class="aasx-card-subtitle">Comprehensive upload metrics and performance</p>
+                    </div>
+                    <div class="aasx-card-header-badge">
+                        <span class="aasx-badge aasx-badge-info">Real-time</span>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="aasx-stat-card">
+                                <div class="aasx-stat-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="aasx-stat-content">
+                                    <span class="aasx-stat-number" id="totalUploads">0</span>
+                                    <span class="aasx-stat-label">Total Uploads</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="aasx-stat-card">
+                                <div class="aasx-stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="aasx-stat-content">
+                                    <span class="aasx-stat-number" id="avgUploadTime">0s</span>
+                                    <span class="aasx-stat-label">Avg Upload Time</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="aasx-stat-card">
+                                <div class="aasx-stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="aasx-stat-content">
+                                    <span class="aasx-stat-number" id="successfulUploads">0</span>
+                                    <span class="aasx-stat-label">Successful</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="aasx-stat-card">
+                                <div class="aasx-stat-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="aasx-stat-content">
+                                    <span class="aasx-stat-number" id="failedUploads">0</span>
+                                    <span class="aasx-stat-label">Failed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Upload Chart -->
+                    <div class="mt-4">
+                        <h4>Upload Activity</h4>
+                        <div class="aasx-chart-placeholder">
+                            <i class="fas fa-chart-line"></i>
+                            <p>Upload Activity Chart</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="aasx-card aasx-card-premium h-100">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-bolt"></i>
+                            Quick Actions
+                        </h3>
+                        <p class="aasx-card-subtitle">Common upload tasks and shortcuts</p>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div class="aasx-quick-actions">
+                        <button class="aasx-quick-action-btn" id="quickUploadBtn" title="Quick Upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Quick Upload</span>
+                        </button>
+                        <button class="aasx-quick-action-btn" id="bulkUploadBtn" title="Bulk Upload">
+                            <i class="fas fa-folder-plus"></i>
+                            <span>Bulk Upload</span>
+                        </button>
+                        <button class="aasx-quick-action-btn" id="urlUploadBtn" title="URL Upload">
+                            <i class="fas fa-link"></i>
+                            <span>URL Upload</span>
+                        </button>
+                        <button class="aasx-quick-action-btn" id="validateFilesBtn" title="Validate Files">
+                            <i class="fas fa-check-double"></i>
+                            <span>Validate Files</span>
+                        </button>
+                        <button class="aasx-quick-action-btn" id="clearUploadsBtn" title="Clear Uploads">
+                            <i class="fas fa-trash"></i>
+                            <span>Clear Uploads</span>
+                        </button>
+                        <button class="aasx-quick-action-btn" id="exportUploadsBtn" title="Export Uploads">
+                            <i class="fas fa-download"></i>
+                            <span>Export Uploads</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Uploads -->
+    <div class="row g-4 mt-4">
+        <div class="col-12">
+            <div class="aasx-card aasx-card-premium">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-history"></i>
+                            Recent Uploads
+                        </h3>
+                        <p class="aasx-card-subtitle">Latest file uploads and their status</p>
+                    </div>
+                    <div class="aasx-card-header-actions">
+                        <button class="aasx-btn aasx-btn-outline" id="refreshUploadsBtn" title="Refresh Uploads">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Size</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Upload Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentUploadsTable">
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-alt text-primary me-2"></i>
+                                        sample_thermal.aasx
+                                    </td>
+                                    <td>2.5 MB</td>
+                                    <td>AASX</td>
+                                    <td><span class="badge bg-success">Completed</span></td>
+                                    <td>2 minutes ago</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-alt text-primary me-2"></i>
+                                        structural_analysis.aasx
+                                    </td>
+                                    <td>1.8 MB</td>
+                                    <td>AASX</td>
+                                    <td><span class="badge bg-warning">Processing</span></td>
+                                    <td>5 minutes ago</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-alt text-primary me-2"></i>
+                                        fluid_dynamics.aasx
+                                    </td>
+                                    <td>3.2 MB</td>
+                                    <td>AASX</td>
+                                    <td><span class="badge bg-danger">Failed</span></td>
+                                    <td>10 minutes ago</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

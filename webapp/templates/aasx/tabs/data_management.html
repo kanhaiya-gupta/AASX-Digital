@@ -1,0 +1,191 @@
+<!-- Data Management Tab - Full Width Layout -->
+<div class="aasx-tab-content">
+    <!-- Data Management Section -->
+    {% include 'aasx/components/data_management.html' %}
+    
+    <!-- Recent Activity & Workflow Row -->
+    <div class="row g-4 mt-4">
+        <!-- Data Hierarchy -->
+        <div class="col-12">
+            <div class="aasx-card aasx-card-premium h-100">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-sitemap"></i>
+                            Data Hierarchy
+                        </h3>
+                        <p class="aasx-card-subtitle">Organized data structure overview</p>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div class="aasx-hierarchy-visualization">
+                        <div class="aasx-hierarchy-level aasx-hierarchy-root">
+                            <div class="aasx-hierarchy-node aasx-hierarchy-main">
+                                <i class="fas fa-database"></i>
+                                <span>Data Management</span>
+                            </div>
+                        </div>
+                        
+                        <div class="aasx-hierarchy-connector"></div>
+                        
+                        <div class="aasx-hierarchy-level aasx-hierarchy-use-cases">
+                            <div class="aasx-hierarchy-node aasx-hierarchy-category">
+                                <i class="fas fa-fire"></i>
+                                <span>Thermal Analysis</span>
+                                <small>Heat exchangers, thermal optimization</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-category">
+                                <i class="fas fa-building"></i>
+                                <span>Structural Analysis</span>
+                                <small>Bridges, buildings, mechanical parts</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-category">
+                                <i class="fas fa-tint"></i>
+                                <span>Fluid Dynamics</span>
+                                <small>Airfoils, pipelines, flow analysis</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-category">
+                                <i class="fas fa-atom"></i>
+                                <span>Multi-Physics</span>
+                                <small>Combined analysis scenarios</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-category">
+                                <i class="fas fa-industry"></i>
+                                <span>Industrial Applications</span>
+                                <small>Manufacturing, quality control</small>
+                            </div>
+                        </div>
+                        
+                        <div class="aasx-hierarchy-connector"></div>
+                        
+                        <div class="aasx-hierarchy-level aasx-hierarchy-projects">
+                            <div class="aasx-hierarchy-node aasx-hierarchy-project">
+                                <i class="fas fa-folder"></i>
+                                <span>Thermal Optimization Study</span>
+                                <small>Heat exchanger performance analysis</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-project">
+                                <i class="fas fa-folder"></i>
+                                <span>Bridge Design Analysis</span>
+                                <small>Structural integrity assessment</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-project">
+                                <i class="fas fa-folder"></i>
+                                <span>Airfoil CFD Study</span>
+                                <small>Aerodynamic performance optimization</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-project">
+                                <i class="fas fa-folder"></i>
+                                <span>Manufacturing QC</span>
+                                <small>Quality control and compliance</small>
+                            </div>
+                        </div>
+                        
+                        <div class="aasx-hierarchy-connector"></div>
+                        
+                        <div class="aasx-hierarchy-level aasx-hierarchy-data-types">
+                            <div class="aasx-hierarchy-node aasx-hierarchy-type">
+                                <i class="fas fa-file-code"></i>
+                                <span>AASX Files</span>
+                                <small>Digital twin packages</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-type">
+                                <i class="fas fa-file-alt"></i>
+                                <span>JSON Data</span>
+                                <small>Structured data format</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-type">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Analytics</span>
+                                <small>Processed results & insights</small>
+                            </div>
+                            <div class="aasx-hierarchy-node aasx-hierarchy-type">
+                                <i class="fas fa-certificate"></i>
+                                <span>Certificates</span>
+                                <small>Quality & compliance data</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Process -->
+    <div class="row g-4 mt-4">
+        <div class="col-12">
+            <div class="aasx-card aasx-card-premium">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-project-diagram"></i>
+                            Workflow Process
+                        </h3>
+                        <p class="aasx-card-subtitle">End-to-end data processing pipeline</p>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div class="aasx-workflow-steps">
+                        <div class="aasx-workflow-step">
+                            <div class="aasx-workflow-step-icon">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <div class="aasx-workflow-step-content">
+                                <h4>1. Data Upload</h4>
+                                <p>Upload AASX files and related data through the file upload interface</p>
+                            </div>
+                            <div class="aasx-workflow-step-status aasx-status-active">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="aasx-workflow-connector"></div>
+                        
+                        <div class="aasx-workflow-step">
+                            <div class="aasx-workflow-step-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div class="aasx-workflow-step-content">
+                                <h4>2. ETL Processing</h4>
+                                <p>Extract, transform, and load data using configured pipelines</p>
+                            </div>
+                            <div class="aasx-workflow-step-status aasx-status-ready">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="aasx-workflow-connector"></div>
+                        
+                        <div class="aasx-workflow-step">
+                            <div class="aasx-workflow-step-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="aasx-workflow-step-content">
+                                <h4>3. Analytics</h4>
+                                <p>Generate insights and analytics from processed data</p>
+                            </div>
+                            <div class="aasx-workflow-step-status aasx-status-ready">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="aasx-workflow-connector"></div>
+                        
+                        <div class="aasx-workflow-step">
+                            <div class="aasx-workflow-step-icon">
+                                <i class="fas fa-share-alt"></i>
+                            </div>
+                            <div class="aasx-workflow-step-content">
+                                <h4>4. Integration</h4>
+                                <p>Connect with other modules and export results</p>
+                            </div>
+                            <div class="aasx-workflow-step-status aasx-status-ready">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

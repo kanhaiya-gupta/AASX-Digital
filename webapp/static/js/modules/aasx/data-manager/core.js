@@ -3,8 +3,8 @@
  * Main DataManager class for managing data, use cases, and projects
  */
 
-import { formatFileSize, getFileStatusInfo, getStatusBadgeColor } from '../../shared/utils.js';
-import { showSuccess, showError, showWarning } from '../../shared/alerts.js';
+import { formatFileSize, getFileStatusInfo, getStatusBadgeColor } from '/static/js/shared/utils.js';
+import { showSuccess, showError, showWarning } from '/static/js/shared/alerts.js';
 
 export class DataManager {
     constructor() {
@@ -190,8 +190,8 @@ export class DataManager {
         try {
             // Load both projects and use cases
             const [projectsResponse, useCasesResponse] = await Promise.all([
-                fetch('/api/aasx/projects'),
-                fetch('/api/aasx/use-cases')
+                fetch('/api/aasx-etl/projects'),
+                fetch('/api/aasx-etl/use-cases')
             ]);
             
             console.log('📡 Projects response status:', projectsResponse.status);
@@ -251,7 +251,7 @@ export class DataManager {
 
     async refreshAndSync() {
         try {
-            const response = await fetch('/aasx/api/projects/sync', {
+            const response = await fetch('/api/aasx-etl/projects/sync', {
                 method: 'POST'
             });
             
@@ -331,7 +331,7 @@ export class DataManager {
     // Update stats from API
     async updateStats() {
         try {
-            const response = await fetch('/api/aasx/stats');
+            const response = await fetch('/api/aasx-etl/stats');
             if (response.ok) {
                 const stats = await response.json();
                 
@@ -378,7 +378,7 @@ export class DataManager {
             try {
                 // Load projects for each use case using the same API as dropdown manager
                 console.log(`🔍 Data Manager: Loading projects for use case ${useCase.id} (${useCase.name})`);
-                const response = await fetch(`/api/aasx/use-cases/${useCase.id}/projects`);
+                const response = await fetch(`/api/aasx-etl/use-cases/${useCase.id}/projects`);
                 if (response.ok) {
                     const projects = await response.json();
                     console.log(`📁 Data Manager: Raw projects response for ${useCase.name}:`, projects);
@@ -843,7 +843,7 @@ export class DataManager {
         
         try {
             // Fetch detailed project information including files
-            const response = await fetch(`/api/aasx/projects/${project.project_id}`);
+            const response = await fetch(`/api/aasx-etl/projects/${project.project_id}`);
             if (!response.ok) {
                 throw new Error(`Failed to fetch project details: ${response.status}`);
             }
@@ -878,116 +878,235 @@ export class DataManager {
         const useCase = projectDetails.use_case;
         
         const modalContent = `
-            <div class="row mb-4">
-                <div class="col-md-8">
-                    <h6>Description</h6>
-                    <p class="text-muted">${projectDetails.description || 'No description available'}</p>
-                    
-                    <h6>Project Details</h6>
-                    <ul class="list-unstyled">
-                        <li><strong>Project ID:</strong> <code>${projectDetails.project_id}</code></li>
-                        <li><strong>Status:</strong> <span class="badge bg-${this.getStatusColor(projectDetails.status || 'active')}">${projectDetails.status || 'active'}</span></li>
-                        <li><strong>Files:</strong> ${files.length} files</li>
-                        <li><strong>Created:</strong> ${new Date(projectDetails.created_at).toLocaleDateString()}</li>
-                        <li><strong>Last Updated:</strong> ${new Date(projectDetails.updated_at).toLocaleDateString()}</li>
-                    </ul>
+            <div class="aasx-project-details">
+                <!-- Project Header -->
+                <div class="aasx-project-header mb-4">
+                    <div class="aasx-project-title-section">
+                        <h4 class="aasx-project-title">
+                            <i class="fas fa-project-diagram me-2"></i>
+                            ${projectDetails.name}
+                        </h4>
+                        <div class="aasx-project-status">
+                            <span class="aasx-status-badge aasx-status-${this.getStatusColor(projectDetails.status || 'active')}">
+                                <i class="fas fa-circle me-1"></i>
+                                ${projectDetails.status || 'active'}
+                            </span>
+                        </div>
+                    </div>
+                    <p class="aasx-project-description">${projectDetails.description || 'No description available'}</p>
                 </div>
-                <div class="col-md-4">
-                    <h6>Use Case</h6>
-                    <p class="text-primary">${useCase ? useCase.name : 'Unknown'}</p>
-                    
-                    <h6>Tags</h6>
-                    <div class="mb-3">
-                        ${this.renderTags(projectDetails.tags)}
+
+                <!-- Project Stats Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="aasx-stat-card">
+                            <div class="aasx-stat-icon">
+                                <i class="fas fa-folder"></i>
+                            </div>
+                            <div class="aasx-stat-content">
+                                <div class="aasx-stat-number">${files.length}</div>
+                                <div class="aasx-stat-label">Files</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="aasx-stat-card">
+                            <div class="aasx-stat-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="aasx-stat-content">
+                                <div class="aasx-stat-number">${new Date(projectDetails.created_at).toLocaleDateString()}</div>
+                                <div class="aasx-stat-label">Created</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="aasx-stat-card">
+                            <div class="aasx-stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="aasx-stat-content">
+                                <div class="aasx-stat-number">${new Date(projectDetails.updated_at).toLocaleDateString()}</div>
+                                <div class="aasx-stat-label">Last Updated</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="aasx-stat-card">
+                            <div class="aasx-stat-icon">
+                                <i class="fas fa-fingerprint"></i>
+                            </div>
+                            <div class="aasx-stat-content">
+                                <div class="aasx-stat-number">${projectDetails.project_id.substring(0, 8)}...</div>
+                                <div class="aasx-stat-label">Project ID</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Information Grid -->
+                <div class="row g-4 mb-4">
+                    <!-- Use Case & Tags -->
+                    <div class="col-lg-6">
+                        <div class="aasx-info-card">
+                            <div class="aasx-info-card-header">
+                                <h6><i class="fas fa-sitemap me-2"></i>Use Case</h6>
+                            </div>
+                            <div class="aasx-info-card-body">
+                                <div class="aasx-use-case-info">
+                                    <span class="aasx-use-case-name">${useCase ? useCase.name : 'Unknown'}</span>
+                                    ${useCase && useCase.description ? `<small class="text-muted d-block mt-1">${useCase.description}</small>` : ''}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <h6>Metadata</h6>
-                    <div class="mb-3">
+                    <!-- Tags -->
+                    <div class="col-lg-6">
+                        <div class="aasx-info-card">
+                            <div class="aasx-info-card-header">
+                                <h6><i class="fas fa-tags me-2"></i>Tags</h6>
+                            </div>
+                            <div class="aasx-info-card-body">
+                                ${this.renderTags(projectDetails.tags)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metadata -->
+                ${projectDetails.metadata && Object.keys(projectDetails.metadata).length > 0 ? `
+                <div class="aasx-info-card mb-4">
+                    <div class="aasx-info-card-header">
+                        <h6><i class="fas fa-info-circle me-2"></i>Metadata</h6>
+                    </div>
+                    <div class="aasx-info-card-body">
                         ${this.renderMetadata(projectDetails.metadata)}
                     </div>
                 </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-12">
-                    <h6>Files in Project</h6>
+                ` : ''}
+
+                <!-- Files Section -->
+                <div class="aasx-files-section">
+                    <div class="aasx-section-header">
+                        <h6><i class="fas fa-file-alt me-2"></i>Files in Project</h6>
+                        <span class="aasx-file-count">${files.length} file${files.length !== 1 ? 's' : ''}</span>
+                    </div>
                     ${this.renderProjectFiles(files)}
                 </div>
             </div>
         `;
         
-                 modalBody.html(modalContent);
+        modalBody.html(modalContent);
          
-         // Add modal footer
-         const modalFooter = `
-             <div class="modal-footer">
-                 <button type="button" class="btn btn-danger" onclick="dataManager.deleteProject('${projectDetails.project_id}')">
-                     <i class="fas fa-trash me-1"></i>Delete Project
-                 </button>
-                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                 <button type="button" class="btn btn-primary" onclick="dataManager.uploadToProject('${projectDetails.project_id}')">
-                     <i class="fas fa-upload me-1"></i>Upload Files
-                 </button>
-             </div>
-         `;
-         
-         modalBody.after(modalFooter);
-     }
+        // Add modal footer
+        const modalFooter = `
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger" onclick="dataManager.deleteProject('${projectDetails.project_id}')">
+                    <i class="fas fa-trash me-1"></i>Delete Project
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="dataManager.uploadToProject('${projectDetails.project_id}')">
+                    <i class="fas fa-upload me-1"></i>Upload Files
+                </button>
+            </div>
+        `;
+        
+        modalBody.after(modalFooter);
+    }
     
     // Render project files with detailed information
     renderProjectFiles(files) {
         if (!files || files.length === 0) {
             return `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    No files uploaded to this project yet.
+                <div class="aasx-empty-state">
+                    <div class="aasx-empty-state-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <h6>No Files Uploaded</h6>
+                    <p class="text-muted">This project doesn't have any files yet. Upload your first AASX file to get started.</p>
+                    <button class="btn btn-primary btn-sm" onclick="dataManager.uploadToProject('${projectDetails.project_id}')">
+                        <i class="fas fa-upload me-1"></i>Upload Files
+                    </button>
                 </div>
             `;
         }
         
-        let filesHtml = '<div class="table-responsive"><table class="table table-hover">';
-        filesHtml += `
-            <thead class="table-light">
-                <tr>
-                    <th style="min-width: 200px; color: #000; font-weight: 600;">File Name</th>
-                    <th style="min-width: 100px; color: #000; font-weight: 600;">Status</th>
-                    <th style="min-width: 140px; color: #000; font-weight: 600;">Federated Learning</th>
-                    <th style="min-width: 80px; color: #000; font-weight: 600;">Size</th>
-                    <th style="min-width: 100px; color: #000; font-weight: 600;">Upload Date</th>
-                    <th style="min-width: 120px; color: #000; font-weight: 600;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+        let filesHtml = `
+            <div class="aasx-files-table-container">
+                <div class="table-responsive">
+                    <table class="table aasx-files-table">
+                        <thead>
+                            <tr>
+                                <th class="aasx-table-header">
+                                    <i class="fas fa-file me-1"></i>File Name
+                                </th>
+                                <th class="aasx-table-header">
+                                    <i class="fas fa-info-circle me-1"></i>Status
+                                </th>
+                                <th class="aasx-table-header">
+                                    <i class="fas fa-network-wired me-1"></i>Federated Learning
+                                </th>
+                                <th class="aasx-table-header">
+                                    <i class="fas fa-weight-hanging me-1"></i>Size
+                                </th>
+                                <th class="aasx-table-header">
+                                    <i class="fas fa-calendar me-1"></i>Upload Date
+                                </th>
+                                <th class="aasx-table-header">
+                                    <i class="fas fa-cogs me-1"></i>Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
         `;
         
         files.forEach(file => {
             const statusColor = this.getFileStatusColor(file.status);
-            const federatedLearningColor = this.getFederatedLearningColor(file.federated_learning);
-            const fileSize = this.formatFileSize(file.size);
-            const uploadDate = new Date(file.upload_date).toLocaleDateString();
+            const federatedColor = this.getFederatedLearningColor(file.federated_learning);
+            const fileSize = this.formatFileSize(file.size || 0);
+            const uploadDate = new Date(file.upload_date || file.created_at).toLocaleDateString();
             
             filesHtml += `
-                <tr>
-                    <td>
-                        <div class="d-flex flex-column">
-                            <strong class="text-break">${file.filename}</strong>
-                            ${file.original_filename !== file.filename ? `<small class="text-muted text-break">Original: ${file.original_filename}</small>` : ''}
+                <tr class="aasx-file-row">
+                    <td class="aasx-file-name">
+                        <div class="aasx-file-info">
+                            <div class="aasx-file-icon">
+                                <i class="fas fa-file-code"></i>
+                            </div>
+                            <div class="aasx-file-details">
+                                <div class="aasx-file-title">${file.filename}</div>
+                                ${file.description ? `<small class="aasx-file-description">${file.description}</small>` : ''}
+                            </div>
                         </div>
                     </td>
-                    <td>
-                        <span class="badge bg-${statusColor} fs-6">${file.status || 'unknown'}</span>
+                    <td class="aasx-file-status">
+                        <span class="aasx-status-badge aasx-status-${statusColor}">
+                            <i class="fas fa-circle me-1"></i>
+                            ${file.status || 'unknown'}
+                        </span>
                     </td>
-                    <td>
-                        <span class="badge bg-${federatedLearningColor} fs-6">${file.federated_learning || 'not_allowed'}</span>
+                    <td class="aasx-file-federated">
+                        <span class="aasx-status-badge aasx-status-${federatedColor}">
+                            <i class="fas fa-${file.federated_learning === 'allowed' ? 'check' : 'times'} me-1"></i>
+                            ${file.federated_learning || 'not_allowed'}
+                        </span>
                     </td>
-                    <td>${fileSize}</td>
-                    <td>${uploadDate}</td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-outline-primary btn-sm" onclick="dataManager.viewFileInBlazor('${file.file_id}')" title="View File in Blazor">
+                    <td class="aasx-file-size">
+                        <span class="aasx-size-badge">${fileSize}</span>
+                    </td>
+                    <td class="aasx-file-date">
+                        <span class="aasx-date-badge">${uploadDate}</span>
+                    </td>
+                    <td class="aasx-file-actions">
+                        <div class="aasx-action-buttons">
+                            <button class="aasx-action-btn aasx-action-view" title="View File in Blazor" onclick="dataManager.viewFileInBlazor('${file.file_id}')">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-outline-danger btn-sm" onclick="dataManager.deleteFile('${file.file_id}')" title="Delete File">
+                            <button class="aasx-action-btn aasx-action-edit" title="Edit File" onclick="dataManager.editFile('${file.file_id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="aasx-action-btn aasx-action-delete" title="Delete File" onclick="dataManager.deleteFile('${file.file_id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -996,7 +1115,13 @@ export class DataManager {
             `;
         });
         
-        filesHtml += '</tbody></table></div>';
+        filesHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        
         return filesHtml;
     }
     
@@ -1088,7 +1213,7 @@ export class DataManager {
         console.log(`🗑️ Deleting file with ID: ${fileId}`);
         if (confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
             try {
-                const response = await fetch(`/api/aasx/files/${fileId}`, {
+                const response = await fetch(`/api/aasx-etl/files/${fileId}`, {
                     method: 'DELETE'
                 });
                 
@@ -1210,7 +1335,7 @@ export class DataManager {
             showWarning('Deleting project...');
             
             // Call API to delete project
-            const response = await fetch(`/api/aasx/projects/${project.project_id}`, {
+            const response = await fetch(`/api/aasx-etl/projects/${project.project_id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'

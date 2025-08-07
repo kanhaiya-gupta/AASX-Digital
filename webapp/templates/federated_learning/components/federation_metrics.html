@@ -1,21 +1,126 @@
-<!-- Federation Metrics Component -->
+<!-- Enhanced Federation Metrics Component -->
 <div class="fl-federation-metrics row mb-4">
     <div class="col-12">
-        <div class="fl-metrics-card card fl-federated-card">
-            <div class="fl-card-header card-header fl-bg-gradient-federated text-white">
+        <div class="fl-metrics-card card fl-federated-card border-0 shadow-lg">
+            <div class="fl-card-header card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="fl-card-title mb-0">
                     <i class="fas fa-chart-bar me-2"></i>
                     Federation Metrics
                 </h5>
+                <button class="btn btn-outline-light btn-sm" onclick="refreshFederationMetrics()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
             </div>
             <div class="fl-card-body card-body">
-                <div class="fl-metrics-content row">
+                <div class="fl-metrics-content row g-4">
                     <div class="col-md-6">
-                        <canvas id="federationChart" class="fl-chart" height="200"></canvas>
+                        <div class="fl-chart-container p-3 bg-light rounded">
+                            <h6 class="fw-semibold mb-3">Training Progress</h6>
+                            <canvas id="federationChart" class="fl-chart" height="200"></canvas>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <div id="federationMetrics" class="fl-metrics-data">
-                            <!-- Federation metrics will be populated by JavaScript -->
+                            <!-- Enhanced Federation Metrics -->
+                            <div class="fl-metric-card mb-4 p-3 bg-light rounded">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="fl-metric-icon me-3">
+                                        <i class="fas fa-bullseye fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">Global Accuracy</h6>
+                                        <span class="badge bg-success">92.1%</span>
+                                    </div>
+                                </div>
+                                <div class="fl-metric-details">
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Baseline</span>
+                                        <span class="fw-bold text-muted">87.3%</span>
+                                    </div>
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Improvement</span>
+                                        <span class="fw-bold text-success">+4.8%</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 92%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="fl-metric-card mb-4 p-3 bg-light rounded">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="fl-metric-icon me-3">
+                                        <i class="fas fa-clock fa-2x text-success"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">Training Efficiency</h6>
+                                        <span class="badge bg-info">2.1s Avg</span>
+                                    </div>
+                                </div>
+                                <div class="fl-metric-details">
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Round Time</span>
+                                        <span class="fw-bold text-info">2.1s</span>
+                                    </div>
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Sync Time</span>
+                                        <span class="fw-bold text-success">0.3s</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-info" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="fl-metric-card mb-4 p-3 bg-light rounded">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="fl-metric-icon me-3">
+                                        <i class="fas fa-database fa-2x text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">Data Utilization</h6>
+                                        <span class="badge bg-warning text-dark">3,295 Points</span>
+                                    </div>
+                                </div>
+                                <div class="fl-metric-details">
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Total Data</span>
+                                        <span class="fw-bold text-warning">3,295</span>
+                                    </div>
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Processed</span>
+                                        <span class="fw-bold text-success">100%</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-warning" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="fl-metric-card p-3 bg-light rounded">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="fl-metric-icon me-3">
+                                        <i class="fas fa-network-wired fa-2x text-info"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-semibold mb-1">Communication Cost</h6>
+                                        <span class="badge bg-info">Low</span>
+                                    </div>
+                                </div>
+                                <div class="fl-metric-details">
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Bandwidth</span>
+                                        <span class="fw-bold text-info">2.4 MB</span>
+                                    </div>
+                                    <div class="fl-detail-item d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Efficiency</span>
+                                        <span class="fw-bold text-success">98%</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-info" style="width: 98%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

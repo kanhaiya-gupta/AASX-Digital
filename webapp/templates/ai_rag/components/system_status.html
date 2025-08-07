@@ -1,61 +1,104 @@
-<!-- System Status Dashboard Component -->
-<div class="ai-rag-system-status row mb-4">
+<!-- Enhanced System Status Dashboard Component -->
+<div class="ai-rag-system-status row mb-5">
     <div class="col-12">
-        <div class="ai-rag-status-card card border-0 shadow-sm">
+        <div class="ai-rag-status-card card border-0 shadow-lg">
             <div class="ai-rag-card-header card-header bg-gradient-primary text-white">
-                <h5 class="ai-rag-card-title mb-0">
-                    <i class="fas fa-tachometer-alt me-2"></i>
-                    System Status Dashboard
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="ai-rag-card-title mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        System Status Dashboard
+                    </h5>
+                    <div class="ai-rag-header-actions">
+                        <button class="ai-rag-btn ai-rag-btn-refresh btn btn-sm btn-outline-light" onclick="refreshSystemStatus()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="ai-rag-card-body card-body">
-                <div class="ai-rag-status-grid row">
-                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+            <div class="ai-rag-card-body card-body p-4">
+                <div class="ai-rag-status-grid row g-3">
+                    <div class="col-md-2 col-sm-4 col-6">
                         <div class="ai-rag-status-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-qdrant">
-                                <i class="fas fa-database fa-2x text-muted"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-database fa-2x"></i>
+                                </div>
+                                <div class="ai-rag-status-dot"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">Vector DB</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">Vector DB</small>
+                                <small class="ai-rag-status-detail text-muted">Qdrant</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                    <div class="col-md-2 col-sm-4 col-6">
                         <div class="ai-rag-status-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-neo4j">
-                                <i class="fas fa-project-diagram fa-2x text-muted"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-project-diagram fa-2x"></i>
+                                </div>
+                                <div class="ai-rag-status-dot"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">Knowledge Graph</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">Knowledge Graph</small>
+                                <small class="ai-rag-status-detail text-muted">Neo4j</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                    <div class="col-md-2 col-sm-4 col-6">
                         <div class="ai-rag-status-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-openai">
-                                <i class="fas fa-robot fa-2x text-muted"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-robot fa-2x"></i>
+                                </div>
+                                <div class="ai-rag-status-dot"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">AI Models</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">AI Models</small>
+                                <small class="ai-rag-status-detail text-muted">OpenAI</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                    <div class="col-md-2 col-sm-4 col-6">
                         <div class="ai-rag-status-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-etl">
-                                <i class="fas fa-cogs fa-2x text-muted"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-cogs fa-2x"></i>
+                                </div>
+                                <div class="ai-rag-status-dot"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">ETL Pipeline</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">ETL Pipeline</small>
+                                <small class="ai-rag-status-detail text-muted">.NET Core</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                    <div class="col-md-2 col-sm-4 col-6">
                         <div class="ai-rag-status-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-system">
-                                <i class="fas fa-server fa-2x text-muted"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-server fa-2x"></i>
+                                </div>
+                                <div class="ai-rag-status-dot"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">System</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">System</small>
+                                <small class="ai-rag-status-detail text-muted">FastAPI</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-2 col-sm-4 col-6 mb-3">
+                    <div class="col-md-2 col-sm-4 col-6">
                         <div class="ai-rag-status-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-rag-techniques">
-                                <i class="fas fa-magic fa-2x text-muted"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-magic fa-2x"></i>
+                                </div>
+                                <div class="ai-rag-status-dot"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">RAG Techniques</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">RAG Techniques</small>
+                                <small class="ai-rag-status-detail text-muted">Multi-Modal</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -64,52 +107,83 @@
     </div>
 </div>
 
-<!-- Integration Status Row -->
-<div class="ai-rag-integration-status row mb-4">
+<!-- Enhanced Integration Status Row -->
+<div class="ai-rag-integration-status row mb-5">
     <div class="col-12">
-        <div class="ai-rag-integration-card card border-0 shadow-sm">
+        <div class="ai-rag-integration-card card border-0 shadow-lg">
             <div class="ai-rag-card-header card-header bg-gradient-success text-white">
-                <h5 class="ai-rag-card-title mb-0">
-                    <i class="fas fa-link me-2"></i>
-                    Integration Status
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="ai-rag-card-title mb-0">
+                        <i class="fas fa-link me-2"></i>
+                        Integration Status
+                    </h5>
+                    <div class="ai-rag-integration-summary">
+                        <span class="ai-rag-integration-badge badge bg-light text-success">
+                            <i class="fas fa-check-circle me-1"></i>All Systems Connected
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="ai-rag-card-body card-body">
-                <div class="ai-rag-integration-grid row">
-                    <div class="col-md-3 col-sm-6 mb-3">
+            <div class="ai-rag-card-body card-body p-4">
+                <div class="ai-rag-integration-grid row g-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="ai-rag-integration-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-etl-integration">
-                                <i class="fas fa-exchange-alt fa-2x text-success"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-exchange-alt fa-2x text-success"></i>
+                                </div>
+                                <div class="ai-rag-status-dot ai-rag-status-dot-success"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">ETL Integration</small>
-                            <small class="ai-rag-status-badge text-success fw-bold">✅ Active</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">ETL Integration</small>
+                                <small class="ai-rag-status-badge text-success fw-bold">✅ Active</small>
+                                <small class="ai-rag-status-detail text-muted d-block">Real-time sync</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="ai-rag-integration-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-digital-twins">
-                                <i class="fas fa-cube fa-2x text-success"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-cube fa-2x text-success"></i>
+                                </div>
+                                <div class="ai-rag-status-dot ai-rag-status-dot-success"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">Digital Twins</small>
-                            <small class="ai-rag-status-badge text-success fw-bold">✅ Auto-Created</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">Digital Twins</small>
+                                <small class="ai-rag-status-badge text-success fw-bold">✅ Auto-Created</small>
+                                <small class="ai-rag-status-detail text-muted d-block">From AASX files</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="ai-rag-integration-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-vector-data">
-                                <i class="fas fa-cube fa-2x text-success"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-cube fa-2x text-success"></i>
+                                </div>
+                                <div class="ai-rag-status-dot ai-rag-status-dot-success"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">Vector Data</small>
-                            <small class="ai-rag-status-badge text-success fw-bold">✅ Populated</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">Vector Data</small>
+                                <small class="ai-rag-status-badge text-success fw-bold">✅ Populated</small>
+                                <small class="ai-rag-status-detail text-muted d-block">Ready for queries</small>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="col-md-3 col-sm-6">
                         <div class="ai-rag-integration-item text-center">
                             <div class="ai-rag-status-indicator status-indicator" id="status-query-processing">
-                                <i class="fas fa-search fa-2x text-success"></i>
+                                <div class="ai-rag-status-icon">
+                                    <i class="fas fa-search fa-2x text-success"></i>
+                                </div>
+                                <div class="ai-rag-status-dot ai-rag-status-dot-success"></div>
                             </div>
-                            <small class="ai-rag-status-label d-block mt-1">Query Processing</small>
-                            <small class="ai-rag-status-badge text-success fw-bold">✅ Ready</small>
+                            <div class="ai-rag-status-info mt-2">
+                                <small class="ai-rag-status-label d-block fw-bold">Query Processing</small>
+                                <small class="ai-rag-status-badge text-success fw-bold">✅ Ready</small>
+                                <small class="ai-rag-status-detail text-muted d-block">Multi-modal RAG</small>
+                            </div>
                         </div>
                     </div>
                 </div>

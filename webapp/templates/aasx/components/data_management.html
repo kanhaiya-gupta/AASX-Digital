@@ -1,47 +1,136 @@
-<!-- Data Management Panel -->
-<div class="aasx-data-management-card card border-0 shadow-sm mb-4">
-    <div class="aasx-card-header card-header bg-gradient-info text-white">
-        <h5 class="aasx-card-title mb-0">
-            <i class="fas fa-folder me-2"></i>
-            Data Management
-        </h5>
+<!-- Premium Data Management Panel -->
+<div class="aasx-data-management-section">
+    <!-- Section Header -->
+    <div class="aasx-section-header">
+        <div class="aasx-section-title-wrapper">
+            <h2 class="aasx-section-title">
+                <i class="fas fa-database aasx-section-icon"></i>
+                Data Management Hub
+            </h2>
+            <p class="aasx-section-description">Organize and manage your digital twin data with hierarchical structure</p>
+        </div>
+        <div class="aasx-section-actions">
+            <button class="aasx-btn aasx-btn-secondary" id="exportDataBtn" title="Export Data">
+                <i class="fas fa-download"></i>
+                <span>Export</span>
+            </button>
+            <button class="aasx-btn aasx-btn-info" id="importDataBtn" title="Import Data">
+                <i class="fas fa-upload"></i>
+                <span>Import</span>
+            </button>
+        </div>
     </div>
-    <div class="aasx-card-body card-body">
-        <!-- Use Cases Section -->
-        <div class="aasx-use-cases-section row mb-4">
-            <div class="col-12">
-                <h6 class="aasx-section-title text-primary mb-3">
-                    <i class="fas fa-sitemap me-2"></i>
-                    Use Cases
-                </h6>
-                <div id="useCasesContainer" class="aasx-use-cases-container">
-                    <div class="aasx-loading-state text-center text-muted py-4">
-                        <i class="fas fa-sitemap fa-3x mb-3 text-muted"></i>
-                        <h5>Loading Use Cases...</h5>
-                        <p>Please wait while we load the use cases</p>
+
+    <!-- Use Cases Section -->
+    <div class="aasx-use-cases-section">
+        <div class="aasx-card aasx-card-premium">
+            <div class="aasx-card-header">
+                <div class="aasx-card-header-content">
+                    <h3 class="aasx-card-title">
+                        <i class="fas fa-sitemap"></i>
+                        Use Cases & Categories
+                    </h3>
+                    <p class="aasx-card-subtitle">Select a use case to view and manage associated projects</p>
+                </div>
+                <div class="aasx-card-header-badge">
+                    <span class="aasx-badge aasx-badge-primary" id="useCaseCount">0</span>
+                </div>
+            </div>
+            <div class="aasx-card-body">
+                <div id="useCasesContainer" class="aasx-use-cases-grid">
+                    <!-- Loading State -->
+                    <div class="aasx-loading-state">
+                        <div class="aasx-loading-spinner"></div>
+                        <h4>Loading Use Cases...</h4>
+                        <p>Please wait while we load your data hierarchy</p>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Projects Section (Hidden by default) -->
-        <div class="aasx-projects-section row mb-3" id="projectsSection" style="display: none;">
-            <div class="col-12">
-                <div class="aasx-projects-header d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="aasx-projects-title text-success mb-0">
-                        <i class="fas fa-folder me-2"></i>
-                        Projects in: <span id="selectedUseCaseName" class="fw-bold"></span>
-                    </h6>
-                    <button class="aasx-btn aasx-btn-back btn btn-sm btn-outline-secondary" id="backToUseCases">
-                        <i class="fas fa-arrow-left me-1"></i>Back to Use Cases
+    <!-- Projects Section (Hidden by default) -->
+    <div class="aasx-projects-section" id="projectsSection" style="display: none;">
+        <div class="aasx-card aasx-card-premium">
+            <div class="aasx-card-header">
+                <div class="aasx-card-header-content">
+                    <div class="aasx-breadcrumb">
+                        <button class="aasx-breadcrumb-item aasx-breadcrumb-back" id="backToUseCases">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Use Cases</span>
+                        </button>
+                        <span class="aasx-breadcrumb-separator">/</span>
+                        <span class="aasx-breadcrumb-current" id="selectedUseCaseName">Selected Use Case</span>
+                    </div>
+                    <h3 class="aasx-card-title">
+                        <i class="fas fa-folder-open"></i>
+                        Projects & Data
+                    </h3>
+                    <p class="aasx-card-subtitle">Manage projects and their associated AASX files</p>
+                </div>
+                <div class="aasx-card-header-actions">
+                    <button class="aasx-btn aasx-btn-success" id="createProjectBtn" title="Create New Project">
+                        <i class="fas fa-plus"></i>
+                        <span>New Project</span>
                     </button>
                 </div>
-                <div id="projectsContainer" class="aasx-projects-container">
-                    <div class="aasx-empty-state text-center text-muted py-4">
-                        <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
-                        <h5>No Projects Found</h5>
-                        <p>This use case has no projects yet</p>
+            </div>
+            <div class="aasx-card-body">
+                <div id="projectsContainer" class="aasx-projects-grid">
+                    <!-- Empty State -->
+                    <div class="aasx-empty-state">
+                        <div class="aasx-empty-icon">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <h4>No Projects Found</h4>
+                        <p>This use case has no projects yet. Create your first project to get started.</p>
+                        <button class="aasx-btn aasx-btn-primary" id="createFirstProjectBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>Create First Project</span>
+                        </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Statistics -->
+    <div class="aasx-data-stats">
+        <div class="aasx-stats-grid">
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="totalUseCases">0</span>
+                    <span class="aasx-stat-label">Use Cases</span>
+                </div>
+            </div>
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="totalProjects">0</span>
+                    <span class="aasx-stat-label">Projects</span>
+                </div>
+            </div>
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="totalFiles">0</span>
+                    <span class="aasx-stat-label">Files</span>
+                </div>
+            </div>
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="processedFiles">0</span>
+                    <span class="aasx-stat-label">Processed</span>
                 </div>
             </div>
         </div>

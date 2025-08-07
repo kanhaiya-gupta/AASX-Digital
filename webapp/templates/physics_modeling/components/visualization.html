@@ -1,0 +1,464 @@
+<!-- Enhanced Visualization Component -->
+<div class="pm-visualization">
+    <!-- Visualization Overview -->
+    <div class="pm-visualization-overview row mb-4">
+        <div class="col-12">
+            <div class="pm-overview-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Visualization Analytics Platform
+                        </h5>
+                        <div class="pm-header-actions">
+                            <button class="pm-btn pm-btn-refresh btn btn-outline-light btn-sm me-2" onclick="refreshVisualizations()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button class="pm-btn pm-btn-export btn btn-outline-light btn-sm" onclick="exportVisualization()">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-visualization-stats row g-4">
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                                <h3 class="text-primary mb-2 fw-bold">24</h3>
+                                <p class="text-muted mb-0 fw-semibold">Active Charts</p>
+                                <small class="text-success">+3 today</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-cube fa-3x text-success mb-3"></i>
+                                <h3 class="text-success mb-2 fw-bold">8</h3>
+                                <p class="text-muted mb-0 fw-semibold">3D Models</p>
+                                <small class="text-success">All rendered</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-play-circle fa-3x text-info mb-3"></i>
+                                <h3 class="text-info mb-2 fw-bold">12</h3>
+                                <p class="text-muted mb-0 fw-semibold">Animations</p>
+                                <small class="text-info">5 running</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-eye fa-3x text-warning mb-3"></i>
+                                <h3 class="text-warning mb-2 fw-bold">156</h3>
+                                <p class="text-muted mb-0 fw-semibold">Views Today</p>
+                                <small class="text-warning">+12% increase</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization Controls -->
+    <div class="pm-visualization-controls row mb-4">
+        <div class="col-12">
+            <div class="pm-controls-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-info text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-sliders-h me-2"></i>Visualization Controls
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="pm-control-group">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter Simulations
+                                </label>
+                                <select class="form-select pm-form-select" id="simulation-filter">
+                                    <option value="">All Simulations</option>
+                                    <option value="thermal">Thermal Analysis</option>
+                                    <option value="structural">Structural Analysis</option>
+                                    <option value="fluid">Fluid Dynamics</option>
+                                    <option value="electromagnetic">Electromagnetic</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pm-control-group">
+                                <label class="form-label fw-bold text-success">
+                                    <i class="fas fa-chart-pie me-2"></i>Chart Type
+                                </label>
+                                <select class="form-select pm-form-select" id="chart-type">
+                                    <option value="line">Line Chart</option>
+                                    <option value="bar">Bar Chart</option>
+                                    <option value="scatter">Scatter Plot</option>
+                                    <option value="heatmap">Heatmap</option>
+                                    <option value="3d">3D Surface</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pm-control-group">
+                                <label class="form-label fw-bold text-info">
+                                    <i class="fas fa-palette me-2"></i>Color Scheme
+                                </label>
+                                <select class="form-select pm-form-select" id="color-scheme">
+                                    <option value="default">Default</option>
+                                    <option value="viridis">Viridis</option>
+                                    <option value="plasma">Plasma</option>
+                                    <option value="inferno">Inferno</option>
+                                    <option value="magma">Magma</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Visualization -->
+    <div class="pm-chart-visualization row mb-4">
+        <div class="col-lg-8">
+            <div class="pm-chart-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-success text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Simulation Results Chart
+                        </h5>
+                        <div class="pm-chart-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="zoomIn()" title="Zoom In">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="zoomOut()" title="Zoom Out">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="resetZoom()" title="Reset Zoom">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-chart-container" style="height: 400px;">
+                        <canvas id="physics-chart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="pm-chart-info-card card border-0 shadow-lg h-100">
+                <div class="pm-card-header card-header bg-gradient-warning text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Chart Information
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-chart-summary">
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-primary fw-bold">Dataset</h6>
+                            <p class="text-muted mb-0">Thermal Analysis Simulation v1.2</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-success fw-bold">Data Points</h6>
+                            <p class="text-muted mb-0">1,247 measurements</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-info fw-bold">Time Range</h6>
+                            <p class="text-muted mb-0">0 - 100 seconds</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-warning fw-bold">Variables</h6>
+                            <p class="text-muted mb-0">Temperature, Pressure, Velocity</p>
+                        </div>
+                        <div class="pm-summary-item">
+                            <h6 class="text-danger fw-bold">Last Updated</h6>
+                            <p class="text-muted mb-0">2 minutes ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D Model Visualization -->
+    <div class="pm-3d-visualization row mb-4">
+        <div class="col-lg-8">
+            <div class="pm-3d-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-danger text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-cube me-2"></i>3D Model Visualization
+                        </h5>
+                        <div class="pm-3d-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="rotate3D()" title="Rotate">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="reset3D()" title="Reset">
+                                <i class="fas fa-home"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="fullscreen3D()" title="Fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-3d-container" style="height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; position: relative;">
+                        <div class="pm-3d-placeholder text-center text-white" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <i class="fas fa-cube fa-5x mb-3"></i>
+                            <h4 class="mb-2">3D Model Viewer</h4>
+                            <p class="mb-0">Interactive 3D visualization of simulation results</p>
+                            <div class="mt-3">
+                                <button class="btn btn-light btn-sm me-2" onclick="load3DModel()">
+                                    <i class="fas fa-cube me-1"></i>Load Model
+                                </button>
+                                <button class="btn btn-outline-light btn-sm" onclick="toggle3DWireframe()">
+                                    <i class="fas fa-border-all me-1"></i>Wireframe
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="pm-3d-info-card card border-0 shadow-lg h-100">
+                <div class="pm-card-header card-header bg-gradient-secondary text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>3D Controls
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-3d-controls-panel">
+                        <div class="pm-control-group mb-3">
+                            <label class="form-label fw-bold text-primary">Camera Position</label>
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn btn-outline-primary btn-sm" onclick="setCameraView('front')">Front</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setCameraView('side')">Side</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="setCameraView('top')">Top</button>
+                            </div>
+                        </div>
+                        <div class="pm-control-group mb-3">
+                            <label class="form-label fw-bold text-success">Rendering Mode</label>
+                            <select class="form-select pm-form-select" id="rendering-mode">
+                                <option value="solid">Solid</option>
+                                <option value="wireframe">Wireframe</option>
+                                <option value="points">Points</option>
+                                <option value="transparent">Transparent</option>
+                            </select>
+                        </div>
+                        <div class="pm-control-group mb-3">
+                            <label class="form-label fw-bold text-info">Color Mapping</label>
+                            <select class="form-select pm-form-select" id="color-mapping">
+                                <option value="temperature">Temperature</option>
+                                <option value="pressure">Pressure</option>
+                                <option value="velocity">Velocity</option>
+                                <option value="stress">Stress</option>
+                            </select>
+                        </div>
+                        <div class="pm-control-group">
+                            <label class="form-label fw-bold text-warning">Animation Speed</label>
+                            <input type="range" class="form-range" id="animation-speed" min="0" max="100" value="50">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Slow</small>
+                                <small class="text-muted">Fast</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animation Controls -->
+    <div class="pm-animation-controls row">
+        <div class="col-12">
+            <div class="pm-animation-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-dark text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-play-circle me-2"></i>Animation Controls
+                        </h5>
+                        <div class="pm-animation-status">
+                            <span class="badge bg-success me-2">Playing</span>
+                            <span class="text-light">Frame 45 of 120</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-8">
+                            <div class="pm-timeline-controls">
+                                <div class="d-flex align-items-center mb-3">
+                                    <button class="btn btn-outline-primary btn-sm me-3" onclick="playAnimation()" title="Play">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning btn-sm me-3" onclick="pauseAnimation()" title="Pause">
+                                        <i class="fas fa-pause"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm me-3" onclick="stopAnimation()" title="Stop">
+                                        <i class="fas fa-stop"></i>
+                                    </button>
+                                    <div class="flex-grow-1 mx-3">
+                                        <input type="range" class="form-range" id="timeline-slider" min="0" max="120" value="45">
+                                    </div>
+                                    <span class="text-muted">45/120</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pm-animation-settings">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Speed</label>
+                                        <select class="form-select form-select-sm" id="animation-speed-select">
+                                            <option value="0.5">0.5x</option>
+                                            <option value="1" selected>1x</option>
+                                            <option value="2">2x</option>
+                                            <option value="5">5x</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold">Loop</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="loop-animation" checked>
+                                            <label class="form-check-label small" for="loop-animation">Enabled</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize Chart.js
+function initializeChart() {
+    const ctx = document.getElementById('physics-chart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['0s', '10s', '20s', '30s', '40s', '50s', '60s', '70s', '80s', '90s', '100s'],
+            datasets: [{
+                label: 'Temperature (°C)',
+                data: [25, 45, 67, 89, 112, 134, 156, 178, 200, 222, 245],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4
+            }, {
+                label: 'Pressure (Pa)',
+                data: [101325, 102500, 104200, 106800, 110300, 114700, 120000, 126200, 133300, 141300, 150200],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Simulation Results Over Time'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    return chart;
+}
+
+function refreshVisualizations() {
+    console.log('🔄 Refreshing visualizations...');
+    // Trigger refresh event
+    document.dispatchEvent(new CustomEvent('visualizationRefresh'));
+}
+
+function exportVisualization() {
+    console.log('📊 Exporting visualization...');
+    // Trigger export event
+    document.dispatchEvent(new CustomEvent('visualizationExport'));
+}
+
+function zoomIn() {
+    console.log('🔍 Zooming in...');
+    // Implement zoom in functionality
+}
+
+function zoomOut() {
+    console.log('🔍 Zooming out...');
+    // Implement zoom out functionality
+}
+
+function resetZoom() {
+    console.log('🔍 Resetting zoom...');
+    // Implement reset zoom functionality
+}
+
+function rotate3D() {
+    console.log('🔄 Rotating 3D model...');
+    // Implement 3D rotation
+}
+
+function reset3D() {
+    console.log('🏠 Resetting 3D view...');
+    // Implement 3D reset
+}
+
+function fullscreen3D() {
+    console.log('📺 Toggling 3D fullscreen...');
+    // Implement fullscreen toggle
+}
+
+function load3DModel() {
+    console.log('📦 Loading 3D model...');
+    // Implement 3D model loading
+}
+
+function toggle3DWireframe() {
+    console.log('🔲 Toggling wireframe mode...');
+    // Implement wireframe toggle
+}
+
+function setCameraView(view) {
+    console.log('📷 Setting camera view:', view);
+    // Implement camera view setting
+}
+
+function playAnimation() {
+    console.log('▶️ Playing animation...');
+    // Implement animation play
+}
+
+function pauseAnimation() {
+    console.log('⏸️ Pausing animation...');
+    // Implement animation pause
+}
+
+function stopAnimation() {
+    console.log('⏹️ Stopping animation...');
+    // Implement animation stop
+}
+
+// Initialize chart when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChart();
+});
+
+// Timeline slider event listener
+document.getElementById('timeline-slider').addEventListener('input', function() {
+    const frame = this.value;
+    console.log('🎬 Timeline frame:', frame);
+    // Update animation frame
+});
+</script> 

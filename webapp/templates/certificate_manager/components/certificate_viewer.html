@@ -1,272 +1,518 @@
-<!-- Certificate Viewer Component -->
-<div class="cm-certificate-viewer certificate-viewer" id="certificate-viewer">
-    <!-- Certificate Header -->
-    <div class="cm-certificate-header certificate-header">
-        <h1 class="cm-certificate-title" id="certificate-title">Digital Certificate</h1>
-        <div class="cm-certificate-id certificate-id" id="certificate-id">CERT-000000</div>
-        <div class="cm-status-badge status-badge" id="certificate-status">Active</div>
+<!-- Enhanced Digital Certificate Viewer Component -->
+<div class="cm-certificate-viewer" id="certificate-viewer">
+    <!-- Certificate Header with Premium Design -->
+    <div class="cm-certificate-header">
+        <div class="cm-header-background">
+            <div class="cm-header-pattern"></div>
+        </div>
+        <div class="cm-header-content">
+            <div class="cm-header-left">
+                <div class="cm-certificate-badge">
+                    <i class="fas fa-certificate"></i>
+                    <span>Digital Product Passport</span>
+                </div>
+                <h1 class="cm-certificate-title" id="certificate-title">Digital Certificate</h1>
+                <div class="cm-certificate-subtitle">Comprehensive Digital Twin Analytics Certificate</div>
+            </div>
+            <div class="cm-header-right">
+                <div class="cm-certificate-id" id="certificate-id">CERT-000000</div>
+                <div class="cm-status-badge" id="certificate-status">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Active</span>
+                </div>
+                <div class="cm-verification-qr">
+                    <div class="cm-qr-placeholder">
+                        <i class="fas fa-qrcode"></i>
+                        <small>Scan to Verify</small>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Certificate Content -->
-    <div class="cm-certificate-content certificate-content">
-        <!-- Certificate Metadata -->
-        <div class="cm-certificate-metadata certificate-metadata">
-            <div class="cm-metadata-grid metadata-grid">
-                <div class="cm-metadata-item metadata-item">
-                    <div class="cm-metadata-label metadata-label">Digital Twin</div>
-                    <div class="cm-metadata-value metadata-value" id="twin-name">-</div>
+    <div class="cm-certificate-content">
+        <!-- Certificate Metadata Section -->
+        <div class="cm-metadata-section">
+            <div class="cm-section-card">
+                <div class="cm-section-header">
+                    <h3 class="cm-section-title">
+                        <i class="fas fa-info-circle me-2"></i>Certificate Information
+                    </h3>
                 </div>
-                <div class="cm-metadata-item metadata-item">
-                    <div class="cm-metadata-label metadata-label">Project</div>
-                    <div class="cm-metadata-value metadata-value" id="project-name">-</div>
-                </div>
-                <div class="cm-metadata-item metadata-item">
-                    <div class="cm-metadata-label metadata-label">Use Case</div>
-                    <div class="cm-metadata-value metadata-value" id="use-case-name">-</div>
-                </div>
-                <div class="cm-metadata-item metadata-item">
-                    <div class="cm-metadata-label metadata-label">Created</div>
-                    <div class="cm-metadata-value metadata-value" id="created-date">-</div>
-                </div>
-                <div class="cm-metadata-item metadata-item">
-                    <div class="cm-metadata-label metadata-label">Last Updated</div>
-                    <div class="cm-metadata-value metadata-value" id="updated-date">-</div>
-                </div>
-                <div class="cm-metadata-item metadata-item">
-                    <div class="cm-metadata-label metadata-label">Version</div>
-                    <div class="cm-metadata-value metadata-value" id="certificate-version">-</div>
+                <div class="cm-metadata-grid">
+                    <div class="cm-metadata-item">
+                        <div class="cm-metadata-label">
+                            <i class="fas fa-cube me-1"></i>Digital Twin
+                        </div>
+                        <div class="cm-metadata-value" id="twin-name">-</div>
+                    </div>
+                    <div class="cm-metadata-item">
+                        <div class="cm-metadata-label">
+                            <i class="fas fa-project-diagram me-1"></i>Project
+                        </div>
+                        <div class="cm-metadata-value" id="project-name">-</div>
+                    </div>
+                    <div class="cm-metadata-item">
+                        <div class="cm-metadata-label">
+                            <i class="fas fa-lightbulb me-1"></i>Use Case
+                        </div>
+                        <div class="cm-metadata-value" id="use-case-name">-</div>
+                    </div>
+                    <div class="cm-metadata-item">
+                        <div class="cm-metadata-label">
+                            <i class="fas fa-calendar-plus me-1"></i>Created
+                        </div>
+                        <div class="cm-metadata-value" id="created-date">-</div>
+                    </div>
+                    <div class="cm-metadata-item">
+                        <div class="cm-metadata-label">
+                            <i class="fas fa-clock me-1"></i>Last Updated
+                        </div>
+                        <div class="cm-metadata-value" id="updated-date">-</div>
+                    </div>
+                    <div class="cm-metadata-item">
+                        <div class="cm-metadata-label">
+                            <i class="fas fa-code-branch me-1"></i>Version
+                        </div>
+                        <div class="cm-metadata-value" id="certificate-version">-</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Certificate Sections -->
-        <div class="cm-certificate-sections certificate-sections" id="certificate-sections">
-            <!-- ETL Section -->
-            <div class="cm-certificate-section certificate-section">
-                <div class="cm-section-header section-header">
-                    <div class="cm-section-icon section-icon">
+        <!-- Module Analysis Sections -->
+        <div class="cm-modules-section">
+            <!-- ETL Processing Section -->
+            <div class="cm-module-card">
+                <div class="cm-module-header">
+                    <div class="cm-module-icon">
                         <i class="fas fa-database"></i>
                     </div>
-                    <h3 class="cm-section-title">ETL Processing</h3>
-                    <div class="cm-section-status section-status completed">Completed</div>
+                    <div class="cm-module-info">
+                        <h4 class="cm-module-title">ETL Processing</h4>
+                        <p class="cm-module-description">Data extraction, transformation, and loading pipeline</p>
+                    </div>
+                    <div class="cm-module-status completed">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Completed</span>
+                    </div>
                 </div>
-                <div class="cm-certificate-grid certificate-grid" id="etl-data">
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Data Quality Score</div>
-                        <div class="cm-field-value field-value">95%</div>
-                    </div>
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Records Processed</div>
-                        <div class="cm-field-value field-value">1,247</div>
-                    </div>
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Processing Time</div>
-                        <div class="cm-field-value field-value">2.3 seconds</div>
-                    </div>
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Status</div>
-                        <div class="cm-field-value field-value">Success</div>
+                <div class="cm-module-content">
+                    <div class="cm-metrics-grid">
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Data Quality Score</div>
+                                <div class="cm-metric-value" id="etl-quality">95%</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-list-ol"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Records Processed</div>
+                                <div class="cm-metric-value" id="etl-records">1,247</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-stopwatch"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Processing Time</div>
+                                <div class="cm-metric-value" id="etl-time">2.3s</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Status</div>
+                                <div class="cm-metric-value success">Success</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- AI Analysis Section -->
-            <div class="cm-certificate-section certificate-section">
-                <div class="cm-section-header section-header">
-                    <div class="cm-section-icon section-icon">
+            <!-- AI/RAG Analysis Section -->
+            <div class="cm-module-card">
+                <div class="cm-module-header">
+                    <div class="cm-module-icon">
                         <i class="fas fa-brain"></i>
                     </div>
-                    <h3 class="cm-section-title">AI Analysis</h3>
-                    <div class="cm-section-status section-status completed">Completed</div>
-                </div>
-                <div class="cm-certificate-grid certificate-grid" id="ai-data">
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Confidence Score</div>
-                        <div class="cm-field-value field-value">87%</div>
+                    <div class="cm-module-info">
+                        <h4 class="cm-module-title">AI/RAG Analysis</h4>
+                        <p class="cm-module-description">Intelligent analysis and reverse engineering</p>
                     </div>
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Classification</div>
-                        <div class="cm-field-value field-value">High Quality</div>
-                    </div>
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Anomalies Detected</div>
-                        <div class="cm-field-value field-value">3</div>
-                    </div>
-                    <div class="cm-certificate-field certificate-field">
-                        <div class="cm-field-label field-label">Recommendations</div>
-                        <div class="cm-field-value field-value">5</div>
+                    <div class="cm-module-status completed">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Completed</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Physics Modeling Section -->
-            <div class="certificate-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-atom"></i>
-                    </div>
-                    <h3>Physics Modeling</h3>
-                    <div class="section-status pending">In Progress</div>
-                </div>
-                <div class="certificate-grid" id="physics-data">
-                    <div class="certificate-field">
-                        <div class="field-label">Model Type</div>
-                        <div class="field-value">Fluid Dynamics</div>
-                    </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Simulation Status</div>
-                        <div class="field-value">Running</div>
-                    </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Progress</div>
-                        <div class="field-value">65%</div>
-                    </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Estimated Completion</div>
-                        <div class="field-value">2 hours</div>
+                <div class="cm-module-content">
+                    <div class="cm-metrics-grid">
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Confidence Score</div>
+                                <div class="cm-metric-value" id="ai-confidence">87%</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-tags"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Classification</div>
+                                <div class="cm-metric-value" id="ai-classification">High Quality</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Anomalies Detected</div>
+                                <div class="cm-metric-value" id="ai-anomalies">3</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Recommendations</div>
+                                <div class="cm-metric-value" id="ai-recommendations">5</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Knowledge Graph Section -->
-            <div class="certificate-section">
-                <div class="section-header">
-                    <div class="section-icon">
+            <div class="cm-module-card">
+                <div class="cm-module-header">
+                    <div class="cm-module-icon">
                         <i class="fas fa-project-diagram"></i>
                     </div>
-                    <h3>Knowledge Graph</h3>
-                    <div class="section-status completed">Completed</div>
+                    <div class="cm-module-info">
+                        <h4 class="cm-module-title">Knowledge Graph</h4>
+                        <p class="cm-module-description">Neo4j relationship analysis and insights</p>
+                    </div>
+                    <div class="cm-module-status completed">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Completed</span>
+                    </div>
                 </div>
-                <div class="certificate-grid" id="kg-data">
-                    <div class="certificate-field">
-                        <div class="field-label">Entities</div>
-                        <div class="field-value">156</div>
-                    </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Relationships</div>
-                        <div class="field-value">342</div>
-                    </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Graph Density</div>
-                        <div class="field-value">0.78</div>
-                    </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Connectivity</div>
-                        <div class="field-value">High</div>
+                <div class="cm-module-content">
+                    <div class="cm-metrics-grid">
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-sitemap"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Entities</div>
+                                <div class="cm-metric-value" id="kg-entities">156</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Relationships</div>
+                                <div class="cm-metric-value" id="kg-relationships">342</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-chart-network"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Graph Density</div>
+                                <div class="cm-metric-value" id="kg-density">0.78</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-wifi"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Connectivity</div>
+                                <div class="cm-metric-value" id="kg-connectivity">High</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quality Metrics Section -->
-            <div class="certificate-section">
-                <div class="section-header">
-                    <div class="section-icon">
-                        <i class="fas fa-chart-line"></i>
+            <!-- Physics Modeling Section -->
+            <div class="cm-module-card">
+                <div class="cm-module-header">
+                    <div class="cm-module-icon">
+                        <i class="fas fa-atom"></i>
                     </div>
-                    <h3>Quality Metrics</h3>
-                    <div class="section-status completed">Completed</div>
+                    <div class="cm-module-info">
+                        <h4 class="cm-module-title">Physics Modeling</h4>
+                        <p class="cm-module-description">Advanced simulation and modeling</p>
+                    </div>
+                    <div class="cm-module-status pending">
+                        <i class="fas fa-clock"></i>
+                        <span>In Progress</span>
+                    </div>
                 </div>
-                <div class="certificate-grid" id="quality-data">
-                    <div class="certificate-field">
-                        <div class="field-label">Overall Score</div>
-                        <div class="field-value">92/100</div>
+                <div class="cm-module-content">
+                    <div class="cm-metrics-grid">
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Model Type</div>
+                                <div class="cm-metric-value" id="physics-model">Fluid Dynamics</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Simulation Status</div>
+                                <div class="cm-metric-value" id="physics-status">Running</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Progress</div>
+                                <div class="cm-metric-value" id="physics-progress">65%</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">ETA</div>
+                                <div class="cm-metric-value" id="physics-eta">2 hours</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Data Completeness</div>
-                        <div class="field-value">98%</div>
+                </div>
+            </div>
+
+            <!-- Federated Learning Section -->
+            <div class="cm-module-card">
+                <div class="cm-module-header">
+                    <div class="cm-module-icon">
+                        <i class="fas fa-network-wired"></i>
                     </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Accuracy</div>
-                        <div class="field-value">94%</div>
+                    <div class="cm-module-info">
+                        <h4 class="cm-module-title">Federated Learning</h4>
+                        <p class="cm-module-description">Distributed machine learning collaboration</p>
                     </div>
-                    <div class="certificate-field">
-                        <div class="field-label">Reliability</div>
-                        <div class="field-value">89%</div>
+                    <div class="cm-module-status completed">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Completed</span>
+                    </div>
+                </div>
+                <div class="cm-module-content">
+                    <div class="cm-metrics-grid">
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Active Twins</div>
+                                <div class="cm-metric-value" id="fl-twins">12</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-sync"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Sync Status</div>
+                                <div class="cm-metric-value" id="fl-sync">Connected</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Privacy Level</div>
+                                <div class="cm-metric-value" id="fl-privacy">High</div>
+                            </div>
+                        </div>
+                        <div class="cm-metric-item">
+                            <div class="cm-metric-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="cm-metric-info">
+                                <div class="cm-metric-label">Performance</div>
+                                <div class="cm-metric-value" id="fl-performance">94%</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Certificate Validation -->
-        <div class="certificate-validation">
-            <div class="validation-header">
-                <div class="validation-icon valid">
-                    <i class="fas fa-check"></i>
+        <!-- Quality Assessment Section -->
+        <div class="cm-quality-section">
+            <div class="cm-section-card">
+                <div class="cm-section-header">
+                    <h3 class="cm-section-title">
+                        <i class="fas fa-chart-line me-2"></i>Quality Assessment
+                    </h3>
                 </div>
-                <div class="validation-title">Certificate Validation</div>
+                <div class="cm-quality-grid">
+                    <div class="cm-quality-item">
+                        <div class="cm-quality-score">
+                            <div class="cm-score-circle">
+                                <span id="overall-score">92</span>
+                            </div>
+                            <div class="cm-score-label">Overall Score</div>
+                        </div>
+                    </div>
+                    <div class="cm-quality-metrics">
+                        <div class="cm-quality-metric">
+                            <div class="cm-metric-bar">
+                                <div class="cm-bar-fill" style="width: 98%"></div>
+                            </div>
+                            <div class="cm-metric-info">
+                                <span class="cm-metric-label">Data Completeness</span>
+                                <span class="cm-metric-value">98%</span>
+                            </div>
+                        </div>
+                        <div class="cm-quality-metric">
+                            <div class="cm-metric-bar">
+                                <div class="cm-bar-fill" style="width: 94%"></div>
+                            </div>
+                            <div class="cm-metric-info">
+                                <span class="cm-metric-label">Accuracy</span>
+                                <span class="cm-metric-value">94%</span>
+                            </div>
+                        </div>
+                        <div class="cm-quality-metric">
+                            <div class="cm-metric-bar">
+                                <div class="cm-bar-fill" style="width: 89%"></div>
+                            </div>
+                            <div class="cm-metric-info">
+                                <span class="cm-metric-label">Reliability</span>
+                                <span class="cm-metric-value">89%</span>
+                            </div>
+                        </div>
+                        <div class="cm-quality-metric">
+                            <div class="cm-metric-bar">
+                                <div class="cm-bar-fill" style="width: 96%"></div>
+                            </div>
+                            <div class="cm-metric-info">
+                                <span class="cm-metric-label">Consistency</span>
+                                <span class="cm-metric-value">96%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="validation-details">
-                <div class="validation-item">
-                    <div class="validation-label">Digital Signature</div>
-                    <div class="validation-result">
-                        <div class="validation-result-icon valid">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <div class="validation-result-text valid">Valid</div>
-                    </div>
+        </div>
+
+        <!-- Certificate Validation Section -->
+        <div class="cm-validation-section">
+            <div class="cm-section-card">
+                <div class="cm-section-header">
+                    <h3 class="cm-section-title">
+                        <i class="fas fa-shield-alt me-2"></i>Certificate Validation
+                    </h3>
                 </div>
-                <div class="validation-item">
-                    <div class="validation-label">Data Integrity</div>
-                    <div class="validation-result">
-                        <div class="validation-result-icon valid">
-                            <i class="fas fa-check"></i>
+                <div class="cm-validation-grid">
+                    <div class="cm-validation-item">
+                        <div class="cm-validation-icon valid">
+                            <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="validation-result-text valid">Valid</div>
+                        <div class="cm-validation-info">
+                            <div class="cm-validation-label">Digital Signature</div>
+                            <div class="cm-validation-status valid">Valid</div>
+                        </div>
                     </div>
-                </div>
-                <div class="validation-item">
-                    <div class="validation-label">Timestamp Verification</div>
-                    <div class="validation-result">
-                        <div class="validation-result-icon valid">
-                            <i class="fas fa-check"></i>
+                    <div class="cm-validation-item">
+                        <div class="cm-validation-icon valid">
+                            <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="validation-result-text valid">Valid</div>
+                        <div class="cm-validation-info">
+                            <div class="cm-validation-label">Data Integrity</div>
+                            <div class="cm-validation-status valid">Valid</div>
+                        </div>
                     </div>
-                </div>
-                <div class="validation-item">
-                    <div class="validation-label">Certificate Chain</div>
-                    <div class="validation-result">
-                        <div class="validation-result-icon warning">
-                            <i class="fas fa-exclamation"></i>
+                    <div class="cm-validation-item">
+                        <div class="cm-validation-icon valid">
+                            <i class="fas fa-check-circle"></i>
                         </div>
-                        <div class="validation-result-text warning">Pending</div>
+                        <div class="cm-validation-info">
+                            <div class="cm-validation-label">Timestamp Verification</div>
+                            <div class="cm-validation-status valid">Valid</div>
+                        </div>
+                    </div>
+                    <div class="cm-validation-item">
+                        <div class="cm-validation-icon warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="cm-validation-info">
+                            <div class="cm-validation-label">Certificate Chain</div>
+                            <div class="cm-validation-status warning">Pending</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Certificate Actions -->
-    <div class="certificate-actions">
-        <div class="left-actions">
-            <button class="btn btn-outline-secondary" onclick="printCertificate()">
-                <i class="fas fa-print"></i> Print
-            </button>
-            <button class="btn btn-outline-info" onclick="shareCertificate()">
-                <i class="fas fa-share"></i> Share
-            </button>
-        </div>
-        <div class="right-actions">
-            <button class="btn btn-primary" onclick="exportCertificate()">
-                <i class="fas fa-download"></i> Export
-            </button>
-            <button class="btn btn-success" onclick="validateCertificate()">
-                <i class="fas fa-shield-alt"></i> Validate
-            </button>
+    <!-- Certificate Footer -->
+    <div class="cm-certificate-footer">
+        <div class="cm-footer-content">
+            <div class="cm-footer-left">
+                <div class="cm-footer-text">
+                    <p>This Digital Product Passport has been automatically generated by the AASX Digital Twin Analytics Framework.</p>
+                    <p>For verification, scan the QR code or visit our public verification portal.</p>
+                </div>
+            </div>
+            <div class="cm-footer-right">
+                <div class="cm-footer-actions">
+                    <button class="cm-btn cm-btn-print" onclick="printCertificate()">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="cm-btn cm-btn-share" onclick="shareCertificate()">
+                        <i class="fas fa-share"></i> Share
+                    </button>
+                    <button class="cm-btn cm-btn-validate" onclick="validateCertificate()">
+                        <i class="fas fa-shield-alt"></i> Validate
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-// Certificate viewer functionality
+// Enhanced Certificate Viewer Functionality
 function loadCertificateData(certificateId) {
-    // Simulate loading certificate data
     console.log('Loading certificate:', certificateId);
     
     // Update certificate header
-    document.getElementById('certificate-title').textContent = 'Digital Certificate - Additive Manufacturing Facility';
+    document.getElementById('certificate-title').textContent = 'Digital Product Passport - Additive Manufacturing Facility';
     document.getElementById('certificate-id').textContent = certificateId;
-    document.getElementById('certificate-status').textContent = 'Active';
+    document.getElementById('certificate-status').innerHTML = '<i class="fas fa-check-circle"></i><span>Active</span>';
     
     // Update metadata
     document.getElementById('twin-name').textContent = 'Additive Manufacturing Facility';
@@ -276,13 +522,42 @@ function loadCertificateData(certificateId) {
     document.getElementById('updated-date').textContent = '2024-01-15 14:45:00';
     document.getElementById('certificate-version').textContent = '1.2.3';
     
-    // Load section data (this would be populated from backend)
-    updateSectionData();
+    // Update module metrics
+    updateModuleMetrics();
 }
 
-function updateSectionData() {
-    // This function would update section data based on actual certificate data
-    console.log('Updating section data...');
+function updateModuleMetrics() {
+    // ETL Metrics
+    document.getElementById('etl-quality').textContent = '95%';
+    document.getElementById('etl-records').textContent = '1,247';
+    document.getElementById('etl-time').textContent = '2.3s';
+    
+    // AI Metrics
+    document.getElementById('ai-confidence').textContent = '87%';
+    document.getElementById('ai-classification').textContent = 'High Quality';
+    document.getElementById('ai-anomalies').textContent = '3';
+    document.getElementById('ai-recommendations').textContent = '5';
+    
+    // Knowledge Graph Metrics
+    document.getElementById('kg-entities').textContent = '156';
+    document.getElementById('kg-relationships').textContent = '342';
+    document.getElementById('kg-density').textContent = '0.78';
+    document.getElementById('kg-connectivity').textContent = 'High';
+    
+    // Physics Metrics
+    document.getElementById('physics-model').textContent = 'Fluid Dynamics';
+    document.getElementById('physics-status').textContent = 'Running';
+    document.getElementById('physics-progress').textContent = '65%';
+    document.getElementById('physics-eta').textContent = '2 hours';
+    
+    // Federated Learning Metrics
+    document.getElementById('fl-twins').textContent = '12';
+    document.getElementById('fl-sync').textContent = 'Connected';
+    document.getElementById('fl-privacy').textContent = 'High';
+    document.getElementById('fl-performance').textContent = '94%';
+    
+    // Overall Score
+    document.getElementById('overall-score').textContent = '92';
 }
 
 function printCertificate() {
@@ -292,10 +567,18 @@ function printCertificate() {
 function shareCertificate() {
     // Implement sharing functionality
     console.log('Sharing certificate...');
+    // Could open a share dialog or copy link to clipboard
 }
 
 function validateCertificate() {
     // Implement validation functionality
     console.log('Validating certificate...');
+    // Could open validation modal or redirect to verification portal
 }
+
+// Initialize certificate viewer
+document.addEventListener('DOMContentLoaded', function() {
+    // Load sample data for demonstration
+    loadCertificateData('CERT-2024-001');
+});
 </script> 

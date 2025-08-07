@@ -1,0 +1,241 @@
+<!-- ETL Pipeline Tab - Full Width Layout -->
+<div class="aasx-tab-content">
+    <!-- ETL Pipeline Section -->
+    {% include 'aasx/components/etl_pipeline.html' %}
+    
+    <!-- ETL Configuration & Processing Row -->
+    <div class="row g-4 mt-4">
+        <!-- ETL Configuration -->
+        <div class="col-lg-4">
+            {% include 'aasx/components/etl_configuration.html' %}
+        </div>
+
+        <!-- ETL Processing Status -->
+        <div class="col-lg-8">
+            <div class="aasx-card aasx-card-premium h-100">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-tasks"></i>
+                            ETL Processing Status
+                        </h3>
+                        <p class="aasx-card-subtitle">Real-time monitoring of data processing pipeline</p>
+                    </div>
+                    <div class="aasx-card-header-badge">
+                        <span class="aasx-badge aasx-badge-warning" id="processingStatus">Idle</span>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <!-- Overall Progress -->
+                    <div class="aasx-overall-progress mb-4">
+                        <div class="aasx-progress-header">
+                            <h4>Overall Progress</h4>
+                            <span class="aasx-progress-percentage" id="overallProgressPercentage">0%</span>
+                        </div>
+                        <div class="aasx-progress-bar-container">
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="overallProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stage Progress -->
+                    <div class="aasx-stage-progress">
+                        <div class="aasx-stage-item">
+                            <div class="aasx-stage-info">
+                                <span class="aasx-stage-name">Extract</span>
+                                <span class="aasx-stage-percentage" id="extractProgress">0%</span>
+                            </div>
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="extractProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="aasx-stage-item">
+                            <div class="aasx-stage-info">
+                                <span class="aasx-stage-name">Transform</span>
+                                <span class="aasx-stage-percentage" id="transformProgress">0%</span>
+                            </div>
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="transformProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="aasx-stage-item">
+                            <div class="aasx-stage-info">
+                                <span class="aasx-stage-name">Load</span>
+                                <span class="aasx-stage-percentage" id="loadProgress">0%</span>
+                            </div>
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="loadProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Actions -->
+                    <div class="aasx-processing-actions mt-4">
+                        <button class="aasx-btn aasx-btn-primary" id="startEtlBtn" title="Start ETL Processing">
+                            <i class="fas fa-play"></i>
+                            <span>Start ETL</span>
+                        </button>
+                        <button class="aasx-btn aasx-btn-danger" id="stopProcessing" title="Stop Processing" style="display: none;">
+                            <i class="fas fa-stop"></i>
+                            <span>Stop Processing</span>
+                        </button>
+                        <button class="aasx-btn aasx-btn-secondary" id="pauseProcessing" title="Pause Processing" style="display: none;">
+                            <i class="fas fa-pause"></i>
+                            <span>Pause</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ETL History & Results -->
+    <div class="row g-4 mt-4">
+        <!-- ETL History -->
+        <div class="col-lg-6">
+            <div class="aasx-card aasx-card-premium h-100">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-history"></i>
+                            ETL History
+                        </h3>
+                        <p class="aasx-card-subtitle">Recent ETL processing jobs</p>
+                    </div>
+                    <div class="aasx-card-header-actions">
+                        <button class="aasx-btn aasx-btn-outline" id="refreshHistoryBtn" title="Refresh History">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div class="aasx-etl-history">
+                        <div class="aasx-etl-job">
+                            <div class="aasx-etl-job-header">
+                                <span class="aasx-etl-job-name">Thermal Analysis Processing</span>
+                                <span class="aasx-etl-job-status aasx-etl-completed">Completed</span>
+                            </div>
+                            <div class="aasx-etl-job-details">
+                                <span class="aasx-etl-job-time">2 hours ago</span>
+                                <span class="aasx-etl-job-duration">45 seconds</span>
+                                <span class="aasx-etl-job-files">3 files processed</span>
+                            </div>
+                        </div>
+                        <div class="aasx-etl-job">
+                            <div class="aasx-etl-job-header">
+                                <span class="aasx-etl-job-name">Structural Analysis Processing</span>
+                                <span class="aasx-etl-job-status aasx-etl-failed">Failed</span>
+                            </div>
+                            <div class="aasx-etl-job-details">
+                                <span class="aasx-etl-job-time">4 hours ago</span>
+                                <span class="aasx-etl-job-duration">12 seconds</span>
+                                <span class="aasx-etl-job-files">1 file processed</span>
+                            </div>
+                        </div>
+                        <div class="aasx-etl-job">
+                            <div class="aasx-etl-job-header">
+                                <span class="aasx-etl-job-name">Fluid Dynamics Processing</span>
+                                <span class="aasx-etl-job-status aasx-etl-completed">Completed</span>
+                            </div>
+                            <div class="aasx-etl-job-details">
+                                <span class="aasx-etl-job-time">6 hours ago</span>
+                                <span class="aasx-etl-job-duration">1 minute 23 seconds</span>
+                                <span class="aasx-etl-job-files">5 files processed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ETL Results -->
+        <div class="col-lg-6">
+            <div class="aasx-card aasx-card-premium h-100">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-chart-pie"></i>
+                            ETL Results
+                        </h3>
+                        <p class="aasx-card-subtitle">Processing statistics and output summary</p>
+                    </div>
+                    <div class="aasx-card-header-badge">
+                        <span class="aasx-badge aasx-badge-success">Latest</span>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="aasx-result-stat">
+                                <div class="aasx-result-icon">
+                                    <i class="fas fa-file-code"></i>
+                                </div>
+                                <div class="aasx-result-content">
+                                    <span class="aasx-result-number">12</span>
+                                    <span class="aasx-result-label">JSON Files</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="aasx-result-stat">
+                                <div class="aasx-result-icon">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="aasx-result-content">
+                                    <span class="aasx-result-number">8</span>
+                                    <span class="aasx-result-label">YAML Files</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="aasx-result-stat">
+                                <div class="aasx-result-icon">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                                <div class="aasx-result-content">
+                                    <span class="aasx-result-number">5</span>
+                                    <span class="aasx-result-label">Graph Files</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="aasx-result-stat">
+                                <div class="aasx-result-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="aasx-result-content">
+                                    <span class="aasx-result-number">3</span>
+                                    <span class="aasx-result-label">Database Files</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>Output Summary</h5>
+                        <div class="aasx-output-summary">
+                            <div class="aasx-output-item">
+                                <span class="aasx-output-label">Total Records:</span>
+                                <span class="aasx-output-value">1,247</span>
+                            </div>
+                            <div class="aasx-output-item">
+                                <span class="aasx-output-label">Valid Records:</span>
+                                <span class="aasx-output-value">1,234</span>
+                            </div>
+                            <div class="aasx-output-item">
+                                <span class="aasx-output-label">Invalid Records:</span>
+                                <span class="aasx-output-value">13</span>
+                            </div>
+                            <div class="aasx-output-item">
+                                <span class="aasx-output-label">Processing Time:</span>
+                                <span class="aasx-output-value">2.3 seconds</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

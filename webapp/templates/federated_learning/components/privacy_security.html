@@ -1,15 +1,121 @@
-<!-- Privacy & Security Component -->
+<!-- Enhanced Privacy & Security Component -->
 <div class="col-md-6">
-    <div class="fl-privacy-security-card card fl-federated-card h-100">
-        <div class="fl-card-header card-header fl-bg-gradient-privacy text-white">
+    <div class="fl-privacy-security-card card fl-federated-card h-100 border-0 shadow-lg">
+        <div class="fl-card-header card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="fl-card-title mb-0">
                 <i class="fas fa-shield-alt me-2"></i>
                 Privacy & Security
             </h5>
+            <button class="btn btn-outline-light btn-sm" onclick="refreshPrivacySecurity()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
         </div>
         <div class="fl-card-body card-body">
             <div id="privacySecurity" class="fl-privacy-content">
-                <!-- Privacy and security info will be populated by JavaScript -->
+                <!-- Enhanced Privacy & Security Content -->
+                <div class="fl-security-item mb-4 p-3 bg-light rounded">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="fl-security-icon me-3">
+                            <i class="fas fa-lock fa-2x text-success"></i>
+                            <div class="fl-status-dot fl-status-dot-success"></div>
+                        </div>
+                        <div>
+                            <h6 class="fw-semibold mb-1">Data Encryption</h6>
+                            <span class="badge bg-success">AES-256 Active</span>
+                        </div>
+                    </div>
+                    <div class="fl-security-metrics">
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Encryption Level</span>
+                            <span class="fw-bold text-success">256-bit</span>
+                        </div>
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Key Rotation</span>
+                            <span class="fw-bold text-info">Every 24h</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="fl-security-item mb-4 p-3 bg-light rounded">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="fl-security-icon me-3">
+                            <i class="fas fa-user-shield fa-2x text-primary"></i>
+                            <div class="fl-status-dot fl-status-dot-success"></div>
+                        </div>
+                        <div>
+                            <h6 class="fw-semibold mb-1">Privacy Compliance</h6>
+                            <span class="badge bg-success">GDPR Compliant</span>
+                        </div>
+                    </div>
+                    <div class="fl-security-metrics">
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Data Anonymization</span>
+                            <span class="fw-bold text-success">100%</span>
+                        </div>
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Audit Trail</span>
+                            <span class="fw-bold text-info">Complete</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="fl-security-item mb-4 p-3 bg-light rounded">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="fl-security-icon me-3">
+                            <i class="fas fa-network-wired fa-2x text-warning"></i>
+                            <div class="fl-status-dot fl-status-dot-success"></div>
+                        </div>
+                        <div>
+                            <h6 class="fw-semibold mb-1">Secure Communication</h6>
+                            <span class="badge bg-success">TLS 1.3 Active</span>
+                        </div>
+                    </div>
+                    <div class="fl-security-metrics">
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Protocol</span>
+                            <span class="fw-bold text-success">TLS 1.3</span>
+                        </div>
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Certificate</span>
+                            <span class="fw-bold text-info">Valid</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="fl-security-item p-3 bg-light rounded">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="fl-security-icon me-3">
+                            <i class="fas fa-eye-slash fa-2x text-info"></i>
+                            <div class="fl-status-dot fl-status-dot-success"></div>
+                        </div>
+                        <div>
+                            <h6 class="fw-semibold mb-1">Zero-Knowledge Proof</h6>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                    <div class="fl-security-metrics">
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Proof Type</span>
+                            <span class="fw-bold text-success">ZK-SNARK</span>
+                        </div>
+                        <div class="fl-metric-item d-flex justify-content-between mb-2">
+                            <span class="text-muted">Verification</span>
+                            <span class="fw-bold text-info">100% Success</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

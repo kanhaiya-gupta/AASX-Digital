@@ -1,0 +1,562 @@
+<!-- Enhanced System Component -->
+<div class="pm-system">
+    <!-- System Overview -->
+    <div class="pm-system-overview row mb-4">
+        <div class="col-12">
+            <div class="pm-overview-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-server me-2"></i>System Management Platform
+                        </h5>
+                        <div class="pm-header-actions">
+                            <button class="pm-btn pm-btn-refresh btn btn-outline-light btn-sm me-2" onclick="refreshSystemStatus()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button class="pm-btn pm-btn-diagnostics btn btn-outline-light btn-sm" onclick="runSystemDiagnostics()">
+                                <i class="fas fa-stethoscope me-1"></i>Diagnostics
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-system-stats row g-4">
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-server fa-3x text-primary mb-3"></i>
+                                <h3 class="text-primary mb-2 fw-bold">Online</h3>
+                                <p class="text-muted mb-0 fw-semibold">System Status</p>
+                                <small class="text-success">All systems operational</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-microchip fa-3x text-success mb-3"></i>
+                                <h3 class="text-success mb-2 fw-bold">78%</h3>
+                                <p class="text-muted mb-0 fw-semibold">CPU Usage</p>
+                                <small class="text-success">Optimal performance</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-memory fa-3x text-info mb-3"></i>
+                                <h3 class="text-info mb-2 fw-bold">1.2GB</h3>
+                                <p class="text-muted mb-0 fw-semibold">Memory Used</p>
+                                <small class="text-info">2.8GB available</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-hdd fa-3x text-warning mb-3"></i>
+                                <h3 class="text-warning mb-2 fw-bold">45%</h3>
+                                <p class="text-muted mb-0 fw-semibold">Storage Used</p>
+                                <small class="text-warning">125GB available</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Dashboard -->
+    <div class="pm-system-health row mb-4">
+        <div class="col-lg-8">
+            <div class="pm-health-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-success text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-heartbeat me-2"></i>System Health Dashboard
+                        </h5>
+                        <div class="pm-health-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="updateHealthChart()" title="Update">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="exportHealthData()" title="Export">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-health-chart" style="height: 300px;">
+                        <canvas id="system-health-chart" width="800" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="pm-health-summary-card card border-0 shadow-lg h-100">
+                <div class="pm-card-header card-header bg-gradient-warning text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Health Summary
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-health-summary">
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-primary fw-bold">Overall Health</h6>
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: 92%"></div>
+                                </div>
+                                <span class="fw-bold text-success">92%</span>
+                            </div>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-success fw-bold">Uptime</h6>
+                            <p class="text-muted mb-0">15 days, 8 hours, 32 minutes</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-info fw-bold">Last Maintenance</h6>
+                            <p class="text-muted mb-0">2024-01-10 14:30 UTC</p>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-warning fw-bold">Next Maintenance</h6>
+                            <p class="text-muted mb-0">2024-01-25 02:00 UTC</p>
+                        </div>
+                        <div class="pm-summary-item">
+                            <h6 class="text-danger fw-bold">Alerts</h6>
+                            <p class="text-muted mb-0">0 active alerts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Services -->
+    <div class="pm-system-services row mb-4">
+        <div class="col-12">
+            <div class="pm-services-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-info text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-cogs me-2"></i>System Services
+                        </h5>
+                        <div class="pm-services-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="restartAllServices()" title="Restart All">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="checkServiceStatus()" title="Check Status">
+                                <i class="fas fa-check-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="pm-service-item p-3 bg-light rounded shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold text-primary">
+                                        <i class="fas fa-database me-2"></i>Database
+                                    </h6>
+                                    <span class="badge bg-success">Running</span>
+                                </div>
+                                <p class="text-muted small mb-2">SQLite database service</p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="restartService('database')" title="Restart">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewServiceLogs('database')" title="View Logs">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="pm-service-item p-3 bg-light rounded shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold text-success">
+                                        <i class="fas fa-cube me-2"></i>Physics Engine
+                                    </h6>
+                                    <span class="badge bg-success">Running</span>
+                                </div>
+                                <p class="text-muted small mb-2">Simulation computation engine</p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="restartService('physics')" title="Restart">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewServiceLogs('physics')" title="View Logs">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="pm-service-item p-3 bg-light rounded shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold text-info">
+                                        <i class="fas fa-puzzle-piece me-2"></i>Plugin Manager
+                                    </h6>
+                                    <span class="badge bg-success">Running</span>
+                                </div>
+                                <p class="text-muted small mb-2">Plugin management service</p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="restartService('plugin')" title="Restart">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewServiceLogs('plugin')" title="View Logs">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="pm-service-item p-3 bg-light rounded shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold text-warning">
+                                        <i class="fas fa-chart-line me-2"></i>Analytics Engine
+                                    </h6>
+                                    <span class="badge bg-success">Running</span>
+                                </div>
+                                <p class="text-muted small mb-2">Data analysis and processing</p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="restartService('analytics')" title="Restart">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewServiceLogs('analytics')" title="View Logs">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="pm-service-item p-3 bg-light rounded shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold text-danger">
+                                        <i class="fas fa-shield-alt me-2"></i>Security
+                                    </h6>
+                                    <span class="badge bg-success">Running</span>
+                                </div>
+                                <p class="text-muted small mb-2">Security and authentication</p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="restartService('security')" title="Restart">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewServiceLogs('security')" title="View Logs">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="pm-service-item p-3 bg-light rounded shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 fw-bold text-secondary">
+                                        <i class="fas fa-network-wired me-2"></i>Network
+                                    </h6>
+                                    <span class="badge bg-success">Running</span>
+                                </div>
+                                <p class="text-muted small mb-2">Network communication service</p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="restartService('network')" title="Restart">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm" onclick="viewServiceLogs('network')" title="View Logs">
+                                        <i class="fas fa-file-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Logs -->
+    <div class="pm-system-logs row mb-4">
+        <div class="col-12">
+            <div class="pm-logs-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-dark text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-file-alt me-2"></i>System Logs
+                        </h5>
+                        <div class="pm-logs-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="clearLogs()" title="Clear Logs">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="exportLogs()" title="Export Logs">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-0">
+                    <div class="pm-logs-container" style="height: 300px; overflow-y: auto;">
+                        <div class="pm-logs-content p-3">
+                            <div class="pm-log-entry mb-2 p-2 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <span class="badge bg-success me-2">INFO</span>
+                                        <span class="text-muted">2024-01-15 14:32:15</span>
+                                        <span class="ms-2">System startup completed successfully</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pm-log-entry mb-2 p-2 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <span class="badge bg-info me-2">DEBUG</span>
+                                        <span class="text-muted">2024-01-15 14:32:10</span>
+                                        <span class="ms-2">Initializing physics engine components</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pm-log-entry mb-2 p-2 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <span class="badge bg-warning me-2">WARN</span>
+                                        <span class="text-muted">2024-01-15 14:31:45</span>
+                                        <span class="ms-2">High memory usage detected (85%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pm-log-entry mb-2 p-2 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <span class="badge bg-success me-2">INFO</span>
+                                        <span class="text-muted">2024-01-15 14:31:30</span>
+                                        <span class="ms-2">Database connection established</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pm-log-entry mb-2 p-2 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <span class="badge bg-info me-2">DEBUG</span>
+                                        <span class="text-muted">2024-01-15 14:31:15</span>
+                                        <span class="ms-2">Loading plugin configurations</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Configuration -->
+    <div class="pm-system-configuration row">
+        <div class="col-12">
+            <div class="pm-config-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-secondary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-cog me-2"></i>System Configuration
+                        </h5>
+                        <div class="pm-config-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="saveConfiguration()" title="Save">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="resetConfiguration()" title="Reset">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary mb-3">Performance Settings</h6>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">CPU Threads</label>
+                                <select class="form-select" id="cpu-threads">
+                                    <option value="2">2 Threads</option>
+                                    <option value="4" selected>4 Threads</option>
+                                    <option value="8">8 Threads</option>
+                                    <option value="16">16 Threads</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Memory Limit</label>
+                                <select class="form-select" id="memory-limit">
+                                    <option value="1">1 GB</option>
+                                    <option value="2" selected>2 GB</option>
+                                    <option value="4">4 GB</option>
+                                    <option value="8">8 GB</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Cache Size</label>
+                                <select class="form-select" id="cache-size">
+                                    <option value="256">256 MB</option>
+                                    <option value="512" selected>512 MB</option>
+                                    <option value="1024">1 GB</option>
+                                    <option value="2048">2 GB</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-success mb-3">Security & Maintenance</h6>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="auto-updates" checked>
+                                    <label class="form-check-label fw-bold" for="auto-updates">Auto Updates</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="auto-backup" checked>
+                                    <label class="form-check-label fw-bold" for="auto-backup">Automatic Backup</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="system-monitoring" checked>
+                                    <label class="form-check-label fw-bold" for="system-monitoring">System Monitoring</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="maintenance-mode">
+                                    <label class="form-check-label fw-bold" for="maintenance-mode">Maintenance Mode</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize System Health Chart
+function initializeSystemHealthChart() {
+    const ctx = document.getElementById('system-health-chart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+            datasets: [{
+                label: 'CPU Usage',
+                data: [45, 52, 78, 85, 72, 68, 78],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4
+            }, {
+                label: 'Memory Usage',
+                data: [60, 65, 70, 75, 72, 68, 70],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                tension: 0.4
+            }, {
+                label: 'System Health',
+                data: [95, 93, 88, 85, 90, 92, 92],
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'System Performance Over Time'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    return chart;
+}
+
+function refreshSystemStatus() {
+    console.log('🔄 Refreshing system status...');
+    // Trigger refresh event
+    document.dispatchEvent(new CustomEvent('systemStatusRefresh'));
+}
+
+function runSystemDiagnostics() {
+    console.log('🔍 Running system diagnostics...');
+    // Trigger diagnostics event
+    document.dispatchEvent(new CustomEvent('runSystemDiagnostics'));
+}
+
+function updateHealthChart() {
+    console.log('📊 Updating health chart...');
+    // Implement chart update functionality
+}
+
+function exportHealthData() {
+    console.log('📊 Exporting health data...');
+    // Implement export functionality
+}
+
+function restartAllServices() {
+    console.log('🔄 Restarting all services...');
+    // Implement restart all services functionality
+}
+
+function checkServiceStatus() {
+    console.log('✅ Checking service status...');
+    // Implement service status check functionality
+}
+
+function restartService(serviceName) {
+    console.log('🔄 Restarting service:', serviceName);
+    // Implement service restart functionality
+}
+
+function viewServiceLogs(serviceName) {
+    console.log('📄 Viewing service logs:', serviceName);
+    // Implement view service logs functionality
+}
+
+function clearLogs() {
+    console.log('🗑️ Clearing logs...');
+    // Implement clear logs functionality
+}
+
+function exportLogs() {
+    console.log('📤 Exporting logs...');
+    // Implement export logs functionality
+}
+
+function saveConfiguration() {
+    console.log('💾 Saving configuration...');
+    const config = {
+        cpuThreads: document.getElementById('cpu-threads').value,
+        memoryLimit: document.getElementById('memory-limit').value,
+        cacheSize: document.getElementById('cache-size').value,
+        autoUpdates: document.getElementById('auto-updates').checked,
+        autoBackup: document.getElementById('auto-backup').checked,
+        systemMonitoring: document.getElementById('system-monitoring').checked,
+        maintenanceMode: document.getElementById('maintenance-mode').checked
+    };
+    
+    console.log('Configuration:', config);
+    // Implement save configuration functionality
+}
+
+function resetConfiguration() {
+    console.log('🔄 Resetting configuration...');
+    // Reset form to default values
+    document.getElementById('cpu-threads').value = '4';
+    document.getElementById('memory-limit').value = '2';
+    document.getElementById('cache-size').value = '512';
+    document.getElementById('auto-updates').checked = true;
+    document.getElementById('auto-backup').checked = true;
+    document.getElementById('system-monitoring').checked = true;
+    document.getElementById('maintenance-mode').checked = false;
+    
+    // Implement reset configuration functionality
+}
+
+// Initialize chart when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSystemHealthChart();
+});
+</script> 

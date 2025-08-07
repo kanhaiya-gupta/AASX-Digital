@@ -1,6 +1,7 @@
 /**
- * Federated Learning Module Main CSS File
- * Imports all modular CSS components for the Federated Learning Module
+ * Enhanced Federated Learning Module Main CSS File
+ * Premium, world-class design with uniform color scheme
+ * Matches AASX, Twin Registry, AI/RAG, and Knowledge Graph color palette
  */
 
 /* ===== MODULAR CSS IMPORTS ===== */
@@ -13,7 +14,7 @@
 /* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
 /* Federated Learning-specific global styles and overrides */
 
-/* Animation keyframes for Federated Learning module */
+/* Enhanced Animation keyframes for Federated Learning module */
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
@@ -35,6 +36,40 @@
     }
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes loadingDots {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
 @keyframes progress {
     0% { width: 0%; }
     100% { width: 100%; }
@@ -53,6 +88,294 @@
     animation: fadeIn 0.5s ease-out;
 }
 
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
 .progress-animation {
     animation: progress 2s ease-in-out;
+}
+
+/* Enhanced loading animation */
+.fl-loading-animation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.fl-loading-dots {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.fl-loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #1e3c72, #2a5298);
+    animation: loadingDots 1.4s infinite ease-in-out both;
+}
+
+.fl-loading-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.fl-loading-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+/* Uniform gradient backgrounds - matching all other modules */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Enhanced card shadows */
+.shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(30, 60, 114, 0.175) !important;
+}
+
+/* Enhanced button styles */
+.fl-btn {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.fl-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.15);
+}
+
+.fl-btn:active {
+    transform: translateY(0);
+}
+
+/* Enhanced status indicators */
+.fl-status-indicator {
+    position: relative;
+    display: inline-block;
+}
+
+.fl-status-icon {
+    position: relative;
+    z-index: 1;
+}
+
+.fl-status-dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    border: 2px solid #fff;
+    animation: pulse 2s infinite;
+}
+
+.fl-status-dot-success {
+    background: #28a745;
+}
+
+.fl-status-dot-warning {
+    background: #ffd700;
+}
+
+.fl-status-dot-danger {
+    background: #dc3545;
+}
+
+/* Enhanced section cards */
+.fl-section-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.fl-section-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.1);
+}
+
+/* Enhanced header content */
+.fl-header-content {
+    padding: 2rem 0;
+}
+
+.fl-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fl-subtitle {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Enhanced status badge */
+.fl-status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* Enhanced version info */
+.fl-version-info {
+    font-size: 0.875rem;
+}
+
+/* Enhanced feature badges */
+.fl-feature-badges .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* Enhanced status trend badges */
+.fl-status-trend .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+/* Enhanced form controls */
+.fl-form-select,
+.fl-query-input {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.fl-form-select:focus,
+.fl-query-input:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+}
+
+/* Enhanced progress bars */
+.fl-progress {
+    border-radius: 10px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.fl-progress-bar {
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    border-radius: 10px;
+}
+
+/* Enhanced real-time indicator */
+.fl-real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #28a745;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+/* Enhanced loading progress */
+.fl-loading-progress .progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.fl-loading-progress .progress-bar {
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    border-radius: 10px;
+}
+
+/* Enhanced modal styles */
+.modal-header.bg-gradient-primary {
+    border-bottom: none;
+}
+
+.modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* Enhanced responsive design */
+@media (max-width: 768px) {
+    .fl-title {
+        font-size: 2rem;
+    }
+    
+    .fl-feature-badges {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .fl-header-main {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .fl-header-status {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .fl-header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .fl-title {
+        font-size: 1.75rem;
+    }
+    
+    .fl-subtitle {
+        font-size: 1rem;
+    }
+    
+    .fl-status-card {
+        margin-bottom: 1rem;
+    }
 } 

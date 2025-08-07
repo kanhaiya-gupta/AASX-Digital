@@ -104,7 +104,7 @@ class ProjectCreator {
     async loadUseCases() {
         try {
             console.log('📋 Loading use cases for project creation...');
-            const response = await fetch('/api/aasx/use-cases');
+            const response = await fetch('/api/aasx-etl/use-cases');
             
             if (response.ok) {
                 this.useCases = await response.json();
@@ -225,7 +225,7 @@ class ProjectCreator {
 
         console.log('📁 Creating project in existing use case:', projectData);
 
-        const response = await fetch('/api/aasx/projects', {
+        const response = await fetch('/api/aasx-etl/projects', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -284,7 +284,7 @@ class ProjectCreator {
         console.log('📋 Creating new use case with project:', { useCaseData, projectData });
 
         // Step 1: Create use case
-        const useCaseResponse = await fetch('/api/aasx/use-cases', {
+        const useCaseResponse = await fetch('/api/aasx-etl/use-cases', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -305,7 +305,7 @@ class ProjectCreator {
         // Step 2: Create project in the new use case
         projectData.use_case_id = useCaseId;
 
-        const projectResponse = await fetch('/api/aasx/projects', {
+        const projectResponse = await fetch('/api/aasx-etl/projects', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

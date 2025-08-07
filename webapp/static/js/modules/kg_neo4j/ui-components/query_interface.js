@@ -3,7 +3,7 @@
  * Handles Cypher query execution and results display
  */
 
-import { showAlert } from '../../shared/alerts.js';
+import { showAlert } from '/static/js/shared/alerts.js';
 
 export async function initQueryInterface() {
     console.log('🔧 Initializing Knowledge Graph Query Interface component...');

@@ -1,0 +1,259 @@
+<!-- Enhanced Certificate Actions Component -->
+<div class="cm-certificate-actions">
+    <!-- Primary Actions Section -->
+    <div class="cm-actions-section mb-4">
+        <h6 class="cm-section-subtitle text-primary mb-3">
+            <i class="fas fa-star me-2"></i>Primary Actions
+        </h6>
+        <div class="cm-actions-grid row g-3">
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-view btn btn-outline-primary w-100 p-3" onclick="window.CertificateManager.viewCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-eye fa-2x mb-2"></i>
+                    <div class="fw-semibold">View Certificate</div>
+                    <small class="text-muted">Inspect full certificate content</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-export-cert btn btn-outline-success w-100 p-3" onclick="window.CertificateManager.exportCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-download fa-2x mb-2"></i>
+                    <div class="fw-semibold">Export Certificate</div>
+                    <small class="text-muted">Download in multiple formats</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-print btn btn-outline-info w-100 p-3" onclick="window.CertificateManager.printCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-print fa-2x mb-2"></i>
+                    <div class="fw-semibold">Print Certificate</div>
+                    <small class="text-muted">Generate physical copy</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security & Validation Section -->
+    <div class="cm-actions-section mb-4">
+        <h6 class="cm-section-subtitle text-warning mb-3">
+            <i class="fas fa-shield-alt me-2"></i>Security & Validation
+        </h6>
+        <div class="cm-actions-grid row g-3">
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-validate btn btn-outline-warning w-100 p-3" onclick="window.CertificateManager.showStatusIndicator(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-shield-check fa-2x mb-2"></i>
+                    <div class="fw-semibold">Validate Certificate</div>
+                    <small class="text-muted">Security verification</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-verify-digital btn btn-outline-danger w-100 p-3" onclick="window.CertificateManager.verifyDigitalSignature(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-signature fa-2x mb-2"></i>
+                    <div class="fw-semibold">Verify Digital Signature</div>
+                    <small class="text-muted">Authenticity check</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-audit-trail btn btn-outline-dark w-100 p-3" onclick="window.CertificateManager.showAuditTrail(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                    <div class="fw-semibold">Audit Trail</div>
+                    <small class="text-muted">Complete activity log</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History & Versioning Section -->
+    <div class="cm-actions-section mb-4">
+        <h6 class="cm-section-subtitle text-info mb-3">
+            <i class="fas fa-history me-2"></i>History & Versioning
+        </h6>
+        <div class="cm-actions-grid row g-3">
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-history btn btn-outline-info w-100 p-3" onclick="window.CertificateManager.showVersionHistory(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <div class="fw-semibold">Version History</div>
+                    <small class="text-muted">Complete timeline</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-compare-versions btn btn-outline-secondary w-100 p-3" onclick="window.CertificateManager.compareVersions(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-code-branch fa-2x mb-2"></i>
+                    <div class="fw-semibold">Compare Versions</div>
+                    <small class="text-muted">Side-by-side analysis</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-restore-version btn btn-outline-warning w-100 p-3" onclick="window.CertificateManager.restoreVersion(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-undo fa-2x mb-2"></i>
+                    <div class="fw-semibold">Restore Version</div>
+                    <small class="text-muted">Rollback to previous</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collaboration & Sharing Section -->
+    <div class="cm-actions-section mb-4">
+        <h6 class="cm-section-subtitle text-success mb-3">
+            <i class="fas fa-users me-2"></i>Collaboration & Sharing
+        </h6>
+        <div class="cm-actions-grid row g-3">
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-share btn btn-outline-success w-100 p-3" onclick="window.CertificateManager.shareCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-share-alt fa-2x mb-2"></i>
+                    <div class="fw-semibold">Share Certificate</div>
+                    <small class="text-muted">Collaborate with team</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-generate-link btn btn-outline-primary w-100 p-3" onclick="window.CertificateManager.generateShareLink(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-link fa-2x mb-2"></i>
+                    <div class="fw-semibold">Generate Link</div>
+                    <small class="text-muted">Create shareable URL</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-email-certificate btn btn-outline-info w-100 p-3" onclick="window.CertificateManager.emailCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-envelope fa-2x mb-2"></i>
+                    <div class="fw-semibold">Email Certificate</div>
+                    <small class="text-muted">Send via email</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Management Section -->
+    <div class="cm-actions-section mb-4">
+        <h6 class="cm-section-subtitle text-danger mb-3">
+            <i class="fas fa-cog me-2"></i>Advanced Management
+        </h6>
+        <div class="cm-actions-grid row g-3">
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-edit-metadata btn btn-outline-secondary w-100 p-3" onclick="window.CertificateManager.editMetadata(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-edit fa-2x mb-2"></i>
+                    <div class="fw-semibold">Edit Metadata</div>
+                    <small class="text-muted">Update certificate info</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-regenerate btn btn-outline-warning w-100 p-3" onclick="window.CertificateManager.regenerateCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-sync fa-2x mb-2"></i>
+                    <div class="fw-semibold">Regenerate Certificate</div>
+                    <small class="text-muted">Create new version</small>
+                </button>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <button class="cm-btn cm-btn-archive btn btn-outline-dark w-100 p-3" onclick="window.CertificateManager.archiveCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
+                    <i class="fas fa-archive fa-2x mb-2"></i>
+                    <div class="fw-semibold">Archive Certificate</div>
+                    <small class="text-muted">Move to archive</small>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Information Footer -->
+    <div class="cm-actions-footer">
+        <div class="cm-footer-info">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Certificate ID: <span id="modal-certificate-id">-</span> | 
+                Last Updated: <span id="modal-last-updated">-</span>
+            </small>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced Certificate Actions Component Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize action buttons with hover effects
+    const actionButtons = document.querySelectorAll('.cm-btn');
+    
+    actionButtons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+        
+        button.addEventListener('click', function() {
+            // Add click feedback
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    });
+});
+
+// Update certificate information in footer
+function updateCertificateInfo(certificateId, lastUpdated) {
+    const certificateIdElement = document.getElementById('modal-certificate-id');
+    const lastUpdatedElement = document.getElementById('modal-last-updated');
+    
+    if (certificateIdElement) {
+        certificateIdElement.textContent = certificateId || '-';
+    }
+    
+    if (lastUpdatedElement) {
+        lastUpdatedElement.textContent = lastUpdated || '-';
+    }
+}
+
+// Enhanced action functions with better error handling
+function executeCertificateAction(action, certificateId) {
+    try {
+        console.log(`Executing certificate action: ${action} for certificate: ${certificateId}`);
+        
+        // Add loading state to button
+        const button = event.target.closest('.cm-btn');
+        if (button) {
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin fa-2x mb-2"></i><div class="fw-semibold">Processing...</div>';
+            button.disabled = true;
+            
+            // Restore button after action completes
+            setTimeout(() => {
+                button.innerHTML = originalContent;
+                button.disabled = false;
+            }, 2000);
+        }
+        
+        // Execute the action
+        if (window.CertificateManager && window.CertificateManager[action]) {
+            window.CertificateManager[action](certificateId);
+        } else {
+            console.warn(`Action ${action} not found in CertificateManager`);
+        }
+        
+    } catch (error) {
+        console.error(`Error executing certificate action ${action}:`, error);
+        // Show error notification
+        showNotification('error', `Failed to execute ${action}. Please try again.`);
+    }
+}
+
+// Notification helper function
+function showNotification(type, message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script> 

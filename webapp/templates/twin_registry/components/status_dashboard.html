@@ -1,123 +1,192 @@
 <!-- Status Dashboard Component -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0" id="totalTwins">0</h4>
-                        <p class="mb-0">Total Twins</p>
+<div class="tr-status-dashboard">
+    <!-- Key Metrics Row -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-metric-card tr-metric-primary">
+                <div class="tr-metric-content">
+                    <div class="tr-metric-info">
+                        <div class="tr-metric-value" id="totalTwins">0</div>
+                        <div class="tr-metric-label">Total Twins</div>
+                        <div class="tr-metric-trend tr-trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12.5%</span>
+                        </div>
                     </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-robot fa-2x"></i>
+                    <div class="tr-metric-icon">
+                        <i class="fas fa-robot"></i>
                     </div>
+                </div>
+                <div class="tr-metric-progress">
+                    <div class="tr-progress-bar" style="width: 75%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-metric-card tr-metric-success">
+                <div class="tr-metric-content">
+                    <div class="tr-metric-info">
+                        <div class="tr-metric-value" id="activeTwins">0</div>
+                        <div class="tr-metric-label">Active Twins</div>
+                        <div class="tr-metric-trend tr-trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+8.3%</span>
+                        </div>
+                    </div>
+                    <div class="tr-metric-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                </div>
+                <div class="tr-metric-progress">
+                    <div class="tr-progress-bar" style="width: 85%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-metric-card tr-metric-warning">
+                <div class="tr-metric-content">
+                    <div class="tr-metric-info">
+                        <div class="tr-metric-value" id="totalDataPoints">0</div>
+                        <div class="tr-metric-label">Data Points</div>
+                        <div class="tr-metric-trend tr-trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+15.2%</span>
+                        </div>
+                    </div>
+                    <div class="tr-metric-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                </div>
+                <div class="tr-metric-progress">
+                    <div class="tr-progress-bar" style="width: 92%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-metric-card tr-metric-danger">
+                <div class="tr-metric-content">
+                    <div class="tr-metric-info">
+                        <div class="tr-metric-value" id="activeAlerts">0</div>
+                        <div class="tr-metric-label">Active Alerts</div>
+                        <div class="tr-metric-trend tr-trend-down">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-5.1%</span>
+                        </div>
+                    </div>
+                    <div class="tr-metric-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="tr-metric-progress">
+                    <div class="tr-progress-bar" style="width: 18%"></div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0" id="activeTwins">0</h4>
-                        <p class="mb-0">Active Twins</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-play-circle fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0" id="totalDataPoints">0</h4>
-                        <p class="mb-0">Data Points</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-database fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card bg-danger text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="mb-0" id="activeAlerts">0</h4>
-                        <p class="mb-0">Active Alerts</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-exclamation-triangle fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- System Status Row -->
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-server me-2"></i>System Status
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>Registry Status:</span>
-                    <span class="badge bg-success">Online</span>
+    <!-- System Status & Performance Row -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-3">
+            <div class="tr-status-card">
+                <div class="tr-card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-server"></i>
+                        System Status
+                    </h6>
+                    <div class="tr-live-badge">
+                        <i class="fas fa-circle"></i>
+                        Live
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>AASX Integration:</span>
-                    <span class="badge bg-success">Active</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>Real-time Sync:</span>
-                    <span class="badge bg-success">Connected</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>Performance Monitoring:</span>
-                    <span class="badge bg-success">Healthy</span>
+                <div class="tr-card-body">
+                    <div class="tr-status-grid">
+                        <div class="tr-status-item">
+                            <div class="tr-status-indicator tr-status-online">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="tr-status-label">Registry Status</div>
+                            <div class="tr-status-value">Online</div>
+                        </div>
+                        <div class="tr-status-item">
+                            <div class="tr-status-indicator tr-status-online">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <div class="tr-status-label">AASX Integration</div>
+                            <div class="tr-status-value">Active</div>
+                        </div>
+                        <div class="tr-status-item">
+                            <div class="tr-status-indicator tr-status-online">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="tr-status-label">Real-time Sync</div>
+                            <div class="tr-status-value">Connected</div>
+                        </div>
+                        <div class="tr-status-item">
+                            <div class="tr-status-indicator tr-status-online">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="tr-status-label">Performance Monitoring</div>
+                            <div class="tr-status-value">Healthy</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>Performance Overview
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>Overall Quality Score:</span>
-                    <span class="badge bg-success">94.2%</span>
+        
+        <div class="col-lg-6 mb-3">
+            <div class="tr-status-card">
+                <div class="tr-card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line"></i>
+                        Performance Overview
+                    </h6>
+                    <div class="tr-live-badge">
+                        <i class="fas fa-circle"></i>
+                        Real-time
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>Compliance Rate:</span>
-                    <span class="badge bg-success">98.7%</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span>Efficiency Index:</span>
-                    <span class="badge bg-warning">87.3%</span>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>Risk Score:</span>
-                    <span class="badge bg-success">12.5</span>
+                <div class="tr-card-body">
+                    <div class="tr-performance-grid">
+                        <div class="tr-performance-item">
+                            <div class="tr-performance-header">
+                                <span class="tr-performance-label">Quality Score</span>
+                                <span class="tr-performance-value tr-performance-excellent">94.2%</span>
+                            </div>
+                            <div class="tr-performance-bar">
+                                <div class="tr-performance-fill" style="width: 94.2%"></div>
+                            </div>
+                        </div>
+                        <div class="tr-performance-item">
+                            <div class="tr-performance-header">
+                                <span class="tr-performance-label">Compliance Rate</span>
+                                <span class="tr-performance-value tr-performance-excellent">98.7%</span>
+                            </div>
+                            <div class="tr-performance-bar">
+                                <div class="tr-performance-fill" style="width: 98.7%"></div>
+                            </div>
+                        </div>
+                        <div class="tr-performance-item">
+                            <div class="tr-performance-header">
+                                <span class="tr-performance-label">Efficiency Index</span>
+                                <span class="tr-performance-value tr-performance-good">87.3%</span>
+                            </div>
+                            <div class="tr-performance-bar">
+                                <div class="tr-performance-fill" style="width: 87.3%"></div>
+                            </div>
+                        </div>
+                        <div class="tr-performance-item">
+                            <div class="tr-performance-header">
+                                <span class="tr-performance-label">Risk Score</span>
+                                <span class="tr-performance-value tr-performance-good">12.5</span>
+                            </div>
+                            <div class="tr-performance-bar tr-performance-bar-inverse">
+                                <div class="tr-performance-fill" style="width: 12.5%"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,0 +1,270 @@
+<!-- Simulation Tab Content -->
+<div class="pm-simulation">
+    <!-- Simulation Overview -->
+    <div class="pm-simulation-overview row mb-4">
+        <div class="col-12">
+            <div class="pm-overview-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-play-circle me-2"></i>Simulation Analytics Platform
+                        </h5>
+                        <div class="pm-header-actions">
+                            <button class="pm-btn pm-btn-refresh btn btn-outline-light btn-sm me-2" onclick="refreshActiveSimulations()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button class="pm-btn pm-btn-clear btn btn-outline-light btn-sm" onclick="clearCompletedSimulations()">
+                                <i class="fas fa-trash me-1"></i>Clear Completed
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-simulation-stats row g-4">
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-rocket fa-3x text-primary mb-3"></i>
+                                <h3 class="text-primary mb-2 fw-bold" id="total-simulations">156</h3>
+                                <p class="text-muted mb-0 fw-semibold">Total Simulations</p>
+                                <small class="text-success">+12% this month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-clock fa-3x text-success mb-3"></i>
+                                <h3 class="text-success mb-2 fw-bold" id="avg-duration">2.4h</h3>
+                                <p class="text-muted mb-0 fw-semibold">Avg Duration</p>
+                                <small class="text-success">-8% faster</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-check-circle fa-3x text-info mb-3"></i>
+                                <h3 class="text-info mb-2 fw-bold" id="success-rate">94.2%</h3>
+                                <p class="text-muted mb-0 fw-semibold">Success Rate</p>
+                                <small class="text-success">+2.1% improvement</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-cpu fa-3x text-warning mb-3"></i>
+                                <h3 class="text-warning mb-2 fw-bold" id="cpu-usage">67%</h3>
+                                <p class="text-muted mb-0 fw-semibold">CPU Usage</p>
+                                <small class="text-warning">Optimal</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Configuration -->
+    <div class="pm-simulation-configuration row mb-4">
+        <div class="col-12">
+            <div class="pm-configuration-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-success text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>Simulation Configuration
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="pm-config-panel card border-0 shadow-sm h-100">
+                                <div class="pm-card-header card-header bg-gradient-light py-3">
+                                    <h6 class="pm-card-title mb-0 text-primary">
+                                        <i class="fas fa-edit me-2"></i>Configuration Panel
+                                    </h6>
+                                </div>
+                                <div class="pm-card-body card-body p-4">
+                                    <div class="pm-config-form">
+                                        <div class="mb-3">
+                                            <label class="pm-form-label form-label fw-bold text-primary">
+                                                <i class="fas fa-cube me-1"></i>Digital Twin
+                                            </label>
+                                            <select class="pm-form-select form-select" id="twin-select">
+                                                <option value="">Select a digital twin...</option>
+                                                <option value="twin-001">Thermal System Twin</option>
+                                                <option value="twin-002">Structural Bridge Twin</option>
+                                                <option value="twin-003">Fluid Dynamics Twin</option>
+                                                <option value="twin-004">Electromagnetic Twin</option>
+                                                <option value="twin-005">Mechanical Assembly Twin</option>
+                                                <option value="twin-006">Chemical Process Twin</option>
+                                            </select>
+                                            <small class="form-text text-muted">Choose the digital twin to simulate</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="pm-form-label form-label fw-bold text-primary">
+                                                <i class="fas fa-puzzle-piece me-1"></i>Plugin
+                                            </label>
+                                            <select class="pm-form-select form-select" id="plugin-select">
+                                                <option value="">Select a plugin...</option>
+                                                <option value="thermal-v1">Thermal Analysis v1.2</option>
+                                                <option value="structural-v2">Structural Analysis v2.1</option>
+                                                <option value="fluid-v3">Fluid Dynamics v3.0</option>
+                                                <option value="electromagnetic-v1">Electromagnetic v1.5</option>
+                                                <option value="multiphysics-v1">Multi-Physics v1.0</option>
+                                                <option value="chemical-v2">Chemical Process v2.3</option>
+                                                <option value="mechanical-v1">Mechanical Analysis v1.8</option>
+                                            </select>
+                                            <small class="form-text text-muted">Choose the physics plugin for simulation</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="pm-form-label form-label fw-bold text-primary">
+                                                <i class="fas fa-tag me-1"></i>Simulation Name
+                                            </label>
+                                            <input type="text" class="pm-form-control form-control" id="simulation-name" placeholder="Enter a name for this simulation...">
+                                            <small class="form-text text-muted">Give your simulation a descriptive name</small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="pm-form-label form-label fw-bold text-primary">
+                                                <i class="fas fa-code me-1"></i>Parameters
+                                            </label>
+                                            <textarea class="pm-form-control form-control" id="simulation-parameters" rows="4" placeholder='Enter parameters as JSON (e.g., {"temperature": 300, "pressure": 101325, "time_steps": 1000})'></textarea>
+                                            <small class="form-text text-muted">JSON format parameters for the simulation</small>
+                                        </div>
+                                        
+                                        <div class="mb-4">
+                                            <label class="pm-form-label form-label fw-bold text-primary">
+                                                <i class="fas fa-sliders-h me-1"></i>Simulation Settings
+                                            </label>
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-semibold">Time Steps</label>
+                                                    <input type="number" class="pm-form-control form-control" id="time-steps" value="1000" min="100" max="10000">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="form-label small fw-semibold">Precision</label>
+                                                    <select class="pm-form-select form-select" id="precision-select">
+                                                        <option value="low">Low (Fast)</option>
+                                                        <option value="medium" selected>Medium (Balanced)</option>
+                                                        <option value="high">High (Accurate)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="pm-simulation-actions">
+                                            <button type="button" class="pm-btn pm-btn-run btn btn-success btn-lg w-100 mb-3" onclick="runSimulation()">
+                                                <i class="fas fa-play me-2"></i>Run Simulation
+                                            </button>
+                                            <div class="d-flex gap-3">
+                                                <button type="button" class="pm-btn pm-btn-save btn btn-outline-primary flex-fill" onclick="saveConfiguration()">
+                                                    <i class="fas fa-save me-1"></i>Save Config
+                                                </button>
+                                                <button type="button" class="pm-btn pm-btn-load btn btn-outline-secondary flex-fill" onclick="loadConfiguration()">
+                                                    <i class="fas fa-folder-open me-1"></i>Load Config
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="pm-plugin-info-panel card border-0 shadow-sm h-100">
+                                <div class="pm-card-header card-header bg-gradient-info text-white py-3">
+                                    <h6 class="pm-card-title mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>Plugin Information
+                                    </h6>
+                                </div>
+                                <div class="pm-card-body card-body p-4">
+                                    <div id="plugin-info-content">
+                                        <div class="text-center text-muted py-5">
+                                            <i class="fas fa-puzzle-piece fa-4x mb-4 text-light"></i>
+                                            <h5 class="text-muted mb-2">Select a Plugin</h5>
+                                            <p class="mb-0">Choose a plugin from the dropdown to view its details, capabilities, and requirements</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Simulations -->
+    <div class="pm-active-simulations row mb-4">
+        <div class="col-12">
+            <div class="pm-active-simulations-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-warning text-dark py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-list me-2"></i>Active Simulations
+                        </h5>
+                        <div class="pm-simulation-controls">
+                            <button type="button" class="pm-btn pm-btn-refresh btn btn-outline-dark btn-sm me-2" onclick="refreshActiveSimulations()" title="Refresh">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button type="button" class="pm-btn pm-btn-clear btn btn-outline-danger btn-sm" onclick="clearCompletedSimulations()" title="Clear Completed">
+                                <i class="fas fa-trash me-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div id="active-simulations-list">
+                        <div class="pm-loading-animation text-center py-5">
+                            <div class="pm-loading-dots mb-3">
+                                <div class="pm-loading-dot"></div>
+                                <div class="pm-loading-dot"></div>
+                                <div class="pm-loading-dot"></div>
+                            </div>
+                            <p class="text-muted mb-0">Loading active simulations...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Simulation Results Modal -->
+<div class="pm-modal modal fade" id="simulationResultsModal" tabindex="-1" aria-labelledby="simulationResultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="pm-modal-content modal-content border-0 shadow-lg">
+            <div class="pm-modal-header modal-header bg-gradient-primary text-white">
+                <h5 class="pm-modal-title modal-title" id="simulationResultsModalLabel">
+                    <i class="fas fa-chart-bar me-2"></i>Simulation Results
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="pm-modal-body modal-body p-4" id="simulationResultsContent">
+                <!-- Simulation results will be populated here -->
+            </div>
+            <div class="pm-modal-footer modal-footer">
+                <button type="button" class="pm-btn pm-btn-export btn btn-outline-primary me-2" onclick="exportResults()">
+                    <i class="fas fa-download me-1"></i>Export Results
+                </button>
+                <button type="button" class="pm-btn pm-btn-close btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Modal -->
+<div class="pm-modal modal fade" id="configurationModal" tabindex="-1" aria-labelledby="configurationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="pm-modal-content modal-content border-0 shadow-lg">
+            <div class="pm-modal-header modal-header bg-gradient-info text-white">
+                <h5 class="pm-modal-title modal-title" id="configurationModalLabel">
+                    <i class="fas fa-cogs me-2"></i>Configuration Management
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="pm-modal-body modal-body p-4" id="configurationContent">
+                <!-- Configuration content will be populated here -->
+            </div>
+            <div class="pm-modal-footer modal-footer">
+                <button type="button" class="pm-btn pm-btn-close btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div> 

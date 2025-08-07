@@ -168,7 +168,7 @@ const CertificateManager = {
             
             // Update UI using the dashboard module
             this.modules.dashboard.updateStats(certificates);
-            this.modules.dashboard.updateTable(certificates);
+            this.modules.dashboard.updateTable(certificates, true); // Force update for initial load
             
             this.setLoading(false);
             
@@ -387,7 +387,7 @@ const CertificateManager = {
         }
         
         // Update table using the dashboard module
-        this.modules.dashboard.updateTable(filtered);
+        this.modules.dashboard.updateTable(filtered, true); // Force update for filtering
     },
 
     toggleSelectAll(checked) {

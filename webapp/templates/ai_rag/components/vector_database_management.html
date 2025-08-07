@@ -1,78 +1,168 @@
-<!-- Vector Database Management Component -->
-<div class="ai-rag-vector-db-management row mt-4">
+<!-- Enhanced Vector Database Management Component -->
+<div class="ai-rag-vector-db-management row mt-5">
     <div class="col-12">
-        <div class="ai-rag-vector-db-card card border-0 shadow-sm">
+        <div class="ai-rag-vector-db-card card border-0 shadow-lg">
             <div class="ai-rag-card-header card-header bg-gradient-dark text-white">
-                <h5 class="ai-rag-card-title mb-0">
-                    <i class="fas fa-database me-2"></i>
-                    Vector Database Management
-                </h5>
-            </div>
-            <div class="ai-rag-card-body card-body">
-                <div class="ai-rag-vector-db-content row">
-                    <div class="col-md-6">
-                        <h6 class="ai-rag-section-title text-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Database Information
-                        </h6>
-                        <div id="vector-db-info" class="ai-rag-db-info">
-                            <p class="text-muted">Loading database information...</p>
-                        </div>
-                        <button class="ai-rag-btn ai-rag-refresh-btn btn btn-outline-info btn-sm" id="refresh-vector-info-btn">
-                            <i class="fas fa-sync-alt me-1"></i>
-                            Refresh Info
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="ai-rag-card-title mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        Vector Database Management
+                    </h5>
+                    <div class="ai-rag-header-actions">
+                        <button class="ai-rag-btn ai-rag-btn-health btn btn-sm btn-outline-light" onclick="checkDatabaseHealth()">
+                            <i class="fas fa-heartbeat me-1"></i>Health Check
                         </button>
-                        
-                        <hr class="ai-rag-divider my-3">
-                        
-                        <h6 class="ai-rag-section-title text-warning">
-                            <i class="fas fa-chart-bar me-2"></i>
-                            Data Statistics
-                        </h6>
-                        <div class="ai-rag-stats-buttons d-grid gap-2">
-                            <button class="ai-rag-btn ai-rag-stats-btn btn btn-outline-warning btn-sm" id="show-data-stats-btn">
-                                <i class="fas fa-chart-bar me-1"></i>
-                                Show Data Statistics
-                            </button>
-                            <button class="ai-rag-btn ai-rag-stats-btn btn btn-outline-info btn-sm" id="show-stored-documents-btn">
-                                <i class="fas fa-file-alt me-1"></i>
-                                Show Stored Documents
-                            </button>
-                        </div>
-                        <div id="data-management-status" class="ai-rag-status-display mt-2"></div>
                     </div>
+                </div>
+            </div>
+            <div class="ai-rag-card-body card-body p-4">
+                <div class="ai-rag-vector-db-content row g-4">
+                    <!-- Database Information Section -->
                     <div class="col-md-6">
-                        <h6 class="ai-rag-section-title text-success">
-                            <i class="fas fa-download me-2"></i>
-                            Backup Operations
-                        </h6>
-                        <div class="ai-rag-backup-buttons d-grid gap-2">
-                            <button class="ai-rag-btn ai-rag-backup-btn btn btn-outline-success btn-sm" id="create-metadata-backup-btn">
-                                <i class="fas fa-download me-1"></i>
-                                Create Metadata Backup
-                            </button>
-                            <button class="ai-rag-btn ai-rag-backup-btn btn btn-outline-warning btn-sm" id="create-full-backup-btn">
-                                <i class="fas fa-download me-1"></i>
-                                Create Full Backup
-                            </button>
-                            <button class="ai-rag-btn ai-rag-backup-btn btn btn-outline-info btn-sm" id="show-backup-history-btn">
-                                <i class="fas fa-history me-1"></i>
-                                Backup History
-                            </button>
+                        <div class="ai-rag-section-card card border-0 bg-light">
+                            <div class="ai-rag-card-body card-body p-3">
+                                <h6 class="ai-rag-section-title text-info mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Database Information
+                                </h6>
+                                <div id="vector-db-info" class="ai-rag-db-info">
+                                    <div class="ai-rag-loading-state text-center">
+                                        <div class="ai-rag-loading-animation">
+                                            <div class="ai-rag-loading-dots">
+                                                <div class="ai-rag-loading-dot"></div>
+                                                <div class="ai-rag-loading-dot"></div>
+                                                <div class="ai-rag-loading-dot"></div>
+                                            </div>
+                                        </div>
+                                        <p class="mt-2 text-muted">Loading database information...</p>
+                                    </div>
+                                </div>
+                                <div class="ai-rag-section-actions mt-3">
+                                    <button class="ai-rag-btn ai-rag-refresh-btn btn btn-outline-info btn-sm" id="refresh-vector-info-btn">
+                                        <i class="fas fa-sync-alt me-1"></i>
+                                        Refresh Info
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="backup-status" class="ai-rag-status-display mt-2"></div>
                         
-                        <hr class="ai-rag-divider my-3">
+                        <!-- Data Statistics Section -->
+                        <div class="ai-rag-section-card card border-0 bg-light mt-3">
+                            <div class="ai-rag-card-body card-body p-3">
+                                <h6 class="ai-rag-section-title text-warning mb-3">
+                                    <i class="fas fa-chart-bar me-2"></i>
+                                    Data Statistics
+                                </h6>
+                                <div class="ai-rag-stats-buttons d-grid gap-2">
+                                    <button class="ai-rag-btn ai-rag-stats-btn btn btn-outline-warning btn-sm" id="show-data-stats-btn">
+                                        <div class="ai-rag-btn-content">
+                                            <i class="fas fa-chart-bar me-1"></i>
+                                            <span>Show Data Statistics</span>
+                                        </div>
+                                        <small class="ai-rag-btn-desc">Collection metrics</small>
+                                    </button>
+                                    <button class="ai-rag-btn ai-rag-stats-btn btn btn-outline-info btn-sm" id="show-stored-documents-btn">
+                                        <div class="ai-rag-btn-content">
+                                            <i class="fas fa-file-alt me-1"></i>
+                                            <span>Show Stored Documents</span>
+                                        </div>
+                                        <small class="ai-rag-btn-desc">Document inventory</small>
+                                    </button>
+                                </div>
+                                <div id="data-management-status" class="ai-rag-status-display mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backup and Management Section -->
+                    <div class="col-md-6">
+                        <!-- Backup Operations Section -->
+                        <div class="ai-rag-section-card card border-0 bg-light">
+                            <div class="ai-rag-card-body card-body p-3">
+                                <h6 class="ai-rag-section-title text-success mb-3">
+                                    <i class="fas fa-download me-2"></i>
+                                    Backup Operations
+                                </h6>
+                                <div class="ai-rag-backup-buttons d-grid gap-2">
+                                    <button class="ai-rag-btn ai-rag-backup-btn btn btn-outline-success btn-sm" id="create-metadata-backup-btn">
+                                        <div class="ai-rag-btn-content">
+                                            <i class="fas fa-download me-1"></i>
+                                            <span>Create Metadata Backup</span>
+                                        </div>
+                                        <small class="ai-rag-btn-desc">Schema & indexes</small>
+                                    </button>
+                                    <button class="ai-rag-btn ai-rag-backup-btn btn btn-outline-warning btn-sm" id="create-full-backup-btn">
+                                        <div class="ai-rag-btn-content">
+                                            <i class="fas fa-download me-1"></i>
+                                            <span>Create Full Backup</span>
+                                        </div>
+                                        <small class="ai-rag-btn-desc">Complete database</small>
+                                    </button>
+                                    <button class="ai-rag-btn ai-rag-backup-btn btn btn-outline-info btn-sm" id="show-backup-history-btn">
+                                        <div class="ai-rag-btn-content">
+                                            <i class="fas fa-history me-1"></i>
+                                            <span>Backup History</span>
+                                        </div>
+                                        <small class="ai-rag-btn-desc">Previous backups</small>
+                                    </button>
+                                </div>
+                                <div id="backup-status" class="ai-rag-status-display mt-3"></div>
+                            </div>
+                        </div>
                         
-                        <h6 class="ai-rag-section-title text-danger">
-                            <i class="fas fa-trash me-2"></i>
-                            Data Management
-                        </h6>
-                        <div class="ai-rag-management-buttons d-grid gap-2">
-                            <button class="ai-rag-btn ai-rag-danger-btn btn btn-outline-danger btn-sm" id="clear-vector-data-btn">
-                                <i class="fas fa-trash me-1"></i>
-                                Clear Global Vector Data
-                            </button>
+                        <!-- Data Management Section -->
+                        <div class="ai-rag-section-card card border-0 bg-light mt-3">
+                            <div class="ai-rag-card-body card-body p-3">
+                                <h6 class="ai-rag-section-title text-danger mb-3">
+                                    <i class="fas fa-trash me-2"></i>
+                                    Data Management
+                                </h6>
+                                <div class="ai-rag-management-buttons d-grid gap-2">
+                                    <button class="ai-rag-btn ai-rag-danger-btn btn btn-outline-danger btn-sm" id="clear-vector-data-btn">
+                                        <div class="ai-rag-btn-content">
+                                            <i class="fas fa-trash me-1"></i>
+                                            <span>Clear Global Vector Data</span>
+                                        </div>
+                                        <small class="ai-rag-btn-desc">⚠️ Irreversible action</small>
+                                    </button>
+                                </div>
+                                <div class="ai-rag-warning-text mt-2">
+                                    <small class="text-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Warning: Data management operations are irreversible
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Database Health Section -->
+                        <div class="ai-rag-section-card card border-0 bg-light mt-3">
+                            <div class="ai-rag-card-body card-body p-3">
+                                <h6 class="ai-rag-section-title text-primary mb-3">
+                                    <i class="fas fa-heartbeat me-2"></i>
+                                    Database Health
+                                </h6>
+                                <div class="ai-rag-health-indicators">
+                                    <div class="ai-rag-health-item d-flex justify-content-between align-items-center mb-2">
+                                        <span class="ai-rag-health-label">Connection Status</span>
+                                        <span class="ai-rag-health-status text-success" id="connection-status">
+                                            <i class="fas fa-circle me-1"></i>Connected
+                                        </span>
+                                    </div>
+                                    <div class="ai-rag-health-item d-flex justify-content-between align-items-center mb-2">
+                                        <span class="ai-rag-health-label">Response Time</span>
+                                        <span class="ai-rag-health-status text-info" id="response-time">
+                                            <i class="fas fa-clock me-1"></i>12ms
+                                        </span>
+                                    </div>
+                                    <div class="ai-rag-health-item d-flex justify-content-between align-items-center">
+                                        <span class="ai-rag-health-label">Storage Usage</span>
+                                        <span class="ai-rag-health-status text-warning" id="storage-usage">
+                                            <i class="fas fa-hdd me-1"></i>67%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

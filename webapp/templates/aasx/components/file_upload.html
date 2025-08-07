@@ -1,91 +1,222 @@
-<!-- File Upload Panel -->
-<div class="aasx-file-upload-card card border-0 shadow-sm mb-4">
-    <div class="aasx-card-header card-header bg-gradient-success text-white">
-        <h5 class="aasx-card-title mb-0">
-            <i class="fas fa-upload me-2"></i>
-            File Upload & Management
-        </h5>
+<!-- Premium File Upload & Management -->
+<div class="aasx-file-upload-section">
+    <!-- Section Header -->
+    <div class="aasx-section-header">
+        <div class="aasx-section-title-wrapper">
+            <h2 class="aasx-section-title">
+                <i class="fas fa-cloud-upload-alt aasx-section-icon"></i>
+                File Upload Hub
+            </h2>
+            <p class="aasx-section-description">Upload and manage your AASX files with multiple methods</p>
+        </div>
+        <div class="aasx-section-actions">
+            <button class="aasx-btn aasx-btn-info" id="bulkUploadBtn" title="Bulk Upload">
+                <i class="fas fa-folder-plus"></i>
+                <span>Bulk Upload</span>
+            </button>
+            <button class="aasx-btn aasx-btn-secondary" id="uploadHistoryBtn" title="Upload History">
+                <i class="fas fa-history"></i>
+                <span>History</span>
+            </button>
+        </div>
     </div>
-    <div class="aasx-card-body card-body">
-        <div class="aasx-upload-content row">
-            <div class="col-md-6">
-                <div class="aasx-upload-section card bg-light border-0">
-                    <div class="aasx-card-body card-body">
-                        <h6 class="aasx-section-title text-primary mb-3">
-                            <i class="fas fa-file-upload me-2"></i>
-                            Upload AASX File
-                        </h6>
+    
+    <!-- Upload Methods -->
+    <div class="aasx-upload-methods">
+        <div class="row g-4">
+            <!-- Local File Upload -->
+            <div class="col-lg-6">
+                <div class="aasx-card aasx-card-premium">
+                    <div class="aasx-card-header">
+                        <div class="aasx-card-header-content">
+                            <h3 class="aasx-card-title">
+                                <i class="fas fa-file-upload"></i>
+                                Local File Upload
+                            </h3>
+                            <p class="aasx-card-subtitle">Upload AASX files from your device</p>
+                        </div>
+                        <div class="aasx-card-header-badge">
+                            <span class="aasx-badge aasx-badge-primary">Recommended</span>
+                        </div>
+                    </div>
+                    <div class="aasx-card-body">
                         <form id="fileUploadForm" class="aasx-upload-form">
-                            <div class="aasx-dropdown-section">
-                                <div class="mb-3">
-                                    <label class="aasx-form-label form-label fw-bold">Select Use Case:</label>
-                                    <select class="aasx-form-select form-select use-case-select" id="uploadUseCaseSelect" required>
-                                        <option value="">Choose a use case...</option>
-                                    </select>
+                            <!-- Project Selection -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Use Case</label>
+                                <select class="aasx-form-select" id="uploadUseCaseSelect" required>
+                                    <option value="">Choose a use case...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Project</label>
+                                <select class="aasx-form-select" id="uploadProjectSelect" required>
+                                    <option value="">Choose a project...</option>
+                                    <option value="" disabled>Select a use case first</option>
+                                </select>
+                            </div>
+                            
+                            <!-- File Upload Area -->
+                            <div class="aasx-upload-area" id="uploadArea">
+                                <div class="aasx-upload-zone">
+                                    <div class="aasx-upload-icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <h4>Drop your AASX file here</h4>
+                                    <p>or click to browse</p>
+                                    <input type="file" id="aasxFileInput" accept=".aasx" required hidden>
+                                    <button type="button" class="aasx-btn aasx-btn-outline" id="browseFilesBtn">
+                                        <i class="fas fa-folder-open"></i>
+                                        <span>Browse Files</span>
+                                    </button>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="aasx-form-label form-label fw-bold">Select Project:</label>
-                                    <select class="aasx-form-select form-select project-select" id="uploadProjectSelect" required>
-                                        <option value="">Choose a project...</option>
-                                        <option value="" disabled>Select a use case first to see available projects</option>
-                                    </select>
+                                <div class="aasx-upload-info">
+                                    <div class="aasx-upload-details">
+                                        <span class="aasx-file-name" id="selectedFileName">No file selected</span>
+                                        <span class="aasx-file-size" id="selectedFileSize"></span>
+                                    </div>
+                                    <div class="aasx-upload-progress" id="uploadProgress" style="display: none;">
+                                        <div class="aasx-progress-bar">
+                                            <div class="aasx-progress-fill" id="uploadProgressFill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="aasx-progress-text" id="uploadProgressText">0%</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="aasx-form-label form-label fw-bold">AASX File:</label>
-                                <input type="file" class="aasx-form-control form-control" id="aasxFileInput" accept=".aasx" required>
-                                <small class="aasx-form-text form-text text-muted">Only .aasx files are allowed</small>
+                            
+                            <!-- File Description -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Description (Optional)</label>
+                                <textarea class="aasx-form-textarea" id="fileDescription" rows="3" placeholder="Describe the AASX file content, purpose, or any relevant notes..."></textarea>
                             </div>
-                            <div class="mb-3">
-                                <label class="aasx-form-label form-label fw-bold">Description (Optional):</label>
-                                <textarea class="aasx-form-control form-control" id="fileDescription" rows="2" placeholder="Describe the AASX file content..."></textarea>
-                            </div>
-                            <button type="submit" class="aasx-btn aasx-btn-upload btn btn-primary w-100">
-                                <i class="fas fa-upload me-2"></i>
-                                Upload File
+                            
+                            <!-- Upload Button -->
+                            <button type="submit" class="aasx-btn aasx-btn-primary aasx-btn-upload" id="uploadFileBtn">
+                                <i class="fas fa-upload"></i>
+                                <span>Upload File</span>
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="aasx-url-upload-section card bg-light border-0">
-                    <div class="aasx-card-body card-body">
-                        <h6 class="aasx-section-title text-warning mb-3">
-                            <i class="fas fa-link me-2"></i>
-                            Upload from URL
-                        </h6>
+            
+            <!-- URL Upload -->
+            <div class="col-lg-6">
+                <div class="aasx-card aasx-card-premium">
+                    <div class="aasx-card-header">
+                        <div class="aasx-card-header-content">
+                            <h3 class="aasx-card-title">
+                                <i class="fas fa-link"></i>
+                                URL Upload
+                            </h3>
+                            <p class="aasx-card-subtitle">Download and upload from remote URLs</p>
+                        </div>
+                        <div class="aasx-card-header-badge">
+                            <span class="aasx-badge aasx-badge-info">Remote</span>
+                        </div>
+                    </div>
+                    <div class="aasx-card-body">
                         <form id="urlUploadForm" class="aasx-url-upload-form">
-                            <div class="aasx-dropdown-section">
-                                <div class="mb-3">
-                                    <label class="aasx-form-label form-label fw-bold">Select Use Case:</label>
-                                    <select class="aasx-form-select form-select use-case-select" id="urlUseCaseSelect" required>
-                                        <option value="">Choose a use case...</option>
-                                    </select>
+                            <!-- Project Selection -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Use Case</label>
+                                <select class="aasx-form-select" id="urlUseCaseSelect" required>
+                                    <option value="">Choose a use case...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Project</label>
+                                <select class="aasx-form-select" id="urlProjectSelect" required>
+                                    <option value="">Choose a project...</option>
+                                    <option value="" disabled>Select a use case first</option>
+                                </select>
+                            </div>
+                            
+                            <!-- URL Input -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">AASX File URL</label>
+                                <div class="aasx-url-input-group">
+                                    <input type="url" class="aasx-form-input" id="aasxFileUrl" placeholder="https://example.com/file.aasx" required>
+                                    <button type="button" class="aasx-btn aasx-btn-outline" id="validateUrlBtn" title="Validate URL">
+                                        <i class="fas fa-check"></i>
+                                    </button>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="aasx-form-label form-label fw-bold">Select Project:</label>
-                                    <select class="aasx-form-select form-select project-select" id="urlProjectSelect" required>
-                                        <option value="">Choose a project...</option>
-                                        <option value="" disabled>Select a use case first to see available projects</option>
-                                    </select>
+                                <small class="aasx-form-help">Direct link to .aasx file</small>
+                            </div>
+                            
+                            <!-- URL Preview -->
+                            <div class="aasx-url-preview" id="urlPreview" style="display: none;">
+                                <div class="aasx-url-info">
+                                    <div class="aasx-url-details">
+                                        <span class="aasx-url-name" id="urlFileName">file.aasx</span>
+                                        <span class="aasx-url-size" id="urlFileSize">0 KB</span>
+                                    </div>
+                                    <div class="aasx-url-status">
+                                        <span class="aasx-status-badge aasx-status-valid" id="urlStatus">
+                                            <i class="fas fa-check-circle"></i>
+                                            Valid
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="aasx-form-label form-label fw-bold">AASX File URL:</label>
-                                <input type="url" class="aasx-form-control form-control" id="aasxFileUrl" placeholder="https://example.com/file.aasx" required>
-                                <small class="aasx-form-text form-text text-muted">Direct link to .aasx file</small>
+                            
+                            <!-- File Description -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Description (Optional)</label>
+                                <textarea class="aasx-form-textarea" id="urlFileDescription" rows="3" placeholder="Describe the AASX file content, purpose, or any relevant notes..."></textarea>
                             </div>
-                            <div class="mb-3">
-                                <label class="aasx-form-label form-label fw-bold">Description (Optional):</label>
-                                <textarea class="aasx-form-control form-control" id="urlFileDescription" rows="2" placeholder="Describe the AASX file content..."></textarea>
-                            </div>
-                            <button type="submit" class="aasx-btn aasx-btn-url-upload btn btn-warning w-100">
-                                <i class="fas fa-download me-2"></i>
-                                Download & Upload
+                            
+                            <!-- Download & Upload Button -->
+                            <button type="submit" class="aasx-btn aasx-btn-warning aasx-btn-url-upload" id="downloadUploadBtn">
+                                <i class="fas fa-download"></i>
+                                <span>Download & Upload</span>
                             </button>
                         </form>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Statistics -->
+    <div class="aasx-upload-stats">
+        <div class="aasx-stats-grid">
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="totalUploads">0</span>
+                    <span class="aasx-stat-label">Total Uploads</span>
+                </div>
+            </div>
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="pendingUploads">0</span>
+                    <span class="aasx-stat-label">Pending</span>
+                </div>
+            </div>
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="completedUploads">0</span>
+                    <span class="aasx-stat-label">Completed</span>
+                </div>
+            </div>
+            <div class="aasx-stat-card">
+                <div class="aasx-stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="aasx-stat-content">
+                    <span class="aasx-stat-number" id="failedUploads">0</span>
+                    <span class="aasx-stat-label">Failed</span>
                 </div>
             </div>
         </div>

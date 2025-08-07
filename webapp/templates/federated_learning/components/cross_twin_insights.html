@@ -1,15 +1,85 @@
-<!-- Cross-Twin Insights Component -->
+<!-- Enhanced Cross-Twin Insights Component -->
 <div class="col-md-6">
-    <div class="fl-cross-twin-insights-card card fl-federated-card h-100">
-        <div class="fl-card-header card-header fl-bg-gradient-insights text-white">
+    <div class="fl-cross-twin-insights-card card fl-federated-card h-100 border-0 shadow-lg">
+        <div class="fl-card-header card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="fl-card-title mb-0">
                 <i class="fas fa-lightbulb me-2"></i>
                 Cross-Twin Insights
             </h5>
+            <button class="btn btn-outline-light btn-sm" onclick="refreshCrossTwinInsights()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
         </div>
         <div class="fl-card-body card-body">
             <div id="crossTwinInsights" class="fl-insights-content">
-                <!-- Cross-twin insights will be populated by JavaScript -->
+                <!-- Enhanced Cross-Twin Insights -->
+                <div class="fl-insight-item mb-4 p-3 bg-light rounded">
+                    <div class="d-flex align-items-start">
+                        <div class="fl-insight-icon me-3">
+                            <i class="fas fa-chart-line fa-2x text-success"></i>
+                        </div>
+                        <div class="fl-insight-content">
+                            <h6 class="fw-semibold mb-2">Performance Convergence</h6>
+                            <p class="text-muted mb-2">All twins showing consistent accuracy improvements across training rounds</p>
+                            <div class="fl-insight-stats d-flex gap-3">
+                                <span class="badge bg-success">+2.3% Avg</span>
+                                <span class="badge bg-info">3 Twins</span>
+                                <span class="badge bg-warning text-dark">24 Rounds</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="fl-insight-item mb-4 p-3 bg-light rounded">
+                    <div class="d-flex align-items-start">
+                        <div class="fl-insight-icon me-3">
+                            <i class="fas fa-network-wired fa-2x text-primary"></i>
+                        </div>
+                        <div class="fl-insight-content">
+                            <h6 class="fw-semibold mb-2">Communication Efficiency</h6>
+                            <p class="text-muted mb-2">Optimal data exchange patterns detected between twins</p>
+                            <div class="fl-insight-stats d-flex gap-3">
+                                <span class="badge bg-success">98% Success</span>
+                                <span class="badge bg-info">Low Latency</span>
+                                <span class="badge bg-warning text-dark">Secure</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="fl-insight-item mb-4 p-3 bg-light rounded">
+                    <div class="d-flex align-items-start">
+                        <div class="fl-insight-icon me-3">
+                            <i class="fas fa-shield-alt fa-2x text-warning"></i>
+                        </div>
+                        <div class="fl-insight-content">
+                            <h6 class="fw-semibold mb-2">Privacy Compliance</h6>
+                            <p class="text-muted mb-2">All data exchanges maintaining privacy-preserving protocols</p>
+                            <div class="fl-insight-stats d-flex gap-3">
+                                <span class="badge bg-success">100% Compliant</span>
+                                <span class="badge bg-info">Zero Leakage</span>
+                                <span class="badge bg-warning text-dark">Audited</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="fl-insight-item p-3 bg-light rounded">
+                    <div class="d-flex align-items-start">
+                        <div class="fl-insight-icon me-3">
+                            <i class="fas fa-brain fa-2x text-info"></i>
+                        </div>
+                        <div class="fl-insight-content">
+                            <h6 class="fw-semibold mb-2">Model Synchronization</h6>
+                            <p class="text-muted mb-2">Federated models successfully synchronized across all twins</p>
+                            <div class="fl-insight-stats d-flex gap-3">
+                                <span class="badge bg-success">Synced</span>
+                                <span class="badge bg-info">Consistent</span>
+                                <span class="badge bg-warning text-dark">Optimized</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

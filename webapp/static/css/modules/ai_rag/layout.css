@@ -1,132 +1,229 @@
 /**
  * AI RAG Module Layout CSS Module
  * Dedicated styling for main layout and structure
+ * Updated to match uniform color scheme from AASX and Twin Registry
  */
 
 /* ===== MAIN LAYOUT STYLING ===== */
 .ai-rag-container {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    min-height: 100vh;
-    padding: 1.5rem 0;
+    min-height: calc(100vh - 80px); /* Account for header */
+    padding: 2rem 0;
 }
 
 /* ===== PAGE HEADER STYLING ===== */
 .ai-rag-header {
-    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
-    padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem 0;
+    margin-bottom: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.2);
+    position: relative;
+    overflow: hidden;
 }
 
-.ai-rag-header h1 {
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+.ai-rag-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
 }
 
-.ai-rag-header .subtitle {
-    opacity: 0.9;
+.ai-rag-header-content {
+    position: relative;
+    z-index: 2;
+}
+
+.ai-rag-title {
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ai-rag-title i {
+    color: #ffd700;
+    margin-right: 0.75rem;
+    font-size: 2rem;
+}
+
+.ai-rag-subtitle {
     font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    margin-bottom: 0;
 }
 
-/* ===== CONTENT AREA STYLING ===== */
+.ai-rag-header-actions {
+    gap: 1rem;
+}
+
+.ai-rag-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ai-rag-btn-primary {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #1e3c72;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.ai-rag-btn-primary:hover {
+    background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    color: #1e3c72;
+}
+
+.ai-rag-btn-refresh {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.ai-rag-btn-refresh:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.ai-rag-btn-export {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #1e3c72;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.ai-rag-btn-export:hover {
+    background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    color: #1e3c72;
+}
+
+/* ===== MAIN CONTENT STYLING ===== */
+.ai-rag-main-content {
+    margin-top: 2rem;
+}
+
+.ai-rag-content-left {
+    margin-bottom: 2rem;
+}
+
 .ai-rag-content {
-    background: #ffffff;
+    background: white;
     border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(30, 60, 114, 0.1);
+    transition: all 0.3s ease;
     overflow: hidden;
+}
+
+.ai-rag-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(30, 60, 114, 0.15);
+}
+
+.ai-rag-sidebar {
     margin-bottom: 2rem;
 }
 
-/* ===== CHAT LAYOUT ===== */
-.ai-rag-chat-layout {
-    display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 1.5rem;
-    height: calc(100vh - 200px);
-    min-height: 600px;
-}
-
-.ai-rag-chat-main {
-    background: #ffffff;
+.ai-rag-sidebar .card {
+    border: none;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(30, 60, 114, 0.1);
+    transition: all 0.3s ease;
     overflow: hidden;
 }
 
-.ai-rag-chat-sidebar {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+.ai-rag-sidebar .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(30, 60, 114, 0.15);
+}
+
+.ai-rag-sidebar .card-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    border: none;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+}
+
+.ai-rag-sidebar .card-body {
     padding: 1.5rem;
-    height: fit-content;
-    position: sticky;
-    top: 2rem;
-}
-
-/* ===== GRID LAYOUT STYLING ===== */
-.ai-rag-grid {
-    display: grid;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.ai-rag-grid-2 {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.ai-rag-grid-3 {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-
-.ai-rag-grid-4 {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-/* ===== DASHBOARD LAYOUT ===== */
-.ai-rag-dashboard {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    min-height: 100vh;
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 1024px) {
-    .ai-rag-chat-layout {
-        grid-template-columns: 1fr;
-        height: auto;
+@media (max-width: 991.98px) {
+    .ai-rag-header {
+        padding: 2rem 0;
+        margin-bottom: 2rem;
     }
     
-    .ai-rag-chat-sidebar {
-        position: static;
-        order: -1;
+    .ai-rag-title {
+        font-size: 1.8rem;
+    }
+    
+    .ai-rag-subtitle {
+        font-size: 1rem;
+    }
+    
+    .ai-rag-header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .ai-rag-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .ai-rag-content-left {
+        margin-bottom: 1.5rem;
+    }
+    
+    .ai-rag-sidebar {
+        margin-bottom: 1.5rem;
     }
 }
 
 @media (max-width: 768px) {
+    .ai-rag-container {
+        padding: 1rem 0;
+    }
+    
     .ai-rag-header {
         padding: 1.5rem 0;
         margin-bottom: 1.5rem;
     }
     
-    .ai-rag-header h1 {
-        font-size: 1.75rem;
+    .ai-rag-title {
+        font-size: 1.5rem;
     }
     
-    .ai-rag-header .subtitle {
-        font-size: 1rem;
+    .ai-rag-title i {
+        font-size: 1.5rem;
     }
     
-    .ai-rag-container {
-        padding: 1rem 0;
+    .ai-rag-content {
+        margin-bottom: 1rem;
     }
     
-    .ai-rag-grid-2,
-    .ai-rag-grid-3,
-    .ai-rag-grid-4 {
-        grid-template-columns: 1fr;
+    .ai-rag-sidebar {
+        margin-bottom: 1rem;
     }
 }
 
@@ -137,9 +234,22 @@
     
     .ai-rag-header {
         padding: 1rem 0;
+        margin-bottom: 1rem;
     }
     
-    .ai-rag-chat-sidebar {
-        padding: 1rem;
+    .ai-rag-title {
+        font-size: 1.25rem;
+    }
+    
+    .ai-rag-subtitle {
+        font-size: 0.9rem;
+    }
+    
+    .ai-rag-content {
+        margin-bottom: 0.5rem;
+    }
+    
+    .ai-rag-sidebar {
+        margin-bottom: 0.5rem;
     }
 } 

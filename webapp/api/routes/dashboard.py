@@ -26,7 +26,7 @@ async def dashboard_home(request: Request):
             "name": "AASX ETL Pipeline",
             "description": "Process and transform AASX files with intelligent ETL",
             "icon": "fas fa-cogs",
-            "url": "/aasx"
+            "url": "/aasx-etl"
         },
         {
             "name": "Digital Twin Registry",
@@ -84,7 +84,7 @@ async def dashboard(request: Request):
             "name": "AASX ETL Pipeline",
             "description": "Process and transform AASX files with intelligent ETL",
             "icon": "fas fa-cogs",
-            "url": "/aasx"
+            "url": "/aasx-etl"
         },
         {
             "name": "Digital Twin Registry",
@@ -176,7 +176,7 @@ async def physics_modeling_page(request: Request):
     return templates.TemplateResponse("physics_modeling/index.html", {"request": request})
 
 
-@router.get("/aasx", response_class=HTMLResponse)
+@router.get("/aasx-etl", response_class=HTMLResponse)
 async def aasx_page(request: Request):
     """AASX page"""
     templates = get_templates()

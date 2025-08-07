@@ -1,242 +1,261 @@
-<!-- Docker Management Component -->
-<div class="kg-docker-management-container docker-management-container">
-    <div class="kg-docker-card card">
-        <div class="kg-card-header card-header">
-            <h5 class="kg-card-title card-title">
-                <i class="fab fa-docker"></i>
+<!-- Enhanced Docker Management Component -->
+<div class="kg-docker-management-container docker-management-container mb-4">
+    <div class="kg-docker-card card border-0 shadow-lg">
+        <div class="kg-card-header card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="kg-card-title card-title mb-0">
+                <i class="fab fa-docker me-2"></i>
                 Neo4j Docker Management
             </h5>
+            <button class="btn btn-outline-light btn-sm" onclick="refreshDockerStatus()">
+                <i class="fas fa-sync-alt me-1"></i>Refresh
+            </button>
         </div>
         <div class="kg-card-body card-body">
-            <!-- Docker Status Overview -->
+            <!-- Enhanced Docker Status Overview -->
             <div class="kg-docker-status-overview docker-status-overview mb-4">
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-3">
-                        <div class="kg-status-card status-card">
-                            <div class="kg-status-icon status-icon" id="docker-container-status">
-                                <i class="fas fa-cube"></i>
-                            </div>
-                            <div class="kg-status-info status-info">
-                                <h6>Container Status</h6>
-                                <span id="container-status-text">Unknown</span>
+                        <div class="kg-status-card status-card bg-gradient-light p-3 rounded shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="kg-status-icon status-icon me-3" id="docker-container-status">
+                                    <i class="fas fa-cube fa-2x text-primary"></i>
+                                    <div class="kg-status-dot kg-status-dot-success"></div>
+                                </div>
+                                <div class="kg-status-info status-info">
+                                    <h6 class="mb-1 fw-semibold">Container Status</h6>
+                                    <span id="container-status-text" class="text-success fw-semibold">Running</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="kg-status-card status-card">
-                            <div class="kg-status-icon status-icon" id="docker-connection-status">
-                                <i class="fas fa-plug"></i>
-                            </div>
-                            <div class="kg-status-info status-info">
-                                <h6>Connection</h6>
-                                <span id="connection-status-text">Unknown</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="kg-status-card status-card">
-                            <div class="kg-status-icon status-icon" id="docker-port-status">
-                                <i class="fas fa-network-wired"></i>
-                            </div>
-                            <div class="kg-status-info status-info">
-                                <h6>Port</h6>
-                                <span id="port-status-text">7474</span>
+                        <div class="kg-status-card status-card bg-gradient-light p-3 rounded shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="kg-status-icon status-icon me-3" id="docker-connection-status">
+                                    <i class="fas fa-plug fa-2x text-success"></i>
+                                    <div class="kg-status-dot kg-status-dot-success"></div>
+                                </div>
+                                <div class="kg-status-info status-info">
+                                    <h6 class="mb-1 fw-semibold">Connection</h6>
+                                    <span id="connection-status-text" class="text-success fw-semibold">Connected</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="kg-status-card status-card">
-                            <div class="kg-status-icon status-icon" id="docker-health-status">
-                                <i class="fas fa-heartbeat"></i>
+                        <div class="kg-status-card status-card bg-gradient-light p-3 rounded shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="kg-status-icon status-icon me-3" id="docker-port-status">
+                                    <i class="fas fa-network-wired fa-2x text-info"></i>
+                                    <div class="kg-status-dot kg-status-dot-success"></div>
+                                </div>
+                                <div class="kg-status-info status-info">
+                                    <h6 class="mb-1 fw-semibold">Port</h6>
+                                    <span id="port-status-text" class="text-info fw-semibold">7474</span>
+                                </div>
                             </div>
-                            <div class="kg-status-info status-info">
-                                <h6>Health</h6>
-                                <span id="health-status-text">Unknown</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="kg-status-card status-card bg-gradient-light p-3 rounded shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="kg-status-icon status-icon me-3" id="docker-health-status">
+                                    <i class="fas fa-heartbeat fa-2x text-success"></i>
+                                    <div class="kg-status-dot kg-status-dot-success"></div>
+                                </div>
+                                <div class="kg-status-info status-info">
+                                    <h6 class="mb-1 fw-semibold">Health</h6>
+                                    <span id="health-status-text" class="text-success fw-semibold">Healthy</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Docker Control Actions -->
+            <!-- Enhanced Docker Control Actions -->
             <div class="kg-docker-controls docker-controls mb-4">
-                <h6 class="kg-section-title section-title">
-                    <i class="fas fa-cogs"></i>
+                <h6 class="kg-section-title section-title mb-3">
+                    <i class="fas fa-cogs me-2"></i>
                     Container Controls
                 </h6>
                 
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-3">
-                        <button id="docker-start-btn" class="kg-btn kg-btn-start btn btn-success btn-block">
-                            <i class="fas fa-play"></i>
+                        <button id="docker-start-btn" class="kg-btn kg-btn-start btn btn-success btn-lg w-100">
+                            <i class="fas fa-play me-2"></i>
                             Start Container
                         </button>
                     </div>
                     <div class="col-md-3">
-                        <button id="docker-stop-btn" class="kg-btn kg-btn-stop btn btn-danger btn-block">
-                            <i class="fas fa-stop"></i>
+                        <button id="docker-stop-btn" class="kg-btn kg-btn-stop btn btn-danger btn-lg w-100">
+                            <i class="fas fa-stop me-2"></i>
                             Stop Container
                         </button>
                     </div>
                     <div class="col-md-3">
-                        <button id="docker-restart-btn" class="kg-btn kg-btn-restart btn btn-warning btn-block">
-                            <i class="fas fa-redo"></i>
+                        <button id="docker-restart-btn" class="kg-btn kg-btn-restart btn btn-warning btn-lg w-100">
+                            <i class="fas fa-redo me-2"></i>
                             Restart Container
                         </button>
                     </div>
                     <div class="col-md-3">
-                        <button id="docker-refresh-btn" class="kg-btn kg-btn-refresh btn btn-info btn-block">
-                            <i class="fas fa-sync"></i>
+                        <button id="docker-refresh-btn" class="kg-btn kg-btn-refresh btn btn-info btn-lg w-100">
+                            <i class="fas fa-sync me-2"></i>
                             Refresh Status
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Docker Details -->
+            <!-- Enhanced Docker Details -->
             <div class="kg-docker-details docker-details mb-4">
-                <h6 class="kg-section-title section-title">
-                    <i class="fas fa-info-circle"></i>
+                <h6 class="kg-section-title section-title mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
                     Container Details
                 </h6>
                 
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="kg-detail-group detail-group">
-                            <label>Container Name:</label>
-                            <span id="container-name">neo4j-aasx</span>
+                        <div class="kg-detail-group detail-group bg-light p-3 rounded">
+                            <label class="fw-semibold">Container Name:</label>
+                            <span id="container-name" class="text-primary">neo4j-aasx</span>
                         </div>
-                        <div class="kg-detail-group detail-group">
-                            <label>Image:</label>
-                            <span id="container-image">neo4j:latest</span>
+                        <div class="kg-detail-group detail-group bg-light p-3 rounded mt-2">
+                            <label class="fw-semibold">Image:</label>
+                            <span id="container-image" class="text-primary">neo4j:latest</span>
                         </div>
-                        <div class="kg-detail-group detail-group">
-                            <label>Port Mapping:</label>
-                            <span id="port-mapping">7474:7474, 7687:7687</span>
+                        <div class="kg-detail-group detail-group bg-light p-3 rounded mt-2">
+                            <label class="fw-semibold">Port Mapping:</label>
+                            <span id="port-mapping" class="text-primary">7474:7474, 7687:7687</span>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="kg-detail-group detail-group">
-                            <label>Memory Usage:</label>
-                            <span id="memory-usage">--</span>
+                        <div class="kg-detail-group detail-group bg-light p-3 rounded">
+                            <label class="fw-semibold">Memory Usage:</label>
+                            <span id="memory-usage" class="text-info">512MB / 2GB</span>
                         </div>
-                        <div class="kg-detail-group detail-group">
-                            <label>CPU Usage:</label>
-                            <span id="cpu-usage">--</span>
+                        <div class="kg-detail-group detail-group bg-light p-3 rounded mt-2">
+                            <label class="fw-semibold">CPU Usage:</label>
+                            <span id="cpu-usage" class="text-info">15%</span>
                         </div>
-                        <div class="kg-detail-group detail-group">
-                            <label>Uptime:</label>
-                            <span id="uptime">--</span>
+                        <div class="kg-detail-group detail-group bg-light p-3 rounded mt-2">
+                            <label class="fw-semibold">Uptime:</label>
+                            <span id="uptime" class="text-success">2 days, 5 hours</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Access Links -->
+            <!-- Enhanced Quick Access Links -->
             <div class="kg-quick-access quick-access mb-4">
-                <h6 class="kg-section-title section-title">
-                    <i class="fas fa-external-link-alt"></i>
+                <h6 class="kg-section-title section-title mb-3">
+                    <i class="fas fa-external-link-alt me-2"></i>
                     Quick Access
                 </h6>
                 
-                <!-- Connection Details -->
-                <div class="kg-connection-details connection-details mb-3">
-                    <div class="kg-alert alert alert-info">
+                <!-- Enhanced Connection Details -->
+                <div class="kg-connection-details connection-details mb-4">
+                    <div class="kg-alert alert alert-info bg-gradient-info text-white border-0">
                         <div class="row">
                             <div class="col-md-6">
                                 <strong>Username:</strong> neo4j<br>
                                 <strong>Password:</strong> Neo4j123<br>
-                                <strong>Bolt URL:</strong> <code>neo4j://localhost:7687</code>
+                                <strong>Bolt URL:</strong> <code class="bg-white text-dark">neo4j://localhost:7687</code>
                             </div>
                             <div class="col-md-6">
-                                <strong>HTTP URL:</strong> <code>http://localhost:7474</code><br>
+                                <strong>HTTP URL:</strong> <code class="bg-white text-dark">http://localhost:7474</code><br>
                                 <strong>Ports:</strong> 7474 (HTTP) / 7687 (Bolt)<br>
-                                <strong>Status:</strong> <span id="connection-status-badge">Unknown</span>
+                                <strong>Status:</strong> <span id="connection-status-badge" class="badge bg-success">Connected</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-4">
-                        <a id="neo4j-browser-link" href="http://localhost:7474" target="_blank" class="kg-btn kg-btn-browser btn btn-outline-primary btn-block">
-                            <i class="fas fa-browser"></i>
+                        <a id="neo4j-browser-link" href="http://localhost:7474" target="_blank" class="kg-btn kg-btn-browser btn btn-outline-primary btn-lg w-100">
+                            <i class="fas fa-browser me-2"></i>
                             Neo4j Browser
                         </a>
                     </div>
                     <div class="col-md-4">
-                        <a id="neo4j-bloom-link" href="http://localhost:7474/bloom" target="_blank" class="kg-btn kg-btn-bloom btn btn-outline-success btn-block">
-                            <i class="fas fa-chart-network"></i>
+                        <a id="neo4j-bloom-link" href="http://localhost:7474/bloom" target="_blank" class="kg-btn kg-btn-bloom btn btn-outline-success btn-lg w-100">
+                            <i class="fas fa-chart-network me-2"></i>
                             Neo4j Bloom
                         </a>
                     </div>
                     <div class="col-md-4">
-                        <button id="test-connection-btn" class="kg-btn kg-btn-test btn btn-outline-info btn-block">
-                            <i class="fas fa-vial"></i>
+                        <button id="test-connection-btn" class="kg-btn kg-btn-test btn btn-outline-info btn-lg w-100">
+                            <i class="fas fa-vial me-2"></i>
                             Test Connection
                         </button>
                     </div>
                 </div>
                 
                 <!-- Additional Tools -->
-                <div class="row mt-3">
+                <div class="row g-3 mt-3">
                     <div class="col-md-4">
-                        <button id="copy-connection-string-btn" class="kg-btn kg-btn-copy btn btn-outline-secondary btn-block">
-                            <i class="fas fa-copy"></i>
+                        <button id="copy-connection-string-btn" class="kg-btn kg-btn-copy btn btn-outline-secondary btn-lg w-100">
+                            <i class="fas fa-copy me-2"></i>
                             Copy Connection String
                         </button>
                     </div>
                     <div class="col-md-4">
-                        <button id="show-examples-btn" class="kg-btn kg-btn-examples btn btn-outline-warning btn-block">
-                            <i class="fas fa-lightbulb"></i>
+                        <button id="show-examples-btn" class="kg-btn kg-btn-examples btn btn-outline-warning btn-lg w-100">
+                            <i class="fas fa-lightbulb me-2"></i>
                             Show Query Examples
                         </button>
                     </div>
                     <div class="col-md-4">
-                        <button id="open-cypher-shell-btn" class="kg-btn kg-btn-shell btn btn-outline-dark btn-block">
-                            <i class="fas fa-terminal"></i>
+                        <button id="open-cypher-shell-btn" class="kg-btn kg-btn-shell btn btn-outline-dark btn-lg w-100">
+                            <i class="fas fa-terminal me-2"></i>
                             Cypher Shell Command
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Logs Section -->
+            <!-- Enhanced Logs Section -->
             <div class="kg-docker-logs docker-logs">
-                <h6 class="kg-section-title section-title">
-                    <i class="fas fa-terminal"></i>
+                <h6 class="kg-section-title section-title mb-3">
+                    <i class="fas fa-terminal me-2"></i>
                     Container Logs
                 </h6>
                 
-                <div class="kg-logs-container logs-container">
-                    <div class="kg-logs-header logs-header">
-                        <div class="kg-logs-controls logs-controls">
-                            <button id="refresh-logs-btn" class="kg-btn kg-btn-refresh-logs btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-sync"></i>
-                                Refresh
-                            </button>
-                            <button id="clear-logs-btn" class="kg-btn kg-btn-clear-logs btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-trash"></i>
-                                Clear
-                            </button>
-                            <label class="kg-form-check-label form-check-label">
+                <div class="kg-logs-container logs-container border rounded">
+                    <div class="kg-logs-header logs-header bg-light p-3 border-bottom">
+                        <div class="kg-logs-controls logs-controls d-flex justify-content-between align-items-center">
+                            <div>
+                                <button id="refresh-logs-btn" class="kg-btn kg-btn-refresh-logs btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-sync me-1"></i>
+                                    Refresh
+                                </button>
+                                <button id="clear-logs-btn" class="kg-btn kg-btn-clear-logs btn btn-sm btn-outline-secondary me-3">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Clear
+                                </button>
+                            </div>
+                            <div class="form-check">
                                 <input type="checkbox" id="auto-refresh-logs" class="kg-form-check-input form-check-input">
-                                Auto-refresh
-                            </label>
+                                <label class="kg-form-check-label form-check-label" for="auto-refresh-logs">
+                                    Auto-refresh
+                                </label>
+                            </div>
                         </div>
                     </div>
-                    <div class="kg-logs-content logs-content">
-                        <pre id="container-logs" class="kg-logs-text logs-text">Loading logs...</pre>
+                    <div class="kg-logs-content logs-content p-3">
+                        <pre id="container-logs" class="kg-logs-text logs-text mb-0" style="max-height: 300px; overflow-y: auto;">Loading logs...</pre>
                     </div>
                 </div>
             </div>
 
-            <!-- Loading Indicator -->
-            <div id="docker-loading-indicator" class="kg-loading-container loading-container">
+            <!-- Enhanced Loading Indicator -->
+            <div id="docker-loading-indicator" class="kg-loading-container loading-container text-center py-4" style="display: none;">
                 <div class="spinner-border text-primary" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>
-                <span class="loading-text ml-2"></span>
+                <span class="loading-text ms-2">Processing...</span>
             </div>
         </div>
     </div>

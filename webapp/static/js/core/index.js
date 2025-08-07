@@ -4,11 +4,11 @@
  */
 
 // Import core components
-import { AppInitializer } from './initialization.js';
-import { NavigationManager } from './navigation.js';
-import { AutoRefreshManager } from './auto-refresh.js';
-import { FormValidator } from './form-validation.js';
-import { ErrorHandler } from './error-handling.js';
+import { AppInitializer } from './components/initialization.js';
+import { NavigationManager } from './components/navigation.js';
+import { AutoRefreshManager } from './components/auto-refresh.js';
+import { FormValidator } from './components/form-validation.js';
+import { ErrorHandler } from './components/error-handling.js';
 import { APIClient } from './api/client.js';
 import { UIHelper } from './ui/helper.js';
 
@@ -148,11 +148,20 @@ class CoreModule {
 const coreModule = new CoreModule();
 
 // Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
+function initializeCore() {
     coreModule.init().catch(error => {
         console.error('Failed to initialize core module:', error);
+        // Don't throw the error to prevent blocking other modules
     });
-});
+}
+
+// Try to initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeCore);
+} else {
+    // DOM is already ready
+    initializeCore();
+}
 
 // Export for module usage
 export default coreModule;

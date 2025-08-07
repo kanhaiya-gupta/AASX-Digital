@@ -1,48 +1,184 @@
 <!-- Performance Monitoring Component -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">
-            <i class="fas fa-tachometer-alt me-2"></i>Advanced Performance Monitoring
-        </h5>
-    </div>
-    <div class="card-body">
-        <!-- Performance Charts -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <h6>Resource Usage by Twin</h6>
-                <div class="chart-container medium">
-                    <canvas id="resourceUsageChart"></canvas>
+<div class="tr-performance-monitoring">
+    <!-- Performance Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-performance-card tr-performance-cpu">
+                <div class="tr-performance-content">
+                    <div class="tr-performance-info">
+                        <div class="tr-performance-value" id="avgCpuUsage">0%</div>
+                        <div class="tr-performance-label">CPU Usage</div>
+                        <div class="tr-performance-trend tr-trend-down">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-2.1%</span>
+                        </div>
+                    </div>
+                    <div class="tr-performance-icon">
+                        <i class="fas fa-microchip"></i>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <h6>Twin Health Distribution</h6>
-                <div class="chart-container medium">
-                    <canvas id="twinHealthDistributionChart"></canvas>
+                <div class="tr-performance-progress">
+                    <div class="tr-progress-bar" style="width: 45%"></div>
                 </div>
             </div>
         </div>
         
-        <!-- Performance Alerts -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-performance-card tr-performance-memory">
+                <div class="tr-performance-content">
+                    <div class="tr-performance-info">
+                        <div class="tr-performance-value" id="avgMemoryUsage">0%</div>
+                        <div class="tr-performance-label">Memory Usage</div>
+                        <div class="tr-performance-trend tr-trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+1.3%</span>
+                        </div>
+                    </div>
+                    <div class="tr-performance-icon">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                </div>
+                <div class="tr-performance-progress">
+                    <div class="tr-progress-bar" style="width: 62%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-performance-card tr-performance-network">
+                <div class="tr-performance-content">
+                    <div class="tr-performance-info">
+                        <div class="tr-performance-value" id="avgNetworkLatency">0ms</div>
+                        <div class="tr-performance-label">Network Latency</div>
+                        <div class="tr-performance-trend tr-trend-down">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-5.2ms</span>
+                        </div>
+                    </div>
+                    <div class="tr-performance-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                </div>
+                <div class="tr-performance-progress">
+                    <div class="tr-progress-bar" style="width: 28%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-performance-card tr-performance-storage">
+                <div class="tr-performance-content">
+                    <div class="tr-performance-info">
+                        <div class="tr-performance-value" id="avgStorageUsage">0%</div>
+                        <div class="tr-performance-label">Storage Usage</div>
+                        <div class="tr-performance-trend tr-trend-up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+0.8%</span>
+                        </div>
+                    </div>
+                    <div class="tr-performance-icon">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                </div>
+                <div class="tr-performance-progress">
+                    <div class="tr-progress-bar" style="width: 73%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts Section -->
+    <div class="tr-performance-charts">
         <div class="row mb-4">
-            <div class="col-12">
-                <h6>Performance Alerts & Notifications</h6>
-                <div id="performanceAlertsContainer">
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle me-2"></i>
-                        No Active Alerts - All twins are performing within normal parameters
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar"></i>
+                            Resource Usage by Twin
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Live
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
+                            <canvas id="resourceUsageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-pie"></i>
+                            Twin Health Distribution
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Real-time
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
+                            <canvas id="twinHealthDistributionChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Individual Twin Performance -->
-        <div class="row">
-            <div class="col-12">
-                <h6>Individual Twin Performance</h6>
-                <div id="individualTwinPerformance" class="row">
-                    <!-- Individual twin performance cards will be populated here -->
-                </div>
+    </div>
+
+    <!-- Performance Alerts Section -->
+    <div class="tr-performance-alerts">
+        <div class="tr-section-header">
+            <h6 class="tr-section-title">
+                <i class="fas fa-exclamation-triangle"></i>
+                Performance Alerts & Notifications
+            </h6>
+            <div class="tr-alert-count">
+                <span id="performanceAlertCount">0</span> active alerts
             </div>
+        </div>
+        
+        <div class="tr-alerts-container" id="performanceAlertsContainer">
+            <div class="tr-alert tr-alert-success">
+                <div class="tr-alert-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="tr-alert-content">
+                    <div class="tr-alert-title">All Systems Optimal</div>
+                    <div class="tr-alert-message">No Active Alerts - All twins are performing within normal parameters</div>
+                </div>
+                <div class="tr-alert-time">Just now</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Individual Twin Performance -->
+    <div class="tr-individual-performance">
+        <div class="tr-section-header">
+            <h6 class="tr-section-title">
+                <i class="fas fa-list"></i>
+                Individual Twin Performance
+            </h6>
+            <div class="tr-section-actions">
+                <button class="tr-btn tr-btn-refresh" id="refreshPerformanceBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+                <button class="tr-btn tr-btn-primary" id="exportPerformanceBtn">
+                    <i class="fas fa-download"></i>
+                    Export Report
+                </button>
+            </div>
+        </div>
+        
+        <div class="tr-performance-grid" id="individualTwinPerformance">
+            <!-- Individual twin performance cards will be populated here -->
         </div>
     </div>
 </div> 

@@ -1,0 +1,491 @@
+<!-- Enhanced Analysis Component -->
+<div class="pm-analysis">
+    <!-- Analysis Overview -->
+    <div class="pm-analysis-overview row mb-4">
+        <div class="col-12">
+            <div class="pm-overview-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-microscope me-2"></i>Advanced Analysis Platform
+                        </h5>
+                        <div class="pm-header-actions">
+                            <button class="pm-btn pm-btn-refresh btn btn-outline-light btn-sm me-2" onclick="refreshAnalysis()">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                            <button class="pm-btn pm-btn-export btn btn-outline-light btn-sm" onclick="exportAnalysis()">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-analysis-stats row g-4">
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                                <h3 class="text-primary mb-2 fw-bold">156</h3>
+                                <p class="text-muted mb-0 fw-semibold">Analyses Run</p>
+                                <small class="text-success">+23 this week</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-clock fa-3x text-success mb-3"></i>
+                                <h3 class="text-success mb-2 fw-bold">2.4s</h3>
+                                <p class="text-muted mb-0 fw-semibold">Avg. Runtime</p>
+                                <small class="text-success">-15% faster</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-bullseye fa-3x text-info mb-3"></i>
+                                <h3 class="text-info mb-2 fw-bold">98.7%</h3>
+                                <p class="text-muted mb-0 fw-semibold">Accuracy</p>
+                                <small class="text-info">High precision</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-stat-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                <h3 class="text-warning mb-2 fw-bold">3</h3>
+                                <p class="text-muted mb-0 fw-semibold">Warnings</p>
+                                <small class="text-warning">Minor issues</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Configuration -->
+    <div class="pm-analysis-config row mb-4">
+        <div class="col-12">
+            <div class="pm-config-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-info text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>Analysis Configuration
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="pm-control-group">
+                                <label class="form-label fw-bold text-primary">
+                                    <i class="fas fa-filter me-2"></i>Analysis Type
+                                </label>
+                                <select class="form-select pm-form-select" id="analysis-type">
+                                    <option value="statistical">Statistical Analysis</option>
+                                    <option value="sensitivity">Sensitivity Analysis</option>
+                                    <option value="uncertainty">Uncertainty Quantification</option>
+                                    <option value="optimization">Optimization</option>
+                                    <option value="validation">Model Validation</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pm-control-group">
+                                <label class="form-label fw-bold text-success">
+                                    <i class="fas fa-chart-bar me-2"></i>Metrics
+                                </label>
+                                <select class="form-select pm-form-select" id="analysis-metrics" multiple>
+                                    <option value="temperature">Temperature</option>
+                                    <option value="pressure">Pressure</option>
+                                    <option value="velocity">Velocity</option>
+                                    <option value="stress">Stress</option>
+                                    <option value="strain">Strain</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="pm-control-group">
+                                <label class="form-label fw-bold text-info">
+                                    <i class="fas fa-sliders-h me-2"></i>Parameters
+                                </label>
+                                <input type="text" class="form-control pm-form-control" id="analysis-parameters" 
+                                       placeholder="Enter analysis parameters (JSON)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button class="pm-btn pm-btn-primary btn btn-primary btn-lg" onclick="runAnalysis()">
+                            <i class="fas fa-play me-2"></i>Run Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistical Analysis Results -->
+    <div class="pm-statistical-analysis row mb-4">
+        <div class="col-lg-8">
+            <div class="pm-chart-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-success text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Statistical Analysis Results
+                        </h5>
+                        <div class="pm-chart-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="updateChart()" title="Update">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="exportChart()" title="Export">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-chart-container" style="height: 400px;">
+                        <canvas id="analysis-chart" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="pm-summary-card card border-0 shadow-lg h-100">
+                <div class="pm-card-header card-header bg-gradient-warning text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Statistical Summary
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-summary-content">
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-primary fw-bold">Mean Values</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Temperature:</small>
+                                    <p class="mb-0 fw-bold">245.6°C</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Pressure:</small>
+                                    <p class="mb-0 fw-bold">125.8 kPa</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-success fw-bold">Standard Deviation</h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <small class="text-muted">Temperature:</small>
+                                    <p class="mb-0 fw-bold">±12.3°C</p>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Pressure:</small>
+                                    <p class="mb-0 fw-bold">±8.7 kPa</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pm-summary-item mb-3">
+                            <h6 class="text-info fw-bold">Confidence Interval</h6>
+                            <p class="text-muted mb-0">95% CI: [231.2°C, 260.1°C]</p>
+                        </div>
+                        <div class="pm-summary-item">
+                            <h6 class="text-warning fw-bold">Correlation</h6>
+                            <p class="text-muted mb-0">r = 0.87 (Strong positive)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sensitivity Analysis -->
+    <div class="pm-sensitivity-analysis row mb-4">
+        <div class="col-lg-8">
+            <div class="pm-radar-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-danger text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="pm-card-title mb-0">
+                            <i class="fas fa-radar me-2"></i>Sensitivity Analysis
+                        </h5>
+                        <div class="pm-radar-controls">
+                            <button class="btn btn-outline-light btn-sm me-2" onclick="updateRadar()" title="Update">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="exportRadar()" title="Export">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-radar-container" style="height: 400px;">
+                        <canvas id="sensitivity-radar" width="800" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="pm-sensitivity-card card border-0 shadow-lg h-100">
+                <div class="pm-card-header card-header bg-gradient-secondary text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-sort-amount-up me-2"></i>Parameter Sensitivity Ranking
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="pm-sensitivity-ranking">
+                        <div class="pm-ranking-item mb-3 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-primary">Temperature</h6>
+                                    <small class="text-muted">Thermal conductivity</small>
+                                </div>
+                                <span class="badge bg-primary fs-6">0.92</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="width: 92%"></div>
+                            </div>
+                        </div>
+                        <div class="pm-ranking-item mb-3 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-success">Pressure</h6>
+                                    <small class="text-muted">Boundary conditions</small>
+                                </div>
+                                <span class="badge bg-success fs-6">0.78</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-success" style="width: 78%"></div>
+                            </div>
+                        </div>
+                        <div class="pm-ranking-item mb-3 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-info">Velocity</h6>
+                                    <small class="text-muted">Flow rate</small>
+                                </div>
+                                <span class="badge bg-info fs-6">0.65</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-info" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        <div class="pm-ranking-item mb-3 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-warning">Material</h6>
+                                    <small class="text-muted">Properties</small>
+                                </div>
+                                <span class="badge bg-warning fs-6">0.45</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-warning" style="width: 45%"></div>
+                            </div>
+                        </div>
+                        <div class="pm-ranking-item p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-secondary">Geometry</h6>
+                                    <small class="text-muted">Mesh density</small>
+                                </div>
+                                <span class="badge bg-secondary fs-6">0.32</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-secondary" style="width: 32%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="pm-performance-metrics row">
+        <div class="col-12">
+            <div class="pm-metrics-card card border-0 shadow-lg">
+                <div class="pm-card-header card-header bg-gradient-dark text-white py-3">
+                    <h5 class="pm-card-title mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>Performance Metrics
+                    </h5>
+                </div>
+                <div class="pm-card-body card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="pm-metric-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-stopwatch fa-3x text-primary mb-3"></i>
+                                <h4 class="text-primary mb-2 fw-bold">2.4s</h4>
+                                <p class="text-muted mb-0 fw-semibold">Execution Time</p>
+                                <small class="text-success">-15% faster</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-metric-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-memory fa-3x text-success mb-3"></i>
+                                <h4 class="text-success mb-2 fw-bold">1.2GB</h4>
+                                <p class="text-muted mb-0 fw-semibold">Memory Usage</p>
+                                <small class="text-success">Optimal</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-metric-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-microchip fa-3x text-info mb-3"></i>
+                                <h4 class="text-info mb-2 fw-bold">78%</h4>
+                                <p class="text-muted mb-0 fw-semibold">CPU Utilization</p>
+                                <small class="text-info">Efficient</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pm-metric-card text-center p-4 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-bullseye fa-3x text-warning mb-3"></i>
+                                <h4 class="text-warning mb-2 fw-bold">98.7%</h4>
+                                <p class="text-muted mb-0 fw-semibold">Accuracy</p>
+                                <small class="text-warning">High precision</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize Analysis Charts
+function initializeAnalysisCharts() {
+    // Bar chart for statistical analysis
+    const ctxBar = document.getElementById('analysis-chart').getContext('2d');
+    const barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: ['Temperature', 'Pressure', 'Velocity', 'Stress', 'Strain'],
+            datasets: [{
+                label: 'Mean Values',
+                data: [245.6, 125.8, 15.3, 89.2, 0.045],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 205, 86, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Statistical Analysis Results'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Radar chart for sensitivity analysis
+    const ctxRadar = document.getElementById('sensitivity-radar').getContext('2d');
+    const radarChart = new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: ['Temperature', 'Pressure', 'Velocity', 'Material', 'Geometry'],
+            datasets: [{
+                label: 'Sensitivity Index',
+                data: [0.92, 0.78, 0.65, 0.45, 0.32],
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Parameter Sensitivity Analysis'
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: {
+                        stepSize: 0.2
+                    }
+                }
+            }
+        }
+    });
+
+    return { barChart, radarChart };
+}
+
+function refreshAnalysis() {
+    console.log('🔄 Refreshing analysis...');
+    // Trigger refresh event
+    document.dispatchEvent(new CustomEvent('analysisRefresh'));
+}
+
+function exportAnalysis() {
+    console.log('📊 Exporting analysis...');
+    // Trigger export event
+    document.dispatchEvent(new CustomEvent('analysisExport'));
+}
+
+function runAnalysis() {
+    console.log('🚀 Running analysis...');
+    const analysisType = document.getElementById('analysis-type').value;
+    const metrics = Array.from(document.getElementById('analysis-metrics').selectedOptions).map(option => option.value);
+    const parameters = document.getElementById('analysis-parameters').value;
+    
+    console.log('Analysis Type:', analysisType);
+    console.log('Metrics:', metrics);
+    console.log('Parameters:', parameters);
+    
+    // Trigger analysis event
+    document.dispatchEvent(new CustomEvent('runAnalysis', {
+        detail: {
+            type: analysisType,
+            metrics: metrics,
+            parameters: parameters
+        }
+    }));
+}
+
+function updateChart() {
+    console.log('📈 Updating chart...');
+    // Implement chart update functionality
+}
+
+function exportChart() {
+    console.log('📊 Exporting chart...');
+    // Implement chart export functionality
+}
+
+function updateRadar() {
+    console.log('📊 Updating radar chart...');
+    // Implement radar chart update functionality
+}
+
+function exportRadar() {
+    console.log('📊 Exporting radar chart...');
+    // Implement radar chart export functionality
+}
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAnalysisCharts();
+});
+</script> 

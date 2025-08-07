@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}AASX Data Management & Processing{% endblock %}
+{% block title %}AASX Digital Twin Data Hub{% endblock %}
 
 {% block extra_css %}
 <link href="{{ url_for('static', path='/css/aasx.css') }}" rel="stylesheet">
@@ -8,51 +8,189 @@
 
 {% block content %}
 <div class="aasx-container container-fluid">
-    <!-- Header -->
-    <div class="aasx-header row mb-4">
-        <div class="col-12">
-            <div class="aasx-header-content d-flex justify-content-between align-items-center">
-                <div class="aasx-header-info">
-                    <h1 class="aasx-title h3 mb-0">
-                        <i class="fas fa-cube text-primary me-2"></i>
-                        AASX Data Management & Processing
-                    </h1>
-                    <p class="aasx-subtitle text-muted mb-0">Comprehensive AASX file management, processing, and analysis platform</p>
+    <!-- Premium Header -->
+    <div class="aasx-header-section">
+        <div class="aasx-header-background"></div>
+        <div class="aasx-header-content">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="aasx-header-info">
+                        <div class="aasx-title-section">
+                            <h1 class="aasx-main-title">
+                                <i class="fas fa-cube aasx-title-icon"></i>
+                                AASX Digital Twin Data Hub
+                            </h1>
+                            <p class="aasx-subtitle">Enterprise-grade digital twin data management, processing, and analytics platform</p>
+                        </div>
+                        <div class="aasx-status-indicators">
+                            <div class="aasx-status-item">
+                                <span class="aasx-status-dot aasx-status-active"></span>
+                                <span class="aasx-status-text">System Online</span>
+                            </div>
+                            <div class="aasx-status-item">
+                                <span class="aasx-status-dot aasx-status-processing"></span>
+                                <span class="aasx-status-text">ETL Ready</span>
+                            </div>
+                            <div class="aasx-status-item">
+                                <span class="aasx-status-dot aasx-status-ready"></span>
+                                <span class="aasx-status-text">AI/RAG Connected</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="aasx-header-actions d-flex gap-2">
-                    <button class="aasx-btn aasx-btn-refresh btn btn-outline-primary" id="refreshBtn">
-                        <i class="fas fa-sync-alt me-1"></i>Refresh
-                    </button>
-                    <button class="aasx-btn aasx-btn-primary btn btn-primary" id="headerCreateProjectBtn" data-bs-toggle="modal" data-bs-target="#projectCreationModal">
-                        <i class="fas fa-plus me-1"></i>New Project
-                    </button>
+                <div class="col-lg-4">
+                    <div class="aasx-header-actions">
+                        <div class="aasx-action-group">
+                            <button class="aasx-btn aasx-btn-premium aasx-btn-refresh" id="refreshBtn" title="Refresh Data">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Refresh</span>
+                            </button>
+                            <button class="aasx-btn aasx-btn-primary aasx-btn-create" id="headerCreateProjectBtn" data-bs-toggle="modal" data-bs-target="#projectCreationModal" title="Create New Project">
+                                <i class="fas fa-plus"></i>
+                                <span>New Project</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="aasx-main-content row">
-        <!-- Left Column - Data Management -->
-        <div class="aasx-content-left col-lg-8">
-            <!-- Include Data Management Component -->
-            {% include 'aasx/components/data_management.html' %}
-            
-            <!-- File Upload Section -->
-            {% include 'aasx/components/file_upload.html' %}
-            
-            <!-- Processing Pipeline -->
-            {% include 'aasx/components/etl_pipeline.html' %}
-        </div>
+    <!-- Unified Dashboard Header -->
+    <div class="aasx-dashboard-header">
+        <div class="aasx-dashboard-stats">
+            <div class="row g-3">
+                <!-- Total Projects -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="aasx-dashboard-stat">
+                        <div class="aasx-dashboard-stat-icon">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <div class="aasx-dashboard-stat-content">
+                            <div class="aasx-dashboard-stat-number" id="dashboardTotalProjects">0</div>
+                            <div class="aasx-dashboard-stat-label">Total Projects</div>
+                            <div class="aasx-dashboard-stat-trend aasx-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12% this month</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-        <!-- Right Column - Sidebar -->
-        <div class="aasx-sidebar col-lg-4">
-            {% include 'aasx/components/sidebar.html' %}
+                <!-- Total Files -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="aasx-dashboard-stat">
+                        <div class="aasx-dashboard-stat-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="aasx-dashboard-stat-content">
+                            <div class="aasx-dashboard-stat-number" id="dashboardTotalFiles">0</div>
+                            <div class="aasx-dashboard-stat-label">Total Files</div>
+                            <div class="aasx-dashboard-stat-trend aasx-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8% this week</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Processed Files -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="aasx-dashboard-stat">
+                        <div class="aasx-dashboard-stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="aasx-dashboard-stat-content">
+                            <div class="aasx-dashboard-stat-number" id="dashboardProcessedFiles">0</div>
+                            <div class="aasx-dashboard-stat-label">Processed Files</div>
+                            <div class="aasx-dashboard-stat-trend aasx-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+15% today</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Success Rate -->
+                <div class="col-lg-3 col-md-6">
+                    <div class="aasx-dashboard-stat">
+                        <div class="aasx-dashboard-stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="aasx-dashboard-stat-content">
+                            <div class="aasx-dashboard-stat-number" id="dashboardSuccessRate">98%</div>
+                            <div class="aasx-dashboard-stat-label">Success Rate</div>
+                            <div class="aasx-dashboard-stat-trend aasx-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2% this month</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Tab Navigation -->
+    <div class="aasx-tab-navigation">
+        <div class="aasx-tab-container">
+            <div class="aasx-tab-list" role="tablist">
+                <button class="aasx-tab-link active" id="data-management-tab" data-bs-toggle="tab" data-bs-target="#data-management" type="button" role="tab">
+                    <i class="fas fa-database"></i>
+                    <span>Data Management</span>
+                </button>
+                <button class="aasx-tab-link" id="file-upload-tab" data-bs-toggle="tab" data-bs-target="#file-upload" type="button" role="tab">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>File Upload</span>
+                </button>
+                <button class="aasx-tab-link" id="etl-pipeline-tab" data-bs-toggle="tab" data-bs-target="#etl-pipeline" type="button" role="tab">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>ETL Pipeline</span>
+                </button>
+                <button class="aasx-tab-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </button>
+                <button class="aasx-tab-link" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">
+                    <i class="fas fa-cogs"></i>
+                    <span>System</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content with Full Width Tab Layout -->
+    <div class="aasx-main-content">
+        <div class="tab-content" id="aasxTabContent">
+            <!-- Data Management Tab -->
+            <div class="tab-pane fade show active" id="data-management" role="tabpanel" aria-labelledby="data-management-tab">
+                {% include 'aasx/tabs/data_management.html' %}
+            </div>
+
+            <!-- File Upload Tab -->
+            <div class="tab-pane fade" id="file-upload" role="tabpanel" aria-labelledby="file-upload-tab">
+                {% include 'aasx/tabs/file_upload.html' %}
+            </div>
+
+            <!-- ETL Pipeline Tab -->
+            <div class="tab-pane fade" id="etl-pipeline" role="tabpanel" aria-labelledby="etl-pipeline-tab">
+                {% include 'aasx/tabs/etl_pipeline.html' %}
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-pane fade" id="analytics" role="tabpanel" aria-labelledby="analytics-tab">
+                {% include 'aasx/tabs/analytics.html' %}
+            </div>
+
+            <!-- System Tab -->
+            <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
+                {% include 'aasx/tabs/system.html' %}
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Modals -->
+<!-- Enhanced Modals -->
 {% include 'aasx/components/modals.html' %}
 
 {% endblock %}

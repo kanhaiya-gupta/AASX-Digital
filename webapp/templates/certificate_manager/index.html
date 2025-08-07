@@ -7,210 +7,286 @@
 {% endblock %}
 
 {% block content %}
-<div class="cm-certificate-manager certificate-manager">
-    <!-- Page Header -->
-    <div class="cm-page-header page-header">
-        <div class="cm-container container-fluid">
-            <h1 class="cm-title"><i class="fas fa-certificate"></i> Certificate Manager</h1>
-            <p class="cm-subtitle subtitle">Comprehensive Digital Certificates for AASX Digital Twin Analytics</p>
+<div class="cm-container container-fluid">
+    <!-- Enhanced Header -->
+    <div class="cm-header row">
+        <div class="col-12">
+            <div class="cm-header-content d-flex justify-content-between align-items-center">
+                <div class="cm-header-info">
+                    <h1 class="cm-title">
+                        <i class="fas fa-certificate"></i>
+                        Certificate Manager
+                    </h1>
+                    <p class="cm-subtitle">Comprehensive Digital Certificates for AASX Digital Twin Analytics</p>
+                </div>
+                <div class="cm-header-actions d-flex gap-2">
+                    <button class="cm-btn cm-btn-refresh" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt"></i>Refresh
+                    </button>
+                    <button class="cm-btn cm-btn-export" onclick="exportSelected()">
+                        <i class="fas fa-download"></i>Export
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="cm-container container-fluid">
-        <!-- Dashboard Overview Cards -->
-        <div class="cm-dashboard-cards dashboard-cards">
-            <div class="cm-stat-card stat-card total">
-                <div class="cm-stat-icon stat-icon">
-                    <i class="fas fa-certificate"></i>
+    <!-- Enhanced Dashboard Overview -->
+    <div class="cm-dashboard-overview row mb-4">
+        <div class="col-12">
+            <div class="cm-overview-card card border-0 shadow-lg">
+                <div class="cm-card-header card-header bg-gradient-primary text-white py-3">
+                    <h5 class="cm-card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Certificate Analytics Platform
+                    </h5>
                 </div>
-                <div class="cm-stat-number stat-number" id="total-certificates">0</div>
-                <div class="cm-stat-label stat-label">Total Certificates</div>
-                <div class="cm-stat-change stat-change">+12% this month</div>
-            </div>
-            
-            <div class="cm-stat-card stat-card active">
-                <div class="cm-stat-icon stat-icon">
-                    <i class="fas fa-check-circle"></i>
+                <div class="cm-card-body card-body p-4">
+                    <div class="cm-dashboard-stats row g-3">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="cm-stat-card text-center p-3 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-certificate fa-2x text-primary mb-2"></i>
+                                <h4 class="text-primary mb-1 fw-bold" id="total-certificates">0</h4>
+                                <p class="text-muted mb-0 fw-semibold small">Total Certificates</p>
+                                <small class="text-success">+12% this month</small>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="cm-stat-card text-center p-3 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h4 class="text-success mb-1 fw-bold" id="active-certificates">0</h4>
+                                <p class="text-muted mb-0 fw-semibold small">Active Certificates</p>
+                                <small class="text-success">+5% this week</small>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="cm-stat-card text-center p-3 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                <h4 class="text-warning mb-1 fw-bold" id="pending-certificates">0</h4>
+                                <p class="text-muted mb-0 fw-semibold small">Pending Certificates</p>
+                                <small class="text-warning">-3% today</small>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <div class="cm-stat-card text-center p-3 bg-gradient-light rounded shadow-sm">
+                                <i class="fas fa-download fa-2x text-info mb-2"></i>
+                                <h4 class="text-info mb-1 fw-bold" id="recent-exports">0</h4>
+                                <p class="text-muted mb-0 fw-semibold small">Recent Exports</p>
+                                <small class="text-info">+8% this month</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="cm-stat-number stat-number" id="active-certificates">0</div>
-                <div class="cm-stat-label stat-label">Active Certificates</div>
-                <div class="cm-stat-change stat-change">+5% this week</div>
-            </div>
-            
-            <div class="cm-stat-card stat-card pending">
-                <div class="cm-stat-icon stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="cm-stat-number stat-number" id="pending-certificates">0</div>
-                <div class="cm-stat-label stat-label">Pending Certificates</div>
-                <div class="cm-stat-change stat-change">-3% today</div>
-            </div>
-            
-            <div class="cm-stat-card stat-card completed">
-                <div class="cm-stat-icon stat-icon">
-                    <i class="fas fa-download"></i>
-                </div>
-                <div class="cm-stat-number stat-number" id="recent-exports">0</div>
-                <div class="cm-stat-label stat-label">Recent Exports</div>
-                <div class="cm-stat-change stat-change">+8% this month</div>
             </div>
         </div>
+    </div>
 
-        <!-- Dashboard Actions -->
-        <div class="cm-dashboard-actions dashboard-actions">
-            <div class="cm-left-actions left-actions">
-                <button class="cm-btn cm-btn-create btn btn-primary" onclick="createNewCertificate()">
-                    <i class="fas fa-plus"></i> Create New Certificate
-                </button>
-                <button class="cm-btn cm-btn-refresh btn btn-outline-secondary" onclick="refreshDashboard()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </div>
-            
-            <div class="cm-right-actions right-actions">
-                <div class="cm-search-container search-container">
-                    <i class="fas fa-search cm-search-icon search-icon"></i>
-                    <input type="text" class="cm-search-input form-control" id="search-certificates" placeholder="Search certificates...">
-                </div>
-                <div class="cm-btn-group btn-group">
-                    <button class="cm-btn cm-btn-filter btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">
-                        <i class="fas fa-filter"></i> Filter
-                    </button>
-                    <div class="cm-dropdown-menu dropdown-menu">
-                        <a class="cm-dropdown-item dropdown-item" href="#" onclick="filterByStatus('all')">All Status</a>
-                        <a class="cm-dropdown-item dropdown-item" href="#" onclick="filterByStatus('active')">Active</a>
-                        <a class="cm-dropdown-item dropdown-item" href="#" onclick="filterByStatus('pending')">Pending</a>
-                        <a class="cm-dropdown-item dropdown-item" href="#" onclick="filterByStatus('completed')">Completed</a>
+        <!-- Enhanced Certificate Management -->
+        <div class="cm-certificate-management row mb-4">
+            <div class="col-12">
+                <div class="cm-management-card card border-0 shadow-lg">
+                    <div class="cm-card-header card-header bg-gradient-success text-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="cm-card-title mb-0">
+                                <i class="fas fa-list me-2"></i>Certificate Management
+                            </h5>
+                            <div class="cm-header-actions">
+                                <button class="cm-btn cm-btn-create btn btn-outline-light btn-sm me-2" onclick="createNewCertificate()">
+                                    <i class="fas fa-plus me-1"></i>Create New
+                                </button>
+                                <button class="cm-btn cm-btn-refresh btn btn-outline-light btn-sm" onclick="refreshDashboard()">
+                                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cm-card-body card-body p-4">
+                        <!-- Search and Filter Controls -->
+                        <div class="cm-controls-row row mb-4">
+                            <div class="col-md-6">
+                                <div class="cm-search-container position-relative">
+                                    <i class="fas fa-search cm-search-icon position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                    <input type="text" class="cm-search-input form-control ps-5" id="search-certificates" placeholder="Search certificates...">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="cm-filter-container d-flex gap-2">
+                                    <select class="cm-filter-select form-select" id="status-filter">
+                                        <option value="all">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                    <select class="cm-filter-select form-select" id="project-filter">
+                                        <option value="all">All Projects</option>
+                                        <option value="industrial">Industrial Process</option>
+                                        <option value="manufacturing">Manufacturing</option>
+                                        <option value="energy">Energy Systems</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Certificate Table -->
+                        <div class="cm-table-container">
+                            <div class="cm-table-header d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="cm-table-title mb-0 text-primary fw-semibold">
+                                    <i class="fas fa-table me-2"></i>Certificate Registry
+                                </h6>
+                                <div class="cm-table-actions d-flex gap-2">
+                                    <button class="cm-btn cm-btn-export btn btn-outline-primary btn-sm" onclick="exportSelected()">
+                                        <i class="fas fa-download me-1"></i>Export Selected
+                                    </button>
+                                    <button class="cm-btn cm-btn-bulk btn btn-outline-secondary btn-sm" onclick="bulkActions()">
+                                        <i class="fas fa-cog me-1"></i>Bulk Actions
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="cm-table-responsive table-responsive">
+                                <table class="cm-certificate-table table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="cm-checkbox-column">
+                                                <div class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="select-all" onchange="toggleSelectAll()">
+                                                </div>
+                                            </th>
+                                            <th class="cm-id-column">
+                                                <i class="fas fa-certificate me-1"></i>Certificate ID
+                                            </th>
+                                            <th class="cm-twin-column">
+                                                <i class="fas fa-robot me-1"></i>Digital Twin
+                                            </th>
+                                            <th class="cm-project-column">
+                                                <i class="fas fa-project-diagram me-1"></i>Project
+                                            </th>
+                                            <th class="cm-status-column">
+                                                <i class="fas fa-info-circle me-1"></i>Status
+                                            </th>
+                                            <th class="cm-progress-column">
+                                                <i class="fas fa-percentage me-1"></i>Progress
+                                            </th>
+                                            <th class="cm-created-column">
+                                                <i class="fas fa-calendar me-1"></i>Created
+                                            </th>
+                                            <th class="cm-actions-column">
+                                                <i class="fas fa-cogs me-1"></i>Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="certificates-tbody">
+                                        <!-- Certificate rows will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Certificate Table -->
-        <div class="cm-table-container table-container">
-            <div class="cm-table-header table-header">
-                <h3 class="cm-table-title"><i class="fas fa-list"></i> Certificates</h3>
-                <div class="cm-table-actions table-actions">
-                    <button class="cm-btn cm-btn-export btn btn-sm btn-outline-primary" onclick="exportSelected()">
-                        <i class="fas fa-download"></i> Export Selected
-                    </button>
-                    <button class="cm-btn cm-btn-bulk btn btn-sm btn-outline-secondary" onclick="bulkActions()">
-                        <i class="fas fa-cog"></i> Bulk Actions
-                    </button>
-                </div>
+        <!-- Enhanced Loading Indicator -->
+        <div class="cm-loading-indicator text-center py-5" id="loading-indicator">
+            <div class="cm-loading-spinner mb-3">
+                <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
             </div>
-            
-            <div class="cm-table-responsive table-responsive">
-                <table class="cm-certificate-table table certificate-table">
-                    <thead>
-                        <tr>
-                            <th>
-                                <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
-                            </th>
-                            <th>Certificate ID</th>
-                            <th>Digital Twin</th>
-                            <th>Project</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="certificates-tbody">
-                        <!-- Certificate rows will be populated by JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Loading Indicator -->
-        <div class="cm-loading-indicator loading-indicator" id="loading-indicator">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Loading certificates...</p>
+            <p class="text-muted mb-0">Loading certificates...</p>
         </div>
     </div>
 </div>
 
-<!-- Certificate Actions Modal -->
+<!-- Enhanced Certificate Actions Modal -->
 <div class="cm-modal modal fade" id="certificateActionsModal" tabindex="-1" role="dialog" aria-labelledby="certificateActionsModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="cm-modal-content modal-content">
-            <div class="cm-modal-header modal-header">
-                <h5 class="cm-modal-title modal-title" id="certificateActionsModalLabel">Certificate Actions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="cm-modal-content modal-content border-0 shadow-lg">
+            <div class="cm-modal-header modal-header bg-gradient-primary text-white">
+                <h5 class="cm-modal-title modal-title" id="certificateActionsModalLabel">
+                    <i class="fas fa-cogs me-2"></i>Certificate Actions & Management
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="cm-modal-body modal-body">
-                <div class="cm-btn-group-vertical btn-group-vertical w-100">
-                    <button class="cm-btn cm-btn-view btn btn-outline-primary" onclick="window.CertificateManager.viewCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
-                        <i class="fas fa-eye"></i> View Details
-                    </button>
-                    <button class="cm-btn cm-btn-export-cert btn btn-outline-success" onclick="window.CertificateManager.exportCertificate(window.CertificateManager.state.currentCertificate?.certificate_id)">
-                        <i class="fas fa-download"></i> Export Certificate
-                    </button>
-                    <button class="cm-btn cm-btn-history btn btn-outline-info" onclick="window.CertificateManager.showVersionHistory(window.CertificateManager.state.currentCertificate?.certificate_id)">
-                        <i class="fas fa-history"></i> View History
-                    </button>
-                    <button class="cm-btn cm-btn-validate btn btn-outline-warning" onclick="window.CertificateManager.showStatusIndicator(window.CertificateManager.state.currentCertificate?.certificate_id)">
-                        <i class="fas fa-shield-alt"></i> Validate Certificate
-                    </button>
-                    <button class="cm-btn cm-btn-share btn btn-outline-secondary" onclick="shareCertificate()">
-                        <i class="fas fa-share"></i> Share Certificate
-                    </button>
-                </div>
+            <div class="cm-modal-body modal-body p-4">
+                {% include 'certificate_manager/components/certificate_actions.html' %}
             </div>
             <div class="cm-modal-footer modal-footer">
-                <button type="button" class="cm-btn cm-btn-close btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="cm-footer-info">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Certificate ID: <span id="modal-certificate-id">-</span> | 
+                        Last Updated: <span id="modal-last-updated">-</span>
+                    </small>
+                </div>
+                <div class="cm-footer-actions">
+                    <button type="button" class="cm-btn cm-btn-cancel btn btn-outline-secondary me-2" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="cm-btn cm-btn-close btn btn-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-1"></i>Done
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Export Options Modal -->
+<!-- Enhanced Export Options Modal -->
 <div class="cm-modal modal fade" id="exportOptionsModal" tabindex="-1" role="dialog" aria-labelledby="exportOptionsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
-        <div class="cm-modal-content modal-content">
-            <div class="cm-modal-header modal-header">
-                <h5 class="cm-modal-title modal-title" id="exportOptionsModalLabel">Export Certificate</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="cm-modal-content modal-content border-0 shadow-lg">
+            <div class="cm-modal-header modal-header bg-gradient-success text-white">
+                <h5 class="cm-modal-title modal-title" id="exportOptionsModalLabel">
+                    <i class="fas fa-download me-2"></i>Export Digital Certificate
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="cm-modal-body modal-body">
+            <div class="cm-modal-body modal-body p-4">
                 {% include 'certificate_manager/components/export_options.html' %}
             </div>
             <div class="cm-modal-footer modal-footer">
                 <button type="button" class="cm-btn cm-btn-cancel btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="cm-btn cm-btn-export-execute btn btn-primary" onclick="window.CertificateManager.modules.exportButtons.executeExport()">Export</button>
+                <button type="button" class="cm-btn cm-btn-export-execute btn btn-success" onclick="window.CertificateManager.modules.exportButtons.executeExport()">
+                    <i class="fas fa-download me-1"></i>Export Certificate
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Certificate Viewer Modal -->
+<!-- Enhanced Certificate Viewer Modal -->
 <div class="cm-modal modal fade" id="certificateViewerModal" tabindex="-1" role="dialog" aria-labelledby="certificateViewerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
-        <div class="cm-modal-content modal-content">
-            <div class="cm-modal-header modal-header">
-                <h5 class="cm-modal-title modal-title" id="certificateViewerModalLabel">Certificate Viewer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="cm-modal-content modal-content border-0 shadow-lg">
+            <div class="cm-modal-header modal-header bg-gradient-info text-white">
+                <h5 class="cm-modal-title modal-title" id="certificateViewerModalLabel">
+                    <i class="fas fa-eye me-2"></i>Digital Certificate Viewer
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="cm-modal-body modal-body">
+            <div class="cm-modal-body modal-body p-4">
                 {% include 'certificate_manager/components/certificate_viewer.html' %}
             </div>
             <div class="cm-modal-footer modal-footer">
                 <button type="button" class="cm-btn cm-btn-close btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="cm-btn cm-btn-export-execute btn btn-primary" onclick="window.CertificateManager.modules.exportButtons.executeExport()">Export</button>
+                <button type="button" class="cm-btn cm-btn-export-execute btn btn-info" onclick="window.CertificateManager.modules.exportButtons.executeExport()">
+                    <i class="fas fa-download me-1"></i>Export Certificate
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Status Indicator Modal -->
+<!-- Enhanced Status Indicator Modal -->
 <div class="cm-modal modal fade" id="statusIndicatorModal" tabindex="-1" role="dialog" aria-labelledby="statusIndicatorModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="cm-modal-content modal-content">
-            <div class="cm-modal-header modal-header">
-                <h5 class="cm-modal-title modal-title" id="statusIndicatorModalLabel">Certificate Status</h5>
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="cm-modal-content modal-content border-0 shadow-lg">
+            <div class="cm-modal-header modal-header bg-gradient-warning text-dark">
+                <h5 class="cm-modal-title modal-title" id="statusIndicatorModalLabel">
+                    <i class="fas fa-shield-alt me-2"></i>Certificate Validation & Status
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="cm-modal-body modal-body">
+            <div class="cm-modal-body modal-body p-4">
                 {% include 'certificate_manager/components/status_indicator.html' %}
             </div>
             <div class="cm-modal-footer modal-footer">
@@ -220,15 +296,17 @@
     </div>
 </div>
 
-<!-- Version History Modal -->
+<!-- Enhanced Version History Modal -->
 <div class="cm-modal modal fade" id="versionHistoryModal" tabindex="-1" role="dialog" aria-labelledby="versionHistoryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
-        <div class="cm-modal-content modal-content">
-            <div class="cm-modal-header modal-header">
-                <h5 class="cm-modal-title modal-title" id="versionHistoryModalLabel">Version History</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="cm-modal-content modal-content border-0 shadow-lg">
+            <div class="cm-modal-header modal-header bg-gradient-secondary text-white">
+                <h5 class="cm-modal-title modal-title" id="versionHistoryModalLabel">
+                    <i class="fas fa-history me-2"></i>Certificate Version History
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="cm-modal-body modal-body">
+            <div class="cm-modal-body modal-body p-4">
                 {% include 'certificate_manager/components/version_history.html' %}
             </div>
             <div class="cm-modal-footer modal-footer">

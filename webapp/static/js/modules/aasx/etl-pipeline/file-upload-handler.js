@@ -3,7 +3,7 @@
  * Handles file uploads and URL downloads for AASX files
  */
 
-import { showSuccess, showError } from '../shared/alerts.js';
+import { showSuccess, showError } from '/static/js/shared/alerts.js';
 
 export class FileUploadHandler {
     constructor() {
@@ -73,7 +73,7 @@ export class FileUploadHandler {
             console.log(`📤 File Upload Handler: Uploading file ${file.name} to project ${projectId}`);
 
             // Upload file
-            const response = await fetch(`/api/aasx/projects/${projectId}/upload`, {
+            const response = await fetch(`/api/aasx-etl/projects/${projectId}/upload`, {
                 method: 'POST',
                 body: formData
             });
@@ -170,7 +170,7 @@ export class FileUploadHandler {
             console.log(`📤 File Upload Handler: Uploading downloaded file ${filename} to project ${projectId}`);
 
             // Upload file
-            const uploadResponse = await fetch(`/api/aasx/projects/${projectId}/upload`, {
+            const uploadResponse = await fetch(`/api/aasx-etl/projects/${projectId}/upload`, {
                 method: 'POST',
                 body: formData
             });

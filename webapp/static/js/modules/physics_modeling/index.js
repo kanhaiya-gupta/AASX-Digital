@@ -360,66 +360,37 @@ class PhysicsModelingMain {
      * Setup tab content loading
      */
     setupTabContentLoading() {
-        const tabs = document.querySelectorAll('#physicsTabs .nav-link');
-        tabs.forEach(tab => {
-            tab.addEventListener('shown.bs.tab', (event) => {
-                const targetId = event.target.getAttribute('data-bs-target').substring(1);
-                this.loadTabContent(targetId);
-            });
-        });
-
-        // Load initial tab content
-        this.loadTabContent('simulation');
+        // Disable dynamic tab content loading since we're using Jinja2 includes
+        console.log('Tab content loading disabled - using Jinja2 includes for modular components');
+        
+        // Only initialize the simulation tab since it has dynamic content
+        const simulationTab = document.getElementById('simulation');
+        if (simulationTab) {
+            this.initializeSimulationTab();
+        }
     }
 
     /**
-     * Load content for specific tab
+     * Initialize simulation tab (only for dynamic content)
+     */
+    async initializeSimulationTab() {
+        try {
+            // Initialize the simulation form and load data
+            await this.initializeSimulationForm();
+            await this.loadActiveSimulations();
+            console.log('Simulation tab initialized successfully');
+        } catch (error) {
+            console.error('Error initializing simulation tab:', error);
+        }
+    }
+
+    /**
+     * Load content for specific tab (DEPRECATED - using Jinja2 includes instead)
      */
     async loadTabContent(tabId) {
-        const tabContent = document.getElementById(tabId);
-        if (!tabContent) return;
-
-        // Show loading spinner
-        tabContent.innerHTML = `
-            <div class="loading-spinner">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        `;
-
-        try {
-            switch (tabId) {
-                case 'simulation':
-                    await this.loadSimulationContent(tabContent);
-                    break;
-                case 'plugins':
-                    await this.loadPluginManagementContent(tabContent);
-                    break;
-                case 'visualization':
-                    await this.loadVisualizationContent(tabContent);
-                    break;
-                case 'analysis':
-                    await this.loadAnalysisContent(tabContent);
-                    break;
-                case 'use-cases':
-                    await this.loadUseCasesContent(tabContent);
-                    break;
-                case 'system':
-                    await this.loadSystemContent(tabContent);
-                    break;
-                default:
-                    tabContent.innerHTML = '<p class="text-muted">Content not available</p>';
-            }
-        } catch (error) {
-            console.error(`Error loading tab content for ${tabId}:`, error);
-            tabContent.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Failed to load content. Please try refreshing the page.
-                </div>
-            `;
-        }
+        console.warn(`loadTabContent(${tabId}) is deprecated - using Jinja2 includes for modular components`);
+        // This method is kept for backward compatibility but should not be used
+        // The modular components are loaded via Jinja2 includes in the template
     }
 
     /**

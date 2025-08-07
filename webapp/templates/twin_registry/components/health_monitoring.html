@@ -1,71 +1,171 @@
 <!-- Health Monitoring Component -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">
-            <i class="fas fa-heartbeat me-2"></i>Twin Health Monitoring
-        </h5>
+<div class="tr-health-monitoring">
+    <!-- Health Overview Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-health-card tr-health-excellent">
+                <div class="tr-health-content">
+                    <div class="tr-health-info">
+                        <div class="tr-health-value" id="excellentCount">0</div>
+                        <div class="tr-health-label">Excellent</div>
+                        <div class="tr-health-range">90-100%</div>
+                    </div>
+                    <div class="tr-health-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="tr-health-progress">
+                    <div class="tr-progress-bar" style="width: 95%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-health-card tr-health-good">
+                <div class="tr-health-content">
+                    <div class="tr-health-info">
+                        <div class="tr-health-value" id="goodCount">0</div>
+                        <div class="tr-health-label">Good</div>
+                        <div class="tr-health-range">75-89%</div>
+                    </div>
+                    <div class="tr-health-icon">
+                        <i class="fas fa-thumbs-up"></i>
+                    </div>
+                </div>
+                <div class="tr-health-progress">
+                    <div class="tr-progress-bar" style="width: 82%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-health-card tr-health-warning">
+                <div class="tr-health-content">
+                    <div class="tr-health-info">
+                        <div class="tr-health-value" id="warningCount">0</div>
+                        <div class="tr-health-label">Warning</div>
+                        <div class="tr-health-range">60-74%</div>
+                    </div>
+                    <div class="tr-health-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+                <div class="tr-health-progress">
+                    <div class="tr-progress-bar" style="width: 67%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="tr-health-card tr-health-critical">
+                <div class="tr-health-content">
+                    <div class="tr-health-info">
+                        <div class="tr-health-value" id="criticalCount">0</div>
+                        <div class="tr-health-label">Critical</div>
+                        <div class="tr-health-range">&lt;60%</div>
+                    </div>
+                    <div class="tr-health-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                </div>
+                <div class="tr-health-progress">
+                    <div class="tr-progress-bar" style="width: 45%"></div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <!-- Health Score Distribution -->
+
+    <!-- Health Charts Section -->
+    <div class="tr-health-charts">
         <div class="row mb-4">
-            <div class="col-md-6">
-                <h6>Health Score Distribution</h6>
-                                        <div class="chart-container medium">
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-pie"></i>
+                            Health Score Distribution
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Live
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
                             <canvas id="healthDistributionChart"></canvas>
                         </div>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6">
-                <h6>Health Score Trends</h6>
-                                        <div class="chart-container medium">
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            Health Score Trends
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Real-time
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
                             <canvas id="healthTrendsChart"></canvas>
                         </div>
-            </div>
-        </div>
-        
-        <!-- Health Categories -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-success mb-1" id="excellentCount">0</div>
-                    <div class="text-muted">Excellent (90-100%)</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-warning mb-1" id="goodCount">0</div>
-                    <div class="text-muted">Good (75-89%)</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-info mb-1" id="warningCount">0</div>
-                    <div class="text-muted">Warning (60-74%)</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-center">
-                    <div class="h4 text-danger mb-1" id="criticalCount">0</div>
-                    <div class="text-muted">Critical (<60%)</div>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Individual Twin Health Status -->
-        <div class="mt-4">
-            <h6>Individual Twin Health Status</h6>
-            <div id="individualTwinHealth" class="row">
-                <!-- Individual twin health cards will be populated here -->
+    </div>
+
+    <!-- Individual Twin Health Status -->
+    <div class="tr-individual-health">
+        <div class="tr-section-header">
+            <h6 class="tr-section-title">
+                <i class="fas fa-list"></i>
+                Individual Twin Health Status
+            </h6>
+            <div class="tr-section-actions">
+                <button class="tr-btn tr-btn-refresh" id="refreshHealthBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+                <button class="tr-btn tr-btn-primary" id="exportHealthBtn">
+                    <i class="fas fa-download"></i>
+                    Export Report
+                </button>
             </div>
         </div>
         
-        <!-- Health Alerts -->
-        <div class="mt-4">
-            <h6>Health Alerts</h6>
-            <div id="healthAlertsContainer">
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    No health alerts - all twins are healthy
+        <div class="tr-health-grid" id="individualTwinHealth">
+            <!-- Individual twin health cards will be populated here -->
+        </div>
+    </div>
+
+    <!-- Health Alerts Section -->
+    <div class="tr-health-alerts">
+        <div class="tr-section-header">
+            <h6 class="tr-section-title">
+                <i class="fas fa-bell"></i>
+                Health Alerts
+            </h6>
+            <div class="tr-alert-count">
+                <span id="alertCount">0</span> active alerts
+            </div>
+        </div>
+        
+        <div class="tr-alerts-container" id="healthAlertsContainer">
+            <div class="tr-alert tr-alert-success">
+                <div class="tr-alert-icon">
+                    <i class="fas fa-check-circle"></i>
                 </div>
+                <div class="tr-alert-content">
+                    <div class="tr-alert-title">All Systems Healthy</div>
+                    <div class="tr-alert-message">No health alerts - all twins are operating within normal parameters</div>
+                </div>
+                <div class="tr-alert-time">Just now</div>
             </div>
         </div>
     </div>

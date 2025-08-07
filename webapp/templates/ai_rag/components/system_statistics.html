@@ -1,53 +1,115 @@
-<!-- System Statistics Component -->
-<div class="ai-rag-system-stats-card card border-0 shadow-sm mb-4">
+<!-- Enhanced System Statistics Component -->
+<div class="ai-rag-system-stats-card card border-0 shadow-lg mb-4">
     <div class="ai-rag-card-header card-header bg-gradient-info text-white">
-        <h6 class="ai-rag-card-title mb-0">
-            <i class="fas fa-chart-bar me-2"></i>
-            System Statistics
-        </h6>
-    </div>
-    <div class="ai-rag-card-body card-body" id="system-stats">
-        <div class="ai-rag-loading-state text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="ai-rag-card-title mb-0">
+                <i class="fas fa-chart-bar me-2"></i>
+                System Statistics
+            </h6>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-refresh btn btn-sm btn-outline-light" onclick="refreshSystemStats()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
             </div>
-            <p class="mt-2 text-muted">Loading statistics...</p>
+        </div>
+    </div>
+    <div class="ai-rag-card-body card-body p-4" id="system-stats">
+        <div class="ai-rag-loading-state text-center">
+            <div class="ai-rag-loading-animation">
+                <div class="ai-rag-loading-dots">
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                </div>
+            </div>
+            <p class="mt-3 text-muted fw-bold">Loading statistics...</p>
         </div>
     </div>
 </div>
 
-<!-- Digital Twin Statistics Component -->
-<div class="ai-rag-digital-twin-stats-card card border-0 shadow-sm mb-4">
+<!-- Enhanced Digital Twin Statistics Component -->
+<div class="ai-rag-digital-twin-stats-card card border-0 shadow-lg mb-4">
     <div class="ai-rag-card-header card-header bg-gradient-success text-white">
-        <h6 class="ai-rag-card-title mb-0">
-            <i class="fas fa-cube me-2"></i>
-            Digital Twin Statistics
-        </h6>
-    </div>
-    <div class="ai-rag-card-body card-body" id="digital-twin-stats">
-        <div class="ai-rag-loading-state text-center">
-            <div class="spinner-border text-success" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="ai-rag-card-title mb-0">
+                <i class="fas fa-cube me-2"></i>
+                Digital Twin Statistics
+            </h6>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-view-all btn btn-sm btn-outline-light" onclick="viewAllTwins()">
+                    <i class="fas fa-eye me-1"></i>View All
+                </button>
             </div>
-            <p class="mt-2 text-muted">Loading digital twin statistics...</p>
+        </div>
+    </div>
+    <div class="ai-rag-card-body card-body p-4" id="digital-twin-stats">
+        <div class="ai-rag-loading-state text-center">
+            <div class="ai-rag-loading-animation">
+                <div class="ai-rag-loading-dots">
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                </div>
+            </div>
+            <p class="mt-3 text-muted fw-bold">Loading digital twin statistics...</p>
         </div>
     </div>
 </div>
 
-<!-- Collections Overview Component -->
-<div class="ai-rag-collections-card card border-0 shadow-sm mb-4">
+<!-- Enhanced Collections Overview Component -->
+<div class="ai-rag-collections-card card border-0 shadow-lg mb-4">
     <div class="ai-rag-card-header card-header bg-gradient-secondary text-white">
-        <h6 class="ai-rag-card-title mb-0">
-            <i class="fas fa-database me-2"></i>
-            Data Collections
-        </h6>
-    </div>
-    <div class="ai-rag-card-body card-body" id="collections-info">
-        <div class="ai-rag-loading-state text-center">
-            <div class="spinner-border text-secondary" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="ai-rag-card-title mb-0">
+                <i class="fas fa-database me-2"></i>
+                Data Collections
+            </h6>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-manage btn btn-sm btn-outline-light" onclick="manageCollections()">
+                    <i class="fas fa-cog me-1"></i>Manage
+                </button>
             </div>
-            <p class="mt-2 text-muted">Loading collections...</p>
+        </div>
+    </div>
+    <div class="ai-rag-card-body card-body p-4" id="collections-info">
+        <div class="ai-rag-loading-state text-center">
+            <div class="ai-rag-loading-animation">
+                <div class="ai-rag-loading-dots">
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                </div>
+            </div>
+            <p class="mt-3 text-muted fw-bold">Loading collections...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Performance Metrics Component -->
+<div class="ai-rag-performance-card card border-0 shadow-lg mb-4">
+    <div class="ai-rag-card-header card-header bg-gradient-warning text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="ai-rag-card-title mb-0">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                Performance Metrics
+            </h6>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-details btn btn-sm btn-outline-light" onclick="showPerformanceDetails()">
+                    <i class="fas fa-chart-line me-1"></i>Details
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="ai-rag-card-body card-body p-4" id="performance-metrics">
+        <div class="ai-rag-loading-state text-center">
+            <div class="ai-rag-loading-animation">
+                <div class="ai-rag-loading-dots">
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                </div>
+            </div>
+            <p class="mt-3 text-muted fw-bold">Loading performance metrics...</p>
         </div>
     </div>
 </div> 

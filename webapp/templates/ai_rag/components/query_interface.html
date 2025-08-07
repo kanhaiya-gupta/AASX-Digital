@@ -1,23 +1,46 @@
-<!-- Query Interface Component -->
-<div class="ai-rag-query-card card border-0 shadow-sm mb-4">
+<!-- Enhanced Query Interface Component -->
+<div class="ai-rag-query-card card border-0 shadow-lg mb-4">
     <div class="ai-rag-card-header card-header bg-gradient-primary text-white">
-        <h5 class="ai-rag-card-title mb-0">
-            <i class="fas fa-search me-2"></i>
-            AI Analysis Query
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="ai-rag-card-title mb-0">
+                <i class="fas fa-search me-2"></i>
+                AI Analysis Query
+            </h5>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-history btn btn-sm btn-outline-light" onclick="showQueryHistory()">
+                    <i class="fas fa-history me-1"></i>History
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="ai-rag-card-body card-body">
-        <div class="ai-rag-query-input-section mb-3">
+    <div class="ai-rag-card-body card-body p-4">
+        <div class="ai-rag-query-input-section mb-4">
             <label for="query-input" class="ai-rag-form-label form-label fw-bold">
                 <i class="fas fa-question-circle text-primary me-1"></i>
                 Your Question
             </label>
-            <textarea 
-                class="ai-rag-query-input form-control query-input" 
-                id="query-input" 
-                rows="4" 
-                placeholder="Ask about asset quality, risk assessment, optimization opportunities, AASX structure analysis, or general insights from your digital twin data..."
-            ></textarea>
+            <div class="ai-rag-query-input-wrapper">
+                <textarea 
+                    class="ai-rag-query-input form-control query-input" 
+                    id="query-input" 
+                    rows="4" 
+                    placeholder="Ask about asset quality, risk assessment, optimization opportunities, AASX structure analysis, or general insights from your digital twin data..."
+                ></textarea>
+                <div class="ai-rag-query-input-actions">
+                    <button class="ai-rag-btn ai-rag-btn-voice btn btn-sm btn-outline-secondary" onclick="startVoiceInput()">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="ai-rag-query-suggestions mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-lightbulb me-1"></i>
+                    <strong>Quick suggestions:</strong> 
+                    <span class="ai-rag-suggestion-link" onclick="setQuery('Analyze the quality metrics of my digital twins')">Quality Analysis</span> • 
+                    <span class="ai-rag-suggestion-link" onclick="setQuery('What are the risk factors in my AASX data?')">Risk Assessment</span> • 
+                    <span class="ai-rag-suggestion-link" onclick="setQuery('Find optimization opportunities in my assets')">Optimization</span>
+                </small>
+            </div>
         </div>
         
         <div class="ai-rag-query-actions d-flex justify-content-between align-items-center">
@@ -37,44 +60,93 @@
             </div>
             <div class="ai-rag-query-hint text-end">
                 <small class="text-muted">
-                    <i class="fas fa-lightbulb me-1"></i>
+                    <i class="fas fa-info-circle me-1"></i>
                     Try demo queries for quick insights
                 </small>
             </div>
         </div>
 
-        <!-- Loading Spinner -->
-        <div class="ai-rag-loading-spinner loading-spinner text-center mt-3" id="query-loading">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <!-- Enhanced Loading Spinner -->
+        <div class="ai-rag-loading-spinner loading-spinner text-center mt-4" id="query-loading" style="display: none;">
+            <div class="ai-rag-loading-animation">
+                <div class="ai-rag-loading-dots">
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                    <div class="ai-rag-loading-dot"></div>
+                </div>
             </div>
-            <p class="mt-2 text-muted">AI is analyzing your question...</p>
+            <p class="mt-3 text-muted fw-bold">AI is analyzing your question...</p>
+            <div class="ai-rag-loading-progress mt-2">
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Analysis Results Component -->
-<div class="ai-rag-results-card card border-0 shadow-sm" id="response-section">
+<!-- Enhanced Analysis Results Component -->
+<div class="ai-rag-results-card card border-0 shadow-lg mb-4" id="response-section" style="display: none;">
     <div class="ai-rag-card-header card-header bg-gradient-success text-white">
-        <h5 class="ai-rag-card-title mb-0">
-            <i class="fas fa-lightbulb me-2"></i>
-            AI Analysis Results
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="ai-rag-card-title mb-0">
+                <i class="fas fa-lightbulb me-2"></i>
+                AI Analysis Results
+            </h5>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-export btn btn-sm btn-outline-light" onclick="exportResults()">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+                <button class="ai-rag-btn ai-rag-btn-share btn btn-sm btn-outline-light ms-1" onclick="shareResults()">
+                    <i class="fas fa-share me-1"></i>Share
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="ai-rag-card-body card-body" id="response-content">
+    <div class="ai-rag-card-body card-body p-4" id="response-content">
         <!-- Results will be populated here -->
     </div>
 </div>
 
-<!-- Technique Comparison Results Component -->
-<div class="ai-rag-comparison-card card border-0 shadow-sm mt-4" id="comparison-section">
+<!-- Enhanced Technique Comparison Results Component -->
+<div class="ai-rag-comparison-card card border-0 shadow-lg mb-4" id="comparison-section" style="display: none;">
     <div class="ai-rag-card-header card-header bg-gradient-warning text-white">
-        <h5 class="ai-rag-card-title mb-0">
-            <i class="fas fa-balance-scale me-2"></i>
-            Technique Comparison
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="ai-rag-card-title mb-0">
+                <i class="fas fa-balance-scale me-2"></i>
+                Technique Comparison
+            </h5>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-details btn btn-sm btn-outline-light" onclick="showComparisonDetails()">
+                    <i class="fas fa-chart-bar me-1"></i>Details
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="ai-rag-card-body card-body" id="comparison-content">
+    <div class="ai-rag-card-body card-body p-4" id="comparison-content">
         <!-- Comparison results will be populated here -->
+    </div>
+</div>
+
+<!-- Enhanced Query History Modal -->
+<div class="modal fade" id="queryHistoryModal" tabindex="-1" aria-labelledby="queryHistoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title" id="queryHistoryModalLabel">
+                    <i class="fas fa-history me-2"></i>Query History
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="ai-rag-history-list" id="queryHistoryList">
+                    <!-- Query history will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="clearQueryHistory()">Clear History</button>
+            </div>
+        </div>
     </div>
 </div> 

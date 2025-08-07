@@ -1,10 +1,10 @@
 /**
  * AASX ETL Pipeline Core
- * Main AASXETLPipeline class for ETL processing functionality
+ * Main ETL pipeline functionality for AASX file processing
  */
 
-import { formatFileSize, getFileStatusInfo } from '../../shared/utils.js';
-import { showSuccess, showError, showWarning } from '../../shared/alerts.js';
+import { formatFileSize, getFileStatusInfo } from '/static/js/shared/utils.js';
+import { showSuccess, showError, showWarning } from '/static/js/shared/alerts.js';
 
 export class AASXETLPipeline {
     constructor() {
@@ -153,7 +153,7 @@ export class AASXETLPipeline {
             
             console.log('📤 Request payload:', requestBody);
             
-            const response = await fetch('/api/aasx/etl/run', {
+            const response = await fetch('/api/aasx-etl/etl/run', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
@@ -252,7 +252,7 @@ export class AASXETLPipeline {
                 return;
             }
 
-            const response = await fetch(`/api/aasx/projects/${projectId}/files`);
+            const response = await fetch(`/api/aasx-etl/projects/${projectId}/files`);
             if (response.ok) {
                 this.files = await response.json();
                 this.renderFileList();

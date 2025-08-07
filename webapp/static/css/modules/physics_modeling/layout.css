@@ -1,37 +1,53 @@
 /**
- * Physics Modeling Module Layout CSS Module
- * Dedicated styling for main layout and structure
+ * Enhanced Physics Modeling Module Layout CSS Module
+ * Premium, world-class design with uniform color scheme
+ * Matches AASX, Twin Registry, AI/RAG, Knowledge Graph, and Federated Learning color palette
  */
 
 /* ===== MAIN LAYOUT STYLING ===== */
-.physics-container {
+.pm-container {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: 100vh;
     padding: 1.5rem 0;
 }
 
-/* ===== PAGE HEADER STYLING ===== */
-.physics-header {
-    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+/* ===== ENHANCED PAGE HEADER STYLING ===== */
+.pm-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 2rem 0;
     margin-bottom: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.2);
+    position: relative;
+    overflow: hidden;
 }
 
-.physics-header h1 {
+.pm-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.pm-header h1 {
     font-weight: 700;
     margin-bottom: 0.5rem;
 }
 
-.physics-header .subtitle {
+.pm-header .subtitle {
     opacity: 0.9;
     font-size: 1.1rem;
 }
 
-/* ===== CONTENT AREA STYLING ===== */
-.physics-content {
+/* ===== ENHANCED CONTENT AREA STYLING ===== */
+.pm-content {
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -39,25 +55,25 @@
     margin-bottom: 2rem;
 }
 
-.physics-content-header {
-    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+.pm-content-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 1.5rem 2rem;
     border-bottom: 1px solid #dee2e6;
 }
 
-.physics-content-title {
+.pm-content-title {
     font-size: 1.5rem;
     font-weight: 600;
     margin: 0;
 }
 
-.physics-content-body {
+.pm-content-body {
     padding: 2rem;
 }
 
-/* ===== SIDEBAR STYLING ===== */
-.physics-sidebar {
+/* ===== ENHANCED SIDEBAR STYLING ===== */
+.pm-sidebar {
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -66,31 +82,31 @@
     height: fit-content;
 }
 
-.physics-sidebar-header {
+.pm-sidebar-header {
     border-bottom: 1px solid #dee2e6;
     padding-bottom: 1rem;
     margin-bottom: 1.5rem;
 }
 
-.physics-sidebar-title {
+.pm-sidebar-title {
     font-size: 1.25rem;
     font-weight: 600;
     color: #495057;
     margin: 0;
 }
 
-/* ===== NAVIGATION STYLING ===== */
-.physics-nav {
+/* ===== ENHANCED NAVIGATION STYLING ===== */
+.pm-nav {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-.physics-nav-item {
+.pm-nav-item {
     margin-bottom: 0.5rem;
 }
 
-.physics-nav-link {
+.pm-nav-link {
     display: block;
     padding: 0.75rem 1rem;
     color: #495057;
@@ -100,41 +116,41 @@
     border-left: 3px solid transparent;
 }
 
-.physics-nav-link:hover {
+.pm-nav-link:hover {
     background: #f8f9fa;
-    color: #20c997;
-    border-left-color: #20c997;
+    color: #1e3c72;
+    border-left-color: #1e3c72;
     text-decoration: none;
 }
 
-.physics-nav-link.active {
+.pm-nav-link.active {
     background: #e3f2fd;
-    color: #20c997;
-    border-left-color: #20c997;
+    color: #1e3c72;
+    border-left-color: #1e3c72;
     font-weight: 500;
 }
 
-/* ===== GRID LAYOUT STYLING ===== */
-.physics-grid {
+/* ===== ENHANCED GRID LAYOUT STYLING ===== */
+.pm-grid {
     display: grid;
     gap: 2rem;
     margin-bottom: 2rem;
 }
 
-.physics-grid-2 {
+.pm-grid-2 {
     grid-template-columns: repeat(2, 1fr);
 }
 
-.physics-grid-3 {
+.pm-grid-3 {
     grid-template-columns: repeat(3, 1fr);
 }
 
-.physics-grid-4 {
+.pm-grid-4 {
     grid-template-columns: repeat(4, 1fr);
 }
 
-/* ===== SECTION STYLING ===== */
-.physics-section {
+/* ===== ENHANCED SECTION STYLING ===== */
+.pm-section {
     background: #ffffff;
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -142,88 +158,187 @@
     margin-bottom: 2rem;
 }
 
-.physics-section-header {
-    background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+.pm-section-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #dee2e6;
 }
 
-.physics-section-title {
+.pm-section-title {
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0;
 }
 
-.physics-section-body {
+.pm-section-body {
     padding: 1.5rem;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* ===== ENHANCED TAB STYLING ===== */
+.pm-tabs-card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pm-card-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-bottom: none;
+    padding: 0;
+}
+
+.pm-tabs {
+    border-bottom: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pm-tabs .nav-item {
+    margin-right: 0.25rem;
+}
+
+.pm-tab-link {
+    border: none;
+    border-radius: 8px 8px 0 0;
+    margin-right: 0.25rem;
+    transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+}
+
+.pm-tab-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.pm-tab-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border-bottom: 3px solid #ffd700;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pm-tab-link i {
+    margin-right: 0.5rem;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.pm-tab-link:hover i,
+.pm-tab-link.active i {
+    opacity: 1;
+}
+
+.pm-card-body {
+    padding: 2rem;
+}
+
+/* ===== ENHANCED STATUS DASHBOARD STYLING ===== */
+.pm-status-dashboard {
+    margin-bottom: 2rem;
+}
+
+.pm-status-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.pm-status-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.1);
+}
+
+.pm-card-body {
+    padding: 1.5rem;
+}
+
+/* ===== ENHANCED RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {
-    .physics-grid-4 {
+    .pm-grid-4 {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 992px) {
-    .physics-grid-3,
-    .physics-grid-4 {
+    .pm-grid-3,
+    .pm-grid-4 {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 768px) {
-    .physics-container {
+    .pm-container {
         padding: 1rem 0;
     }
 
-    .physics-header {
+    .pm-header {
         padding: 1.5rem 0;
         margin-bottom: 1.5rem;
     }
 
-    .physics-content-body {
+    .pm-content-body {
         padding: 1.5rem;
     }
 
-    .physics-grid-2,
-    .physics-grid-3,
-    .physics-grid-4 {
+    .pm-grid-2,
+    .pm-grid-3,
+    .pm-grid-4 {
         grid-template-columns: 1fr;
     }
 
-    .physics-sidebar {
+    .pm-sidebar {
         margin-bottom: 1.5rem;
     }
 
-    .physics-section-body {
+    .pm-section-body {
         padding: 1rem;
+    }
+
+    .pm-tabs {
+        flex-wrap: wrap;
+    }
+
+    .pm-tab-link {
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
     }
 }
 
 @media (max-width: 576px) {
-    .physics-header h1 {
+    .pm-header h1 {
         font-size: 1.75rem;
     }
 
-    .physics-header .subtitle {
+    .pm-header .subtitle {
         font-size: 1rem;
     }
 
-    .physics-content-body {
+    .pm-content-body {
         padding: 1rem;
     }
 
-    .physics-sidebar {
+    .pm-sidebar {
         padding: 1rem;
     }
 
-    .physics-section-header {
+    .pm-section-header {
         padding: 0.75rem 1rem;
     }
 
-    .physics-section-body {
+    .pm-section-body {
         padding: 0.75rem;
+    }
+
+    .pm-card-body {
+        padding: 1rem;
     }
 } 

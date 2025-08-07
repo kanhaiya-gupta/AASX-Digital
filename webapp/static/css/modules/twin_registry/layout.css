@@ -1,184 +1,327 @@
 /**
  * Twin Registry Layout CSS Module
  * Dedicated styling for main layout and structure in the Twin Registry
+ * Updated to match world-class header design
  */
 
 /* ===== MAIN LAYOUT STYLING ===== */
-.twin-registry-container {
-    background-color: #f8f9fa;
-    min-height: 100vh;
-    padding: 1.5rem 0;
-}
-
-.twin-registry-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #ffffff;
+.tr-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - 80px); /* Account for header */
     padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-radius: 0 0 1rem 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.twin-registry-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.twin-registry-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    margin-bottom: 0;
-    font-weight: 300;
-}
-
-/* ===== PAGE HEADER STYLING ===== */
-.page-header {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e9ecef;
-}
-
-.page-header h1 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #212529;
-    margin-bottom: 0.5rem;
-}
-
-.page-header p {
-    color: #6c757d;
-    margin-bottom: 0;
-    font-size: 1rem;
-}
-
-.page-header .btn-group {
-    gap: 0.5rem;
-}
-
-/* ===== CONTENT AREA STYLING ===== */
-.content-area {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e9ecef;
+/* ===== HEADER STYLING ===== */
+.tr-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 2.5rem 0;
+    margin-bottom: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.2);
+    position: relative;
     overflow: hidden;
 }
 
-.content-area .card {
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
+.tr-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
 }
 
-.content-area .card-header {
-    background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+.tr-header-content {
+    position: relative;
+    z-index: 2;
+}
+
+.tr-title {
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
     color: #ffffff;
-    border-bottom: none;
-    padding: 1.25rem 1.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.content-area .card-body {
+.tr-title i {
+    color: #ffd700;
+    margin-right: 0.75rem;
+    font-size: 2rem;
+}
+
+.tr-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    margin-bottom: 0;
+}
+
+.tr-header-actions {
+    gap: 1rem;
+}
+
+.tr-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tr-btn-refresh {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.tr-btn-refresh:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.tr-btn-export {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #1e3c72;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.tr-btn-export:hover {
+    background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    color: #1e3c72;
+}
+
+/* ===== MAIN CONTENT STYLING ===== */
+.tr-main-content {
+    gap: 2rem;
+}
+
+.tr-main-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.tr-main-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.tr-card-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    border-bottom: none;
     padding: 1.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.tr-card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.tr-card-body {
+    padding: 2rem;
     background: #ffffff;
 }
 
+/* ===== NAV TABS STYLING ===== */
+.tr-nav-tabs {
+    position: relative;
+    z-index: 2;
+    border: none;
+    gap: 0.5rem;
+}
+
+.tr-tab-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.tr-tab-link:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.tr-tab-link.active {
+    color: #1e3c72 !important;
+    background: #ffffff;
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+.tr-tab-link i {
+    font-size: 1rem;
+}
+
+/* ===== TAB CONTENT STYLING ===== */
+.tr-tab-content {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.tr-tab-pane {
+    padding: 0;
+}
+
+/* ===== ANALYTICS CARDS ===== */
+.tr-analytics-content {
+    gap: 1.5rem;
+}
+
+.tr-analytics-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.tr-analytics-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.tr-analytics-card .card-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.tr-analytics-card .card-body {
+    padding: 1.5rem;
+}
+
 /* ===== GRID LAYOUT STYLING ===== */
-.twin-registry-grid {
+.tr-grid {
     display: grid;
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.twin-registry-grid.cols-2 {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.tr-grid.cols-2 {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
 }
 
-.twin-registry-grid.cols-3 {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+.tr-grid.cols-3 {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
-.twin-registry-grid.cols-4 {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+.tr-grid.cols-4 {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 /* ===== SIDEBAR LAYOUT ===== */
-.twin-registry-sidebar {
+.tr-sidebar {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e9ecef;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
     height: fit-content;
     position: sticky;
-    top: 1rem;
+    top: 2rem;
+    animation: fadeIn 0.8s ease-out;
 }
 
-.sidebar-section {
+.tr-sidebar-section {
     margin-bottom: 2rem;
 }
 
-.sidebar-section:last-child {
+.tr-sidebar-section:last-child {
     margin-bottom: 0;
 }
 
-.sidebar-section h6 {
+.tr-sidebar-section h6 {
     font-weight: 600;
-    color: #495057;
+    color: #1e3c72;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid #e9ecef;
 }
 
-/* ===== MAIN CONTENT AREA ===== */
-.twin-registry-main {
-    flex: 1;
-    min-width: 0;
-}
-
 /* ===== SECTION STYLING ===== */
-.twin-registry-section {
+.tr-section {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 16px;
+    padding: 2rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e9ecef;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
 }
 
-.twin-registry-section h5 {
+.tr-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.tr-section h5 {
     font-weight: 600;
-    color: #212529;
+    color: #1e3c72;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid #e9ecef;
 }
 
 /* ===== UTILITY CLASSES ===== */
-.twin-registry-spacer {
+.tr-spacer {
     height: 1.5rem;
 }
 
-.twin-registry-divider {
+.tr-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, #dee2e6, transparent);
     margin: 1.5rem 0;
 }
 
-.twin-registry-shadow {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.tr-shadow {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
-.twin-registry-shadow-lg {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+.tr-shadow-lg {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 /* ===== LOADING STATES ===== */
-.twin-registry-loading {
+.tr-loading {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -187,12 +330,12 @@
     font-style: italic;
 }
 
-.twin-registry-loading::before {
+.tr-loading::before {
     content: '';
     width: 20px;
     height: 20px;
     border: 2px solid #e9ecef;
-    border-top: 2px solid #0d6efd;
+    border-top: 2px solid #1e3c72;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-right: 0.75rem;
@@ -203,110 +346,156 @@
     100% { transform: rotate(360deg); }
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* ===== EMPTY STATES ===== */
-.twin-registry-empty {
+.tr-empty {
     text-align: center;
     padding: 3rem 1.5rem;
     color: #6c757d;
 }
 
-.twin-registry-empty i {
+.tr-empty i {
     font-size: 3rem;
     margin-bottom: 1rem;
     opacity: 0.5;
+    color: #1e3c72;
 }
 
-.twin-registry-empty h5 {
+.tr-empty h5 {
     font-weight: 500;
     margin-bottom: 0.5rem;
-    color: #495057;
+    color: #1e3c72;
 }
 
-.twin-registry-empty p {
+.tr-empty p {
     margin-bottom: 1.5rem;
     font-size: 0.875rem;
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {
-    .twin-registry-grid.cols-4 {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    .tr-grid.cols-4 {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 }
 
-@media (max-width: 992px) {
-    .twin-registry-grid.cols-3 {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+@media (max-width: 991.98px) {
+    .tr-header {
+        padding: 2rem 0;
+        margin-bottom: 2rem;
     }
     
-    .twin-registry-sidebar {
+    .tr-title {
+        font-size: 1.8rem;
+    }
+    
+    .tr-subtitle {
+        font-size: 1rem;
+    }
+    
+    .tr-header-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .tr-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .tr-grid.cols-3 {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+    
+    .tr-sidebar {
         position: static;
         margin-bottom: 1.5rem;
     }
 }
 
 @media (max-width: 768px) {
-    .twin-registry-container {
-        padding: 1rem 0;
+    .tr-container {
+        padding: 1.5rem 0;
     }
     
-    .twin-registry-header {
+    .tr-header {
         padding: 1.5rem 0;
         margin-bottom: 1.5rem;
     }
     
-    .twin-registry-title {
-        font-size: 2rem;
+    .tr-title {
+        font-size: 1.6rem;
     }
     
-    .page-header {
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .page-header h1 {
+    .tr-title i {
         font-size: 1.5rem;
     }
     
-    .content-area .card-body {
-        padding: 1rem;
+    .tr-card-body {
+        padding: 1.5rem;
     }
     
-    .twin-registry-section {
-        padding: 1rem;
-        margin-bottom: 1rem;
+    .tr-sidebar {
+        padding: 1.5rem;
     }
     
-    .twin-registry-grid {
+    .tr-section {
+        padding: 1.5rem;
+    }
+    
+    .tr-grid {
         gap: 1rem;
     }
     
-    .twin-registry-grid.cols-2,
-    .twin-registry-grid.cols-3,
-    .twin-registry-grid.cols-4 {
+    .tr-grid.cols-2,
+    .tr-grid.cols-3,
+    .tr-grid.cols-4 {
         grid-template-columns: 1fr;
+    }
+    
+    .tr-nav-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .tr-tab-link {
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
     }
 }
 
 @media (max-width: 576px) {
-    .twin-registry-title {
-        font-size: 1.75rem;
+    .tr-container {
+        padding: 1rem 0;
     }
     
-    .twin-registry-subtitle {
-        font-size: 1rem;
+    .tr-header {
+        padding: 1.25rem 0;
+        border-radius: 12px;
     }
     
-    .page-header .btn-group {
-        flex-direction: column;
-        width: 100%;
+    .tr-title {
+        font-size: 1.4rem;
     }
     
-    .page-header .btn-group .btn {
-        margin-bottom: 0.5rem;
+    .tr-subtitle {
+        font-size: 0.9rem;
     }
     
-    .twin-registry-sidebar {
-        padding: 1rem;
+    .tr-card-body {
+        padding: 1.25rem;
+    }
+    
+    .tr-sidebar {
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+    
+    .tr-section {
+        padding: 1.25rem;
+        border-radius: 12px;
     }
 } 

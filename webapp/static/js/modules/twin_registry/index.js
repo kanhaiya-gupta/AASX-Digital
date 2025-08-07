@@ -4,7 +4,7 @@
  */
 
 // Import shared utilities
-import { initAlertSystem } from '../shared/alerts.js';
+import { initAlertSystem } from '/static/js/shared/alerts.js';
 
 // Import Twin Registry modules
 import TwinRegistryCore from './registry-management/core.js';

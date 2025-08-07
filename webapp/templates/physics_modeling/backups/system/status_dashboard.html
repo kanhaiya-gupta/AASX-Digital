@@ -1,0 +1,267 @@
+<!-- Enhanced System Status Dashboard -->
+<div class="pm-system-status-card card border-0 shadow-lg mb-4">
+    <div class="pm-card-header card-header bg-gradient-primary text-white">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="pm-card-title mb-0">
+                <i class="fas fa-server me-2"></i>
+                System Status Dashboard
+            </h5>
+            <div class="pm-header-actions">
+                <button class="pm-btn pm-btn-refresh btn btn-outline-light btn-sm me-2" onclick="refreshSystemStatus()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>All Systems Operational
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="pm-card-body card-body p-4">
+        <!-- Enhanced Connection Status -->
+        <div class="pm-connection-status mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="pm-section-title mb-0 fw-bold text-primary">
+                    <i class="fas fa-network-wired me-2"></i>Connection Status
+                </h6>
+                <span class="badge bg-success">
+                    <i class="fas fa-signal me-1"></i>7/8 Connected
+                </span>
+            </div>
+            <div class="pm-connections-grid row g-3">
+                <div class="col-md-4">
+                    <div class="pm-connection-card p-3 bg-gradient-light rounded shadow-sm">
+                        <div class="pm-connection-item d-flex align-items-center mb-3">
+                            <div class="pm-status-indicator status-indicator bg-success me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">Physics Engine</span>
+                                <br>
+                                <small class="text-muted">Core simulation engine</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-success ms-auto">Active</span>
+                        </div>
+                        <div class="pm-connection-item d-flex align-items-center mb-3">
+                            <div class="pm-status-indicator status-indicator bg-success me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">Knowledge Graph</span>
+                                <br>
+                                <small class="text-muted">Neo4j database</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-success ms-auto">Connected</span>
+                        </div>
+                        <div class="pm-connection-item d-flex align-items-center mb-3">
+                            <div class="pm-status-indicator status-indicator bg-warning me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">Federated Learning</span>
+                                <br>
+                                <small class="text-muted">Distributed AI system</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-warning ms-auto">Standby</span>
+                        </div>
+                        <div class="pm-connection-item d-flex align-items-center">
+                            <div class="pm-status-indicator status-indicator bg-success me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">Database</span>
+                                <br>
+                                <small class="text-muted">SQLite storage</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-success ms-auto">Healthy</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pm-connection-card p-3 bg-gradient-light rounded shadow-sm">
+                        <div class="pm-connection-item d-flex align-items-center mb-3">
+                            <div class="pm-status-indicator status-indicator bg-success me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">File Storage</span>
+                                <br>
+                                <small class="text-muted">Local file system</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-success ms-auto">Available</span>
+                        </div>
+                        <div class="pm-connection-item d-flex align-items-center mb-3">
+                            <div class="pm-status-indicator status-indicator bg-success me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">API Gateway</span>
+                                <br>
+                                <small class="text-muted">FastAPI server</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-success ms-auto">Responding</span>
+                        </div>
+                        <div class="pm-connection-item d-flex align-items-center mb-3">
+                            <div class="pm-status-indicator status-indicator bg-success me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">Web Interface</span>
+                                <br>
+                                <small class="text-muted">Frontend application</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-success ms-auto">Active</span>
+                        </div>
+                        <div class="pm-connection-item d-flex align-items-center">
+                            <div class="pm-status-indicator status-indicator bg-success me-3"></div>
+                            <div class="pm-connection-info">
+                                <span class="pm-connection-label fw-bold">AI/RAG System</span>
+                                <br>
+                                <small class="text-muted">Intelligent analysis</small>
+                            </div>
+                            <span class="pm-connection-badge badge bg-success ms-auto">Online</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pm-system-overview-card p-3 bg-gradient-light rounded shadow-sm">
+                        <h6 class="fw-bold text-primary mb-3">
+                            <i class="fas fa-chart-pie me-2"></i>System Overview
+                        </h6>
+                        <div class="pm-overview-stats">
+                            <div class="pm-stat-item d-flex justify-content-between mb-2">
+                                <span class="text-muted">Uptime:</span>
+                                <span class="fw-bold">24h 15m 32s</span>
+                            </div>
+                            <div class="pm-stat-item d-flex justify-content-between mb-2">
+                                <span class="text-muted">Active Simulations:</span>
+                                <span class="fw-bold text-success">3</span>
+                            </div>
+                            <div class="pm-stat-item d-flex justify-content-between mb-2">
+                                <span class="text-muted">Available Plugins:</span>
+                                <span class="fw-bold text-info">12</span>
+                            </div>
+                            <div class="pm-stat-item d-flex justify-content-between mb-2">
+                                <span class="text-muted">System Health:</span>
+                                <span class="fw-bold text-success">98%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Performance Metrics -->
+        <div class="pm-performance-metrics row g-4">
+            <div class="col-md-6">
+                <div class="pm-performance-card card border-0 shadow-sm">
+                    <div class="pm-card-header card-header bg-gradient-info text-white">
+                        <h6 class="pm-section-title mb-0">
+                            <i class="fas fa-tachometer-alt me-2"></i>System Performance
+                        </h6>
+                    </div>
+                    <div class="pm-card-body card-body p-3">
+                        <div class="pm-performance-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="pm-form-label form-label small fw-bold mb-0">
+                                    <i class="fas fa-microchip me-1"></i>CPU Usage
+                                </label>
+                                <span class="text-success fw-bold">25% - Normal</span>
+                            </div>
+                            <div class="pm-performance-progress progress mb-1" style="height: 8px;">
+                                <div class="pm-performance-bar progress-bar bg-gradient-success" id="system-cpu-usage" style="width: 25%"></div>
+                            </div>
+                        </div>
+                        <div class="pm-performance-item mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="pm-form-label form-label small fw-bold mb-0">
+                                    <i class="fas fa-memory me-1"></i>Memory Usage
+                                </label>
+                                <span class="text-info fw-bold">45% - 2.3 GB / 5.0 GB</span>
+                            </div>
+                            <div class="pm-performance-progress progress mb-1" style="height: 8px;">
+                                <div class="pm-performance-bar progress-bar bg-gradient-info" id="system-memory-usage" style="width: 45%"></div>
+                            </div>
+                        </div>
+                        <div class="pm-performance-item">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="pm-form-label form-label small fw-bold mb-0">
+                                    <i class="fas fa-hdd me-1"></i>Disk Usage
+                                </label>
+                                <span class="text-warning fw-bold">60% - 120 GB / 200 GB</span>
+                            </div>
+                            <div class="pm-performance-progress progress mb-1" style="height: 8px;">
+                                <div class="pm-performance-bar progress-bar bg-gradient-warning" id="system-disk-usage" style="width: 60%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="pm-logs-card card border-0 shadow-sm">
+                    <div class="pm-card-header card-header bg-gradient-dark text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="pm-section-title mb-0">
+                                <i class="fas fa-terminal me-2"></i>Recent Activity
+                            </h6>
+                            <button class="pm-btn pm-btn-clear btn btn-outline-light btn-sm" onclick="clearSystemLogs()">
+                                <i class="fas fa-trash me-1"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pm-card-body card-body p-0">
+                        <div class="pm-system-logs bg-dark text-light p-3" 
+                             style="height: 150px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.8rem;" 
+                             id="system-logs">
+                            <div class="text-success">[2024-01-15 10:30:15] System startup completed</div>
+                            <div class="text-info">[2024-01-15 10:30:20] Physics framework initialized</div>
+                            <div class="text-info">[2024-01-15 10:30:25] Twin registry connection established</div>
+                            <div class="text-info">[2024-01-15 10:30:30] AI/RAG system activated</div>
+                            <div class="text-warning">[2024-01-15 10:35:12] Simulation started: thermal_analysis_001</div>
+                            <div class="text-success">[2024-01-15 10:40:45] Model created: structural_bridge_v2</div>
+                            <div class="text-info">[2024-01-15 10:45:20] Plugin loaded: fluid_dynamics_v3.2</div>
+                            <div class="text-success">[2024-01-15 10:50:15] Simulation completed: thermal_analysis_001</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced System Actions -->
+        <div class="pm-system-actions d-flex gap-3 mt-4 flex-wrap">
+            <button type="button" class="pm-btn pm-btn-refresh btn btn-outline-primary" onclick="refreshSystemStatus()">
+                <i class="fas fa-sync me-2"></i>Refresh Status
+            </button>
+            <button type="button" class="pm-btn pm-btn-diagnostics btn btn-outline-info" onclick="runSystemDiagnostics()">
+                <i class="fas fa-stethoscope me-2"></i>Run Diagnostics
+            </button>
+            <button type="button" class="pm-btn pm-btn-maintenance btn btn-outline-warning" onclick="toggleMaintenanceMode()">
+                <i class="fas fa-tools me-2"></i>Maintenance Mode
+            </button>
+            <button type="button" class="pm-btn pm-btn-emergency btn btn-outline-danger" onclick="emergencyStop()">
+                <i class="fas fa-stop-circle me-2"></i>Emergency Stop
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshSystemStatus() {
+    console.log('🔄 Refreshing system status...');
+    // Trigger refresh event
+    document.dispatchEvent(new CustomEvent('systemStatusRefresh'));
+}
+
+function runSystemDiagnostics() {
+    console.log('🔍 Running system diagnostics...');
+    // Trigger diagnostics event
+    document.dispatchEvent(new CustomEvent('systemDiagnostics'));
+}
+
+function toggleMaintenanceMode() {
+    console.log('🔧 Toggling maintenance mode...');
+    // Trigger maintenance mode event
+    document.dispatchEvent(new CustomEvent('maintenanceModeToggle'));
+}
+
+function emergencyStop() {
+    console.log('🛑 Emergency stop triggered...');
+    if (confirm('Are you sure you want to perform an emergency stop? This will halt all simulations.')) {
+        // Trigger emergency stop event
+        document.dispatchEvent(new CustomEvent('emergencyStop'));
+    }
+}
+
+function clearSystemLogs() {
+    console.log('🗑️ Clearing system logs...');
+    const logsContainer = document.getElementById('system-logs');
+    if (logsContainer) {
+        logsContainer.innerHTML = '<div class="text-muted"><i class="fas fa-terminal me-1"></i>System logs cleared</div>';
+    }
+}
+</script> 

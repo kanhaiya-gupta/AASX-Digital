@@ -1,6 +1,7 @@
 /**
  * Twin Registry Main CSS File
  * Imports all modular CSS components for the Twin Registry
+ * Updated to match world-class header design
  */
 
 /* ===== MODULAR CSS IMPORTS ===== */
@@ -10,114 +11,99 @@
 @import url('./modules/twin_registry/tabs.css');
 @import url('./modules/twin_registry/charts.css');
 
-/* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
-
-/* Ensure tab text is visible */
-.nav-tabs .nav-link {
-    color: #ffffff !important;
-    font-weight: 500;
-}
-
-.nav-tabs .nav-link.active {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-.nav-tabs .nav-link:hover {
-    color: #ffffff !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Ensure all text in dark backgrounds is white */
-.card-header,
-.nav-tabs,
-.bg-dark,
-.bg-primary {
-    color: #ffffff !important;
-}
-
-.card-header h5,
-.card-header h6,
-.nav-tabs .nav-link {
-    color: #ffffff !important;
-}
-
-/* Fix any remaining visibility issues */
-.text-dark {
-    color: #ffffff !important;
-}
-
-/* Ensure proper contrast for readability */
-.btn-outline-light {
-    color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-.btn-outline-light:hover {
-    color: #000000 !important;
-    background-color: #ffffff !important;
-}
-
 /* ===== GLOBAL TWIN REGISTRY STYLES ===== */
 /* These are styles that apply across all modules */
 
 /* Global twin registry container */
-.twin-registry {
+.tr-container {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: #212529;
 }
 
 /* Global focus styles */
-.twin-registry *:focus {
-    outline: 2px solid #0d6efd;
+.tr-container *:focus {
+    outline: 2px solid #1e3c72;
     outline-offset: 2px;
 }
 
 /* Global transition for interactive elements */
-.twin-registry .btn,
-.twin-registry .card,
-.twin-registry .nav-link,
-.twin-registry .form-control {
-    transition: all 0.2s ease-in-out;
+.tr-container .btn,
+.tr-container .card,
+.tr-container .nav-link,
+.tr-container .form-control {
+    transition: all 0.3s ease;
 }
 
 /* Global scrollbar styling */
-.twin-registry ::-webkit-scrollbar {
+.tr-container ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-.twin-registry ::-webkit-scrollbar-track {
+.tr-container ::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
 }
 
-.twin-registry ::-webkit-scrollbar-thumb {
+.tr-container ::-webkit-scrollbar-thumb {
     background: #c1c1c1;
     border-radius: 4px;
 }
 
-.twin-registry ::-webkit-scrollbar-thumb:hover {
+.tr-container ::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
 
 /* Global print styles */
 @media print {
-    .twin-registry .btn,
-    .twin-registry .nav-tabs,
-    .twin-registry .modal {
+    .tr-container .btn,
+    .tr-container .nav-tabs,
+    .tr-container .modal {
         display: none !important;
     }
     
-    .twin-registry .card {
+    .tr-container .card {
         border: 1px solid #000 !important;
         box-shadow: none !important;
     }
     
-    .twin-registry .chart-container {
+    .tr-container .chart-container {
         page-break-inside: avoid;
     }
+}
+
+/* ===== ANIMATION KEYFRAMES ===== */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Global loading and animation classes */
+.tr-loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #1e3c72;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.tr-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.tr-pulse {
+    animation: pulse 2s infinite;
 } 

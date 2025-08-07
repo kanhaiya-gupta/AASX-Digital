@@ -1,81 +1,159 @@
 <!-- Analytics Dashboard Component -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-            <i class="fas fa-chart-bar me-2"></i>Registry Analytics
-        </h5>
-        <div class="d-flex gap-2">
-            <select class="form-select form-select-sm" id="timeRangeFilter">
-                <option value="24h">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d" selected>Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-            </select>
-            <button class="btn btn-sm btn-outline-primary" onclick="generateReport()">
-                <i class="fas fa-file-pdf me-2"></i>Generate Report
-            </button>
-            <button class="btn btn-sm btn-outline-success" onclick="exportData()">
-                <i class="fas fa-download me-2"></i>Export Data
-            </button>
+<div class="tr-analytics-dashboard">
+    <!-- Analytics Header -->
+    <div class="tr-analytics-header">
+        <div class="tr-header-content">
+            <div class="tr-header-info">
+                <h5 class="tr-header-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Registry Analytics
+                </h5>
+                <p class="tr-header-subtitle">Comprehensive insights and performance metrics</p>
+            </div>
+            <div class="tr-header-actions">
+                <select class="tr-time-filter" id="timeRangeFilter">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d" selected>Last 30 Days</option>
+                    <option value="90d">Last 90 Days</option>
+                </select>
+                <button class="tr-btn tr-btn-primary" onclick="generateReport()">
+                    <i class="fas fa-file-pdf"></i>
+                    Generate Report
+                </button>
+                <button class="tr-btn tr-btn-success" onclick="exportData()">
+                    <i class="fas fa-download"></i>
+                    Export Data
+                </button>
+            </div>
         </div>
     </div>
-    <div class="card-body">
-        <!-- Analytics Overview -->
+
+    <!-- Analytics Overview Cards -->
+    <div class="tr-analytics-overview">
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body text-center">
-                        <h4 class="mb-0" id="totalTwinsAnalytics">0</h4>
-                        <p class="mb-0">Total Twins</p>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="tr-analytics-card tr-analytics-primary">
+                    <div class="tr-analytics-content">
+                        <div class="tr-analytics-info">
+                            <div class="tr-analytics-value" id="totalTwinsAnalytics">0</div>
+                            <div class="tr-analytics-label">Total Twins</div>
+                            <div class="tr-analytics-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12.5%</span>
+                            </div>
+                        </div>
+                        <div class="tr-analytics-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                    </div>
+                    <div class="tr-analytics-progress">
+                        <div class="tr-progress-bar" style="width: 75%"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body text-center">
-                        <h4 class="mb-0" id="avgHealthScore">0%</h4>
-                        <p class="mb-0">Avg Health Score</p>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="tr-analytics-card tr-analytics-success">
+                    <div class="tr-analytics-content">
+                        <div class="tr-analytics-info">
+                            <div class="tr-analytics-value" id="avgHealthScore">0%</div>
+                            <div class="tr-analytics-label">Avg Health Score</div>
+                            <div class="tr-analytics-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+3.2%</span>
+                            </div>
+                        </div>
+                        <div class="tr-analytics-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                    </div>
+                    <div class="tr-analytics-progress">
+                        <div class="tr-progress-bar" style="width: 85%"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body text-center">
-                        <h4 class="mb-0" id="totalEvents">0</h4>
-                        <p class="mb-0">Total Events</p>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="tr-analytics-card tr-analytics-info">
+                    <div class="tr-analytics-content">
+                        <div class="tr-analytics-info">
+                            <div class="tr-analytics-value" id="totalEvents">0</div>
+                            <div class="tr-analytics-label">Total Events</div>
+                            <div class="tr-analytics-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8.7%</span>
+                            </div>
+                        </div>
+                        <div class="tr-analytics-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                    <div class="tr-analytics-progress">
+                        <div class="tr-progress-bar" style="width: 92%"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body text-center">
-                        <h4 class="mb-0" id="uptimePercentage">0%</h4>
-                        <p class="mb-0">Uptime</p>
+            
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="tr-analytics-card tr-analytics-warning">
+                    <div class="tr-analytics-content">
+                        <div class="tr-analytics-info">
+                            <div class="tr-analytics-value" id="uptimePercentage">0%</div>
+                            <div class="tr-analytics-label">Uptime</div>
+                            <div class="tr-analytics-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+1.2%</span>
+                            </div>
+                        </div>
+                        <div class="tr-analytics-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="tr-analytics-progress">
+                        <div class="tr-progress-bar" style="width: 98%"></div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Analytics Charts -->
+    <!-- Analytics Charts Section -->
+    <div class="tr-analytics-charts">
         <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Twin Growth Trend</h6>
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            Twin Growth Trend
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Live
+                        </div>
                     </div>
-                    <div class="card-body">
+                    <div class="tr-card-body">
                         <div class="chart-container large">
                             <canvas id="twinGrowthChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Health Score Distribution</h6>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-pie"></i>
+                            Health Score Distribution
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Real-time
+                        </div>
                     </div>
-                    <div class="card-body">
+                    <div class="tr-card-body">
                         <div class="chart-container large">
                             <canvas id="healthDistributionChart"></canvas>
                         </div>
@@ -84,26 +162,40 @@
             </div>
         </div>
 
-        <!-- Performance Metrics -->
         <div class="row mb-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Event Activity</h6>
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar"></i>
+                            Event Activity
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Live
+                        </div>
                     </div>
-                    <div class="card-body">
+                    <div class="tr-card-body">
                         <div class="chart-container large">
                             <canvas id="eventActivityChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Performance Trends</h6>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-area"></i>
+                            Performance Trends
+                        </h6>
+                        <div class="tr-live-badge">
+                            <i class="fas fa-circle"></i>
+                            Real-time
+                        </div>
                     </div>
-                    <div class="card-body">
+                    <div class="tr-card-body">
                         <div class="chart-container large">
                             <canvas id="performanceTrendsChart"></canvas>
                         </div>
@@ -111,33 +203,43 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Usage Statistics -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">Usage Statistics</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Metric</th>
-                                        <th>Current</th>
-                                        <th>Previous Period</th>
-                                        <th>Change</th>
-                                        <th>Trend</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="usageStatsTable">
-                                    <!-- Usage statistics will be populated here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <!-- Usage Statistics Section -->
+    <div class="tr-usage-statistics">
+        <div class="tr-section-header">
+            <h6 class="tr-section-title">
+                <i class="fas fa-table"></i>
+                Usage Statistics
+            </h6>
+            <div class="tr-section-actions">
+                <button class="tr-btn tr-btn-refresh" id="refreshStatsBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+                <button class="tr-btn tr-btn-primary" id="exportStatsBtn">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+        
+        <div class="tr-stats-table-container">
+            <div class="tr-table-responsive">
+                <table class="tr-stats-table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Current</th>
+                            <th>Previous Period</th>
+                            <th>Change</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usageStatsTable">
+                        <!-- Usage statistics will be populated here -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

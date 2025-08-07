@@ -1,150 +1,428 @@
 /**
- * AASX Processing Module Layout CSS Module
- * Dedicated styling for main layout and structure
+ * AASX Module Layout CSS
+ * World-class styling for the AASX Digital Twin Data Hub
  */
 
-/* ===== MAIN LAYOUT STYLING ===== */
+/* AASX Layout Styles */
 .aasx-container {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: 100vh;
-    padding: 1.5rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-/* ===== PAGE HEADER STYLING ===== */
-.aasx-header {
-    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+/* Premium Header Section */
+.aasx-header-section {
+    position: relative;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 2rem 0;
-    margin-bottom: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0;
+    overflow: hidden;
 }
 
-.aasx-header h1 {
+.aasx-header-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.aasx-header-content {
+    position: relative;
+    z-index: 2;
+}
+
+.aasx-main-title {
+    font-size: 2.5rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.aasx-header .subtitle {
-    opacity: 0.9;
+.aasx-title-icon {
+    font-size: 2rem;
+    color: #ffd700;
+    animation: pulse 2s infinite;
+}
+
+.aasx-subtitle {
     font-size: 1.1rem;
-}
-
-/* ===== CONTENT AREA STYLING ===== */
-.aasx-content {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    margin-bottom: 2rem;
-}
-
-/* ===== SIDEBAR STYLING ===== */
-.aasx-sidebar {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    height: fit-content;
-    position: sticky;
-    top: 2rem;
-}
-
-.aasx-sidebar .card {
-    border: none;
-    box-shadow: none;
-    background: transparent;
-}
-
-.aasx-sidebar .card-header {
-    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
-    color: white;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
-
-.aasx-sidebar .card-body {
-    padding: 0;
-}
-
-/* ===== GRID LAYOUT STYLING ===== */
-.aasx-grid {
-    display: grid;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.aasx-grid-2 {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.aasx-grid-3 {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-
-.aasx-grid-4 {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-/* ===== PROCESSING INTERFACE LAYOUT ===== */
-.processing-interface {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    margin-bottom: 2rem;
-}
-
-.processing-interface .card-header {
-    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
-    color: white;
-    border-radius: 8px;
-    padding: 1rem;
+    opacity: 0.9;
     margin-bottom: 1.5rem;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 768px) {
-    .aasx-header {
-        padding: 1.5rem 0;
-        margin-bottom: 1.5rem;
+.aasx-status-indicators {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.aasx-status-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.aasx-status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.aasx-status-active {
+    background: #28a745;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+.aasx-status-processing {
+    background: #ffc107;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+
+.aasx-status-ready {
+    background: #17a2b8;
+    box-shadow: 0 0 10px rgba(23, 162, 184, 0.5);
+}
+
+.aasx-status-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.aasx-header-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.aasx-action-group {
+    display: flex;
+    gap: 1rem;
+}
+
+.aasx-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.aasx-btn-premium {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #1e3c72;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.aasx-btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.aasx-btn-primary {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.aasx-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+/* Tab Navigation */
+.aasx-tab-navigation {
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0;
+    margin-bottom: 0;
+    box-shadow: 0 2px 10px rgba(30, 60, 114, 0.1);
+}
+
+.aasx-tab-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.aasx-tab-list {
+    display: flex;
+    gap: 0;
+    border: none;
+    background: transparent;
+}
+
+.aasx-tab-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 2rem;
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+    border-radius: 0;
+    text-decoration: none;
+}
+
+.aasx-tab-link:hover {
+    color: #1e3c72;
+    background: rgba(30, 60, 114, 0.05);
+}
+
+.aasx-tab-link.active {
+    color: #1e3c72;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.2);
+}
+
+.aasx-tab-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+}
+
+.aasx-tab-link i {
+    font-size: 1.1rem;
+}
+
+/* Unified Dashboard Header */
+.aasx-dashboard-header {
+    background: white;
+    padding: 2rem 0;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 2px 10px rgba(30, 60, 114, 0.05);
+}
+
+.aasx-dashboard-stats {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.aasx-dashboard-stat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.aasx-dashboard-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.15);
+}
+
+.aasx-dashboard-stat-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-radius: 12px;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.2);
+}
+
+.aasx-dashboard-stat-content {
+    flex: 1;
+}
+
+.aasx-dashboard-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e3c72;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-dashboard-stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.aasx-dashboard-stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.aasx-trend-up {
+    color: #28a745;
+}
+
+.aasx-trend-down {
+    color: #dc3545;
+}
+
+.aasx-trend-up i,
+.aasx-trend-down i {
+    font-size: 0.7rem;
+}
+
+/* Main Content */
+.aasx-main-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.tab-content {
+    background: transparent;
+}
+
+.tab-pane {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .aasx-main-title {
+        font-size: 2rem;
     }
     
-    .aasx-header h1 {
-        font-size: 1.75rem;
+    .aasx-title-icon {
+        font-size: 1.5rem;
     }
     
-    .aasx-header .subtitle {
+    .aasx-status-indicators {
+        gap: 1rem;
+    }
+    
+    .aasx-tab-link {
+        padding: 1rem 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .aasx-tab-link i {
         font-size: 1rem;
     }
     
-    .processing-interface {
-        padding: 1.5rem;
+    .aasx-dashboard-stat {
+        padding: 1.25rem;
     }
     
-    .aasx-sidebar {
-        position: static;
-        margin-bottom: 1.5rem;
+    .aasx-dashboard-stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
     }
     
-    .aasx-grid-2,
-    .aasx-grid-3,
-    .aasx-grid-4 {
-        grid-template-columns: 1fr;
+    .aasx-dashboard-stat-number {
+        font-size: 1.75rem;
     }
 }
 
-@media (max-width: 576px) {
-    .aasx-container {
-        padding: 1rem 0;
+@media (max-width: 767.98px) {
+    .aasx-header-section {
+        padding: 1.5rem 0;
     }
     
-    .aasx-header {
-        padding: 1rem 0;
+    .aasx-main-title {
+        font-size: 1.75rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
     }
     
-    .processing-interface {
+    .aasx-status-indicators {
+        justify-content: center;
+    }
+    
+    .aasx-header-actions {
+        align-items: center;
+        margin-top: 1rem;
+    }
+    
+    .aasx-tab-list {
+        flex-wrap: wrap;
+    }
+    
+    .aasx-tab-link {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
         padding: 1rem;
+    }
+    
+    .aasx-dashboard-stat {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .aasx-dashboard-stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .aasx-dashboard-stat-number {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
     }
 } 

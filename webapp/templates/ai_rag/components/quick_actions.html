@@ -1,69 +1,146 @@
-<!-- Quick Actions Component -->
-<div class="ai-rag-quick-actions-card card border-0 shadow-sm mb-4">
+<!-- Enhanced Quick Actions Component -->
+<div class="ai-rag-quick-actions-card card border-0 shadow-lg mb-4">
     <div class="ai-rag-card-header card-header bg-gradient-warning text-white">
-        <h6 class="ai-rag-card-title mb-0">
-            <i class="fas fa-bolt me-2"></i>
-            Quick Actions
-        </h6>
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="ai-rag-card-title mb-0">
+                <i class="fas fa-bolt me-2"></i>
+                Quick Actions
+            </h6>
+            <div class="ai-rag-header-actions">
+                <button class="ai-rag-btn ai-rag-btn-custom btn btn-sm btn-outline-light" onclick="createCustomAction()">
+                    <i class="fas fa-plus me-1"></i>Custom
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="ai-rag-card-body card-body">
-        <div class="ai-rag-actions-grid d-grid gap-2">
-            <!-- General Demo Queries -->
-            <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="What are the quality issues in our manufacturing assets?">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Quality Issues
-            </button>
-            <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="Assess the risk level of our critical equipment">
-                <i class="fas fa-shield-alt me-2"></i>
-                Risk Assessment
-            </button>
-            <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="How can we optimize our production efficiency?">
-                <i class="fas fa-chart-line me-2"></i>
-                Optimization
-            </button>
-            <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="What are the main assets in our digital twin system?">
-                <i class="fas fa-cube me-2"></i>
-                Asset Overview
-            </button>
-            
-            <!-- AASX-Specific Demo Queries -->
-            <hr class="ai-rag-divider my-2">
-            <small class="ai-rag-section-label text-muted fw-bold">AASX-Specific Queries:</small>
-            <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="Analyze the asset structure in our digital twin">
-                <i class="fas fa-sitemap me-2"></i>
-                Asset Structure Analysis
-            </button>
-            <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="What are the submodels in our AASX file?">
-                <i class="fas fa-layer-group me-2"></i>
-                Submodel Analysis
-            </button>
-            <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="Show me the properties of our manufacturing assets">
-                <i class="fas fa-tags me-2"></i>
-                Asset Properties
-            </button>
-            <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="Identify quality issues in our asset data">
-                <i class="fas fa-search-plus me-2"></i>
-                Data Quality Check
-            </button>
-            
-            <!-- Action Buttons -->
-            <hr class="ai-rag-divider my-2">
-            <button class="ai-rag-btn ai-rag-action-btn btn btn-success demo-query-btn" id="run-all-demos">
-                <i class="fas fa-rocket me-2"></i>
-                Run All Demos
-            </button>
-            <button class="ai-rag-btn ai-rag-action-btn btn btn-outline-info" id="compare-techniques">
-                <i class="fas fa-balance-scale me-2"></i>
-                Compare Techniques
-            </button>
-            <button class="ai-rag-btn ai-rag-action-btn btn btn-outline-warning" id="process-embeddings">
-                <i class="fas fa-cube me-2"></i>
-                Process Embeddings
-            </button>
-            <button class="ai-rag-btn ai-rag-action-btn btn btn-outline-secondary" id="analyze-latest-etl">
-                <i class="fas fa-sync-alt me-2"></i>
-                Analyze Latest ETL
-            </button>
+    <div class="ai-rag-card-body card-body p-4">
+        <!-- General Analysis Actions -->
+        <div class="ai-rag-actions-section mb-4">
+            <h6 class="ai-rag-section-title text-primary mb-3">
+                <i class="fas fa-chart-bar me-2"></i>General Analysis
+            </h6>
+            <div class="ai-rag-actions-grid d-grid gap-2">
+                <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="What are the quality issues in our manufacturing assets?">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span>Quality Issues</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Identify quality problems</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="Assess the risk level of our critical equipment">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <span>Risk Assessment</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Evaluate equipment risks</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="How can we optimize our production efficiency?">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-chart-line me-2"></i>
+                        <span>Optimization</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Find efficiency gains</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-demo-btn btn btn-outline-primary demo-query-btn" data-query="What are the main assets in our digital twin system?">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-cube me-2"></i>
+                        <span>Asset Overview</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">System-wide asset view</small>
+                </button>
+            </div>
+        </div>
+        
+        <!-- AASX-Specific Actions -->
+        <div class="ai-rag-actions-section mb-4">
+            <h6 class="ai-rag-section-title text-success mb-3">
+                <i class="fas fa-sitemap me-2"></i>AASX-Specific Queries
+            </h6>
+            <div class="ai-rag-actions-grid d-grid gap-2">
+                <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="Analyze the asset structure in our digital twin">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-sitemap me-2"></i>
+                        <span>Asset Structure</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Hierarchical analysis</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="What are the submodels in our AASX file?">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-layer-group me-2"></i>
+                        <span>Submodel Analysis</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Component breakdown</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="Show me the properties of our manufacturing assets">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-tags me-2"></i>
+                        <span>Asset Properties</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Detailed attributes</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-demo-btn ai-rag-aasx-btn btn btn-outline-success demo-query-btn" data-query="Identify quality issues in our asset data">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-search-plus me-2"></i>
+                        <span>Data Quality Check</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Validation analysis</small>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Advanced Actions -->
+        <div class="ai-rag-actions-section mb-4">
+            <h6 class="ai-rag-section-title text-warning mb-3">
+                <i class="fas fa-cogs me-2"></i>Advanced Actions
+            </h6>
+            <div class="ai-rag-actions-grid d-grid gap-2">
+                <button class="ai-rag-btn ai-rag-action-btn btn btn-success" id="run-all-demos">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-rocket me-2"></i>
+                        <span>Run All Demos</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Comprehensive analysis</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-action-btn btn btn-outline-info" id="compare-techniques">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-balance-scale me-2"></i>
+                        <span>Compare Techniques</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">RAG performance test</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-action-btn btn btn-outline-warning" id="process-embeddings">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-cube me-2"></i>
+                        <span>Process Embeddings</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Vector database update</small>
+                </button>
+                <button class="ai-rag-btn ai-rag-action-btn btn btn-outline-secondary" id="analyze-latest-etl">
+                    <div class="ai-rag-btn-content">
+                        <i class="fas fa-sync-alt me-2"></i>
+                        <span>Analyze Latest ETL</span>
+                    </div>
+                    <small class="ai-rag-btn-desc">Fresh data analysis</small>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="ai-rag-quick-stats mt-4">
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="ai-rag-stat-card text-center p-2 bg-light rounded">
+                        <small class="ai-rag-stat-label text-muted d-block">Total Queries</small>
+                        <span class="ai-rag-stat-value fw-bold text-primary" id="total-queries">0</span>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="ai-rag-stat-card text-center p-2 bg-light rounded">
+                        <small class="ai-rag-stat-label text-muted d-block">Success Rate</small>
+                        <span class="ai-rag-stat-value fw-bold text-success" id="success-rate">0%</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div> 

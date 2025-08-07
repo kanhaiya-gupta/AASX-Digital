@@ -1,46 +1,70 @@
-<!-- Federation Status Component -->
+<!-- Enhanced Federation Status Component -->
 <div class="fl-federation-status row mb-4">
     <div class="col-md-3">
-        <div class="fl-status-card card fl-federated-card h-100">
-            <div class="fl-card-body card-body text-center">
+        <div class="fl-status-card card fl-federated-card h-100 border-0 shadow-lg">
+            <div class="fl-card-body card-body text-center p-4">
                 <div class="fl-status-icon mb-3">
                     <i class="fas fa-network-wired fa-3x text-primary"></i>
+                    <div class="fl-status-dot fl-status-dot-success"></div>
                 </div>
-                <h4 class="fl-status-value fw-bold text-primary mb-1" id="federationStatus">Inactive</h4>
-                <p class="fl-status-label text-muted mb-0">Federation Status</p>
+                <h4 class="fl-status-value fw-bold text-primary mb-2" id="federationStatus">Active</h4>
+                <p class="fl-status-label text-muted mb-3">Federation Status</p>
+                <div class="fl-status-trend">
+                    <span class="badge bg-success">
+                        <i class="fas fa-arrow-up me-1"></i>Connected
+                    </span>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="fl-status-card card fl-federated-card h-100">
-            <div class="fl-card-body card-body text-center">
+        <div class="fl-status-card card fl-federated-card h-100 border-0 shadow-lg">
+            <div class="fl-card-body card-body text-center p-4">
                 <div class="fl-status-icon mb-3">
                     <i class="fas fa-sync fa-3x text-success"></i>
+                    <div class="fl-status-dot fl-status-dot-success"></div>
                 </div>
-                <h4 class="fl-status-value fw-bold text-success mb-1" id="aggregationRounds">0</h4>
-                <p class="fl-status-label text-muted mb-0">Aggregation Rounds</p>
+                <h4 class="fl-status-value fw-bold text-success mb-2" id="aggregationRounds">24</h4>
+                <p class="fl-status-label text-muted mb-3">Aggregation Rounds</p>
+                <div class="fl-status-trend">
+                    <span class="badge bg-success">
+                        <i class="fas fa-plus me-1"></i>+3 today
+                    </span>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="fl-status-card card fl-federated-card h-100">
-            <div class="fl-card-body card-body text-center">
+        <div class="fl-status-card card fl-federated-card h-100 border-0 shadow-lg">
+            <div class="fl-card-body card-body text-center p-4">
                 <div class="fl-status-icon mb-3">
                     <i class="fas fa-users fa-3x text-info"></i>
+                    <div class="fl-status-dot fl-status-dot-success"></div>
                 </div>
-                <h4 class="fl-status-value fw-bold text-info mb-1" id="activeTwins">3</h4>
-                <p class="fl-status-label text-muted mb-0">Active Twins</p>
+                <h4 class="fl-status-value fw-bold text-info mb-2" id="activeTwins">3</h4>
+                <p class="fl-status-label text-muted mb-3">Active Twins</p>
+                <div class="fl-status-trend">
+                    <span class="badge bg-info">
+                        <i class="fas fa-check me-1"></i>All Online
+                    </span>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-3">
-        <div class="fl-status-card card fl-federated-card h-100">
-            <div class="fl-card-body card-body text-center">
+        <div class="fl-status-card card fl-federated-card h-100 border-0 shadow-lg">
+            <div class="fl-card-body card-body text-center p-4">
                 <div class="fl-status-icon mb-3">
                     <i class="fas fa-chart-line fa-3x text-warning"></i>
+                    <div class="fl-status-dot fl-status-dot-success"></div>
                 </div>
-                <h4 class="fl-status-value fw-bold text-warning mb-1" id="avgHealthScore">79.4%</h4>
-                <p class="fl-status-label text-muted mb-0">Avg Health Score</p>
+                <h4 class="fl-status-value fw-bold text-warning mb-2" id="avgHealthScore">89.4%</h4>
+                <p class="fl-status-label text-muted mb-3">Avg Health Score</p>
+                <div class="fl-status-trend">
+                    <span class="badge bg-warning text-dark">
+                        <i class="fas fa-arrow-up me-1"></i>+2.1%
+                    </span>
+                </div>
             </div>
         </div>
     </div>

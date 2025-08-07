@@ -3,8 +3,8 @@
  * AASX-style modular pattern for federated learning functionality
  */
 
-import { showAlert } from '../shared/alerts.js';
-import { formatDate, generateId } from '../shared/utils.js';
+import { showAlert } from '/static/js/shared/alerts.js';
+import { formatDate, generateId } from '/static/js/shared/utils.js';
 
 // Import UI components
 import FederationStatusComponent from './ui-components/federation_status.js';

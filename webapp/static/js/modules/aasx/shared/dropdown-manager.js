@@ -1,9 +1,9 @@
 /**
- * AASX Dropdown Manager
- * Handles dynamic dropdown population for use cases, projects, and files
+ * Dropdown Manager for AASX Module
+ * Manages dropdown functionality across the AASX module
  */
 
-import { showError } from '../../shared/alerts.js';
+import { showError } from '/static/js/shared/alerts.js';
 
 export class DropdownManager {
     constructor() {
@@ -44,7 +44,7 @@ export class DropdownManager {
 
     async loadUseCases() {
         try {
-            const response = await fetch('/api/aasx/use-cases');
+            const response = await fetch('/api/aasx-etl/use-cases');
             if (response.ok) {
                 this.useCases = await response.json();
                 this.populateUseCaseDropdowns();
@@ -60,7 +60,7 @@ export class DropdownManager {
     async loadProjectsForUseCase(useCaseId) {
         try {
             console.log(`🔍 Dropdown Manager: Loading projects for use case ${useCaseId}`);
-            const response = await fetch(`/api/aasx/use-cases/${useCaseId}/projects`);
+            const response = await fetch(`/api/aasx-etl/use-cases/${useCaseId}/projects`);
             if (response.ok) {
                 this.projects = await response.json();
                 console.log(`📁 Dropdown Manager: Loaded ${this.projects.length} projects for use case ${useCaseId}`);
@@ -78,7 +78,7 @@ export class DropdownManager {
 
     async loadFilesForProject(projectId) {
         try {
-            const response = await fetch(`/api/aasx/projects/${projectId}/files`);
+            const response = await fetch(`/api/aasx-etl/projects/${projectId}/files`);
             if (response.ok) {
                 this.files = await response.json();
                 console.log(`📄 Loaded ${this.files.length} files for project ${projectId}`);

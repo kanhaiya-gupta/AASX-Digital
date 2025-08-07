@@ -8,8 +8,8 @@ console.log('📦 Knowledge Graph index.js: Module loading started...');
 
 // Import shared utilities
 console.log('📦 Knowledge Graph index.js: Importing shared utilities...');
-import { initAlertSystem, showAlert } from '../shared/alerts.js';
-import { formatFileSize, getFileStatusInfo } from '../shared/utils.js';
+import { initAlertSystem, showAlert } from '/static/js/shared/alerts.js';
+import { formatFileSize, getFileStatusInfo } from '/static/js/shared/utils.js';
 console.log('✅ Knowledge Graph index.js: Shared utilities imported');
 
 // Import Knowledge Graph core modules

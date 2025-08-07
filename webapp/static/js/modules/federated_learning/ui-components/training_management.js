@@ -3,7 +3,7 @@
  * Handles federation training controls and management
  */
 
-import { showAlert } from '../../shared/alerts.js';
+import { showAlert } from '/static/js/shared/alerts.js';
 
 export default class TrainingManagementComponent {
     constructor() {

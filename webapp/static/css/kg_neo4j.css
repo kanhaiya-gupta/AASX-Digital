@@ -1,6 +1,7 @@
 /**
- * Knowledge Graph (Neo4j) Module Main CSS File
- * Imports all modular CSS components for the Knowledge Graph Module
+ * Enhanced Knowledge Graph (Neo4j) Module Main CSS File
+ * Premium, world-class design with uniform color scheme
+ * Matches AASX, Twin Registry, and AI/RAG color palette
  */
 
 /* ===== MODULAR CSS IMPORTS ===== */
@@ -13,7 +14,7 @@
 /* ===== GLOBAL OVERRIDES AND CUSTOMIZATIONS ===== */
 /* Knowledge Graph-specific global styles and overrides */
 
-/* Animation keyframes for Knowledge Graph module */
+/* Enhanced Animation keyframes for Knowledge Graph module */
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
@@ -35,6 +36,40 @@
     }
 }
 
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes loadingDots {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
 /* Global animation classes */
 .pulse-animation {
     animation: pulse 2s infinite;
@@ -46,4 +81,284 @@
 
 .fade-in {
     animation: fadeIn 0.5s ease-out;
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Enhanced loading animation */
+.kg-loading-animation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+}
+
+.kg-loading-dots {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.kg-loading-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, #1e3c72, #2a5298);
+    animation: loadingDots 1.4s infinite ease-in-out both;
+}
+
+.kg-loading-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.kg-loading-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+/* Uniform gradient backgrounds - matching AASX, Twin Registry, and AI/RAG */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.bg-gradient-light {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Enhanced card shadows */
+.shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(30, 60, 114, 0.175) !important;
+}
+
+/* Enhanced button styles */
+.kg-btn {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.kg-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.15);
+}
+
+.kg-btn:active {
+    transform: translateY(0);
+}
+
+/* Enhanced status indicators */
+.kg-status-indicator {
+    position: relative;
+    display: inline-block;
+}
+
+.kg-status-icon {
+    position: relative;
+    z-index: 1;
+}
+
+.kg-status-dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #28a745;
+    border: 2px solid #fff;
+    animation: pulse 2s infinite;
+}
+
+.kg-status-dot-success {
+    background: #28a745;
+}
+
+.kg-status-dot-warning {
+    background: #ffd700;
+}
+
+.kg-status-dot-danger {
+    background: #dc3545;
+}
+
+/* Enhanced section cards */
+.kg-section-card {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.kg-section-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 60, 114, 0.1);
+}
+
+/* Enhanced header content */
+.kg-header-content {
+    padding: 2rem 0;
+}
+
+.kg-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.kg-subtitle {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Enhanced status badge */
+.kg-status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* Enhanced version info */
+.kg-version-info {
+    font-size: 0.875rem;
+}
+
+/* Enhanced feature badges */
+.kg-feature-badges .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* Enhanced integration summary */
+.kg-integration-summary {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #1e3c72;
+}
+
+/* Enhanced form controls */
+.kg-form-select,
+.kg-query-input {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.kg-form-select:focus,
+.kg-query-input:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.25);
+}
+
+/* Enhanced logs container */
+.kg-logs-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.kg-logs-text {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #495057;
+}
+
+/* Enhanced detail groups */
+.kg-detail-group {
+    transition: all 0.3s ease;
+}
+
+.kg-detail-group:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(30, 60, 114, 0.1);
+}
+
+/* Enhanced loading progress */
+.kg-loading-progress .progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.kg-loading-progress .progress-bar {
+    background: linear-gradient(90deg, #1e3c72, #2a5298);
+    border-radius: 10px;
+}
+
+/* Enhanced modal styles */
+.modal-header.bg-gradient-primary {
+    border-bottom: none;
+}
+
+.modal-header .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+/* Enhanced responsive design */
+@media (max-width: 768px) {
+    .kg-title {
+        font-size: 2rem;
+    }
+    
+    .kg-feature-badges {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .kg-header-main {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .kg-header-status {
+        text-align: center;
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .kg-title {
+        font-size: 1.75rem;
+    }
+    
+    .kg-subtitle {
+        font-size: 1rem;
+    }
+    
+    .kg-detail-group {
+        padding: 1rem;
+    }
 } 

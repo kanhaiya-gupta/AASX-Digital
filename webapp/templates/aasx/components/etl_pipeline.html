@@ -1,64 +1,181 @@
-<!-- ETL Pipeline Management -->
-<div class="aasx-etl-pipeline-card card border-0 shadow-sm mb-4">
-    <div class="aasx-card-header card-header bg-gradient-warning text-white d-flex justify-content-between align-items-center">
-        <h5 class="aasx-card-title mb-0">
-            <i class="fas fa-cogs me-2"></i>
-            ETL Pipeline Management
-        </h5>
-        <div class="aasx-header-actions d-flex gap-2">
-            <button type="button" class="aasx-btn aasx-btn-run-selected btn btn-light btn-sm" id="runSelectedPipeline">
-                <i class="fas fa-play me-1"></i>
-                Run Selected Pipeline
+<!-- Premium ETL Pipeline Management -->
+<div class="aasx-etl-pipeline-section">
+    <div class="aasx-section-header">
+        <div class="aasx-section-title-wrapper">
+            <div class="aasx-section-icon">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+            <div>
+                <h2 class="aasx-section-title">ETL Pipeline Management</h2>
+                <p class="aasx-section-description">Process and transform your AASX data through the ETL pipeline</p>
+            </div>
+        </div>
+        <div class="aasx-section-actions">
+            <button class="aasx-btn aasx-btn-outline" id="refreshFilesBtn" title="Refresh Files">
+                <i class="fas fa-sync-alt"></i>
+                <span>Refresh</span>
             </button>
-            <button type="button" class="aasx-btn aasx-btn-run-all btn btn-light btn-sm" id="runAllData">
-                <i class="fas fa-rocket me-1"></i>
-                Run ETL on All Data
+            <button class="aasx-btn aasx-btn-primary" id="startEtlBtn" title="Start ETL Processing">
+                <i class="fas fa-play"></i>
+                <span>Start ETL</span>
             </button>
         </div>
     </div>
-    <div class="aasx-card-body card-body">
-        <div class="aasx-etl-content row">
-            <div class="col-md-8">
-                <div class="aasx-files-section card bg-light border-0">
-                    <div class="aasx-card-body card-body">
-                        <h6 class="aasx-section-title text-primary mb-3">
-                            <i class="fas fa-list me-2"></i>
-                            Project Files
-                        </h6>
-                        <div class="aasx-dropdown-section">
-                            <div class="mb-3">
-                                <div class="aasx-refresh-header d-flex justify-content-between align-items-center mb-2">
-                                    <label class="aasx-form-label form-label fw-bold mb-0">Select Use Case:</label>
-                                    <button type="button" class="aasx-btn aasx-btn-refresh-files btn btn-sm btn-outline-primary" id="refreshEtlFiles">
-                                        <i class="fas fa-sync-alt me-1"></i>
-                                        Refresh Files
-                                    </button>
-                                </div>
-                                <select class="aasx-form-select form-select use-case-select mb-2" id="etlUseCaseSelect">
-                                    <option value="">Choose a use case...</option>
-                                </select>
+
+    <div class="aasx-etl-content">
+        <!-- File Selection Controls -->
+        <div class="aasx-file-selection-controls">
+            <div class="aasx-selection-row">
+                <div class="aasx-selection-group">
+                    <label class="aasx-form-label">Select Use Case</label>
+                    <select class="aasx-form-select" id="useCaseSelect">
+                        <option value="">Choose a use case...</option>
+                        <option value="thermal">Thermal Analysis</option>
+                        <option value="structural">Structural Analysis</option>
+                        <option value="fluid">Fluid Dynamics</option>
+                        <option value="multiphysics">Multi-Physics</option>
+                        <option value="industrial">Industrial Applications</option>
+                    </select>
+                </div>
+                <div class="aasx-selection-group">
+                    <label class="aasx-form-label">Select Project</label>
+                    <select class="aasx-form-select" id="projectSelect">
+                        <option value="">Choose a project...</option>
+                    </select>
+                </div>
+                <div class="aasx-selection-group">
+                    <label class="aasx-form-label">Data Format</label>
+                    <select class="aasx-form-select" id="dataFormatSelect">
+                        <option value="minimal">Minimal (Core Data)</option>
+                        <option value="structured">Structured (Full Structure)</option>
+                        <option value="rdf">RDF (Semantic Web)</option>
+                        <option value="graph">Graph (Knowledge Graph)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="aasx-file-actions">
+                <div class="aasx-action-group">
+                    <button class="aasx-btn aasx-btn-outline" id="selectAllFilesBtn" title="Select All Files">
+                        <i class="fas fa-check-square"></i>
+                        <span>Select All</span>
+                    </button>
+                    <button class="aasx-btn aasx-btn-outline" id="clearSelectionBtn" title="Clear Selection">
+                        <i class="fas fa-square"></i>
+                        <span>Clear</span>
+                    </button>
+                </div>
+                <div class="aasx-selection-info">
+                    <span class="aasx-selection-count" id="selectedFilesCount">0</span>
+                    <span class="aasx-selection-label">files selected</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- File List Container -->
+        <div class="aasx-file-list-container">
+            <div class="aasx-card aasx-card-premium">
+                <div class="aasx-card-header">
+                    <div class="aasx-card-header-content">
+                        <h3 class="aasx-card-title">
+                            <i class="fas fa-file-alt"></i>
+                            Available Files
+                        </h3>
+                        <p class="aasx-card-subtitle">Select files to process through the ETL pipeline</p>
+                    </div>
+                    <div class="aasx-card-header-badge">
+                        <span class="aasx-badge aasx-badge-info" id="filesCount">0 files</span>
+                    </div>
+                </div>
+                <div class="aasx-card-body">
+                    <div id="etlFilesList" class="aasx-file-list">
+                        <!-- Empty State -->
+                        <div class="aasx-empty-state">
+                            <div class="aasx-empty-icon">
+                                <i class="fas fa-file-alt"></i>
                             </div>
-                            <div class="mb-3">
-                                <label class="aasx-form-label form-label fw-bold mb-0">Select Project:</label>
-                                <select class="aasx-form-select form-select project-select" id="etlProjectSelect">
-                                    <option value="">Choose a project...</option>
-                                    <option value="" disabled>Select a use case first to see available projects</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="aasx-file-list" id="etlFilesList">
-                            <div class="aasx-empty-state text-center text-muted py-4">
-                                <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
-                                <h5>No Files Available</h5>
-                                <p>Select a project to view available files for ETL processing</p>
-                            </div>
+                            <h4>No Files Available</h4>
+                            <p>Select a project to view available files for ETL processing</p>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <!-- Include the new ETL Configuration Component -->
-                {% include 'aasx/components/etl_configuration.html' %}
+        </div>
+    </div>
+
+    <!-- ETL Progress Section (Hidden by default) -->
+    <div class="aasx-etl-progress-section" id="etlProgressSection" style="display: none;">
+        <div class="aasx-card aasx-card-premium">
+            <div class="aasx-card-header">
+                <div class="aasx-card-header-content">
+                    <h3 class="aasx-card-title">
+                        <i class="fas fa-tasks"></i>
+                        ETL Processing Progress
+                    </h3>
+                    <p class="aasx-card-subtitle">Real-time monitoring of your data processing pipeline</p>
+                </div>
+                <div class="aasx-card-header-badge">
+                    <span class="aasx-badge aasx-badge-warning" id="processingStatus">Processing...</span>
+                </div>
+            </div>
+            <div class="aasx-card-body">
+                <div class="aasx-progress-container">
+                    <!-- Overall Progress -->
+                    <div class="aasx-overall-progress">
+                        <div class="aasx-progress-header">
+                            <h4>Overall Progress</h4>
+                            <span class="aasx-progress-percentage" id="overallProgressPercentage">0%</span>
+                        </div>
+                        <div class="aasx-progress-bar-container">
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="overallProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stage Progress -->
+                    <div class="aasx-stage-progress">
+                        <div class="aasx-stage-item">
+                            <div class="aasx-stage-info">
+                                <span class="aasx-stage-name">Extract</span>
+                                <span class="aasx-stage-percentage" id="extractProgress">0%</span>
+                            </div>
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="extractProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="aasx-stage-item">
+                            <div class="aasx-stage-info">
+                                <span class="aasx-stage-name">Transform</span>
+                                <span class="aasx-stage-percentage" id="transformProgress">0%</span>
+                            </div>
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="transformProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="aasx-stage-item">
+                            <div class="aasx-stage-info">
+                                <span class="aasx-stage-name">Load</span>
+                                <span class="aasx-stage-percentage" id="loadProgress">0%</span>
+                            </div>
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" id="loadProgressFill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Processing Actions -->
+                    <div class="aasx-processing-actions">
+                        <button class="aasx-btn aasx-btn-danger" id="stopProcessing" title="Stop Processing">
+                            <i class="fas fa-stop"></i>
+                            <span>Stop Processing</span>
+                        </button>
+                        <button class="aasx-btn aasx-btn-secondary" id="pauseProcessing" title="Pause Processing">
+                            <i class="fas fa-pause"></i>
+                            <span>Pause</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

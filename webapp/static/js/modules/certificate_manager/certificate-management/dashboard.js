@@ -118,7 +118,7 @@ export class DashboardManager {
     /**
      * Update certificate table
      */
-    updateTable(certificates) {
+    updateTable(certificates, forceUpdate = false) {
         console.log('📋 Updating certificate table...');
         
         try {
@@ -128,16 +128,25 @@ export class DashboardManager {
                 return;
             }
             
-            // Clear existing rows
-            tbody.innerHTML = '';
+            // Check if table already has content and we're not forcing an update
+            if (!forceUpdate && tbody.children.length > 0) {
+                console.log('📋 Table already has content, skipping update');
+                return;
+            }
             
-            // Add certificate rows
-            certificates.forEach(certificate => {
-                const row = this.createCertificateRow(certificate);
-                tbody.appendChild(row);
-            });
-            
-            console.log(`✅ Table updated with ${certificates.length} certificates`);
+            // Add a small delay to prevent immediate overwriting of static content
+            setTimeout(() => {
+                // Clear existing rows
+                tbody.innerHTML = '';
+                
+                // Add certificate rows
+                certificates.forEach(certificate => {
+                    const row = this.createCertificateRow(certificate);
+                    tbody.appendChild(row);
+                });
+                
+                console.log(`✅ Table updated with ${certificates.length} certificates`);
+            }, 100); // 100ms delay
             
         } catch (error) {
             console.error('❌ Error updating table:', error);
@@ -145,64 +154,72 @@ export class DashboardManager {
     }
 
     /**
-     * Create certificate table row
+     * Create certificate table row with enhanced structure
      */
     createCertificateRow(certificate) {
         const row = document.createElement('tr');
+        row.className = 'cm-certificate-row';
+        
+        // Get status badge class and icon
+        const statusClass = this.getStatusClass(certificate.status);
+        const statusIcon = this.getStatusIcon(certificate.status);
+        
+        // Get progress class based on health score
+        const progressClass = this.getProgressClass(certificate.health_score || 0);
         
         row.innerHTML = `
-            <td>
-                <input type="checkbox" class="certificate-select" value="${certificate.certificate_id}">
-            </td>
-            <td>
-                <div class="certificate-id">
-                    <span class="id-text">${certificate.certificate_id}</span>
-                    <button class="btn btn-sm btn-link copy-id" data-id="${certificate.certificate_id}">
-                        <i class="fas fa-copy"></i>
-                    </button>
+            <td class="cm-checkbox-column">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input cm-certificate-checkbox certificate-select" value="${certificate.certificate_id}">
                 </div>
             </td>
-            <td>
-                <div class="twin-info">
-                    <div class="twin-name">${certificate.twin_name}</div>
-                    <div class="twin-id">${certificate.twin_id}</div>
+            <td class="cm-id-column">
+                <div class="cm-certificate-info">
+                    <div class="cm-certificate-id fw-bold text-primary">${certificate.certificate_id}</div>
+                    <div class="cm-certificate-name small text-muted">${certificate.twin_name || 'N/A'}</div>
                 </div>
             </td>
-            <td>
-                <div class="project-info">
-                    <div class="project-name">${certificate.project_name}</div>
-                    <div class="use-case">${certificate.use_case_name}</div>
+            <td class="cm-twin-column">
+                <div class="cm-twin-info">
+                    <div class="cm-twin-id fw-semibold">${certificate.twin_id || 'N/A'}</div>
+                    <div class="cm-twin-type small text-muted">${certificate.twin_name || 'N/A'}</div>
                 </div>
             </td>
-            <td>
-                <div class="status-info">
-                    <span class="badge badge-${this.getStatusClass(certificate.status)}">
-                        ${certificate.status}
-                    </span>
-                    <div class="health-score">
-                        <div class="progress">
-                            <div class="progress-bar bg-${this.getHealthScoreClass(certificate.health_score)}" 
-                                 style="width: ${certificate.health_score}%"></div>
-                        </div>
-                        <span class="score-text">${certificate.health_score}%</span>
+            <td class="cm-project-column">
+                <div class="cm-project-info">
+                    <div class="cm-project-name fw-semibold">${certificate.project_name || 'N/A'}</div>
+                    <div class="cm-project-category small text-muted">${certificate.use_case_name || 'N/A'}</div>
+                </div>
+            </td>
+            <td class="cm-status-column">
+                <span class="cm-status-badge cm-status-${statusClass}">
+                    <i class="${statusIcon} me-1"></i>${this.capitalizeFirst(certificate.status)}
+                </span>
+            </td>
+            <td class="cm-progress-column">
+                <div class="cm-progress-container">
+                    <div class="cm-progress-bar">
+                        <div class="cm-progress-fill ${progressClass}" style="width: ${certificate.health_score || 0}%"></div>
                     </div>
+                    <div class="cm-progress-text small fw-semibold">${certificate.health_score || 0}%</div>
                 </div>
             </td>
-            <td>
-                <div class="date-info">
-                    <div class="created-date">${this.formatDate(certificate.created_at)}</div>
-                    <div class="updated-date">Updated: ${this.formatDate(certificate.updated_at)}</div>
+            <td class="cm-created-column">
+                <div class="cm-date-info">
+                    <div class="cm-created-date small fw-semibold">${this.formatDate(certificate.created_at)}</div>
+                    <div class="cm-updated-date small text-muted">Updated: ${this.formatDate(certificate.updated_at)}</div>
                 </div>
             </td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn btn-sm btn-outline-primary" onclick="window.CertificateManager.viewCertificate('${certificate.certificate_id}')" title="View Certificate">
+            <td class="cm-actions-column">
+                <div class="cm-actions-buttons">
+                    <button class="cm-btn cm-btn-view btn btn-outline-primary btn-sm me-1" 
+                            onclick="window.CertificateManager.viewCertificate('${certificate.certificate_id}')" 
+                            title="View Certificate">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="window.CertificateManager.exportCertificate('${certificate.certificate_id}')" title="Export Certificate">
-                        <i class="fas fa-download"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-info" onclick="window.CertificateManager.showCertificateActions('${certificate.certificate_id}')" title="More Actions">
+                    <button class="cm-btn cm-btn-actions btn btn-outline-secondary btn-sm" 
+                            onclick="window.CertificateManager.showCertificateActions('${certificate.certificate_id}')" 
+                            title="More Actions">
                         <i class="fas fa-ellipsis-v"></i>
                     </button>
                 </div>
@@ -374,22 +391,47 @@ export class DashboardManager {
      */
     getStatusClass(status) {
         const statusMap = {
-            'active': 'success',
-            'pending': 'warning',
-            'completed': 'info',
-            'error': 'danger',
-            'in_progress': 'primary'
+            'active': 'active',
+            'pending': 'pending',
+            'completed': 'completed',
+            'ready': 'ready',
+            'error': 'error',
+            'in_progress': 'pending'
         };
-        return statusMap[status] || 'secondary';
+        return statusMap[status] || 'pending';
     }
 
     /**
-     * Get health score class
+     * Get status icon
      */
-    getHealthScoreClass(score) {
-        if (score >= 90) return 'success';
-        if (score >= 70) return 'warning';
-        return 'danger';
+    getStatusIcon(status) {
+        const iconMap = {
+            'active': 'fas fa-check-circle',
+            'pending': 'fas fa-clock',
+            'completed': 'fas fa-check',
+            'ready': 'fas fa-check',
+            'error': 'fas fa-exclamation-circle',
+            'in_progress': 'fas fa-clock'
+        };
+        return iconMap[status] || 'fas fa-clock';
+    }
+
+    /**
+     * Get progress class based on health score
+     */
+    getProgressClass(score) {
+        if (score >= 90) return 'cm-progress-excellent';
+        if (score >= 70) return 'cm-progress-good';
+        if (score >= 50) return 'cm-progress-warning';
+        return 'cm-progress-danger';
+    }
+
+    /**
+     * Capitalize first letter
+     */
+    capitalizeFirst(str) {
+        if (!str) return 'N/A';
+        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     /**
