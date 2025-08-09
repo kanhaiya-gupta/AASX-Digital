@@ -3,16 +3,17 @@
     <!-- ETL Pipeline Section -->
     {% include 'aasx/components/etl_pipeline.html' %}
     
-    <!-- ETL Configuration & Processing Row -->
+    <!-- ETL Configuration - Full Width -->
     <div class="row g-4 mt-4">
-        <!-- ETL Configuration -->
-        <div class="col-lg-4">
+        <div class="col-12">
             {% include 'aasx/components/etl_configuration.html' %}
         </div>
+    </div>
 
-        <!-- ETL Processing Status -->
-        <div class="col-lg-8">
-            <div class="aasx-card aasx-card-premium h-100">
+    <!-- ETL Processing Status - Full Width -->
+    <div class="row g-4 mt-4">
+        <div class="col-12">
+            <div class="aasx-card aasx-card-premium">
                 <div class="aasx-card-header">
                     <div class="aasx-card-header-content">
                         <h3 class="aasx-card-title">
@@ -39,33 +40,50 @@
                         </div>
                     </div>
 
-                    <!-- Stage Progress -->
-                    <div class="aasx-stage-progress">
-                        <div class="aasx-stage-item">
-                            <div class="aasx-stage-info">
-                                <span class="aasx-stage-name">Extract</span>
-                                <span class="aasx-stage-percentage" id="extractProgress">0%</span>
-                            </div>
-                            <div class="aasx-progress-bar">
-                                <div class="aasx-progress-fill" id="extractProgressFill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="aasx-stage-item">
-                            <div class="aasx-stage-info">
-                                <span class="aasx-stage-name">Transform</span>
-                                <span class="aasx-stage-percentage" id="transformProgress">0%</span>
-                            </div>
-                            <div class="aasx-progress-bar">
-                                <div class="aasx-progress-fill" id="transformProgressFill" style="width: 0%"></div>
+                    <!-- Processing Details -->
+                    <div class="row g-4">
+                        <div class="col-lg-3 col-md-6">
+                            <div class="aasx-processing-stat">
+                                <div class="aasx-processing-stat-icon">
+                                    <i class="fas fa-file-upload"></i>
+                                </div>
+                                <div class="aasx-processing-stat-content">
+                                    <span class="aasx-processing-stat-number" id="filesProcessed">0</span>
+                                    <span class="aasx-processing-stat-label">Files Processed</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="aasx-stage-item">
-                            <div class="aasx-stage-info">
-                                <span class="aasx-stage-name">Load</span>
-                                <span class="aasx-stage-percentage" id="loadProgress">0%</span>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="aasx-processing-stat">
+                                <div class="aasx-processing-stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="aasx-processing-stat-content">
+                                    <span class="aasx-processing-stat-number" id="processingTime">0s</span>
+                                    <span class="aasx-processing-stat-label">Processing Time</span>
+                                </div>
                             </div>
-                            <div class="aasx-progress-bar">
-                                <div class="aasx-progress-fill" id="loadProgressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="aasx-processing-stat">
+                                <div class="aasx-processing-stat-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="aasx-processing-stat-content">
+                                    <span class="aasx-processing-stat-number" id="successRate">0%</span>
+                                    <span class="aasx-processing-stat-label">Success Rate</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <div class="aasx-processing-stat">
+                                <div class="aasx-processing-stat-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="aasx-processing-stat-content">
+                                    <span class="aasx-processing-stat-number" id="recordsProcessed">0</span>
+                                    <span class="aasx-processing-stat-label">Records Processed</span>
+                                </div>
                             </div>
                         </div>
                     </div>

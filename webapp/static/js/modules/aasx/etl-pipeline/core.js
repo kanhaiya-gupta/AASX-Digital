@@ -1,6 +1,7 @@
 /**
- * AASX ETL Pipeline Core
- * Main ETL pipeline functionality for AASX file processing
+ * AASX ETL Pipeline Core - Bidirectional
+ * Main ETL pipeline functionality for bidirectional AASX conversion
+ * Supports: AASX → Structured Data + Documents AND Structured Data + Documents → AASX
  */
 
 import { formatFileSize, getFileStatusInfo } from '/static/js/shared/utils.js';
@@ -19,12 +20,16 @@ export class AASXETLPipeline {
         };
         this.files = [];
         this.selectedFiles = new Set();
+        this.conversionMode = 'aasx-to-structured'; // Default mode
     }
 
     async init() {
-        console.log('🚀 AASX ETL Pipeline initializing...');
+        console.log('🚀 AASX ETL Pipeline (Bidirectional) initializing...');
         
         try {
+            // Initialize mode switching first (like file upload)
+            this.setupModeSwitching();
+            
             // Initialize event listeners
             this.initializeEventListeners();
             
@@ -35,12 +40,30 @@ export class AASXETLPipeline {
             await this.refreshFiles();
             
             this.isInitialized = true;
-            console.log('✅ AASX ETL Pipeline initialized successfully');
+            console.log('✅ AASX ETL Pipeline (Bidirectional) initialized successfully');
             
         } catch (error) {
             console.error('❌ AASX ETL Pipeline initialization failed:', error);
             showError('Failed to initialize ETL Pipeline');
         }
+    }
+
+    setupModeSwitching() {
+        // Only target tabs within the ETL Pipeline section
+        const etlSection = document.querySelector('.aasx-etl-pipeline-section');
+        if (!etlSection) {
+            console.error('❌ ETL Pipeline section not found');
+            return;
+        }
+        
+        const modeTabs = etlSection.querySelectorAll('.aasx-etl-mode-tab');
+        
+        modeTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const mode = tab.dataset.mode;
+                this.switchConversionMode(mode);
+            });
+        });
     }
 
     initializeEventListeners() {
@@ -63,6 +86,8 @@ export class AASXETLPipeline {
         $('#resetConfig').on('click', () => this.resetConfig());
         $('#savePreset').on('click', () => this.savePreset());
         
+
+        
         // Preset loading
         $('.preset-btn').on('click', (e) => {
             const presetName = $(e.target).data('preset');
@@ -72,7 +97,78 @@ export class AASXETLPipeline {
         // Project selection change
         $('#etlProjectSelect').on('change', () => this.refreshFiles());
         
-        console.log('📋 ETL Pipeline event listeners setup complete');
+        console.log('📋 ETL Pipeline (Bidirectional) event listeners setup complete');
+    }
+
+
+
+    switchConversionMode(mode) {
+        console.log(`🔄 Switching conversion mode to: ${mode}`);
+        
+        this.conversionMode = mode;
+        
+        // Update active tab using vanilla JavaScript (like file upload)
+        const etlSection = document.querySelector('.aasx-etl-pipeline-section');
+        const allTabs = etlSection.querySelectorAll('.aasx-etl-mode-tab');
+        
+        allTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        const activeTab = etlSection.querySelector(`[data-mode="${mode}"]`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+        }
+        
+        // Show/hide relevant configuration sections
+        if (mode === 'aasx-to-structured') {
+            $('#aasxToStructuredConfig').show();
+            $('#structuredToAasxConfig').hide();
+        } else {
+            $('#aasxToStructuredConfig').hide();
+            $('#structuredToAasxConfig').show();
+        }
+        
+        // Update display
+        this.updateConversionModeDisplay();
+    }
+
+    updateConversionModeDisplay() {
+        // ETL Pipeline header should stay as "ETL Pipeline Management" always
+        // Only the tab colors should change, not the main header
+        console.log(`🔄 ETL Pipeline mode updated to: ${this.conversionMode}`);
+    }
+
+    updateFileListForExtraction() {
+        // Update file list to show AASX files for extraction
+        const fileListContainer = $('#etlFilesList');
+        if (fileListContainer.length) {
+            fileListContainer.find('.file-item').each((index, element) => {
+                const fileName = $(element).find('.file-name').text();
+                if (fileName.toLowerCase().endsWith('.aasx')) {
+                    $(element).show();
+                } else {
+                    $(element).hide();
+                }
+            });
+        }
+    }
+
+    updateFileListForGeneration() {
+        // Update file list to show structured data files for generation
+        const fileListContainer = $('#etlFilesList');
+        if (fileListContainer.length) {
+            fileListContainer.find('.file-item').each((index, element) => {
+                const fileName = $(element).find('.file-name').text();
+                if (fileName.toLowerCase().endsWith('.zip') || 
+                    fileName.toLowerCase().endsWith('.json') ||
+                    fileName.toLowerCase().endsWith('.yaml')) {
+                    $(element).show();
+                } else {
+                    $(element).hide();
+                }
+            });
+        }
     }
 
     initializeProgressCircles() {
@@ -99,21 +195,20 @@ export class AASXETLPipeline {
             return;
         }
         
-        try {
-            const radius = circle.r.baseVal.value;
-            const circumference = radius * 2 * Math.PI;
-            const offset = circumference - (progress / 100) * circumference;
-            
-            circle.style.strokeDasharray = `${circumference} ${circumference}`;
-            circle.style.strokeDashoffset = offset;
-            text.textContent = `${Math.round(progress)}%`;
-        } catch (error) {
-            console.warn(`Error updating progress circle ${elementId}:`, error.message);
-        }
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+        
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
+        
+        const offset = circumference - (progress / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+        
+        text.textContent = `${Math.round(progress)}%`;
     }
 
     async runETLPipeline() {
-        console.log('🚀 ETL Pipeline execution started');
+        console.log(`🚀 ETL Pipeline execution started (Mode: ${this.conversionMode})`);
         
         if (this.isProcessing) {
             console.log('⚠️ Pipeline is already running, aborting');
@@ -139,21 +234,27 @@ export class AASXETLPipeline {
         this.startProgressSimulation();
 
         try {
-            console.log('📡 Making API call to /api/aasx/etl/run');
+            const endpoint = this.conversionMode === 'aasx-to-structured' 
+                ? '/api/aasx-etl/etl/extract' 
+                : '/api/aasx-etl/etl/generate';
+            
+            console.log(`📡 Making API call to ${endpoint}`);
             console.log('📤 Request payload:', {
                 files: selectedFiles,
-                config: config
+                config: config,
+                mode: this.conversionMode
             });
             
             // Combine files and config into a single request body
             const requestBody = {
                 ...config,
-                files: selectedFiles
+                files: selectedFiles,
+                conversionMode: this.conversionMode
             };
             
             console.log('📤 Request payload:', requestBody);
             
-            const response = await fetch('/api/aasx-etl/etl/run', {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
@@ -212,127 +313,257 @@ export class AASXETLPipeline {
         // Safely handle undefined arrays
         const outputFormats = result.outputFormats || [];
         const exportFormats = result.exportFormats || [];
-        const processedFiles = result.processedFiles || 0;
-        const duration = result.duration || 0;
         
-        const resultsHtml = `
-            <div class="alert alert-success">
-                <h5><i class="fas fa-check-circle"></i> ETL Pipeline Completed Successfully</h5>
-                <p>Processed ${processedFiles} files in ${duration} seconds</p>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Output Formats Generated:</h6>
-                    <ul>
-                        ${outputFormats.length > 0 ? outputFormats.map(format => `<li>${format}</li>`).join('') : '<li>No output formats specified</li>'}
-                    </ul>
+        // Update results display based on conversion mode
+        if (this.conversionMode === 'aasx-to-structured') {
+            this.showExtractionResults(result);
+        } else {
+            this.showGenerationResults(result);
+        }
+    }
+
+    showExtractionResults(result) {
+        const resultsContainer = $('#etlResultsContent');
+        if (!resultsContainer.length) return;
+
+        const html = `
+            <div class="etl-results-section">
+                <h4><i class="fas fa-file-archive text-primary"></i> Extraction Results</h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="result-stat">
+                            <span class="result-number">${result.filesProcessed || 0}</span>
+                            <span class="result-label">Files Processed</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="result-stat">
+                            <span class="result-number">${result.documentsExtracted || 0}</span>
+                            <span class="result-label">Documents Extracted</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <h6>Export Formats:</h6>
-                    <ul>
-                        ${exportFormats.length > 0 ? exportFormats.map(format => `<li>${format}</li>`).join('') : '<li>No export formats specified</li>'}
-                    </ul>
+                
+                <div class="mt-3">
+                    <h5>Output Formats Generated:</h5>
+                    <div class="output-formats">
+                        ${this.renderOutputFormats(result.outputFormats || [])}
+                    </div>
                 </div>
-            </div>
-            <div class="mt-3">
-                <h6>Processing Details:</h6>
-                <pre class="bg-light p-2 rounded">${JSON.stringify(result, null, 2)}</pre>
+                
+                <div class="mt-3">
+                    <h5>Export Formats:</h5>
+                    <div class="export-formats">
+                        ${this.renderExportFormats(result.exportFormats || [])}
+                    </div>
+                </div>
             </div>
         `;
         
-        $('#etlResults').html(resultsHtml);
+        resultsContainer.html(html);
+    }
+
+    showGenerationResults(result) {
+        const resultsContainer = $('#etlResultsContent');
+        if (!resultsContainer.length) return;
+
+        const html = `
+            <div class="etl-results-section">
+                <h4><i class="fas fa-file-code text-success"></i> Generation Results</h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="result-stat">
+                            <span class="result-number">${result.aasxFilesGenerated || 0}</span>
+                            <span class="result-label">AASX Files Generated</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="result-stat">
+                            <span class="result-number">${result.documentsIncluded || 0}</span>
+                            <span class="result-label">Documents Included</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h5>Generated AASX Files:</h5>
+                    <div class="generated-files">
+                        ${this.renderGeneratedFiles(result.generatedFiles || [])}
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h5>Processing Summary:</h5>
+                    <div class="processing-summary">
+                        <p><strong>Total Records:</strong> ${result.totalRecords || 0}</p>
+                        <p><strong>Valid Records:</strong> ${result.validRecords || 0}</p>
+                        <p><strong>Processing Time:</strong> ${result.processingTime || 'Unknown'}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        resultsContainer.html(html);
+    }
+
+    renderOutputFormats(formats) {
+        if (formats.length === 0) return '<p class="text-muted">No output formats generated</p>';
+        
+        return formats.map(format => `
+            <span class="badge bg-primary me-2">
+                <i class="fas fa-${this.getFormatIcon(format)}"></i>
+                ${format.toUpperCase()}
+            </span>
+        `).join('');
+    }
+
+    renderExportFormats(formats) {
+        if (formats.length === 0) return '<p class="text-muted">No export formats generated</p>';
+        
+        return formats.map(format => `
+            <span class="badge bg-success me-2">
+                <i class="fas fa-${this.getFormatIcon(format)}"></i>
+                ${format.toUpperCase()}
+            </span>
+        `).join('');
+    }
+
+    renderGeneratedFiles(files) {
+        if (files.length === 0) return '<p class="text-muted">No files generated</p>';
+        
+        return files.map(file => `
+            <div class="generated-file-item">
+                <i class="fas fa-file-archive text-success me-2"></i>
+                <span class="file-name">${file.name}</span>
+                <span class="file-size text-muted">(${file.size})</span>
+            </div>
+        `).join('');
+    }
+
+    getFormatIcon(format) {
+        const icons = {
+            'json': 'file-code',
+            'yaml': 'file-alt',
+            'xml': 'file-code',
+            'rdf': 'sitemap',
+            'graph': 'project-diagram',
+            'sqlite': 'database',
+            'vector_db': 'brain',
+            'csv': 'file-csv',
+            'excel': 'file-excel',
+            'pdf': 'file-pdf'
+        };
+        return icons[format] || 'file';
     }
 
     async refreshFiles() {
+        console.log('🔄 Refreshing ETL files...');
+        
         try {
             const projectId = $('#etlProjectSelect').val();
             if (!projectId) {
+                console.log('⚠️ No project selected, clearing file list');
                 this.files = [];
                 this.renderFileList();
                 return;
             }
 
             const response = await fetch(`/api/aasx-etl/projects/${projectId}/files`);
+            
             if (response.ok) {
-                this.files = await response.json();
-                this.renderFileList();
-                console.log(`📁 Loaded ${this.files.length} files for project ${projectId}`);
+                const data = await response.json();
+                this.files = data.files || [];
+                console.log(`✅ Loaded ${this.files.length} files for project ${projectId}`);
             } else {
-                console.warn('No files found for project:', projectId);
+                console.error('❌ Failed to load files:', response.status);
                 this.files = [];
-                this.renderFileList();
             }
         } catch (error) {
-            console.warn('Failed to load files:', error.message);
+            console.error('❌ Error loading files:', error);
             this.files = [];
-            this.renderFileList();
         }
+        
+        this.renderFileList();
     }
 
     getSelectedFiles() {
-        const selected = Array.from(this.selectedFiles);
-        console.log('📁 getSelectedFiles() called, selected files:', selected);
-        console.log('📁 this.selectedFiles Set contents:', this.selectedFiles);
-        
-        // Send simple hierarchy information - let backend do reverse engineering
-        const selectedFilesWithHierarchy = [];
-        
-        for (const filename of selected) {
-            // Get use case and project information from the current selection
-            const useCaseSelect = $('#etlUseCaseSelect');
-            const projectSelect = $('#etlProjectSelect');
-            
-            const useCaseName = useCaseSelect.find('option:selected').text();
-            const projectName = projectSelect.find('option:selected').text();
-            
-            selectedFilesWithHierarchy.push({
-                filename: filename,
-                use_case_name: useCaseName,
-                project_name: projectName
-            });
-            
-            console.log(`📋 File hierarchy: ${useCaseName}/${projectName}/${filename}`);
-        }
-        
-        console.log('📁 Selected files with hierarchy:', selectedFilesWithHierarchy);
-        return selectedFilesWithHierarchy;
+        return Array.from(this.selectedFiles);
     }
 
     toggleSelectAll(checked) {
+        console.log(`🔘 Select All: ${checked}`);
+        
         if (checked) {
-            this.files.forEach(file => this.selectedFiles.add(file.filename));
+            // Select all files based on current mode
+            this.files.forEach(file => {
+                if (this.isFileCompatibleWithMode(file.name)) {
+                    this.selectedFiles.add(file.name);
+                }
+            });
         } else {
             this.selectedFiles.clear();
         }
+        
         this.updateSelectedCount();
         this.renderFileList();
     }
 
+    isFileCompatibleWithMode(fileName) {
+        if (this.conversionMode === 'aasx-to-structured') {
+            return fileName.toLowerCase().endsWith('.aasx');
+        } else {
+            return fileName.toLowerCase().endsWith('.zip') || 
+                   fileName.toLowerCase().endsWith('.json') ||
+                   fileName.toLowerCase().endsWith('.yaml');
+        }
+    }
+
     invertSelection() {
+        console.log('🔘 Invert Selection');
+        
         this.files.forEach(file => {
-            if (this.selectedFiles.has(file.filename)) {
-                this.selectedFiles.delete(file.filename);
-            } else {
-                this.selectedFiles.add(file.filename);
+            if (this.isFileCompatibleWithMode(file.name)) {
+                if (this.selectedFiles.has(file.name)) {
+                    this.selectedFiles.delete(file.name);
+                } else {
+                    this.selectedFiles.add(file.name);
+                }
             }
         });
+        
         this.updateSelectedCount();
         this.renderFileList();
     }
 
     updateSelectedCount() {
         const count = this.selectedFiles.size;
-        $('#selectedFileCount').text(count);
-        $('#totalFileCount').text(this.files.length);
+        $('#selectedFilesCount').text(count);
+        console.log(`📊 Selected files count: ${count}`);
     }
 
     getETLConfiguration() {
-        return {
-            outputFormats: this.getSelectedOutputFormats(),
-            exportFormats: this.getSelectedExportFormats(),
+        const baseConfig = {
+            conversionMode: this.conversionMode,
             processingMode: $('#processingMode').val(),
             batchSize: parseInt($('#batchSize').val()) || 10
         };
+
+        if (this.conversionMode === 'aasx-to-structured') {
+            return {
+                ...baseConfig,
+                outputFormats: this.getSelectedOutputFormats(),
+                exportFormats: this.getSelectedExportFormats(),
+                extractStructuredData: $('#extractStructuredData').is(':checked'),
+                extractDocuments: $('#extractDocuments').is(':checked')
+            };
+        } else {
+            return {
+                ...baseConfig,
+                includeStructuredData: $('#includeStructuredData').is(':checked'),
+                includeDocuments: $('#includeDocuments').is(':checked'),
+                outputFileName: $('#outputAasxFileName').val() || 'generated.aasx'
+            };
+        }
     }
 
     getSelectedOutputFormats() {
@@ -365,39 +596,50 @@ export class AASXETLPipeline {
         const presets = {
             'minimal': {
                 outputFormats: ['json'],
-                exportFormats: ['csv'],
+                exportFormats: ['sqlite'],
                 processingMode: 'single',
-                batchSize: 5
+                batchSize: 5,
+                extractStructuredData: true,
+                extractDocuments: false
             },
             'standard': {
-                outputFormats: ['json', 'xml'],
-                exportFormats: ['csv', 'excel'],
+                outputFormats: ['json', 'yaml'],
+                exportFormats: ['sqlite', 'vector_db'],
                 processingMode: 'batch',
-                batchSize: 10
+                batchSize: 10,
+                extractStructuredData: true,
+                extractDocuments: true
             },
             'comprehensive': {
-                outputFormats: ['json', 'xml', 'yaml', 'rdf'],
-                exportFormats: ['csv', 'excel', 'pdf'],
+                outputFormats: ['json', 'yaml', 'graph', 'rdf'],
+                exportFormats: ['sqlite', 'vector_db'],
                 processingMode: 'batch',
-                batchSize: 20
+                batchSize: 20,
+                extractStructuredData: true,
+                extractDocuments: true
             }
         };
 
         const preset = presets[presetName];
         if (preset) {
             // Apply preset configuration
-            $('input[name="outputFormat"]').prop('checked', false);
-            preset.outputFormats.forEach(format => {
-                $(`input[name="outputFormat"][value="${format}"]`).prop('checked', true);
-            });
-
-            $('input[name="exportFormat"]').prop('checked', false);
-            preset.exportFormats.forEach(format => {
-                $(`input[name="exportFormat"][value="${format}"]`).prop('checked', true);
-            });
-
+            $('#jsonExport').prop('checked', preset.outputFormats.includes('json'));
+            $('#yamlExport').prop('checked', preset.outputFormats.includes('yaml'));
+            $('#graphExport').prop('checked', preset.outputFormats.includes('graph'));
+            $('#rdfExport').prop('checked', preset.outputFormats.includes('rdf'));
+            
+            $('#sqliteExport').prop('checked', preset.exportFormats.includes('sqlite'));
+            $('#vectorDbExport').prop('checked', preset.exportFormats.includes('vector_db'));
+            
             $('#processingMode').val(preset.processingMode);
             $('#batchSize').val(preset.batchSize);
+            
+            if (preset.extractStructuredData !== undefined) {
+                $('#extractStructuredData').prop('checked', preset.extractStructuredData);
+            }
+            if (preset.extractDocuments !== undefined) {
+                $('#extractDocuments').prop('checked', preset.extractDocuments);
+            }
 
             showSuccess(`Loaded ${presetName} preset`);
         }
@@ -417,67 +659,75 @@ export class AASXETLPipeline {
     }
 
     resetConfig() {
-        $('input[name="outputFormat"]').prop('checked', false);
-        $('input[name="exportFormat"]').prop('checked', false);
+        // Reset output formats
+        $('#jsonExport, #yamlExport, #graphExport, #rdfExport').prop('checked', false);
+        $('#sqliteExport, #vectorDbExport').prop('checked', false);
+        
+        // Reset processing options
         $('#processingMode').val('single');
         $('#batchSize').val('10');
-        showInfo('Configuration reset to defaults');
+        
+        // Reset extraction options
+        $('#extractStructuredData, #extractDocuments').prop('checked', true);
+        
+        // Reset generation options
+        $('#includeStructuredData, #includeDocuments').prop('checked', true);
+        $('#outputAasxFileName').val('generated.aasx');
+        
+        showSuccess('Configuration reset to defaults');
     }
 
     renderFileList() {
         const container = $('#etlFilesList');
-        if (!container.length) {
-            console.warn('ETL file list container not found');
-            return;
-        }
+        if (!container.length) return;
 
         if (this.files.length === 0) {
             container.html(`
-                <div class="text-center py-4">
-                    <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
-                    <h6 class="text-muted">No AASX files available</h6>
-                    <p class="text-muted small">Upload AASX files to projects to start ETL processing</p>
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-folder-open fa-3x mb-3"></i>
+                    <p>No files found for ${this.conversionMode === 'aasx-to-structured' ? 'AASX extraction' : 'AASX generation'}</p>
                 </div>
             `);
-            this.updateSelectedCount();
             return;
         }
 
-        let html = '';
-        this.files.forEach(file => {
-            const isSelected = this.selectedFiles.has(file.filename);
-            const statusColor = this.getFileStatusColor(file.status || 'not_processed');
-            const statusText = this.getFileStatusText(file.status || 'not_processed');
-            
-            html += `
-                <div class="file-item d-flex align-items-center p-2 border-bottom">
+        const fileItems = this.files
+            .filter(file => this.isFileCompatibleWithMode(file.name))
+            .map(file => `
+                <div class="file-item d-flex align-items-center p-3 border-bottom">
                     <div class="form-check me-3">
                         <input class="form-check-input" type="checkbox" 
-                               id="file_${file.file_id}" 
-                               ${isSelected ? 'checked' : ''}
-                               onchange="window.aasxETLPipeline.toggleFileSelection('${file.filename}', this.checked)">
+                               id="file_${file.name}" 
+                               ${this.selectedFiles.has(file.name) ? 'checked' : ''}
+                               onchange="window.aasxETLPipeline.toggleFileSelection('${file.name}', this.checked)">
                     </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">${file.filename}</h6>
-                                <small class="text-muted">${file.description || 'No description'}</small>
-                                <br>
-                                <small class="text-muted">
-                                    <i class="fas fa-folder me-1"></i>${file.project_name || 'Unknown Project'}
-                                    <span class="mx-2">•</span>
-                                    <i class="fas fa-hdd me-1"></i>${formatFileSize(file.size || 0)}
-                                </small>
-                            </div>
-                            <span class="badge ${statusColor}">${statusText}</span>
+                    <div class="file-icon me-3">
+                        <i class="fas fa-${this.getFileIcon(file.name)} text-primary"></i>
+                    </div>
+                    <div class="file-info flex-grow-1">
+                        <div class="file-name fw-bold">${file.name}</div>
+                        <div class="file-details text-muted">
+                            <small>${formatFileSize(file.size)} • ${file.uploadDate}</small>
                         </div>
                     </div>
+                    <div class="file-status">
+                        <span class="badge bg-${this.getFileStatusColor(file.status)}">
+                            ${this.getFileStatusText(file.status)}
+                        </span>
+                    </div>
                 </div>
-            `;
-        });
+            `).join('');
 
-        container.html(html);
+        container.html(fileItems);
         this.updateSelectedCount();
+    }
+
+    getFileIcon(fileName) {
+        if (fileName.toLowerCase().endsWith('.aasx')) return 'file-archive';
+        if (fileName.toLowerCase().endsWith('.zip')) return 'file-archive';
+        if (fileName.toLowerCase().endsWith('.json')) return 'file-code';
+        if (fileName.toLowerCase().endsWith('.yaml')) return 'file-alt';
+        return 'file';
     }
 
     toggleFileSelection(filename, checked) {
@@ -491,31 +741,49 @@ export class AASXETLPipeline {
 
     getFileStatusColor(status) {
         const colors = {
-            'processed': 'bg-success',
-            'processing': 'bg-warning',
-            'failed': 'bg-danger',
-            'not_processed': 'bg-secondary'
+            'ready': 'success',
+            'processing': 'warning',
+            'completed': 'success',
+            'failed': 'danger',
+            'pending': 'secondary'
         };
-        return colors[status] || 'bg-secondary';
+        return colors[status] || 'secondary';
     }
 
     getFileStatusText(status) {
         const texts = {
-            'processed': 'Processed',
+            'ready': 'Ready',
             'processing': 'Processing',
+            'completed': 'Completed',
             'failed': 'Failed',
-            'not_processed': 'Pending'
+            'pending': 'Pending'
         };
         return texts[status] || 'Unknown';
     }
 
-    // Cleanup method
     destroy() {
+        // Clean up event listeners
+        $('#runSelectedPipeline, #runAllData, #refreshEtlFiles').off('click');
+        $('#selectAllFiles').off('change');
+        $('#invertSelection, #resetConfig, #savePreset').off('click');
+        $('.preset-btn').off('click');
+        $('#etlProjectSelect').off('change');
+        
+        // Clean up vanilla JavaScript event listeners
+        const modeTabs = document.querySelectorAll('.aasx-mode-tab');
+        modeTabs.forEach(tab => {
+            tab.removeEventListener('click', () => {});
+        });
+        
+        // Clear intervals
         this.stopProgressSimulation();
+        
         this.isInitialized = false;
         console.log('🧹 AASX ETL Pipeline destroyed');
     }
 }
 
-// Export the class
+// Export for use in other modules
+window.AASXETLPipeline = AASXETLPipeline;
+
 export default AASXETLPipeline; 

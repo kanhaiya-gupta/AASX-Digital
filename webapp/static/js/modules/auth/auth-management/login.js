@@ -644,7 +644,7 @@ export default class AuthLogin {
      * Redirect to register page
      */
     redirectToRegister() {
-        window.location.href = '/auth/register';
+        window.location.href = '/api/auth/';
     }
 
     /**

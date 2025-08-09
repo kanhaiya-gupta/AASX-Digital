@@ -28,7 +28,7 @@
             </div>
             <div class="col-md-3">
                 <div class="stats-card text-center">
-                    <div class="stats-number">{{ users|selectattr('status', 'equalto', 'active')|list|length }}</div>
+                    <div class="stats-number">{{ users|selectattr('is_active', 'equalto', True)|list|length }}</div>
                     <div class="stats-label">Active Users</div>
                 </div>
             </div>
@@ -71,7 +71,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if user.status == 'active' %}
+                            {% if user.is_active %}
                                 <span class="badge bg-success">Active</span>
                             {% else %}
                                 <span class="badge bg-warning">Inactive</span>
@@ -93,7 +93,7 @@
                                         onclick="viewUser('{{ user.user_id }}')" title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                {% if user.user_id != current_user.user_id %}
+                                {% if current_user and user.user_id != current_user.user_id %}
                                 <button type="button" class="btn btn-sm btn-outline-warning" 
                                         onclick="editUser('{{ user.user_id }}')" title="Edit User">
                                     <i class="fas fa-edit"></i>
@@ -150,16 +150,16 @@
     // Logout function
     async function logout() {
         try {
-            const response = await fetch('/auth/api/logout', {
+            const response = await fetch('/api/auth/logout', {
                 method: 'POST'
             });
             
             if (response.ok) {
-                window.location.href = '/auth/login';
+                window.location.href = '/api/auth/';
             }
         } catch (error) {
             console.log('Logout failed:', error);
-            window.location.href = '/auth/login';
+            window.location.href = '/api/auth/';
         }
     }
 </script> 

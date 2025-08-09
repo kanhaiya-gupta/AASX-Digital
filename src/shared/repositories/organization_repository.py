@@ -21,7 +21,7 @@ class OrganizationRepository(BaseRepository[Organization]):
     
     def _get_columns(self) -> List[str]:
         return [
-            "id", "name", "description", "domain", "contact_email", "contact_phone",
+            "org_id", "name", "description", "domain", "contact_email", "contact_phone",
             "address", "is_active", "subscription_tier", "max_users", "max_projects",
             "max_storage_gb", "created_at", "updated_at"
         ]
@@ -97,12 +97,12 @@ class OrganizationRepository(BaseRepository[Organization]):
     def get_organization_usage(self, organization_id: str) -> Dict[str, Any]:
         """Get organization usage statistics."""
         # Get user count
-        user_query = "SELECT COUNT(*) as user_count FROM users WHERE organization_id = ?"
+        user_query = "SELECT COUNT(*) as user_count FROM users WHERE org_id = ?"
         user_results = self.db_manager.execute_query(user_query, (organization_id,))
         user_count = user_results[0]["user_count"] if user_results else 0
         
         # Get project count
-        project_query = "SELECT COUNT(*) as project_count FROM projects WHERE owner_id IN (SELECT id FROM users WHERE organization_id = ?)"
+        project_query = "SELECT COUNT(*) as project_count FROM projects WHERE user_id IN (SELECT user_id FROM users WHERE org_id = ?)"
         project_results = self.db_manager.execute_query(project_query, (organization_id,))
         project_count = project_results[0]["project_count"] if project_results else 0
         
@@ -110,15 +110,15 @@ class OrganizationRepository(BaseRepository[Organization]):
         storage_query = """
             SELECT SUM(f.size) as total_storage 
             FROM files f 
-            JOIN projects p ON f.project_id = p.id 
-            JOIN users u ON p.owner_id = u.id 
-            WHERE u.organization_id = ?
+            JOIN projects p ON f.project_id = p.project_id 
+            JOIN users u ON p.user_id = u.user_id 
+            WHERE u.org_id = ?
         """
         storage_results = self.db_manager.execute_query(storage_query, (organization_id,))
         total_storage = storage_results[0]["total_storage"] if storage_results and storage_results[0]["total_storage"] else 0
         
         # Get organization limits
-        org_query = "SELECT max_users, max_projects, max_storage_gb FROM organizations WHERE id = ?"
+        org_query = "SELECT max_users, max_projects, max_storage_gb FROM organizations WHERE org_id = ?"
         org_results = self.db_manager.execute_query(org_query, (organization_id,))
         
         if org_results:
@@ -166,7 +166,7 @@ class OrganizationRepository(BaseRepository[Organization]):
         query = """
             UPDATE organizations 
             SET subscription_tier = ?, max_users = ?, max_projects = ?, max_storage_gb = ?, updated_at = datetime('now')
-            WHERE id = ?
+            WHERE org_id = ?
         """
         try:
             affected_rows = self.db_manager.execute_update(

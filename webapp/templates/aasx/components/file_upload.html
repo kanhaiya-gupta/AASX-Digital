@@ -1,13 +1,13 @@
-<!-- Premium File Upload & Management -->
+<!-- Premium File Upload & Management - Bidirectional -->
 <div class="aasx-file-upload-section">
     <!-- Section Header -->
     <div class="aasx-section-header">
         <div class="aasx-section-title-wrapper">
             <h2 class="aasx-section-title">
-                <i class="fas fa-cloud-upload-alt aasx-section-icon"></i>
-                File Upload Hub
+                <i class="fas fa-exchange-alt aasx-section-icon"></i>
+                Bidirectional File Hub
             </h2>
-            <p class="aasx-section-description">Upload and manage your AASX files with multiple methods</p>
+            <p class="aasx-section-description">Convert between AASX files and structured data with advanced processing</p>
         </div>
         <div class="aasx-section-actions">
             <button class="aasx-btn aasx-btn-info" id="bulkUploadBtn" title="Bulk Upload">
@@ -21,66 +21,131 @@
         </div>
     </div>
     
-    <!-- Upload Methods -->
-    <div class="aasx-upload-methods">
+    <!-- Conversion Mode Selector -->
+    <div class="aasx-conversion-mode-selector">
+        <div class="aasx-mode-tabs">
+            <button class="aasx-mode-tab active" data-mode="aasx-to-structured" id="aasxToStructuredTab">
+                <div class="aasx-mode-icon">
+                    <i class="fas fa-file-archive"></i>
+                </div>
+                <div class="aasx-mode-content">
+                    <span class="aasx-mode-title">AASX → Structured Data</span>
+                    <span class="aasx-mode-description">Extract structured data from AASX files</span>
+                </div>
+                <div class="aasx-mode-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </button>
+            <button class="aasx-mode-tab" data-mode="structured-to-aasx" id="structuredToAasxTab">
+                <div class="aasx-mode-icon">
+                    <i class="fas fa-file-code"></i>
+                </div>
+                <div class="aasx-mode-content">
+                    <span class="aasx-mode-title">Structured Data → AASX</span>
+                    <span class="aasx-mode-description">Convert structured data back to AASX files</span>
+                </div>
+                <div class="aasx-mode-arrow">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+            </button>
+        </div>
+    </div>
+    
+    <!-- AASX to Structured Data Mode -->
+    <div class="aasx-upload-methods" id="aasxToStructuredMode">
         <div class="row g-4">
-            <!-- Local File Upload -->
+            <!-- Local AASX File Upload -->
             <div class="col-lg-6">
                 <div class="aasx-card aasx-card-premium">
                     <div class="aasx-card-header">
                         <div class="aasx-card-header-content">
                             <h3 class="aasx-card-title">
                                 <i class="fas fa-file-upload"></i>
-                                Local File Upload
+                                Local AASX Upload
                             </h3>
-                            <p class="aasx-card-subtitle">Upload AASX files from your device</p>
+                            <p class="aasx-card-subtitle">Upload AASX files for structured data extraction</p>
                         </div>
                         <div class="aasx-card-header-badge">
                             <span class="aasx-badge aasx-badge-primary">Recommended</span>
                         </div>
                     </div>
                     <div class="aasx-card-body">
-                        <form id="fileUploadForm" class="aasx-upload-form">
+                        <form id="aasxFileUploadForm" class="aasx-upload-form">
                             <!-- Project Selection -->
                             <div class="aasx-form-group">
                                 <label class="aasx-form-label">Use Case</label>
-                                <select class="aasx-form-select" id="uploadUseCaseSelect" required>
+                                <select class="aasx-form-select" id="aasxUploadUseCaseSelect" required>
                                     <option value="">Choose a use case...</option>
                                 </select>
                             </div>
                             
                             <div class="aasx-form-group">
                                 <label class="aasx-form-label">Project</label>
-                                <select class="aasx-form-select" id="uploadProjectSelect" required>
+                                <select class="aasx-form-select" id="aasxUploadProjectSelect" required>
                                     <option value="">Choose a project...</option>
                                     <option value="" disabled>Select a use case first</option>
                                 </select>
                             </div>
                             
                             <!-- File Upload Area -->
-                            <div class="aasx-upload-area" id="uploadArea">
+                            <div class="aasx-upload-area" id="aasxUploadArea">
                                 <div class="aasx-upload-zone">
                                     <div class="aasx-upload-icon">
-                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <i class="fas fa-file-archive"></i>
                                     </div>
                                     <h4>Drop your AASX file here</h4>
                                     <p>or click to browse</p>
                                     <input type="file" id="aasxFileInput" accept=".aasx" required hidden>
-                                    <button type="button" class="aasx-btn aasx-btn-outline" id="browseFilesBtn">
+                                    <button type="button" class="aasx-btn aasx-btn-outline" id="browseAasxFilesBtn">
                                         <i class="fas fa-folder-open"></i>
-                                        <span>Browse Files</span>
+                                        <span>Browse AASX Files</span>
                                     </button>
                                 </div>
                                 <div class="aasx-upload-info">
                                     <div class="aasx-upload-details">
-                                        <span class="aasx-file-name" id="selectedFileName">No file selected</span>
-                                        <span class="aasx-file-size" id="selectedFileSize"></span>
+                                        <span class="aasx-file-name" id="aasxSelectedFileName">No file selected</span>
+                                        <span class="aasx-file-size" id="aasxSelectedFileSize"></span>
                                     </div>
-                                    <div class="aasx-upload-progress" id="uploadProgress" style="display: none;">
+                                    <div class="aasx-upload-progress" id="aasxUploadProgress" style="display: none;">
                                         <div class="aasx-progress-bar">
-                                            <div class="aasx-progress-fill" id="uploadProgressFill" style="width: 0%"></div>
+                                            <div class="aasx-progress-fill" id="aasxUploadProgressFill" style="width: 0%"></div>
                                         </div>
-                                        <span class="aasx-progress-text" id="uploadProgressText">0%</span>
+                                        <span class="aasx-progress-text" id="aasxUploadProgressText">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Extraction Options -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Extraction Options</label>
+                                <div class="aasx-checkbox-group">
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractStructuredData" checked>
+                                        <label for="extractStructuredData">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-database"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Structured Data</span>
+                                                    <span class="aasx-checkbox-description">Extract JSON, YAML, and graph data</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractDocuments" checked>
+                                        <label for="extractDocuments">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-file-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Documents & Images</span>
+                                                    <span class="aasx-checkbox-description">Extract embedded documents and images</span>
+                                                </div>
+                                            </div>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -88,47 +153,47 @@
                             <!-- File Description -->
                             <div class="aasx-form-group">
                                 <label class="aasx-form-label">Description (Optional)</label>
-                                <textarea class="aasx-form-textarea" id="fileDescription" rows="3" placeholder="Describe the AASX file content, purpose, or any relevant notes..."></textarea>
+                                <textarea class="aasx-form-textarea" id="aasxFileDescription" rows="3" placeholder="Describe the AASX file content, purpose, or any relevant notes..."></textarea>
                             </div>
                             
                             <!-- Upload Button -->
-                            <button type="submit" class="aasx-btn aasx-btn-primary aasx-btn-upload" id="uploadFileBtn">
+                            <button type="submit" class="aasx-btn aasx-btn-primary aasx-btn-upload" id="uploadAasxFileBtn">
                                 <i class="fas fa-upload"></i>
-                                <span>Upload File</span>
+                                <span>Extract Structured Data</span>
                             </button>
                         </form>
                     </div>
                 </div>
             </div>
             
-            <!-- URL Upload -->
+            <!-- URL AASX Upload -->
             <div class="col-lg-6">
                 <div class="aasx-card aasx-card-premium">
                     <div class="aasx-card-header">
                         <div class="aasx-card-header-content">
                             <h3 class="aasx-card-title">
                                 <i class="fas fa-link"></i>
-                                URL Upload
+                                URL AASX Upload
                             </h3>
-                            <p class="aasx-card-subtitle">Download and upload from remote URLs</p>
+                            <p class="aasx-card-subtitle">Download and extract from remote AASX files</p>
                         </div>
                         <div class="aasx-card-header-badge">
                             <span class="aasx-badge aasx-badge-info">Remote</span>
                         </div>
                     </div>
                     <div class="aasx-card-body">
-                        <form id="urlUploadForm" class="aasx-url-upload-form">
+                        <form id="aasxUrlUploadForm" class="aasx-url-upload-form">
                             <!-- Project Selection -->
                             <div class="aasx-form-group">
                                 <label class="aasx-form-label">Use Case</label>
-                                <select class="aasx-form-select" id="urlUseCaseSelect" required>
+                                <select class="aasx-form-select" id="aasxUrlUseCaseSelect" required>
                                     <option value="">Choose a use case...</option>
                                 </select>
                             </div>
                             
                             <div class="aasx-form-group">
                                 <label class="aasx-form-label">Project</label>
-                                <select class="aasx-form-select" id="urlProjectSelect" required>
+                                <select class="aasx-form-select" id="aasxUrlProjectSelect" required>
                                     <option value="">Choose a project...</option>
                                     <option value="" disabled>Select a use case first</option>
                                 </select>
@@ -139,7 +204,7 @@
                                 <label class="aasx-form-label">AASX File URL</label>
                                 <div class="aasx-url-input-group">
                                     <input type="url" class="aasx-form-input" id="aasxFileUrl" placeholder="https://example.com/file.aasx" required>
-                                    <button type="button" class="aasx-btn aasx-btn-outline" id="validateUrlBtn" title="Validate URL">
+                                    <button type="button" class="aasx-btn aasx-btn-outline" id="validateAasxUrlBtn" title="Validate URL">
                                         <i class="fas fa-check"></i>
                                     </button>
                                 </div>
@@ -147,14 +212,14 @@
                             </div>
                             
                             <!-- URL Preview -->
-                            <div class="aasx-url-preview" id="urlPreview" style="display: none;">
+                            <div class="aasx-url-preview" id="aasxUrlPreview" style="display: none;">
                                 <div class="aasx-url-info">
                                     <div class="aasx-url-details">
-                                        <span class="aasx-url-name" id="urlFileName">file.aasx</span>
-                                        <span class="aasx-url-size" id="urlFileSize">0 KB</span>
+                                        <span class="aasx-url-name" id="aasxUrlFileName">file.aasx</span>
+                                        <span class="aasx-url-size" id="aasxUrlFileSize">0 KB</span>
                                     </div>
                                     <div class="aasx-url-status">
-                                        <span class="aasx-status-badge aasx-status-valid" id="urlStatus">
+                                        <span class="aasx-status-badge aasx-status-valid" id="aasxUrlStatus">
                                             <i class="fas fa-check-circle"></i>
                                             Valid
                                         </span>
@@ -165,13 +230,221 @@
                             <!-- File Description -->
                             <div class="aasx-form-group">
                                 <label class="aasx-form-label">Description (Optional)</label>
-                                <textarea class="aasx-form-textarea" id="urlFileDescription" rows="3" placeholder="Describe the AASX file content, purpose, or any relevant notes..."></textarea>
+                                <textarea class="aasx-form-textarea" id="aasxUrlFileDescription" rows="3" placeholder="Describe the AASX file content, purpose, or any relevant notes..."></textarea>
                             </div>
                             
-                            <!-- Download & Upload Button -->
-                            <button type="submit" class="aasx-btn aasx-btn-warning aasx-btn-url-upload" id="downloadUploadBtn">
+                            <!-- Download & Extract Button -->
+                            <button type="submit" class="aasx-btn aasx-btn-warning aasx-btn-url-upload" id="downloadExtractAasxBtn">
                                 <i class="fas fa-download"></i>
-                                <span>Download & Upload</span>
+                                <span>Download & Extract</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Structured Data to AASX Mode -->
+    <div class="aasx-upload-methods" id="structuredToAasxMode" style="display: none;">
+        <div class="row g-4">
+            <!-- Local Structured Data Upload -->
+            <div class="col-lg-6">
+                <div class="aasx-card aasx-card-premium">
+                    <div class="aasx-card-header">
+                        <div class="aasx-card-header-content">
+                            <h3 class="aasx-card-title">
+                                <i class="fas fa-file-upload"></i>
+                                Local Structured Data Upload
+                            </h3>
+                            <p class="aasx-card-subtitle">Upload zipped structured data to create AASX files</p>
+                        </div>
+                        <div class="aasx-card-header-badge">
+                            <span class="aasx-badge aasx-badge-success">New</span>
+                        </div>
+                    </div>
+                    <div class="aasx-card-body">
+                        <form id="structuredDataUploadForm" class="aasx-upload-form">
+                            <!-- Project Selection -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Use Case</label>
+                                <select class="aasx-form-select" id="structuredUploadUseCaseSelect" required>
+                                    <option value="">Choose a use case...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Project</label>
+                                <select class="aasx-form-select" id="structuredUploadProjectSelect" required>
+                                    <option value="">Choose a project...</option>
+                                    <option value="" disabled>Select a use case first</option>
+                                </select>
+                            </div>
+                            
+                            <!-- File Upload Area -->
+                            <div class="aasx-upload-area" id="structuredUploadArea">
+                                <div class="aasx-upload-zone">
+                                    <div class="aasx-upload-icon">
+                                        <i class="fas fa-file-code"></i>
+                                    </div>
+                                    <h4>Drop your zipped structured data here</h4>
+                                    <p>or click to browse</p>
+                                    <input type="file" id="structuredDataInput" accept=".zip" required hidden>
+                                    <button type="button" class="aasx-btn aasx-btn-outline" id="browseStructuredFilesBtn">
+                                        <i class="fas fa-folder-open"></i>
+                                        <span>Browse ZIP Files</span>
+                                    </button>
+                                </div>
+                                <div class="aasx-upload-info">
+                                    <div class="aasx-upload-details">
+                                        <span class="aasx-file-name" id="structuredSelectedFileName">No file selected</span>
+                                        <span class="aasx-file-size" id="structuredSelectedFileSize"></span>
+                                    </div>
+                                    <div class="aasx-upload-progress" id="structuredUploadProgress" style="display: none;">
+                                        <div class="aasx-progress-bar">
+                                            <div class="aasx-progress-fill" id="structuredUploadProgressFill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="aasx-progress-text" id="structuredUploadProgressText">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- AASX Generation Options -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">AASX Generation Options</label>
+                                <div class="aasx-checkbox-group">
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeStructuredData" checked>
+                                        <label for="includeStructuredData">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-database"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include Structured Data</span>
+                                                    <span class="aasx-checkbox-description">Embed JSON, YAML, and graph data</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeDocuments" checked>
+                                        <label for="includeDocuments">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-file-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include Documents</span>
+                                                    <span class="aasx-checkbox-description">Embed documents and images</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- AASX File Name -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Output AASX File Name</label>
+                                <input type="text" class="aasx-form-input" id="outputAasxFileName" placeholder="generated_file.aasx" required>
+                                <small class="aasx-form-help">Name for the generated AASX file</small>
+                            </div>
+                            
+                            <!-- File Description -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Description (Optional)</label>
+                                <textarea class="aasx-form-textarea" id="structuredFileDescription" rows="3" placeholder="Describe the structured data content, purpose, or any relevant notes..."></textarea>
+                            </div>
+                            
+                            <!-- Generate Button -->
+                            <button type="submit" class="aasx-btn aasx-btn-success aasx-btn-upload" id="generateAasxFileBtn">
+                                <i class="fas fa-magic"></i>
+                                <span>Generate AASX File</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- URL Structured Data Upload -->
+            <div class="col-lg-6">
+                <div class="aasx-card aasx-card-premium">
+                    <div class="aasx-card-header">
+                        <div class="aasx-card-header-content">
+                            <h3 class="aasx-card-title">
+                                <i class="fas fa-link"></i>
+                                URL Structured Data Upload
+                            </h3>
+                            <p class="aasx-card-subtitle">Download and convert remote structured data to AASX</p>
+                        </div>
+                        <div class="aasx-card-header-badge">
+                            <span class="aasx-badge aasx-badge-info">Remote</span>
+                        </div>
+                    </div>
+                    <div class="aasx-card-body">
+                        <form id="structuredUrlUploadForm" class="aasx-url-upload-form">
+                            <!-- Project Selection -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Use Case</label>
+                                <select class="aasx-form-select" id="structuredUrlUseCaseSelect" required>
+                                    <option value="">Choose a use case...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Project</label>
+                                <select class="aasx-form-select" id="structuredUrlProjectSelect" required>
+                                    <option value="">Choose a project...</option>
+                                    <option value="" disabled>Select a use case first</option>
+                                </select>
+                            </div>
+                            
+                            <!-- URL Input -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Structured Data ZIP URL</label>
+                                <div class="aasx-url-input-group">
+                                    <input type="url" class="aasx-form-input" id="structuredDataUrl" placeholder="https://example.com/structured_data.zip" required>
+                                    <button type="button" class="aasx-btn aasx-btn-outline" id="validateStructuredUrlBtn" title="Validate URL">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                                <small class="aasx-form-help">Direct link to zipped structured data</small>
+                            </div>
+                            
+                            <!-- URL Preview -->
+                            <div class="aasx-url-preview" id="structuredUrlPreview" style="display: none;">
+                                <div class="aasx-url-info">
+                                    <div class="aasx-url-details">
+                                        <span class="aasx-url-name" id="structuredUrlFileName">structured_data.zip</span>
+                                        <span class="aasx-url-size" id="structuredUrlFileSize">0 KB</span>
+                                    </div>
+                                    <div class="aasx-url-status">
+                                        <span class="aasx-status-badge aasx-status-valid" id="structuredUrlStatus">
+                                            <i class="fas fa-check-circle"></i>
+                                            Valid
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- AASX File Name -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Output AASX File Name</label>
+                                <input type="text" class="aasx-form-input" id="urlOutputAasxFileName" placeholder="generated_file.aasx" required>
+                                <small class="aasx-form-help">Name for the generated AASX file</small>
+                            </div>
+                            
+                            <!-- File Description -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Description (Optional)</label>
+                                <textarea class="aasx-form-textarea" id="structuredUrlFileDescription" rows="3" placeholder="Describe the structured data content, purpose, or any relevant notes..."></textarea>
+                            </div>
+                            
+                            <!-- Download & Generate Button -->
+                            <button type="submit" class="aasx-btn aasx-btn-warning aasx-btn-url-upload" id="downloadGenerateAasxBtn">
+                                <i class="fas fa-download"></i>
+                                <span>Download & Generate AASX</span>
                             </button>
                         </form>
                     </div>
@@ -194,20 +467,20 @@
             </div>
             <div class="aasx-stat-card">
                 <div class="aasx-stat-icon">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-file-archive"></i>
                 </div>
                 <div class="aasx-stat-content">
-                    <span class="aasx-stat-number" id="pendingUploads">0</span>
-                    <span class="aasx-stat-label">Pending</span>
+                    <span class="aasx-stat-number" id="aasxExtractions">0</span>
+                    <span class="aasx-stat-label">AASX Extractions</span>
                 </div>
             </div>
             <div class="aasx-stat-card">
                 <div class="aasx-stat-icon">
-                    <i class="fas fa-check-circle"></i>
+                    <i class="fas fa-file-code"></i>
                 </div>
                 <div class="aasx-stat-content">
-                    <span class="aasx-stat-number" id="completedUploads">0</span>
-                    <span class="aasx-stat-label">Completed</span>
+                    <span class="aasx-stat-number" id="aasxGenerations">0</span>
+                    <span class="aasx-stat-label">AASX Generations</span>
                 </div>
             </div>
             <div class="aasx-stat-card">

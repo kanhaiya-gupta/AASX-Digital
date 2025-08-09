@@ -18,7 +18,7 @@ import { DataManager } from './data-manager/core.js';
 import { AASXETLPipeline } from './etl-pipeline/core.js';
 import { dropdownManager } from './shared/dropdown-manager.js';
 import ProjectCreator from './data-manager/project-creator.js';
-import { FileUploadHandler } from './etl-pipeline/file-upload-handler.js';
+import AasxFileUploadManager from './file-upload/core.js';
 console.log('✅ AASX index.js: AASX modules imported');
 
 // Global instances
@@ -64,9 +64,9 @@ export async function initAASXModule() {
         const projectCreator = new ProjectCreator();
         window.projectCreator = projectCreator;
         
-        // Initialize File Upload Handler
-        const fileUploadHandler = new FileUploadHandler();
-        window.fileUploadHandler = fileUploadHandler;
+        // Initialize File Upload Manager
+        const fileUploadManager = new AasxFileUploadManager();
+        window.fileUploadManager = fileUploadManager;
         
         // Initialize ETL Configuration Manager (lazy load when needed)
         // This will be initialized when the ETL configuration form is accessed

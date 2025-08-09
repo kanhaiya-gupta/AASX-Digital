@@ -6,9 +6,12 @@ Data access layer for users in the AAS Data Modeling framework.
 """
 
 from typing import List, Optional, Dict, Any
+import logging
 from ..database.base_manager import BaseDatabaseManager
 from ..models.user import User
 from .base_repository import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 class UserRepository(BaseRepository[User]):
     """Repository for user operations."""
@@ -21,8 +24,8 @@ class UserRepository(BaseRepository[User]):
     
     def _get_columns(self) -> List[str]:
         return [
-            "id", "username", "email", "full_name", "organization_id", 
-            "role", "is_active", "last_login", "created_at", "updated_at"
+            "user_id", "username", "email", "full_name", "org_id", 
+            "password_hash", "role", "is_active", "last_login", "created_at", "updated_at"
         ]
     
     def get_by_username(self, username: str) -> Optional[User]:
@@ -43,7 +46,7 @@ class UserRepository(BaseRepository[User]):
     
     def get_by_organization(self, organization_id: str) -> List[User]:
         """Get users by organization."""
-        query = "SELECT * FROM users WHERE organization_id = ?"
+        query = "SELECT * FROM users WHERE org_id = ?"
         results = self.db_manager.execute_query(query, (organization_id,))
         return [self.model_class.from_dict(row) for row in results]
     
@@ -71,7 +74,7 @@ class UserRepository(BaseRepository[User]):
     
     def update_last_login(self, user_id: str) -> bool:
         """Update user's last login timestamp."""
-        query = "UPDATE users SET last_login = datetime('now'), updated_at = datetime('now') WHERE id = ?"
+        query = "UPDATE users SET last_login = datetime('now'), updated_at = datetime('now') WHERE user_id = ?"
         try:
             affected_rows = self.db_manager.execute_update(query, (user_id,))
             return affected_rows > 0
@@ -89,7 +92,7 @@ class UserRepository(BaseRepository[User]):
                     role,
                     COUNT(*) as role_count
                 FROM users 
-                WHERE organization_id = ?
+                WHERE org_id = ?
                 GROUP BY role
             """
             results = self.db_manager.execute_query(query, (organization_id,))
@@ -132,4 +135,37 @@ class UserRepository(BaseRepository[User]):
         """Check if email already exists."""
         query = "SELECT COUNT(*) as count FROM users WHERE email = ?"
         results = self.db_manager.execute_query(query, (email,))
-        return results[0]["count"] > 0 if results else False 
+        return results[0]["count"] > 0 if results else False
+    
+    def create_with_password(self, user: User, password: str) -> User:
+        """Create a new user with password hashing."""
+        try:
+            from passlib.context import CryptContext
+            
+            # Hash the password
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            password_hash = pwd_context.hash(password)
+            
+            # Prepare user data
+            user_data = user.to_dict()
+            user_data['password_hash'] = password_hash
+            
+            # Insert directly with password hash
+            columns = self._get_columns()
+            placeholders = ', '.join(['?' for _ in columns])
+            column_names = ', '.join(columns)
+            
+            query = f"""
+                INSERT INTO {self.table_name} ({column_names})
+                VALUES ({placeholders})
+            """
+            
+            values = tuple(user_data.get(col) for col in columns)
+            self.db_manager.execute_update(query, values)
+            
+            logger.info(f"Created user with password: {user.username}")
+            return user
+            
+        except Exception as e:
+            logger.error(f"Failed to create user with password: {e}")
+            raise 

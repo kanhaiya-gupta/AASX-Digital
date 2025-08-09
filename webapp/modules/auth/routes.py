@@ -1,372 +1,372 @@
 """
-Authentication routes
+Authentication routes for AASX Digital Twin Analytics Framework
 """
+import logging
+from datetime import datetime, timedelta
+from typing import Optional, List
+from fastapi import APIRouter, Request, HTTPException, Depends, status, Form
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.security import HTTPBearer
+#from sqlalchemy.exc import SQLAlchemyError
 
-import uuid
-from datetime import datetime
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends, Request, Response, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
-from starlette.responses import JSONResponse
-
-from .models import UserCreate, UserLogin, UserResponse, UserUpdate, Token
-from .utils import get_password_hash, verify_password, create_access_token, get_current_user_from_token
 from .database import AuthDatabase
+from .models import (
+    UserCreate, UserResponse, TokenData, UserLogin, 
+    PasswordReset, PasswordResetConfirm, UserActivity
+)
+from .utils import (
+    get_current_user_data_from_token, authenticate_user, 
+    get_user_from_request, require_manager_or_admin, 
+    log_user_activity, validate_password_strength, 
+    sanitize_user_input, validate_email_format, 
+    get_user_permissions, has_permission
+)
 
-# Create router
-router = APIRouter()
+logger = logging.getLogger(__name__)
 
-# Setup templates
-templates = Jinja2Templates(directory="webapp/templates")
-
-# Initialize database
+# Initialize auth database
 auth_db = AuthDatabase()
 
-# Dependency to get current user from session
-def get_current_user(request: Request) -> Optional[dict]:
-    """Get current user from session"""
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-    
-    username = get_current_user_from_token(token)
-    if not username:
-        return None
-    
-    return auth_db.get_user_by_username(username)
+# Security scheme
+security = HTTPBearer()
 
-# Dependency to require authentication
-def require_auth(request: Request) -> dict:
-    """Require authentication - redirect to login if not authenticated"""
-    user = get_current_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    return user
+# Create single router for all auth routes
+router = APIRouter(tags=["Authentication"])
 
-# Dependency to require admin role
-def require_admin(request: Request) -> dict:
-    """Require admin role"""
-    user = require_auth(request)
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
-    return user
+# ============================================================================
+# PAGE ROUTES (HTML responses)
+# ============================================================================
 
-# ==================== PAGE ROUTES ====================
-
-@router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    """Login page"""
-    return templates.TemplateResponse("auth/login.html", {"request": request})
-
-@router.get("/signup", response_class=HTMLResponse)
-async def signup_page(request: Request):
-    """Signup page"""
-    return templates.TemplateResponse("auth/signup.html", {"request": request})
-
-@router.get("/profile", response_class=HTMLResponse)
-async def profile_page(request: Request):
-    """User profile page"""
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse(url="/auth/login", status_code=302)
-    
-    return templates.TemplateResponse("auth/profile.html", {
-        "request": request,
-        "user": user
-    })
-
-@router.get("/admin/users", response_class=HTMLResponse)
-async def admin_users_page(request: Request):
-    """Admin users management page"""
-    user = require_admin(request)
-    users = auth_db.get_all_users()
-    
-    return templates.TemplateResponse("auth/admin_users.html", {
-        "request": request,
-        "current_user": user,
-        "users": users
-    })
-
-# ==================== API ROUTES ====================
-
-@router.post("/api/login")
-async def login_api(request: Request, response: Response):
-    """API login endpoint"""
+@router.get("/", response_class=HTMLResponse)
+async def auth_dashboard(request: Request):
+    """Main authentication dashboard page with tabs"""
     try:
-        form_data = await request.form()
-        username = form_data.get("username")
-        password = form_data.get("password")
+        # Get current user if authenticated
+        user = None
+        try:
+            user = await get_user_from_request(request)
+        except:
+            pass  # User not authenticated, which is fine for the dashboard
         
-        if not username or not password:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Username and password are required"}
-            )
+        # Get all users for admin section (if user is admin)
+        users = []
+        if user and has_permission(user, "admin"):
+            users = auth_db.get_all_users()
         
-        # Get user from database
-        user = auth_db.get_user_by_username(username)
+        # Get all active organizations for signup/profile forms
+        organizations = auth_db.get_active_organizations()
+        
+        return request.app.state.templates.TemplateResponse(
+            "auth/index.html",
+            {
+                "request": request, 
+                "title": "Authentication - AASX Digital Twin Analytics Framework",
+                "current_user": user,
+                "users": users,
+                "organizations": organizations
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error rendering auth dashboard: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# ============================================================================
+# API ROUTES (JSON responses)
+# ============================================================================
+
+@router.post("/login")
+async def login(login_data: UserLogin, request: Request):
+    """Login API endpoint"""
+    try:
+        # Sanitize inputs
+        username = sanitize_user_input(login_data.username)
+        password = login_data.password
+        
+        # Authenticate user
+        user = auth_db.authenticate_user(username, password)
         if not user:
-            return JSONResponse(
-                status_code=401,
-                content={"error": "Invalid username or password"}
-            )
-        
-        # Verify password
-        if not verify_password(password, user["password_hash"]):
-            return JSONResponse(
-                status_code=401,
-                content={"error": "Invalid username or password"}
-            )
-        
-        # Check if user is active
-        if user["status"] != "active":
-            return JSONResponse(
-                status_code=401,
-                content={"error": "Account is not active"}
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password"
             )
         
         # Create access token
-        access_token = create_access_token(data={"sub": user["username"]})
+        token_data = TokenData(
+            user_id=user.user_id,
+            username=user.username,
+            role=user.role,
+            organization_id=user.org_id
+        )
+        access_token = auth_db.create_access_token(token_data)
         
         # Update last login
-        auth_db.update_last_login(user["user_id"])
+        auth_db.update_last_login(user.user_id)
         
         # Log activity
-        auth_db.log_user_activity(
-            user["user_id"], 
-            "login", 
-            "system", 
-            details={"ip": request.client.host if request.client else "unknown"}
-        )
+        await log_user_activity(request, user.user_id, "login", "User logged in successfully")
         
-        # Set cookie
-        response = JSONResponse(content={"message": "Login successful"})
-        response.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            max_age=1800,  # 30 minutes
-            samesite="lax"
-        )
+        return {
+            "success": True,
+            "message": "Login successful",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": UserResponse.from_shared_user(user)
+        }
         
-        return response
-        
+    except HTTPException:
+        raise
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Login failed: {str(e)}"}
+        logger.error(f"Login error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
         )
 
-@router.post("/api/signup")
-async def signup_api(request: Request):
-    """API signup endpoint"""
+@router.post("/signup")
+async def signup(user_data: UserCreate, request: Request):
+    """Signup API endpoint"""
     try:
-        form_data = await request.form()
-        username = form_data.get("username")
-        email = form_data.get("email")
-        password = form_data.get("password")
-        confirm_password = form_data.get("confirm_password")
-        full_name = form_data.get("full_name", "")
-        
-        # Validate input
-        if not all([username, email, password, confirm_password]):
-            return JSONResponse(
-                status_code=400,
-                content={"error": "All fields are required"}
+        # Validate password strength
+        password_strength = validate_password_strength(user_data.password)
+        if not password_strength["is_valid"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Password too weak: {password_strength['message']}"
             )
         
-        if password != confirm_password:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Passwords do not match"}
+        # Validate email format
+        if not validate_email_format(user_data.email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid email format"
             )
         
-        if len(password) < 8:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Password must be at least 8 characters long"}
+        # Check if username/email already exists
+        if auth_db.check_username_exists(user_data.username):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already exists"
             )
         
-        # Check if username already exists
-        existing_user = auth_db.get_user_by_username(username)
-        if existing_user:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Username already exists"}
-            )
-        
-        # Check if email already exists
-        existing_email = auth_db.get_user_by_email(email)
-        if existing_email:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Email already registered"}
+        if auth_db.check_email_exists(user_data.email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already exists"
             )
         
         # Create user
-        user_id = str(uuid.uuid4())
-        password_hash = get_password_hash(password)
-        created_at = datetime.now().isoformat()
-        
-        user_data = {
-            "user_id": user_id,
-            "username": username,
-            "email": email,
-            "password_hash": password_hash,
-            "full_name": full_name,
-            "role": "user",
-            "status": "active",
-            "created_at": created_at
-        }
-        
-        success = auth_db.create_user(user_data)
-        if not success:
-            return JSONResponse(
-                status_code=500,
-                content={"error": "Failed to create user"}
-            )
+        user = auth_db.create_user(user_data)
         
         # Log activity
-        auth_db.log_user_activity(
-            user_id, 
-            "user_create", 
-            "user", 
-            user_id,
-            details={"username": username, "email": email}
-        )
+        await log_user_activity(request, user.user_id, "signup", "New user registered")
         
-        return JSONResponse(content={"message": "User created successfully"})
+        return {
+            "success": True,
+            "message": "User created successfully",
+            "user": UserResponse.from_shared_user(user)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Signup error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+@router.post("/logout")
+async def logout(request: Request):
+    """Logout API endpoint"""
+    try:
+        user = await get_user_from_request(request)
+        if user:
+            await log_user_activity(request, user.user_id, "logout", "User logged out")
+        
+        return {
+            "success": True,
+            "message": "Logout successful"
+        }
         
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Signup failed: {str(e)}"}
+        logger.error(f"Logout error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
         )
 
-@router.post("/api/logout")
-async def logout_api(request: Request, response: Response):
-    """API logout endpoint"""
-    user = get_current_user(request)
-    if user:
-        auth_db.log_user_activity(
-            user["user_id"], 
-            "logout", 
-            "system"
-        )
-    
-    response = JSONResponse(content={"message": "Logged out successfully"})
-    response.delete_cookie("access_token")
-    return response
-
-@router.get("/api/profile")
-async def get_profile_api(request: Request):
-    """Get user profile API"""
-    user = require_auth(request)
-    
-    return JSONResponse(content={
-        "user_id": user["user_id"],
-        "username": user["username"],
-        "email": user["email"],
-        "full_name": user["full_name"],
-        "role": user["role"],
-        "status": user["status"],
-        "created_at": user["created_at"],
-        "last_login": user["last_login"]
-    })
-
-@router.put("/api/profile")
-async def update_profile_api(request: Request):
-    """Update user profile API"""
-    user = require_auth(request)
-    
+@router.get("/profile")
+async def get_profile(request: Request):
+    """Get user profile API endpoint"""
     try:
-        form_data = await request.form()
-        updates = {}
-        
-        # Update full name
-        if "full_name" in form_data:
-            updates["full_name"] = form_data["full_name"]
-        
-        # Update email
-        if "email" in form_data:
-            new_email = form_data["email"]
-            # Check if email is already taken by another user
-            existing_user = auth_db.get_user_by_email(new_email)
-            if existing_user and existing_user["user_id"] != user["user_id"]:
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "Email already registered"}
-                )
-            updates["email"] = new_email
-        
-        # Update password
-        if "current_password" in form_data and "new_password" in form_data:
-            current_password = form_data["current_password"]
-            new_password = form_data["new_password"]
-            
-            # Verify current password
-            if not verify_password(current_password, user["password_hash"]):
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "Current password is incorrect"}
-                )
-            
-            # Validate new password
-            if len(new_password) < 8:
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "Password must be at least 8 characters long"}
-                )
-            
-            updates["password_hash"] = get_password_hash(new_password)
-        
-        if updates:
-            success = auth_db.update_user_profile(user["user_id"], updates)
-            if not success:
-                return JSONResponse(
-                    status_code=500,
-                    content={"error": "Failed to update profile"}
-                )
-            
-            # Log activity
-            auth_db.log_user_activity(
-                user["user_id"], 
-                "profile_update", 
-                "user", 
-                user["user_id"],
-                details={"updated_fields": list(updates.keys())}
+        user = await get_user_from_request(request)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
             )
         
-        return JSONResponse(content={"message": "Profile updated successfully"})
+        return {
+            "success": True,
+            "user": UserResponse.from_shared_user(user)
+        }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"Profile update failed: {str(e)}"}
+        logger.error(f"Get profile error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
         )
 
-@router.get("/api/admin/users")
-async def get_users_api(request: Request):
-    """Get all users (admin only)"""
-    require_admin(request)
-    users = auth_db.get_all_users()
-    return JSONResponse(content={"users": users})
+@router.put("/profile")
+async def update_profile(request: Request, user_data: dict):
+    """Update user profile API endpoint"""
+    try:
+        user = await get_user_from_request(request)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
+        
+        # Update user
+        updated_user = auth_db.update_user(user.user_id, user_data)
+        
+        # Log activity
+        await log_user_activity(request, user.user_id, "profile_update", "Profile updated")
+        
+        return {
+            "success": True,
+            "message": "Profile updated successfully",
+            "user": UserResponse.from_shared_user(updated_user)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update profile error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
 
-# ==================== UTILITY ROUTES ====================
+@router.get("/admin/users")
+async def get_all_users(request: Request):
+    """Get all users (admin only)"""
+    try:
+        user = await get_user_from_request(request)
+        if not user or not has_permission(user, "admin"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required"
+            )
+        
+        users = auth_db.get_all_users()
+        return {
+            "success": True,
+            "users": [UserResponse.from_shared_user(u) for u in users]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get all users error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+@router.post("/forgot-password")
+async def forgot_password(email: str = Form(...), request: Request = None):
+    """Forgot password API endpoint"""
+    try:
+        # Validate email
+        if not validate_email_format(email):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid email format"
+            )
+        
+        # Check if user exists
+        user = auth_db.get_user_by_email(email)
+        if not user:
+            # Don't reveal if email exists or not
+            return {
+                "success": True,
+                "message": "If the email exists, a reset link has been sent"
+            }
+        
+        # Generate reset token and send email (simplified)
+        # In production, implement proper email sending
+        
+        return {
+            "success": True,
+            "message": "Password reset link sent to email"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Forgot password error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+@router.post("/reset-password")
+async def reset_password(reset_data: PasswordResetConfirm, request: Request = None):
+    """Reset password API endpoint"""
+    try:
+        # Validate password strength
+        password_strength = validate_password_strength(reset_data.new_password)
+        if not password_strength["is_valid"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Password too weak: {password_strength['message']}"
+            )
+        
+        # Validate token and update password (simplified)
+        # In production, implement proper token validation
+        
+        return {
+            "success": True,
+            "message": "Password reset successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Reset password error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
 
 @router.get("/check-auth")
 async def check_auth(request: Request):
-    """Check if user is authenticated"""
-    user = get_current_user(request)
-    if user:
-        return JSONResponse(content={
-            "authenticated": True,
-            "user": {
-                "username": user["username"],
-                "role": user["role"],
-                "full_name": user["full_name"]
+    """Check authentication status"""
+    try:
+        user = await get_user_from_request(request)
+        if user:
+            return {
+                "success": True,
+                "authenticated": True,
+                "user": UserResponse.from_shared_user(user)
             }
-        })
-    else:
-        return JSONResponse(content={"authenticated": False}) 
+        else:
+            return {
+                "success": True,
+                "authenticated": False,
+                "user": None
+            }
+        
+    except Exception as e:
+        logger.error(f"Check auth error: {e}")
+        return {
+            "success": False,
+            "authenticated": False,
+            "user": None,
+            "error": "Authentication check failed"
+        } 

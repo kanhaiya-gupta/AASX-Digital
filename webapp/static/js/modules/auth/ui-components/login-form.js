@@ -78,7 +78,7 @@ export default class LoginForm {
             formData.append('password', document.getElementById('password').value);
             formData.append('remember_me', document.getElementById('rememberMe')?.checked || false);
             
-            const response = await fetch('/auth/api/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 body: formData
             });

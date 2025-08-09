@@ -92,6 +92,7 @@ class DatabaseSchemaManager:
                 is_public BOOLEAN DEFAULT 0,
                 access_level TEXT DEFAULT 'private',
                 user_id TEXT,
+                org_id TEXT,
                 metadata TEXT DEFAULT '{}',
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
@@ -199,6 +200,7 @@ class DatabaseSchemaManager:
                 email TEXT UNIQUE,
                 full_name TEXT,
                 org_id TEXT,
+                password_hash TEXT,
                 role TEXT DEFAULT 'user',
                 is_active BOOLEAN DEFAULT 1,
                 last_login TEXT,

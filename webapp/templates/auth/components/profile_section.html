@@ -16,35 +16,45 @@
             <h3 class="section-title">Current Information</h3>
             <div class="info-item">
                 <span class="info-label">Username:</span>
-                <span class="info-value">{{ user.username }}</span>
+                <span class="info-value">{{ current_user.username if current_user else 'Not logged in' }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Full Name:</span>
-                <span class="info-value">{{ user.full_name or 'Not set' }}</span>
+                <span class="info-value">{{ current_user.full_name or 'Not set' if current_user else 'Not logged in' }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Email:</span>
-                <span class="info-value">{{ user.email }}</span>
+                <span class="info-value">{{ current_user.email if current_user else 'Not logged in' }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Organization:</span>
+                <span class="info-value">
+                    {% if current_user and current_user.org_id %}
+                        {% for org in organizations %}
+                            {% if org.org_id == current_user.org_id %}
+                                {{ org.name }}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        No Organization
+                    {% endif %}
+                </span>
             </div>
             <div class="info-item">
                 <span class="info-label">Role:</span>
-                <span class="info-value">
-                    <span class="badge bg-primary">{{ user.role.title() }}</span>
-                </span>
+                <span class="badge bg-primary">{{ current_user.role.title() if current_user else 'Guest' }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Status:</span>
-                <span class="info-value">
-                    <span class="badge bg-success">{{ user.status.title() }}</span>
-                </span>
+                <span class="badge bg-success">{{ 'Active' if current_user and current_user.is_active else 'Inactive' }}</span>
             </div>
             <div class="info-item">
-                <span class="info-label">Member Since:</span>
-                <span class="info-value">{{ user.created_at.split('T')[0] if user.created_at else 'Unknown' }}</span>
+                <span class="info-label">Created:</span>
+                <span class="info-value">{{ current_user.created_at.split('T')[0] if current_user and current_user.created_at else 'Unknown' }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Last Login:</span>
-                <span class="info-value">{{ user.last_login.split('T')[0] if user.last_login else 'Never' }}</span>
+                <span class="info-value">{{ current_user.last_login.split('T')[0] if current_user and current_user.last_login else 'Never' }}</span>
             </div>
         </div>
         
@@ -60,7 +70,7 @@
                             <i class="fas fa-id-card"></i>
                         </span>
                         <input type="text" class="form-control" id="full_name" name="full_name" 
-                               value="{{ user.full_name or '' }}" placeholder="Your full name">
+                               value="{{ current_user.full_name or '' if current_user else '' }}" placeholder="Your full name">
                     </div>
                 </div>
                 
@@ -71,7 +81,24 @@
                             <i class="fas fa-envelope"></i>
                         </span>
                         <input type="email" class="form-control" id="email" name="email" 
-                               value="{{ user.email }}" placeholder="your.email@example.com">
+                               value="{{ current_user.email if current_user else '' }}" placeholder="your.email@example.com">
+                    </div>
+                </div>
+                
+                <div class="auth-col-md-6 col-md-6 mb-3">
+                    <label for="organization_id" class="form-label">Organization</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-building"></i>
+                        </span>
+                        <select class="form-control" id="organization_id" name="organization_id">
+                            <option value="">No Organization</option>
+                            {% for org in organizations %}
+                            <option value="{{ org.org_id }}" {% if current_user and current_user.org_id == org.org_id %}selected{% endif %}>
+                                {{ org.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
             </div>

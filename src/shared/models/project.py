@@ -24,6 +24,7 @@ class Project(BaseModel):
     is_public: bool = False
     access_level: str = "private"
     user_id: Optional[str] = None
+    org_id: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):

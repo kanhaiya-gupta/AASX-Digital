@@ -37,6 +37,21 @@
     <div class="mb-3">
         <div class="input-group">
             <span class="input-group-text">
+                <i class="fas fa-building"></i>
+            </span>
+            <select class="form-control" id="organization_id" name="organization_id">
+                <option value="">Select Organization (Optional)</option>
+                {% for org in organizations %}
+                <option value="{{ org.org_id }}">{{ org.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-text">Choose your organization (optional)</div>
+    </div>
+    
+    <div class="mb-3">
+        <div class="input-group">
+            <span class="input-group-text">
                 <i class="fas fa-lock"></i>
             </span>
             <input type="password" class="form-control" id="password" name="password" 

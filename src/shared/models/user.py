@@ -5,6 +5,7 @@ User Model
 Data model for users in the AAS Data Modeling framework.
 """
 
+import uuid
 from typing import Optional
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,7 +19,8 @@ class User(BaseModel):
     username: str
     email: Optional[str] = None
     full_name: Optional[str] = None
-    organization_id: Optional[str] = None
+    org_id: Optional[str] = None
+    password_hash: Optional[str] = None
     role: str = "user"
     is_active: bool = True
     last_login: Optional[str] = None
@@ -37,7 +39,7 @@ class User(BaseModel):
         if self.full_name and len(self.full_name) > 100:
             raise ValueError("Full name must be less than 100 characters")
         
-        valid_roles = ["user", "admin", "manager", "viewer"]
+        valid_roles = ["super_admin", "admin", "manager", "user", "viewer"]
         if self.role not in valid_roles:
             raise ValueError(f"Role must be one of: {valid_roles}")
         
@@ -57,7 +59,8 @@ class User(BaseModel):
             "viewer": ["read"],
             "user": ["read", "write"],
             "manager": ["read", "write", "manage"],
-            "admin": ["read", "write", "manage", "admin"]
+            "admin": ["read", "write", "manage", "admin"],
+            "super_admin": ["read", "write", "manage", "admin", "super_admin"]
         }
         
         user_permissions = role_permissions.get(self.role, [])

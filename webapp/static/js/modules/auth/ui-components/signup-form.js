@@ -99,7 +99,7 @@ export default class SignupForm {
             formData.append('confirm_password', document.getElementById('confirmPassword').value);
             formData.append('full_name', document.getElementById('fullName')?.value.trim() || '');
             
-            const response = await fetch('/auth/api/register', {
+            const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 body: formData
             });

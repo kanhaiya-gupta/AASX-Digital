@@ -22,7 +22,7 @@ class ProjectRepository(BaseRepository[Project]):
     def _get_columns(self) -> List[str]:
         return [
             "project_id", "name", "description", "tags", "file_count", "total_size",
-            "is_public", "access_level", "user_id", "metadata", 
+            "is_public", "access_level", "user_id", "org_id", "metadata", 
             "created_at", "updated_at"
         ]
     
@@ -63,6 +63,12 @@ class ProjectRepository(BaseRepository[Project]):
         """Get projects by user."""
         query = "SELECT * FROM projects WHERE user_id = ?"
         results = self.db_manager.execute_query(query, (user_id,))
+        return [self.model_class.from_dict(row) for row in results]
+    
+    def get_by_organization(self, org_id: str) -> List[Project]:
+        """Get projects by organization."""
+        query = "SELECT * FROM projects WHERE org_id = ?"
+        results = self.db_manager.execute_query(query, (org_id,))
         return [self.model_class.from_dict(row) for row in results]
     
     def get_public_projects(self) -> List[Project]:

@@ -425,4 +425,893 @@
     100% {
         background-position: 0% 50%;
     }
+}
+
+/* AASX Processing Statistics */
+.aasx-processing-stat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(42, 82, 152, 0.05) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(30, 60, 114, 0.1);
+    transition: all 0.3s ease;
+}
+
+.aasx-processing-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.15);
+    border-color: rgba(30, 60, 114, 0.2);
+}
+
+.aasx-processing-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.aasx-processing-stat-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.aasx-processing-stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e3c72;
+    line-height: 1.2;
+}
+
+.aasx-processing-stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-top: 0.25rem;
+}
+
+/* Responsive adjustments for processing stats */
+@media (max-width: 767.98px) {
+    .aasx-processing-stat {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+    
+    .aasx-processing-stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .aasx-processing-stat-number {
+        font-size: 1.25rem;
+    }
+    
+    .aasx-processing-stat-label {
+        font-size: 0.8rem;
+    }
+}
+
+/* AASX Conversion Mode Selector */
+.aasx-conversion-mode-selector {
+    margin: 2rem 0;
+}
+
+.aasx-mode-tabs {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.aasx-mode-tab {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(42, 82, 152, 0.05) 100%);
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 280px;
+    position: relative;
+    overflow: hidden;
+}
+
+.aasx-mode-tab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.15);
+    border-color: rgba(30, 60, 114, 0.3);
+}
+
+
+
+.aasx-mode-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #1e3c72;
+    transition: all 0.3s ease;
+}
+
+.aasx-mode-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.aasx-mode-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #1e3c72;
+    margin-bottom: 0.25rem;
+    transition: color 0.3s ease;
+}
+
+.aasx-mode-description {
+    font-size: 0.9rem;
+    color: rgba(30, 60, 114, 0.7);
+    transition: color 0.3s ease;
+}
+
+.aasx-mode-arrow {
+    font-size: 1.2rem;
+    color: rgba(30, 60, 114, 0.5);
+    transition: color 0.3s ease;
+}
+
+/* Configuration Section */
+.aasx-configuration-section {
+    margin-bottom: 2rem;
+}
+
+.aasx-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.aasx-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.aasx-checkbox-option {
+    position: relative;
+}
+
+.aasx-checkbox-option input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.aasx-checkbox-option label {
+    display: block;
+    cursor: pointer;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.02) 0%, rgba(42, 82, 152, 0.02) 100%);
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.aasx-checkbox-option input[type="checkbox"]:checked + label {
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%);
+    border-color: #1e3c72;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.1);
+}
+
+.aasx-checkbox-option label:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.1);
+}
+
+.aasx-checkbox-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.aasx-checkbox-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #1e3c72;
+    transition: all 0.3s ease;
+}
+
+.aasx-checkbox-option input[type="checkbox"]:checked + label .aasx-checkbox-icon {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+}
+
+.aasx-checkbox-text {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.aasx-checkbox-title {
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-checkbox-description {
+    font-size: 0.85rem;
+    color: rgba(30, 60, 114, 0.7);
+}
+
+/* Form Elements */
+.aasx-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.aasx-form-label {
+    display: block;
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.aasx-form-input,
+.aasx-form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #1e3c72;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.aasx-form-input:focus,
+.aasx-form-select:focus {
+    outline: none;
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    background: white;
+}
+
+.aasx-form-help {
+    display: block;
+    font-size: 0.85rem;
+    color: rgba(30, 60, 114, 0.6);
+    margin-top: 0.25rem;
+}
+
+/* ETL Results Section */
+.aasx-etl-results-section {
+    margin-top: 2rem;
+}
+
+.etl-results-section {
+    padding: 1rem 0;
+}
+
+.etl-results-section h4 {
+    color: #1e3c72;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-stat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(42, 82, 152, 0.05) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(30, 60, 114, 0.1);
+    transition: all 0.3s ease;
+}
+
+.result-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.1);
+}
+
+.result-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e3c72;
+    line-height: 1;
+}
+
+.result-label {
+    font-size: 0.9rem;
+    color: rgba(30, 60, 114, 0.7);
+    font-weight: 500;
+}
+
+.output-formats,
+.export-formats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.generated-files {
+    margin-top: 0.5rem;
+}
+
+.generated-file-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(30, 60, 114, 0.05);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.processing-summary {
+    background: rgba(30, 60, 114, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.processing-summary p {
+    margin-bottom: 0.5rem;
+    color: #1e3c72;
+}
+
+.processing-summary strong {
+    color: #1e3c72;
+    font-weight: 600;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .aasx-mode-tabs {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .aasx-mode-tab {
+        min-width: 100%;
+        max-width: 320px;
+    }
+    
+    .aasx-checkbox-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .result-stat {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .result-number {
+        font-size: 1.5rem;
+    }
+}
+
+.aasx-mode-tabs {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.aasx-mode-tab {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(42, 82, 152, 0.05) 100%);
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 280px;
+    position: relative;
+    overflow: hidden;
+}
+
+.aasx-mode-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+
+.aasx-mode-tab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.15);
+    border-color: rgba(30, 60, 114, 0.3);
+}
+
+.aasx-mode-tab.active {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-color: #ffd700;
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.25);
+    transform: translateY(-2px);
+}
+
+.aasx-mode-tab.active::before {
+    opacity: 0.1;
+}
+
+.aasx-mode-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3c72;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.aasx-mode-tab.active .aasx-mode-icon {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    color: #1e3c72;
+}
+
+.aasx-mode-content {
+    flex: 1;
+    min-width: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.aasx-mode-title {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e3c72;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-mode-tab.active .aasx-mode-title {
+    color: #ffffff;
+}
+
+.aasx-mode-description {
+    display: block;
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.3;
+}
+
+.aasx-mode-tab.active .aasx-mode-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.aasx-mode-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(30, 60, 114, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3c72;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.aasx-mode-tab.active .aasx-mode-arrow {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+} 
+
+/* ETL Pipeline Mode Tabs (separate from file upload to avoid conflicts) */
+.aasx-etl-mode-tab {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(42, 82, 152, 0.05) 100%);
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 280px;
+    position: relative;
+    overflow: hidden;
+}
+
+.aasx-etl-mode-tab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.15);
+    border-color: rgba(30, 60, 114, 0.3);
+}
+
+.aasx-etl-mode-tab.active {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-color: #ffd700;
+    color: white;
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.25);
+    transform: translateY(-2px);
+}
+
+.aasx-etl-mode-tab.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 237, 78, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.aasx-etl-mode-tab.active::before {
+    opacity: 0.1;
+}
+
+.aasx-etl-mode-tab .aasx-mode-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3c72;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.aasx-etl-mode-tab.active .aasx-mode-icon {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    color: #1e3c72;
+}
+
+.aasx-etl-mode-tab .aasx-mode-content {
+    flex: 1;
+    min-width: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.aasx-etl-mode-tab .aasx-mode-title {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e3c72;
+    line-height: 1.2;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-etl-mode-tab.active .aasx-mode-title {
+    color: #ffffff;
+}
+
+.aasx-etl-mode-tab .aasx-mode-description {
+    display: block;
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.3;
+}
+
+.aasx-etl-mode-tab.active .aasx-mode-description {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.aasx-etl-mode-tab .aasx-mode-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(30, 60, 114, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3c72;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    z-index: 2;
+    position: relative;
+}
+
+.aasx-etl-mode-tab.active .aasx-mode-arrow {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+} 
+
+/* ETL Pipeline Full-Width Configuration Panels */
+.aasx-config-panel {
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.aasx-config-panel .aasx-card {
+    border: none;
+    box-shadow: 0 8px 32px rgba(30, 60, 114, 0.08);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.aasx-config-panel .aasx-card:hover {
+    box-shadow: 0 12px 40px rgba(30, 60, 114, 0.12);
+    transform: translateY(-2px);
+}
+
+.aasx-config-panel .aasx-card-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    padding: 2rem;
+    border-bottom: 3px solid #ffd700;
+    position: relative;
+    overflow: hidden;
+}
+
+.aasx-config-panel .aasx-card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 237, 78, 0.1) 100%);
+    opacity: 0.3;
+}
+
+.aasx-config-panel .aasx-card-header-content {
+    position: relative;
+    z-index: 2;
+}
+
+.aasx-config-panel .aasx-card-title {
+    color: #ffffff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.aasx-config-panel .aasx-card-title i {
+    color: #ffd700;
+    font-size: 2rem;
+}
+
+.aasx-config-panel .aasx-card-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 400;
+}
+
+.aasx-config-panel .aasx-card-body {
+    padding: 2.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+/* Enhanced Form Groups for Full Width */
+.aasx-config-panel .aasx-form-group {
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    border: 1px solid rgba(30, 60, 114, 0.1);
+    transition: all 0.3s ease;
+}
+
+.aasx-config-panel .aasx-form-group:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(30, 60, 114, 0.2);
+    box-shadow: 0 4px 20px rgba(30, 60, 114, 0.08);
+}
+
+.aasx-config-panel .aasx-form-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Enhanced Checkbox Grid for Full Width */
+.aasx-config-panel .aasx-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.aasx-config-panel .aasx-checkbox-option {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.aasx-config-panel .aasx-checkbox-option:hover {
+    border-color: rgba(30, 60, 114, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 60, 114, 0.1);
+}
+
+.aasx-config-panel .aasx-checkbox-option input[type="checkbox"]:checked + label .aasx-checkbox-content {
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.1) 0%, rgba(42, 82, 152, 0.1) 100%);
+    border-color: #ffd700;
+}
+
+/* Enhanced Form Inputs for Full Width */
+.aasx-config-panel .aasx-form-input,
+.aasx-config-panel .aasx-form-select {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+.aasx-config-panel .aasx-form-input:focus,
+.aasx-config-panel .aasx-form-select:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    outline: none;
+}
+
+.aasx-config-panel .aasx-form-help {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    display: block;
+}
+
+/* Animation for Configuration Panels */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+} 
+
+/* Responsive adjustments for mode selector */
+@media (max-width: 991.98px) {
+    .aasx-mode-tabs {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .aasx-mode-tab,
+    .aasx-etl-mode-tab {
+        min-width: 320px;
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .aasx-config-panel .aasx-checkbox-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .aasx-conversion-mode-selector {
+        margin: 1.5rem 0;
+    }
+    
+    .aasx-mode-tab,
+    .aasx-etl-mode-tab {
+        padding: 1.25rem 1.5rem;
+        min-width: 280px;
+        gap: 0.75rem;
+    }
+    
+    .aasx-mode-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .aasx-mode-title {
+        font-size: 1rem;
+    }
+    
+    .aasx-mode-description {
+        font-size: 0.8rem;
+    }
+    
+    .aasx-mode-arrow {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+    
+    .aasx-config-panel .aasx-card-header {
+        padding: 1.5rem;
+    }
+    
+    .aasx-config-panel .aasx-card-title {
+        font-size: 1.5rem;
+    }
+    
+    .aasx-config-panel .aasx-card-body {
+        padding: 1.5rem;
+    }
+    
+    .aasx-config-panel .aasx-form-group {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .aasx-config-panel .aasx-checkbox-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .aasx-config-panel .aasx-card-header {
+        padding: 1rem;
+    }
+    
+    .aasx-config-panel .aasx-card-title {
+        font-size: 1.3rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .aasx-config-panel .aasx-card-body {
+        padding: 1rem;
+    }
+    
+    .aasx-config-panel .aasx-form-group {
+        padding: 0.75rem;
+    }
 } 

@@ -9,15 +9,15 @@ export class APIClient {
         this.endpoints = {
             // Auth System
             auth: {
-                login: '/auth/login',
-                logout: '/auth/logout',
-                register: '/auth/register',
-                profile: '/auth/profile',
-                refresh: '/auth/refresh',
-                validate: '/auth/validate',
-                changePassword: '/auth/change-password',
-                resetPassword: '/auth/reset-password',
-                verifyEmail: '/auth/verify-email'
+                login: '/api/auth/login',
+                logout: '/api/auth/logout',
+                register: '/api/auth/register',
+                profile: '/api/auth/profile',
+                refresh: '/api/auth/refresh',
+                validate: '/api/auth/validate',
+                changePassword: '/api/auth/change-password',
+                resetPassword: '/api/auth/reset-password',
+                verifyEmail: '/api/auth/verify-email'
             },
             // AASX ETL Pipeline
             aasx_etl: {

@@ -1,28 +1,547 @@
-<!-- Premium ETL Pipeline Management -->
+<!-- Premium ETL Pipeline Management - Bidirectional -->
 <div class="aasx-etl-pipeline-section">
     <div class="aasx-section-header">
         <div class="aasx-section-title-wrapper">
             <div class="aasx-section-icon">
-                <i class="fas fa-sync-alt"></i>
+                <i class="fas fa-exchange-alt"></i>
             </div>
             <div>
-                <h2 class="aasx-section-title">ETL Pipeline Management</h2>
-                <p class="aasx-section-description">Process and transform your AASX data through the ETL pipeline</p>
+                <h2 class="aasx-section-title" id="conversionModeTitle">ETL Pipeline Management</h2>
+                <p class="aasx-section-description" id="conversionModeDescription">Process and transform your data through the bidirectional ETL pipeline</p>
             </div>
         </div>
         <div class="aasx-section-actions">
-            <button class="aasx-btn aasx-btn-outline" id="refreshFilesBtn" title="Refresh Files">
+            <button class="aasx-btn aasx-btn-outline" id="refreshEtlFiles" title="Refresh Files">
                 <i class="fas fa-sync-alt"></i>
                 <span>Refresh</span>
             </button>
-            <button class="aasx-btn aasx-btn-primary" id="startEtlBtn" title="Start ETL Processing">
+            <button class="aasx-btn aasx-btn-primary" id="runSelectedPipeline" title="Run Selected Pipeline">
                 <i class="fas fa-play"></i>
-                <span>Start ETL</span>
+                <span>Run Pipeline</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Conversion Mode Selector -->
+    <div class="aasx-conversion-mode-selector">
+        <div class="aasx-mode-tabs">
+            <button class="aasx-etl-mode-tab active" data-mode="aasx-to-structured" id="aasxToStructuredTab">
+                <div class="aasx-mode-icon">
+                    <i class="fas fa-file-archive"></i>
+                </div>
+                <div class="aasx-mode-content">
+                    <span class="aasx-mode-title">AASX → Structured Data</span>
+                    <span class="aasx-mode-description">Extract structured data from AASX files</span>
+                </div>
+                <div class="aasx-mode-arrow">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </button>
+            <button class="aasx-etl-mode-tab" data-mode="structured-to-aasx" id="structuredToAasxTab">
+                <div class="aasx-mode-icon">
+                    <i class="fas fa-file-code"></i>
+                </div>
+                <div class="aasx-mode-content">
+                    <span class="aasx-mode-title">Structured Data → AASX</span>
+                    <span class="aasx-mode-description">Convert structured data back to AASX files</span>
+                </div>
+                <div class="aasx-mode-arrow">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
             </button>
         </div>
     </div>
 
     <div class="aasx-etl-content">
+        <!-- Configuration Section -->
+        <div class="aasx-configuration-section">
+            <!-- AASX to Structured Data Configuration -->
+            <div class="aasx-config-panel" id="aasxToStructuredConfig">
+                    <div class="aasx-card aasx-card-premium">
+                        <div class="aasx-card-header">
+                            <div class="aasx-card-header-content">
+                                <h3 class="aasx-card-title">
+                                    <i class="fas fa-file-archive"></i>
+                                    Extraction Configuration
+                                </h3>
+                                <p class="aasx-card-subtitle">Configure AASX to structured data extraction</p>
+                            </div>
+                        </div>
+                        <div class="aasx-card-body">
+                            <!-- Output Formats -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Output Formats</label>
+                                <div class="aasx-checkbox-grid">
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="jsonExport" checked>
+                                        <label for="jsonExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-file-code"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">JSON Export</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="yamlExport" checked>
+                                        <label for="yamlExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-file-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">YAML Export</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="graphExport" checked>
+                                        <label for="graphExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-project-diagram"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Graph Export</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="rdfExport" checked>
+                                        <label for="rdfExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-sitemap"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">RDF Export</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Database Export -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Database Export</label>
+                                <div class="aasx-checkbox-grid">
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="sqliteExport" checked>
+                                        <label for="sqliteExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-database"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">SQLite Export</span>
+                                                    <span class="aasx-checkbox-description">Local database storage</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="vectorDbExport">
+                                        <label for="vectorDbExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-brain"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Vector DB Export</span>
+                                                    <span class="aasx-checkbox-description">AI/RAG vector database</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="neo4jExport">
+                                        <label for="neo4jExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-project-diagram"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Neo4j Export</span>
+                                                    <span class="aasx-checkbox-description">Graph database storage</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="postgresExport">
+                                        <label for="postgresExport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-server"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">PostgreSQL Export</span>
+                                                    <span class="aasx-checkbox-description">Enterprise database storage</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Extraction Options -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Extraction Options</label>
+                                <div class="aasx-checkbox-grid">
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractStructuredData" checked>
+                                        <label for="extractStructuredData">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-database"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Extract Structured Data</span>
+                                                    <span class="aasx-checkbox-description">Extract JSON, YAML, and graph data</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractDocuments" checked>
+                                        <label for="extractDocuments">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-file-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Extract Documents & Images</span>
+                                                    <span class="aasx-checkbox-description">Extract embedded documents and images</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractMetadata" checked>
+                                        <label for="extractMetadata">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-tags"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Extract Metadata</span>
+                                                    <span class="aasx-checkbox-description">Extract semantic metadata and annotations</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractRelationships" checked>
+                                        <label for="extractRelationships">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-project-diagram"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Extract Relationships</span>
+                                                    <span class="aasx-checkbox-description">Extract entity relationships and references</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractValidation" checked>
+                                        <label for="extractValidation">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Extract Validation Rules</span>
+                                                    <span class="aasx-checkbox-description">Extract validation rules and constraints</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="extractHistory" checked>
+                                        <label for="extractHistory">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-history"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Extract History</span>
+                                                    <span class="aasx-checkbox-description">Extract version history and audit trail</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Processing Configuration -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Processing Configuration</label>
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Extraction Depth</label>
+                                        <select class="aasx-form-select" id="extractionDepth">
+                                            <option value="shallow">Shallow (Basic)</option>
+                                            <option value="standard" selected>Standard</option>
+                                            <option value="deep">Deep (Comprehensive)</option>
+                                            <option value="complete">Complete (All Levels)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Parallel Processing</label>
+                                        <select class="aasx-form-select" id="parallelProcessing">
+                                            <option value="disabled">Disabled</option>
+                                            <option value="auto" selected>Auto (Recommended)</option>
+                                            <option value="manual">Manual Configuration</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Error Handling</label>
+                                        <select class="aasx-form-select" id="errorHandling">
+                                            <option value="stop">Stop on Error</option>
+                                            <option value="skip" selected>Skip Errors</option>
+                                            <option value="retry">Retry with Backoff</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Logging Level</label>
+                                        <select class="aasx-form-select" id="loggingLevel">
+                                            <option value="error">Error Only</option>
+                                            <option value="warning">Warning</option>
+                                            <option value="info" selected>Info</option>
+                                            <option value="debug">Debug</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+
+            <!-- Structured Data to AASX Configuration -->
+            <div class="aasx-config-panel" id="structuredToAasxConfig" style="display: none;">
+                    <div class="aasx-card aasx-card-premium">
+                        <div class="aasx-card-header">
+                            <div class="aasx-card-header-content">
+                                <h3 class="aasx-card-title">
+                                    <i class="fas fa-file-code"></i>
+                                    Generation Configuration
+                                </h3>
+                                <p class="aasx-card-subtitle">Configure structured data to AASX generation</p>
+                            </div>
+                        </div>
+                        <div class="aasx-card-body">
+                            <!-- AASX Generation Options -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">AASX Generation Options</label>
+                                <div class="aasx-checkbox-grid">
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeStructuredData" checked>
+                                        <label for="includeStructuredData">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-database"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include Structured Data</span>
+                                                    <span class="aasx-checkbox-description">Embed JSON, YAML, and graph data</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeDocuments" checked>
+                                        <label for="includeDocuments">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-file-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include Documents</span>
+                                                    <span class="aasx-checkbox-description">Embed documents and images</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeMetadata" checked>
+                                        <label for="includeMetadata">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-tags"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include Metadata</span>
+                                                    <span class="aasx-checkbox-description">Embed semantic metadata and annotations</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeValidation" checked>
+                                        <label for="includeValidation">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include Validation</span>
+                                                    <span class="aasx-checkbox-description">Embed validation rules and constraints</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeRelationships" checked>
+                                        <label for="includeRelationships">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-project-diagram"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include Relationships</span>
+                                                    <span class="aasx-checkbox-description">Embed entity relationships and references</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="includeHistory" checked>
+                                        <label for="includeHistory">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-history"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Include History</span>
+                                                    <span class="aasx-checkbox-description">Embed version history and audit trail</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Output File Name -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Output AASX File Name</label>
+                                <input type="text" class="aasx-form-input" id="outputAasxFileName" placeholder="generated_file.aasx" value="generated_file.aasx">
+                                <small class="aasx-form-help">Name for the generated AASX file</small>
+                            </div>
+
+                            <!-- Processing Options -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Processing Options</label>
+                                <div class="row g-4">
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Processing Mode</label>
+                                        <select class="aasx-form-select" id="processingMode">
+                                            <option value="single">Single File</option>
+                                            <option value="batch" selected>Batch Processing</option>
+                                            <option value="parallel">Parallel Processing</option>
+                                            <option value="streaming">Streaming Processing</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Batch Size</label>
+                                        <input type="number" class="aasx-form-input" id="batchSize" value="10" min="1" max="100">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Compression Level</label>
+                                        <select class="aasx-form-select" id="compressionLevel">
+                                            <option value="none">No Compression</option>
+                                            <option value="fast" selected>Fast Compression</option>
+                                            <option value="balanced">Balanced</option>
+                                            <option value="maximum">Maximum Compression</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="aasx-form-label">Quality Level</label>
+                                        <select class="aasx-form-select" id="qualityLevel">
+                                            <option value="draft">Draft (Fast)</option>
+                                            <option value="standard" selected>Standard</option>
+                                            <option value="high">High Quality</option>
+                                            <option value="maximum">Maximum Quality</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Options -->
+                            <div class="aasx-form-group">
+                                <label class="aasx-form-label">Advanced Options</label>
+                                <div class="aasx-checkbox-grid">
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="optimizeForSize" checked>
+                                        <label for="optimizeForSize">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-compress-alt"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Optimize for Size</span>
+                                                    <span class="aasx-checkbox-description">Reduce file size while maintaining quality</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="preserveStructure" checked>
+                                        <label for="preserveStructure">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-layer-group"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Preserve Structure</span>
+                                                    <span class="aasx-checkbox-description">Maintain original data hierarchy</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="enableValidation" checked>
+                                        <label for="enableValidation">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Enable Validation</span>
+                                                    <span class="aasx-checkbox-description">Validate generated AASX files</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    <div class="aasx-checkbox-option">
+                                        <input type="checkbox" id="generateReport" checked>
+                                        <label for="generateReport">
+                                            <div class="aasx-checkbox-content">
+                                                <div class="aasx-checkbox-icon">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </div>
+                                                <div class="aasx-checkbox-text">
+                                                    <span class="aasx-checkbox-title">Generate Report</span>
+                                                    <span class="aasx-checkbox-description">Create detailed processing report</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- File Selection Controls -->
         <div class="aasx-file-selection-controls">
             <div class="aasx-selection-row">
@@ -39,30 +558,21 @@
                 </div>
                 <div class="aasx-selection-group">
                     <label class="aasx-form-label">Select Project</label>
-                    <select class="aasx-form-select" id="projectSelect">
+                    <select class="aasx-form-select" id="etlProjectSelect">
                         <option value="">Choose a project...</option>
-                    </select>
-                </div>
-                <div class="aasx-selection-group">
-                    <label class="aasx-form-label">Data Format</label>
-                    <select class="aasx-form-select" id="dataFormatSelect">
-                        <option value="minimal">Minimal (Core Data)</option>
-                        <option value="structured">Structured (Full Structure)</option>
-                        <option value="rdf">RDF (Semantic Web)</option>
-                        <option value="graph">Graph (Knowledge Graph)</option>
                     </select>
                 </div>
             </div>
             
             <div class="aasx-file-actions">
                 <div class="aasx-action-group">
-                    <button class="aasx-btn aasx-btn-outline" id="selectAllFilesBtn" title="Select All Files">
+                    <button class="aasx-btn aasx-btn-outline" id="selectAllFiles" title="Select All Files">
                         <i class="fas fa-check-square"></i>
                         <span>Select All</span>
                     </button>
-                    <button class="aasx-btn aasx-btn-outline" id="clearSelectionBtn" title="Clear Selection">
-                        <i class="fas fa-square"></i>
-                        <span>Clear</span>
+                    <button class="aasx-btn aasx-btn-outline" id="invertSelection" title="Invert Selection">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Invert</span>
                     </button>
                 </div>
                 <div class="aasx-selection-info">
@@ -133,37 +643,6 @@
                         </div>
                     </div>
 
-                    <!-- Stage Progress -->
-                    <div class="aasx-stage-progress">
-                        <div class="aasx-stage-item">
-                            <div class="aasx-stage-info">
-                                <span class="aasx-stage-name">Extract</span>
-                                <span class="aasx-stage-percentage" id="extractProgress">0%</span>
-                            </div>
-                            <div class="aasx-progress-bar">
-                                <div class="aasx-progress-fill" id="extractProgressFill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="aasx-stage-item">
-                            <div class="aasx-stage-info">
-                                <span class="aasx-stage-name">Transform</span>
-                                <span class="aasx-stage-percentage" id="transformProgress">0%</span>
-                            </div>
-                            <div class="aasx-progress-bar">
-                                <div class="aasx-progress-fill" id="transformProgressFill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="aasx-stage-item">
-                            <div class="aasx-stage-info">
-                                <span class="aasx-stage-name">Load</span>
-                                <span class="aasx-stage-percentage" id="loadProgress">0%</span>
-                            </div>
-                            <div class="aasx-progress-bar">
-                                <div class="aasx-progress-fill" id="loadProgressFill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Processing Actions -->
                     <div class="aasx-processing-actions">
                         <button class="aasx-btn aasx-btn-danger" id="stopProcessing" title="Stop Processing">
@@ -175,6 +654,29 @@
                             <span>Pause</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ETL Results Section (Hidden by default) -->
+    <div class="aasx-etl-results-section" id="etlResultsSection" style="display: none;">
+        <div class="aasx-card aasx-card-premium">
+            <div class="aasx-card-header">
+                <div class="aasx-card-header-content">
+                    <h3 class="aasx-card-title">
+                        <i class="fas fa-chart-pie"></i>
+                        ETL Processing Results
+                    </h3>
+                    <p class="aasx-card-subtitle">Results and statistics from your ETL processing</p>
+                </div>
+                <div class="aasx-card-header-badge">
+                    <span class="aasx-badge aasx-badge-success">Completed</span>
+                </div>
+            </div>
+            <div class="aasx-card-body">
+                <div id="etlResultsContent">
+                    <!-- Results content will be dynamically populated -->
                 </div>
             </div>
         </div>

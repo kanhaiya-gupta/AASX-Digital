@@ -37,7 +37,9 @@ class UseCase(BaseModel):
         if len(self.description) > 1000:
             raise ValueError("Use case description must be less than 1000 characters")
         
-        valid_categories = ["thermal", "structural", "fluid_dynamics", "multi_physics", "industrial", "general"]
+        valid_categories = ["thermal", "structural", "fluid_dynamics", "multi_physics", "industrial", "general", 
+                           "environmental", "advanced_analytics", "iot_analytics", "manufacturing", 
+                           "quality_control", "supply_chain"]
         if self.category not in valid_categories:
             raise ValueError(f"Category must be one of: {valid_categories}")
         
