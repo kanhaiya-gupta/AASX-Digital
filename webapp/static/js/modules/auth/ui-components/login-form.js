@@ -88,10 +88,25 @@ export default class LoginForm {
             if (response.ok) {
                 this.showSuccess(result.message || 'Login successful!');
                 
-                // Redirect after short delay
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
+                // Check for password expiration warnings
+                if (result.password_expiration) {
+                    const expiration = result.password_expiration;
+                    if (expiration.expired) {
+                        this.showPasswordExpirationWarning('Your password has expired. Please change it now.', 'expired');
+                    } else if (expiration.days_remaining <= 7) {
+                        this.showPasswordExpirationWarning(
+                            `Your password expires in ${expiration.days_remaining} days. Please change it soon.`, 
+                            'expiring_soon'
+                        );
+                    }
+                }
+                
+                // Redirect after short delay (unless password is expired)
+                if (!result.password_expiration?.expired) {
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                }
             } else {
                 this.showError(result.error || 'Login failed. Please try again.');
             }
@@ -290,6 +305,23 @@ export default class LoginForm {
     destroy() {
         if (this.form) {
             this.form.removeEventListener('submit', this.handleSubmit);
+        }
+    }
+
+    /**
+     * Show password expiration warning
+     */
+    showPasswordExpirationWarning(message, type = 'expiring_soon') {
+        const warningDiv = document.getElementById('passwordExpirationWarning');
+        const messageSpan = document.getElementById('passwordExpirationMessage');
+        
+        if (warningDiv && messageSpan) {
+            messageSpan.textContent = message;
+            warningDiv.className = `alert alert-${type === 'expired' ? 'danger' : 'warning'}`;
+            warningDiv.style.display = 'block';
+            
+            // Scroll to warning
+            warningDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 } 

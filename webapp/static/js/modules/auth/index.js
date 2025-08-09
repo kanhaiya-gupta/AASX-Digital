@@ -32,6 +32,9 @@ export async function initAuthModule() {
         authCore = new AuthCore();
         await authCore.init();
         
+        // Set global authCore for other modules to access
+        window.authCore = authCore;
+        
         // Initialize Login Management with authCore instance
         authLogin = new AuthLogin(authCore);
         await authLogin.init();

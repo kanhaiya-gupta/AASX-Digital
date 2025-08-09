@@ -211,16 +211,124 @@ def validate_email_format(email: str) -> bool:
     return re.match(pattern, email) is not None
 
 def get_user_permissions(user_role: str) -> list:
-    """Get user permissions based on role"""
-    role_permissions = {
-        "viewer": ["read"],
-        "user": ["read", "write"],
-        "manager": ["read", "write", "manage"],
-        "admin": ["read", "write", "manage", "admin"]
+    """Get user permissions based on role with inheritance"""
+    # Define role hierarchy and permissions
+    role_hierarchy = {
+        "super_admin": {
+            "permissions": ["read", "write", "manage", "admin", "super_admin"],
+            "inherits": []
+        },
+        "admin": {
+            "permissions": ["read", "write", "manage", "admin"],
+            "inherits": ["manager"]
+        },
+        "manager": {
+            "permissions": ["read", "write", "manage"],
+            "inherits": ["user"]
+        },
+        "user": {
+            "permissions": ["read", "write"],
+            "inherits": ["viewer"]
+        },
+        "viewer": {
+            "permissions": ["read"],
+            "inherits": []
+        }
     }
-    return role_permissions.get(user_role, [])
+    
+    def get_inherited_permissions(role: str, visited: set = None) -> set:
+        """Recursively get all inherited permissions for a role"""
+        if visited is None:
+            visited = set()
+        
+        if role in visited:
+            return set()  # Prevent circular inheritance
+        
+        visited.add(role)
+        role_config = role_hierarchy.get(role, {"permissions": [], "inherits": []})
+        
+        # Get direct permissions
+        permissions = set(role_config["permissions"])
+        
+        # Get inherited permissions
+        for inherited_role in role_config["inherits"]:
+            inherited_permissions = get_inherited_permissions(inherited_role, visited.copy())
+            permissions.update(inherited_permissions)
+        
+        return permissions
+    
+    # Get all permissions including inherited ones
+    all_permissions = get_inherited_permissions(user_role)
+    return list(all_permissions)
 
 def has_permission(user_role: str, required_permission: str) -> bool:
-    """Check if user has required permission"""
+    """Check if user has required permission (with inheritance)"""
     user_permissions = get_user_permissions(user_role)
-    return required_permission in user_permissions 
+    return required_permission in user_permissions
+
+def get_role_hierarchy() -> dict:
+    """Get the complete role hierarchy"""
+    return {
+        "super_admin": {
+            "name": "Super Administrator",
+            "description": "Full system access with all permissions",
+            "permissions": ["read", "write", "manage", "admin", "super_admin"],
+            "inherits": [],
+            "level": 5
+        },
+        "admin": {
+            "name": "Administrator", 
+            "description": "Organization-level administration",
+            "permissions": ["read", "write", "manage", "admin"],
+            "inherits": ["manager"],
+            "level": 4
+        },
+        "manager": {
+            "name": "Manager",
+            "description": "Team and project management",
+            "permissions": ["read", "write", "manage"],
+            "inherits": ["user"],
+            "level": 3
+        },
+        "user": {
+            "name": "User",
+            "description": "Standard user with basic access",
+            "permissions": ["read", "write"],
+            "inherits": ["viewer"],
+            "level": 2
+        },
+        "viewer": {
+            "name": "Viewer",
+            "description": "Read-only access",
+            "permissions": ["read"],
+            "inherits": [],
+            "level": 1
+        }
+    }
+
+def can_manage_role(user_role: str, target_role: str) -> bool:
+    """Check if a user can manage users with the target role"""
+    hierarchy = get_role_hierarchy()
+    
+    user_level = hierarchy.get(user_role, {}).get("level", 0)
+    target_level = hierarchy.get(target_role, {}).get("level", 0)
+    
+    # Users can only manage roles at a lower level
+    return user_level > target_level
+
+def get_manageable_roles(user_role: str) -> list:
+    """Get list of roles that the user can manage"""
+    hierarchy = get_role_hierarchy()
+    user_level = hierarchy.get(user_role, {}).get("level", 0)
+    
+    manageable_roles = []
+    for role, config in hierarchy.items():
+        if config.get("level", 0) < user_level:
+            manageable_roles.append({
+                "role": role,
+                "name": config.get("name", role),
+                "description": config.get("description", ""),
+                "level": config.get("level", 0)
+            })
+    
+    return manageable_roles 

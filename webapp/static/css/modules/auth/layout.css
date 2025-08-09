@@ -1,85 +1,333 @@
 /* ===== AUTH MODULE - LAYOUT STYLES ===== */
 
-/* Auth-specific body styles */
+/* Auth-specific body styles - Updated to match uniform color scheme */
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     min-height: 100vh;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Main auth container */
+/* Main auth container - Updated to match other modules */
 .auth-container {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    min-height: calc(100vh - 80px);
+    padding: 2rem 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-/* Auth card container */
+/* Auth card container - Updated with premium styling */
 .auth-card {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    padding: 40px;
-    width: 100%;
-    max-width: 500px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 2rem;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    transition: all 0.3s ease;
 }
 
-/* Auth header section */
+.auth-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Auth header section - Updated to match uniform design */
 .auth-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.auth-header-content {
+    position: relative;
+    z-index: 2;
 }
 
 .auth-header h1 {
-    color: #333;
+    color: #ffffff;
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-header h1 i {
+    color: #ffd700;
+    margin-right: 0.75rem;
     font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 10px;
 }
 
 .auth-header p {
-    color: #666;
-    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: 0;
 }
 
 /* Auth footer section */
 .auth-footer {
     text-align: center;
-    margin-top: 30px;
+    margin-top: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
 }
 
 .auth-footer a {
-    color: #667eea;
+    color: #1e3c72;
     text-decoration: none;
     font-weight: 600;
+    transition: all 0.3s ease;
 }
 
 .auth-footer a:hover {
+    color: #2a5298;
     text-decoration: underline;
 }
 
-/* Section titles */
+/* Section titles - Updated to match uniform design */
 .section-title {
-    color: #333;
+    color: #1e3c72;
     font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #f8f9fa;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid rgba(30, 60, 114, 0.1);
+    position: relative;
 }
 
-/* Responsive design */
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+}
+
+/* Auth navigation tabs - Updated to match uniform design */
+.auth-nav-tabs {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 0.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.auth-nav-tabs .nav-link {
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    color: #1e3c72;
+    transition: all 0.3s ease;
+    margin: 0 0.25rem;
+}
+
+.auth-nav-tabs .nav-link:hover {
+    background: rgba(30, 60, 114, 0.1);
+    color: #1e3c72;
+    transform: translateY(-1px);
+}
+
+.auth-nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+}
+
+.auth-nav-tabs .nav-link.active i {
+    color: #ffd700;
+}
+
+/* Auth page header - Updated to match uniform design */
+.auth-page-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.2);
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+}
+
+.auth-page-title {
+    font-weight: 800;
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-page-title i {
+    color: #ffd700;
+    margin-right: 0.75rem;
+    font-size: 2rem;
+}
+
+.auth-page-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    margin-bottom: 0;
+}
+
+.auth-page-actions {
+    gap: 1rem;
+}
+
+.auth-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.auth-btn-primary {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #1e3c72;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.auth-btn-primary:hover {
+    background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+    color: #1e3c72;
+}
+
+.auth-btn-outline-primary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.auth-btn-outline-primary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Responsive design - Updated to match uniform patterns */
+@media (max-width: 991.98px) {
+    .auth-page-header {
+        padding: 1.5rem;
+    }
+    
+    .auth-page-title {
+        font-size: 1.8rem;
+    }
+    
+    .auth-page-subtitle {
+        font-size: 1rem;
+    }
+    
+    .auth-page-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .auth-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 @media (max-width: 768px) {
+    .auth-container {
+        padding: 1rem 0;
+    }
+    
     .auth-card {
-        padding: 30px 20px;
-        margin: 10px;
+        padding: 1.5rem;
+        margin: 0.5rem;
+        border-radius: 12px;
+    }
+    
+    .auth-header {
+        padding: 1.5rem;
+        border-radius: 12px;
     }
     
     .auth-header h1 {
         font-size: 1.75rem;
+    }
+    
+    .auth-header h1 i {
+        font-size: 1.5rem;
+    }
+    
+    .auth-nav-tabs {
+        padding: 0.25rem;
+        border-radius: 12px;
+    }
+    
+    .auth-nav-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .auth-card {
+        padding: 1rem;
+        border-radius: 10px;
+    }
+    
+    .auth-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .auth-header h1 i {
+        font-size: 1.25rem;
+    }
+    
+    .auth-nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
     }
 } 

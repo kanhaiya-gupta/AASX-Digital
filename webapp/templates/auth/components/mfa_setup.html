@@ -1,0 +1,296 @@
+<!-- MFA Setup Modals -->
+<!-- TOTP Setup Modal -->
+<div class="modal fade" id="totpSetupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-qrcode me-2"></i>Setup Authenticator App
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="totpSetupContent">
+                    <!-- QR Code and setup instructions will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SMS Setup Modal -->
+<div class="modal fade" id="smsSetupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-sms me-2"></i>Setup SMS Verification
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="smsSetupForm">
+                    <div class="form-group">
+                        <label for="phoneNumber" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control auth-form-control" id="phoneNumber" 
+                               placeholder="+1234567890" required>
+                        <div class="form-text">Enter your phone number with country code</div>
+                    </div>
+                    <button type="submit" class="btn auth-btn auth-btn-primary w-100 mt-3">
+                        <i class="fas fa-paper-plane me-2"></i>Send Verification Code
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email Setup Modal -->
+<div class="modal fade" id="emailSetupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-envelope me-2"></i>Setup Email Verification
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="emailSetupForm">
+                    <div class="form-group">
+                        <label for="emailAddress" class="form-label">Email Address</label>
+                        <input type="email" class="form-control auth-form-control" id="emailAddress" 
+                               placeholder="your@email.com" required>
+                        <div class="form-text">Enter the email address for verification codes</div>
+                    </div>
+                    <button type="submit" class="btn auth-btn auth-btn-primary w-100 mt-3">
+                        <i class="fas fa-paper-plane me-2"></i>Send Verification Code
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Modal -->
+<div class="modal fade" id="verificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-shield-alt me-2"></i>Verify Setup
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="verificationForm">
+                    <div class="form-group">
+                        <label for="verificationCode" class="form-label">Verification Code</label>
+                        <input type="text" class="form-control auth-form-control" id="verificationCode" 
+                               placeholder="123456" maxlength="6" required>
+                        <div class="form-text">Enter the 6-digit code from your authenticator app or received via SMS/email</div>
+                    </div>
+                    <button type="submit" class="btn auth-btn auth-btn-primary w-100 mt-3">
+                        <i class="fas fa-check me-2"></i>Verify and Enable MFA
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentMfaType = null;
+    let currentMfaData = null;
+    
+    // Setup TOTP
+    async function setupTOTP() {
+        try {
+            const response = await fetch('/api/auth/mfa/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mfa_type: 'totp'
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                currentMfaType = 'totp';
+                currentMfaData = result.data;
+                
+                // Show QR code and setup instructions
+                const content = `
+                    <div class="text-center mb-4">
+                        <h6>Scan QR Code with Authenticator App</h6>
+                        <img src="${result.data.qr_code}" alt="QR Code" class="img-fluid mb-3" style="max-width: 200px;">
+                        <p class="text-muted">Or enter this code manually: <code>${result.data.secret}</code></p>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6>Setup Instructions:</h6>
+                        <ol>
+                            <li>Open your authenticator app (Google Authenticator, Authy, etc.)</li>
+                            <li>Scan the QR code above or enter the secret code manually</li>
+                            <li>Enter the 6-digit code from your app to verify setup</li>
+                        </ol>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn auth-btn auth-btn-primary" onclick="showVerificationModal()">
+                            <i class="fas fa-check me-2"></i>I've Added the Code
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('totpSetupContent').innerHTML = content;
+                new bootstrap.Modal(document.getElementById('totpSetupModal')).show();
+            } else {
+                alert('Failed to setup TOTP: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error setting up TOTP:', error);
+            alert('Error setting up TOTP');
+        }
+    }
+    
+    // Setup SMS
+    function setupSMS() {
+        new bootstrap.Modal(document.getElementById('smsSetupModal')).show();
+    }
+    
+    // Setup Email
+    function setupEmail() {
+        new bootstrap.Modal(document.getElementById('emailSetupModal')).show();
+    }
+    
+    // Show verification modal
+    function showVerificationModal() {
+        bootstrap.Modal.getInstance(document.getElementById('totpSetupModal')).hide();
+        new bootstrap.Modal(document.getElementById('verificationModal')).show();
+    }
+    
+    // Handle SMS setup form
+    document.getElementById('smsSetupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const phoneNumber = document.getElementById('phoneNumber').value;
+        
+        try {
+            const response = await fetch('/api/auth/mfa/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mfa_type: 'sms',
+                    phone_number: phoneNumber
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                currentMfaType = 'sms';
+                currentMfaData = result.data;
+                
+                bootstrap.Modal.getInstance(document.getElementById('smsSetupModal')).hide();
+                new bootstrap.Modal(document.getElementById('verificationModal')).show();
+            } else {
+                alert('Failed to setup SMS: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error setting up SMS:', error);
+            alert('Error setting up SMS');
+        }
+    });
+    
+    // Handle email setup form
+    document.getElementById('emailSetupForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const emailAddress = document.getElementById('emailAddress').value;
+        
+        try {
+            const response = await fetch('/api/auth/mfa/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mfa_type: 'email',
+                    email: emailAddress
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                currentMfaType = 'email';
+                currentMfaData = result.data;
+                
+                bootstrap.Modal.getInstance(document.getElementById('emailSetupModal')).hide();
+                new bootstrap.Modal(document.getElementById('verificationModal')).show();
+            } else {
+                alert('Failed to setup email: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error setting up email:', error);
+            alert('Error setting up email');
+        }
+    });
+    
+    // Handle verification form
+    document.getElementById('verificationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const verificationCode = document.getElementById('verificationCode').value;
+        
+        try {
+            // Get current user from auth module or window
+            let currentUser = null;
+            if (window.currentUser) {
+                currentUser = window.currentUser;
+            } else if (window.getCurrentUser) {
+                currentUser = window.getCurrentUser();
+            } else {
+                // Try to get from auth core
+                const authCore = window.authCore || (window.CoreModule && window.CoreModule.authCore);
+                if (authCore) {
+                    currentUser = authCore.getCurrentUser();
+                }
+            }
+            
+            if (!currentUser || !currentUser.user_id) {
+                alert('User not authenticated. Please log in again.');
+                return;
+            }
+            
+            const response = await fetch('/api/auth/mfa/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    user_id: currentUser.user_id,
+                    mfa_type: currentMfaType,
+                    code: verificationCode
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('MFA setup successful!');
+                bootstrap.Modal.getInstance(document.getElementById('verificationModal')).hide();
+                location.reload();
+            } else {
+                alert('Verification failed: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error verifying MFA:', error);
+            alert('Error verifying MFA');
+        }
+    });
+</script> 

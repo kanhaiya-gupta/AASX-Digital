@@ -25,6 +25,7 @@ class UserRepository(BaseRepository[User]):
     def _get_columns(self) -> List[str]:
         return [
             "user_id", "username", "email", "full_name", "org_id", 
+            "phone", "job_title", "department", "bio",
             "password_hash", "role", "is_active", "last_login", "created_at", "updated_at"
         ]
     
@@ -63,13 +64,17 @@ class UserRepository(BaseRepository[User]):
         return [self.model_class.from_dict(row) for row in results]
     
     def search_users(self, search_term: str) -> List[User]:
-        """Search users by username, email, or full name."""
+        """Search users by username, email, full name, job title, or department."""
         query = """
             SELECT * FROM users 
-            WHERE username LIKE ? OR email LIKE ? OR full_name LIKE ?
+            WHERE username LIKE ? OR email LIKE ? OR full_name LIKE ? 
+            OR job_title LIKE ? OR department LIKE ?
         """
         search_pattern = f"%{search_term}%"
-        results = self.db_manager.execute_query(query, (search_pattern, search_pattern, search_pattern))
+        results = self.db_manager.execute_query(query, (
+            search_pattern, search_pattern, search_pattern, 
+            search_pattern, search_pattern
+        ))
         return [self.model_class.from_dict(row) for row in results]
     
     def update_last_login(self, user_id: str) -> bool:

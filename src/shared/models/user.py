@@ -20,6 +20,10 @@ class User(BaseModel):
     email: Optional[str] = None
     full_name: Optional[str] = None
     org_id: Optional[str] = None
+    phone: Optional[str] = None
+    job_title: Optional[str] = None
+    department: Optional[str] = None
+    bio: Optional[str] = None
     password_hash: Optional[str] = None
     role: str = "user"
     is_active: bool = True
@@ -38,6 +42,18 @@ class User(BaseModel):
         
         if self.full_name and len(self.full_name) > 100:
             raise ValueError("Full name must be less than 100 characters")
+        
+        if self.phone and len(self.phone) > 20:
+            raise ValueError("Phone number must be less than 20 characters")
+        
+        if self.job_title and len(self.job_title) > 100:
+            raise ValueError("Job title must be less than 100 characters")
+        
+        if self.department and len(self.department) > 100:
+            raise ValueError("Department must be less than 100 characters")
+        
+        if self.bio and len(self.bio) > 1000:
+            raise ValueError("Bio must be less than 1000 characters")
         
         valid_roles = ["super_admin", "admin", "manager", "user", "viewer"]
         if self.role not in valid_roles:

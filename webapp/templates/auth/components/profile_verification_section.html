@@ -1,0 +1,425 @@
+<!-- Profile Verification Section -->
+<div class="auth-container" id="profileVerificationSection">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1><i class="fas fa-shield-alt"></i> Profile Verification</h1>
+            <p>Verify your identity and contact information to enhance your profile security</p>
+        </div>
+        
+        <div id="profile-verification-alert-container"></div>
+        
+        <!-- Verification Status Overview -->
+        <div class="verification-status-overview mb-4">
+            <div class="status-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Verification Status
+                </h4>
+                <div class="verification-score">
+                    <div class="score-circle">
+                        <span id="verificationScore">0</span>%
+                    </div>
+                </div>
+            </div>
+            <div class="status-description mt-2">
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span id="verificationStatusDescription">Complete verifications to increase your profile trust score.</span>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Verification Progress -->
+        <div class="verification-progress mb-4">
+            <div class="progress">
+                <div class="progress-bar bg-success" id="verificationProgressBar" role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted">Verification progress: <span id="verificationProgressText">0/4</span> completed</small>
+        </div>
+        
+        <!-- Verification Types -->
+        <div class="verification-types">
+            <div class="row g-4">
+                <!-- Email Verification -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="auth-card auth-verification-card h-100">
+                        <div class="auth-card-header">
+                            <h5 class="auth-card-title">
+                                <i class="fas fa-envelope me-2"></i>Email Verification
+                            </h5>
+                            <div class="verification-status">
+                                <span id="emailVerificationStatus" class="badge bg-secondary">Not Verified</span>
+                            </div>
+                        </div>
+                        <div class="auth-card-body p-4">
+                            <p class="text-muted">Verify your email address to receive important notifications and security alerts.</p>
+                            <div id="emailVerificationContent">
+                                <button type="button" class="auth-btn auth-btn-primary" id="requestEmailVerification">
+                                    <i class="fas fa-paper-plane me-2"></i>Request Email Verification
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Phone Verification -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="auth-card auth-verification-card h-100">
+                        <div class="auth-card-header">
+                            <h5 class="auth-card-title">
+                                <i class="fas fa-phone me-2"></i>Phone Verification
+                            </h5>
+                            <div class="verification-status">
+                                <span id="phoneVerificationStatus" class="badge bg-secondary">Not Verified</span>
+                            </div>
+                        </div>
+                        <div class="auth-card-body p-4">
+                            <p class="text-muted">Verify your phone number for SMS notifications and two-factor authentication.</p>
+                            <div id="phoneVerificationContent">
+                                <button type="button" class="auth-btn auth-btn-primary" id="requestPhoneVerification">
+                                    <i class="fas fa-mobile-alt me-2"></i>Request Phone Verification
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Identity Verification -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="auth-card auth-verification-card h-100">
+                        <div class="auth-card-header">
+                            <h5 class="auth-card-title">
+                                <i class="fas fa-id-card me-2"></i>Identity Verification
+                            </h5>
+                            <div class="verification-status">
+                                <span id="identityVerificationStatus" class="badge bg-secondary">Not Verified</span>
+                            </div>
+                        </div>
+                        <div class="auth-card-body p-4">
+                            <p class="text-muted">Verify your identity with official documents for enhanced account security.</p>
+                            <div id="identityVerificationContent">
+                                <button type="button" class="auth-btn auth-btn-primary" id="requestIdentityVerification">
+                                    <i class="fas fa-user-check me-2"></i>Request Identity Verification
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Address Verification -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="auth-card auth-verification-card h-100">
+                        <div class="auth-card-header">
+                            <h5 class="auth-card-title">
+                                <i class="fas fa-map-marker-alt me-2"></i>Address Verification
+                            </h5>
+                            <div class="verification-status">
+                                <span id="addressVerificationStatus" class="badge bg-secondary">Not Verified</span>
+                            </div>
+                        </div>
+                        <div class="auth-card-body p-4">
+                            <p class="text-muted">Verify your physical address for billing and shipping purposes.</p>
+                            <div id="addressVerificationContent">
+                                <button type="button" class="auth-btn auth-btn-primary" id="requestAddressVerification">
+                                    <i class="fas fa-home me-2"></i>Request Address Verification
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Verification History -->
+        <div class="verification-history mt-4">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <h5 class="auth-card-title">
+                        <i class="fas fa-history me-2"></i>Verification History
+                    </h5>
+                </div>
+                <div class="auth-card-body p-4">
+                    <div id="verificationHistoryContent">
+                        <p class="text-muted">No verification history available.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Profile Verification Management
+class ProfileVerificationManager {
+    constructor() {
+        this.init();
+    }
+    
+    init() {
+        this.setupEventListeners();
+        this.loadVerificationStatus();
+    }
+    
+    setupEventListeners() {
+        // Email verification
+        const emailBtn = document.getElementById('requestEmailVerification');
+        if (emailBtn) {
+            emailBtn.addEventListener('click', () => {
+                this.requestVerification('email');
+            });
+        }
+        
+        // Phone verification
+        const phoneBtn = document.getElementById('requestPhoneVerification');
+        if (phoneBtn) {
+            phoneBtn.addEventListener('click', () => {
+                this.requestVerification('phone');
+            });
+        }
+        
+        // Identity verification
+        const identityBtn = document.getElementById('requestIdentityVerification');
+        if (identityBtn) {
+            identityBtn.addEventListener('click', () => {
+                this.requestVerification('identity');
+            });
+        }
+        
+        // Address verification
+        const addressBtn = document.getElementById('requestAddressVerification');
+        if (addressBtn) {
+            addressBtn.addEventListener('click', () => {
+                this.requestVerification('address');
+            });
+        }
+    }
+    
+    async loadVerificationStatus() {
+        try {
+            const token = window.authCore ? window.authCore.getSessionToken() : null;
+            
+            if (!token) {
+                showAlert('Please log in to load verification status', 'warning');
+                return;
+            }
+            
+            const response = await fetch('/api/auth/profile/verification/status', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.verification_status) {
+                    this.updateVerificationStatus(data.verification_status);
+                }
+            } else {
+                showAlert('Failed to load verification status', 'danger');
+            }
+        } catch (error) {
+            console.error('Error loading verification status:', error);
+            showAlert('Error loading verification status', 'danger');
+        }
+    }
+    
+    updateVerificationStatus(status) {
+        // Update verification score
+        const scoreElement = document.getElementById('verificationScore');
+        const progressBar = document.getElementById('verificationProgressBar');
+        const progressText = document.getElementById('verificationProgressText');
+        const statusDescription = document.getElementById('verificationStatusDescription');
+        
+        if (scoreElement) {
+            scoreElement.textContent = status.verification_score;
+        }
+        
+        if (progressBar) {
+            progressBar.style.width = `${status.verification_score}%`;
+        }
+        
+        if (progressText) {
+            const completedCount = [status.email_verified, status.phone_verified, status.identity_verified, status.address_verified].filter(Boolean).length;
+            progressText.textContent = `${completedCount}/4`;
+        }
+        
+        if (statusDescription) {
+            if (status.verification_score === 100) {
+                statusDescription.textContent = 'All verifications completed! Your profile is fully verified.';
+            } else if (status.verification_score > 0) {
+                statusDescription.textContent = `You have completed ${status.verification_score}% of your verifications.`;
+            } else {
+                statusDescription.textContent = 'Complete verifications to increase your profile trust score.';
+            }
+        }
+        
+        // Update individual verification statuses
+        this.updateVerificationTypeStatus('email', status.email_verified);
+        this.updateVerificationTypeStatus('phone', status.phone_verified);
+        this.updateVerificationTypeStatus('identity', status.identity_verified);
+        this.updateVerificationTypeStatus('address', status.address_verified);
+    }
+    
+    updateVerificationTypeStatus(type, isVerified) {
+        const statusElement = document.getElementById(`${type}VerificationStatus`);
+        const contentElement = document.getElementById(`${type}VerificationContent`);
+        
+        if (statusElement) {
+            if (isVerified) {
+                statusElement.textContent = 'Verified';
+                statusElement.className = 'badge bg-success';
+            } else {
+                statusElement.textContent = 'Not Verified';
+                statusElement.className = 'badge bg-secondary';
+            }
+        }
+        
+        if (contentElement && isVerified) {
+            contentElement.innerHTML = `
+                <div class="text-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Verified</strong>
+                    <br>
+                    <small class="text-muted">Your ${type} has been successfully verified.</small>
+                </div>
+            `;
+        }
+    }
+    
+    async requestVerification(verificationType) {
+        try {
+            const token = window.authCore ? window.authCore.getSessionToken() : null;
+            
+            if (!token) {
+                showAlert('Please log in to request verification', 'warning');
+                return;
+            }
+            
+            const response = await fetch('/api/auth/profile/verification/request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    verification_type: verificationType
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    showAlert(`Verification request sent for ${verificationType}`, 'success');
+                    
+                    // If it's email or phone verification, show code input
+                    if (verificationType === 'email' || verificationType === 'phone') {
+                        this.showVerificationCodeInput(verificationType);
+                    }
+                } else {
+                    showAlert(data.message || 'Failed to request verification', 'danger');
+                }
+            } else {
+                showAlert('Failed to request verification', 'danger');
+            }
+        } catch (error) {
+            console.error('Error requesting verification:', error);
+            showAlert('Error requesting verification', 'danger');
+        }
+    }
+    
+    showVerificationCodeInput(verificationType) {
+        const contentElement = document.getElementById(`${verificationType}VerificationContent`);
+        if (contentElement) {
+            contentElement.innerHTML = `
+                <div class="verification-code-input">
+                    <label for="${verificationType}VerificationCode" class="form-label">Enter verification code:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control auth-form-control" 
+                               id="${verificationType}VerificationCode" 
+                               placeholder="Enter 6-digit code">
+                        <button class="auth-btn auth-btn-primary" type="button" 
+                                onclick="profileVerificationManager.confirmVerification('${verificationType}')">
+                            <i class="fas fa-check me-2"></i>Verify
+                        </button>
+                    </div>
+                    <small class="text-muted">Check your ${verificationType} for the verification code.</small>
+                </div>
+            `;
+        }
+    }
+    
+    async confirmVerification(verificationType) {
+        try {
+            const codeInput = document.getElementById(`${verificationType}VerificationCode`);
+            const code = codeInput ? codeInput.value.trim() : '';
+            
+            if (!code) {
+                showAlert('Please enter the verification code', 'warning');
+                return;
+            }
+            
+            const token = window.authCore ? window.authCore.getSessionToken() : null;
+            
+            if (!token) {
+                showAlert('Please log in to confirm verification', 'warning');
+                return;
+            }
+            
+            const response = await fetch('/api/auth/profile/verification/confirm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    verification_type: verificationType,
+                    verification_code: code
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    showAlert(`Verification completed successfully for ${verificationType}`, 'success');
+                    this.loadVerificationStatus(); // Reload status
+                } else {
+                    showAlert(data.message || 'Verification failed', 'danger');
+                }
+            } else {
+                showAlert('Failed to confirm verification', 'danger');
+            }
+        } catch (error) {
+            console.error('Error confirming verification:', error);
+            showAlert('Error confirming verification', 'danger');
+        }
+    }
+}
+
+// Initialize profile verification management when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.profileVerificationManager = new ProfileVerificationManager();
+});
+
+// Function to show alerts
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('profile-verification-alert-container');
+    if (alertContainer) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        alertContainer.innerHTML = alertHtml;
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = alertContainer.querySelector('.alert');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+}
+</script> 

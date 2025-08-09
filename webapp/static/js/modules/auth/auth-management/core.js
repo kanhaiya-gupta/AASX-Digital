@@ -173,15 +173,37 @@ export default class AuthCore {
             const data = await response.json();
 
             if (response.ok) {
-                this.sessionToken = data.token;
+                this.sessionToken = data.access_token || data.token;
                 this.isAuthenticated = true;
                 this.currentUser = data.user;
 
                 // Store token
-                this.storeToken(data.token, rememberMe);
+                this.storeToken(this.sessionToken, rememberMe);
 
                 // Load user profile
                 await this.loadUserProfile();
+
+                // Check for password expiration warning
+                if (data.password_expiration) {
+                    const expiration = data.password_expiration;
+                    if (expiration.expired) {
+                        console.warn('⚠️ Password has expired');
+                        return { 
+                            success: true, 
+                            user: data.user, 
+                            passwordExpired: true,
+                            passwordExpiration: expiration
+                        };
+                    } else if (expiration.days_remaining <= 7) {
+                        console.warn(`⚠️ Password expires in ${expiration.days_remaining} days`);
+                        return { 
+                            success: true, 
+                            user: data.user, 
+                            passwordExpiringSoon: true,
+                            passwordExpiration: expiration
+                        };
+                    }
+                }
 
                 console.log('✅ Login successful');
                 return { success: true, user: data.user };
