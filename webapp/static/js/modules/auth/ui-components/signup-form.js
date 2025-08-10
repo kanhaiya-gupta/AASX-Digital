@@ -1,6 +1,7 @@
 /**
  * Signup Form UI Component
  * Handles signup form interactions and validation
+ * CACHE BUST: 2025-08-10-20:07
  */
 
 export default class SignupForm {
@@ -50,9 +51,9 @@ export default class SignupForm {
         }
         
         // Real-time validation
-        const usernameInput = document.getElementById('username');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
+        const usernameInput = document.getElementById('signup_username');
+        const emailInput = document.getElementById('signup_email');
+        const passwordInput = document.getElementById('signup_password');
         const confirmPasswordInput = document.getElementById('confirmPassword');
         
         if (usernameInput) {
@@ -93,8 +94,8 @@ export default class SignupForm {
         
         try {
             const formData = new FormData();
-            formData.append('username', document.getElementById('username').value.trim());
-            formData.append('email', document.getElementById('email').value.trim());
+            formData.append('username', document.getElementById('signup_username').value.trim());
+            formData.append('email', document.getElementById('signup_email').value.trim());
             formData.append('password', document.getElementById('password').value);
             formData.append('confirm_password', document.getElementById('confirmPassword').value);
             formData.append('full_name', document.getElementById('fullName')?.value.trim() || '');
@@ -128,10 +129,10 @@ export default class SignupForm {
      * Validate form
      */
     validateForm() {
-        const username = document.getElementById('username').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
+        const username = document.getElementById('signup_username').value.trim();
+        const email = document.getElementById('signup_email').value.trim();
+        const password = document.getElementById('signup_password').value;
+        const confirmPassword = document.getElementById('signup_confirm_password').value;
         
         let isValid = true;
         
@@ -162,7 +163,7 @@ export default class SignupForm {
      * Validate username
      */
     validateUsername() {
-        const username = document.getElementById('username').value.trim();
+        const username = document.getElementById('signup_username').value.trim();
         
         if (!username) {
             this.showFieldError('username', 'Username is required');

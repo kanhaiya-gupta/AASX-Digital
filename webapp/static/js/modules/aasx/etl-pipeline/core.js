@@ -9,43 +9,88 @@ import { showSuccess, showError, showWarning } from '/static/js/shared/alerts.js
 
 export class AASXETLPipeline {
     constructor() {
-        this.isProcessing = false;
-        this.isInitialized = false;
-        this.progressInterval = null;
-        this.currentProgress = {
-            extract: 0,
-            transform: 0,
-            load: 0,
-            overall: 0
-        };
+        this.conversionMode = 'aasx-to-structured';
+        this.processingMode = 'batch';
+        this.batchSize = 10;
         this.files = [];
         this.selectedFiles = new Set();
-        this.conversionMode = 'aasx-to-structured'; // Default mode
+        this.isProcessing = false;
+        this.currentProgress = { overall: 0 };
+        this.progressInterval = null;
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     async init() {
-        console.log('🚀 AASX ETL Pipeline (Bidirectional) initializing...');
+        console.log('🚀 AASX ETL Pipeline initializing...');
         
+        // Initialize authentication
+        this.initAuthentication();
+        
+        // Initialize UI components
+        this.initializeProgressCircles();
+        this.setupModeSwitching();
+        this.initializeEventListeners();
+        
+        // Load initial data
+        await this.refreshFiles();
+        
+        console.log('✅ AASX ETL Pipeline initialized');
+    }
+
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
         try {
-            // Initialize mode switching first (like file upload)
-            this.setupModeSwitching();
-            
-            // Initialize event listeners
-            this.initializeEventListeners();
-            
-            // Initialize progress circles
-            this.initializeProgressCircles();
-            
-            // Load initial files
-            await this.refreshFiles();
-            
-            this.isInitialized = true;
-            console.log('✅ AASX ETL Pipeline (Bidirectional) initialized successfully');
-            
+            // Check if user is authenticated
+            if (typeof getCurrentUser === 'function') {
+                this.currentUser = getCurrentUser();
+                if (this.currentUser) {
+                    this.isAuthenticated = true;
+                    this.authToken = this.getAuthToken();
+                    console.log('🔐 ETL Pipeline: User authenticated:', this.currentUser.username);
+                } else {
+                    console.log('🔐 ETL Pipeline: User not authenticated');
+                    this.isAuthenticated = false;
+                }
+            } else {
+                console.warn('⚠️ ETL Pipeline: getCurrentUser function not available');
+                this.isAuthenticated = false;
+            }
         } catch (error) {
-            console.error('❌ AASX ETL Pipeline initialization failed:', error);
-            showError('Failed to initialize ETL Pipeline');
+            console.error('❌ ETL Pipeline: Authentication initialization error:', error);
+            this.isAuthenticated = false;
         }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        try {
+            // Try to get token from localStorage/sessionStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ ETL Pipeline: Could not get auth token:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
     }
 
     setupModeSwitching() {
@@ -256,7 +301,7 @@ export class AASXETLPipeline {
             
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(requestBody)
             });
 
@@ -460,6 +505,12 @@ export class AASXETLPipeline {
         console.log('🔄 Refreshing ETL files...');
         
         try {
+            // Check if user is authenticated
+            if (!this.isAuthenticated) {
+                console.log('🔐 ETL Pipeline: User not authenticated, cannot refresh files');
+                return;
+            }
+            
             const projectId = $('#etlProjectSelect').val();
             if (!projectId) {
                 console.log('⚠️ No project selected, clearing file list');
@@ -468,7 +519,9 @@ export class AASXETLPipeline {
                 return;
             }
 
-            const response = await fetch(`/api/aasx-etl/projects/${projectId}/files`);
+            const response = await fetch(`/api/aasx-etl/projects/${projectId}/files`, {
+                headers: this.getAuthHeaders()
+            });
             
             if (response.ok) {
                 const data = await response.json();

@@ -4,9 +4,13 @@
 from .certificate_service import CertificateService
 from .export_service import ExportService
 from .template_service import TemplateService
+from .user_specific_service import CertificateManagerUserSpecificService
+from .organization_service import CertificateManagerOrganizationService
 
 __all__ = [
     'CertificateService',
     'ExportService', 
-    'TemplateService'
+    'TemplateService',
+    'CertificateManagerUserSpecificService',
+    'CertificateManagerOrganizationService'
 ] 

@@ -4,7 +4,7 @@ Provides REST API endpoints for Neo4j management and Docker operations
 Uses centralized data management system for clean separation of concerns
 """
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -15,9 +15,15 @@ from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+# Import authentication dependencies
+from src.core.auth.user_context import UserContext
+from src.core.auth.auth_middleware import get_current_user, require_auth
+
 # Import module-specific services
 from .services.kg_neo4j_service import KGNeo4jService
 from .services.graph_discovery_service import GraphDiscoveryService
+from .services.user_specific_service import KGNeo4jUserSpecificService
+from .services.organization_service import KGNeo4jOrganizationService
 
 # Create FastAPI Router
 router = APIRouter(tags=["Knowledge Graph Neo4j"])
@@ -25,6 +31,8 @@ router = APIRouter(tags=["Knowledge Graph Neo4j"])
 # Create service instances
 kg_neo4j_service = KGNeo4jService()
 graph_discovery_service = GraphDiscoveryService()
+
+# Note: Authentication services will be created per-request with user context
 
 # Pydantic models for request/response
 class DockerResponse(BaseModel):
@@ -50,116 +58,231 @@ class QueryRequest(BaseModel):
 # ============================================================================
 
 @router.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+@require_auth("read", allow_independent=True)
+async def index(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Knowledge Graph Neo4j main page"""
     templates = Jinja2Templates(directory="webapp/templates")
-    return templates.TemplateResponse("kg_neo4j/index.html", {"request": request})
+    
+    # Initialize authentication services
+    user_specific_service = KGNeo4jUserSpecificService(user_context)
+    organization_service = KGNeo4jOrganizationService(user_context)
+    
+    # Get user-specific data
+    user_projects = user_specific_service.get_user_projects()
+    user_limits = user_specific_service.get_user_graph_limits()
+    
+    context = {
+        "request": request,
+        "user_projects": user_projects,
+        "user_limits": user_limits,
+        "is_independent": user_context.is_independent
+    }
+    
+    return templates.TemplateResponse("kg_neo4j/index.html", context)
 
 @router.get("/visualize", response_class=HTMLResponse)
-async def visualize(request: Request):
+@require_auth("read", allow_independent=True)
+async def visualize(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Knowledge Graph visualization page"""
     templates = Jinja2Templates(directory="webapp/templates")
-    return templates.TemplateResponse("kg_neo4j/visualize.html", {"request": request})
+    
+    # Initialize authentication services
+    user_specific_service = KGNeo4jUserSpecificService(user_context)
+    
+    # Get user-specific graph data
+    user_graph_data = user_specific_service.get_user_graph_data()
+    
+    context = {
+        "request": request,
+        "user_graph_data": user_graph_data,
+        "is_independent": user_context.is_independent
+    }
+    
+    return templates.TemplateResponse("kg_neo4j/visualize.html", context)
 
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================
 
 @router.get("/status", response_model=StatusResponse)
-async def get_status():
+@require_auth("read", allow_independent=True)
+async def get_status(user_context: UserContext = Depends(get_current_user)):
     """Get Neo4j connection and system status"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access system status")
+        
         result = kg_neo4j_service.get_system_status()
         return StatusResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/docker-status")
-async def get_docker_status():
-    """Get detailed Docker container status"""
+@require_auth("read", allow_independent=True)
+async def get_docker_status(user_context: UserContext = Depends(get_current_user)):
+    """Get Docker container status"""
     try:
-        return kg_neo4j_service.get_docker_status()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access docker status")
+        
+        # Get docker status
+        result = kg_neo4j_service.get_docker_status()
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/docker/start", response_model=DockerResponse)
-async def start_docker():
+@require_auth("admin", allow_independent=False)
+async def start_docker(user_context: UserContext = Depends(get_current_user)):
     """Start Neo4j Docker container"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can manage Docker
+        if not user_specific_service.can_manage_docker():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to manage Docker containers")
+        
         result = kg_neo4j_service.start_docker_container()
         return DockerResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/docker/stop", response_model=DockerResponse)
-async def stop_docker():
+@require_auth("admin", allow_independent=False)
+async def stop_docker(user_context: UserContext = Depends(get_current_user)):
     """Stop Neo4j Docker container"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can manage Docker
+        if not user_specific_service.can_manage_docker():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to manage Docker containers")
+        
         result = kg_neo4j_service.stop_docker_container()
         return DockerResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/local/status")
-async def get_local_neo4j_status():
-    """Get local Neo4j Desktop status"""
+@require_auth("read", allow_independent=True)
+async def get_local_neo4j_status(user_context: UserContext = Depends(get_current_user)):
+    """Get local Neo4j status"""
     try:
-        return kg_neo4j_service.get_local_neo4j_status()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access local Neo4j status")
+        
+        return {
+            "success": True,
+            "local_status": kg_neo4j_service.get_local_neo4j_status()
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/local/desktop-status")
-async def get_local_desktop_status():
-    """Get local Neo4j Desktop installation status"""
+@require_auth("read", allow_independent=True)
+async def get_local_desktop_status(user_context: UserContext = Depends(get_current_user)):
+    """Get local Neo4j Desktop status"""
     try:
-        result = kg_neo4j_service.get_local_neo4j_status()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access local Neo4j Desktop status")
+        
         return {
-            'installed': result.get('desktop_installed', False),
-            'running': result.get('desktop_running', False)
+            "success": True,
+            "desktop_status": kg_neo4j_service.get_local_desktop_status()
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/local/connection-status")
-async def get_local_connection_status():
+@require_auth("read", allow_independent=True)
+async def get_local_connection_status(user_context: UserContext = Depends(get_current_user)):
     """Get local Neo4j connection status"""
     try:
-        result = kg_neo4j_service.get_local_neo4j_status()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access local Neo4j connection status")
+        
         return {
-            'available': result.get('connection_available', False),
-            'browser_url': result.get('browser_url'),
-            'bolt_url': result.get('bolt_url')
+            "success": True,
+            "connection_status": kg_neo4j_service.get_local_connection_status()
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/local/launch")
-async def launch_local_neo4j_desktop():
-    """Launch Neo4j Desktop application"""
+@require_auth("admin", allow_independent=False)
+async def launch_local_neo4j_desktop(user_context: UserContext = Depends(get_current_user)):
+    """Launch local Neo4j Desktop"""
     try:
-        return kg_neo4j_service.launch_local_desktop()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can manage Docker
+        if not user_specific_service.can_manage_docker():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to launch local Neo4j Desktop")
+        
+        result = kg_neo4j_service.launch_local_neo4j_desktop()
+        return {
+            "success": True,
+            "message": "Neo4j Desktop launched successfully",
+            "result": result
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/local/info")
-async def get_local_neo4j_info():
+@require_auth("read", allow_independent=True)
+async def get_local_neo4j_info(user_context: UserContext = Depends(get_current_user)):
     """Get local Neo4j information"""
     try:
-        result = kg_neo4j_service.get_local_neo4j_status()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access local Neo4j information")
+        
+        result = kg_neo4j_service.get_local_neo4j_info()
         return {
-            'desktop_installed': result.get('desktop_installed', False),
-            'desktop_running': result.get('desktop_running', False),
-            'connection_available': result.get('connection_available', False),
-            'browser_url': result.get('browser_url'),
-            'bolt_url': result.get('bolt_url')
+            "success": True,
+            "info": result
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/query")
-async def execute_cypher_query(request: QueryRequest):
+@require_auth("read", allow_independent=True)
+async def execute_cypher_query(request: QueryRequest, user_context: UserContext = Depends(get_current_user)):
     """Execute Cypher query against Neo4j"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can execute queries
+        if not user_specific_service.can_execute_queries():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to execute queries")
+        
         result = kg_neo4j_service.execute_cypher_query(request.query)
         
         if result['success']:
@@ -167,7 +290,9 @@ async def execute_cypher_query(request: QueryRequest):
                 'success': True,
                 'data': result['data'],
                 'query': result['query'],
-                'timestamp': result['timestamp']
+                'timestamp': result['timestamp'],
+                'user_id': user_context.user_id,
+                'organization_id': user_context.organization_id
             }
         else:
             return {
@@ -179,26 +304,49 @@ async def execute_cypher_query(request: QueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects")
-async def get_projects():
+@require_auth("read", allow_independent=True)
+async def get_projects(user_context: UserContext = Depends(get_current_user)):
     """Get all projects"""
     try:
-        result = kg_neo4j_service.get_projects()
-        if result['success']:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Get user-specific projects
+        user_projects = user_specific_service.get_user_projects()
+        
+        # Filter projects based on user access
+        if user_projects:
             return {
                 'success': True,
-                'projects': result['projects']
+                'projects': user_projects
             }
         else:
-            raise HTTPException(status_code=500, detail=result['error'])
+            # Fallback to all projects if user has access
+            result = kg_neo4j_service.get_projects()
+            if result['success']:
+                return {
+                    'success': True,
+                    'projects': result['projects']
+                }
+            else:
+                raise HTTPException(status_code=500, detail=result['error'])
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 
 @router.get("/projects/{project_id}/graph")
-async def get_project_graph(project_id: str):
+@require_auth("read", allow_independent=True)
+async def get_project_graph(project_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get graph data for a specific project"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this project
+        if not user_specific_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
+        
         result = kg_neo4j_service.get_project_graph(project_id)
         if result['success']:
             return result
@@ -208,9 +356,17 @@ async def get_project_graph(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/{file_id}/graph")
-async def get_file_graph(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_file_graph(file_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get graph data for a specific file"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Access denied to this file")
+        
         result = kg_neo4j_service.get_file_graph(file_id)
         if result['success']:
             return result
@@ -220,9 +376,17 @@ async def get_file_graph(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/{file_id}/graph-exists")
-async def check_file_graph_exists(file_id: str):
+@require_auth("read", allow_independent=True)
+async def check_file_graph_exists(file_id: str, user_context: UserContext = Depends(get_current_user)):
     """Check if graph data exists for a file"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Access denied to this file")
+        
         result = kg_neo4j_service.check_file_graph_exists(file_id)
         if result['success']:
             return result
@@ -232,9 +396,17 @@ async def check_file_graph_exists(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/{file_id}/graph-data")
-async def get_file_graph_data(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_file_graph_data(file_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get detailed graph data for a file"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Access denied to this file")
+        
         result = kg_neo4j_service.get_file_graph_data(file_id)
         if result['success']:
             return result
@@ -244,9 +416,17 @@ async def get_file_graph_data(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects/{project_id}/graph-data")
-async def get_project_graph_data(project_id: str):
+@require_auth("read", allow_independent=True)
+async def get_project_graph_data(project_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get detailed graph data for a project"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this project
+        if not user_specific_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
+        
         result = kg_neo4j_service.get_project_graph_data(project_id)
         if result['success']:
             return result
@@ -256,9 +436,17 @@ async def get_project_graph_data(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/available-folders")
-async def get_available_folders():
+@require_auth("read", allow_independent=True)
+async def get_available_folders(user_context: UserContext = Depends(get_current_user)):
     """Get list of available data folders"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access folder information")
+        
         result = kg_neo4j_service.get_available_folders()
         if result['success']:
             return result
@@ -268,9 +456,17 @@ async def get_available_folders():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/database-stats")
-async def get_database_stats():
+@require_auth("read", allow_independent=True)
+async def get_database_stats(user_context: UserContext = Depends(get_current_user)):
     """Get database statistics"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access database statistics")
+        
         result = kg_neo4j_service.get_database_stats()
         if result['success']:
             return result
@@ -281,9 +477,17 @@ async def get_database_stats():
 
 # Additional endpoints for UI components
 @router.get("/kg-neo4j/status")
-async def get_kg_neo4j_status():
+@require_auth("read", allow_independent=True)
+async def get_kg_neo4j_status(user_context: UserContext = Depends(get_current_user)):
     """Get Knowledge Graph Neo4j status for UI components"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access system status")
+        
         result = kg_neo4j_service.get_system_status()
         return {
             'docker_status': 'connected' if result.get('docker_running') else 'disconnected',
@@ -297,9 +501,17 @@ async def get_kg_neo4j_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/kg-neo4j/graph-data")
-async def get_kg_neo4j_graph_data():
+@require_auth("read", allow_independent=True)
+async def get_kg_neo4j_graph_data(user_context: UserContext = Depends(get_current_user)):
     """Get graph data for visualization"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access graph data")
+        
         # This would return actual graph data for visualization
         return {
             'success': True,
@@ -310,27 +522,51 @@ async def get_kg_neo4j_graph_data():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/kg-neo4j/execute-query")
-async def execute_kg_neo4j_query(request: QueryRequest):
+@require_auth("read", allow_independent=True)
+async def execute_kg_neo4j_query(request: QueryRequest, user_context: UserContext = Depends(get_current_user)):
     """Execute Cypher query for UI components"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can execute queries
+        if not user_specific_service.can_execute_queries():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to execute queries")
+        
         result = kg_neo4j_service.execute_cypher_query(request.query)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/kg-neo4j/available-folders")
-async def get_kg_neo4j_available_folders():
+@require_auth("read", allow_independent=True)
+async def get_kg_neo4j_available_folders(user_context: UserContext = Depends(get_current_user)):
     """Get available folders for UI components"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access folder information")
+        
         result = kg_neo4j_service.get_available_folders()
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/kg-neo4j/import-data")
-async def import_kg_neo4j_data(directory: str):
+@require_auth("create", allow_independent=True)
+async def import_kg_neo4j_data(directory: str, user_context: UserContext = Depends(get_current_user)):
     """Import data for UI components"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can import data
+        if not user_specific_service.can_import_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to import data")
+        
         # Implementation for data import
         return {
             'success': True,
@@ -341,9 +577,17 @@ async def import_kg_neo4j_data(directory: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/kg-neo4j/export-data")
-async def export_kg_neo4j_data(format: str = "json"):
+@require_auth("read", allow_independent=True)
+async def export_kg_neo4j_data(format: str = "json", user_context: UserContext = Depends(get_current_user)):
     """Export data for UI components"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can export data
+        if not user_specific_service.can_export_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to export data")
+        
         # Implementation for data export
         return {
             'success': True,
@@ -354,18 +598,34 @@ async def export_kg_neo4j_data(format: str = "json"):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/kg-neo4j/database-stats")
-async def get_kg_neo4j_database_stats():
+@require_auth("read", allow_independent=True)
+async def get_kg_neo4j_database_stats(user_context: UserContext = Depends(get_current_user)):
     """Get database stats for UI components"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access database statistics")
+        
         result = kg_neo4j_service.get_database_stats()
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/kg-neo4j/clear-data")
-async def clear_kg_neo4j_data():
+@require_auth("delete", allow_independent=False)
+async def clear_kg_neo4j_data(user_context: UserContext = Depends(get_current_user)):
     """Clear database data for UI components"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can clear data
+        if not user_specific_service.can_clear_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to clear database data")
+        
         # Implementation for clearing data
         return {
             'success': True,
@@ -379,9 +639,17 @@ async def clear_kg_neo4j_data():
 # ============================================================================
 
 @router.get("/hierarchy/use-cases")
-async def get_use_cases_with_graphs():
+@require_auth("read", allow_independent=True)
+async def get_use_cases_with_graphs(user_context: UserContext = Depends(get_current_user)):
     """Get all use cases that have graph data files"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access use case information")
+        
         use_cases = graph_discovery_service.discover_use_cases_with_graphs()
         return {
             "success": True,
@@ -392,9 +660,17 @@ async def get_use_cases_with_graphs():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/hierarchy/use-cases/{use_case_id}/projects")
-async def get_projects_with_graphs(use_case_id: str):
+@require_auth("read", allow_independent=True)
+async def get_projects_with_graphs(use_case_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get all projects in a use case that have graph data files"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this use case
+        if not user_specific_service.can_access_use_case(use_case_id):
+            raise HTTPException(status_code=403, detail="Access denied to this use case")
+        
         projects = graph_discovery_service.discover_projects_with_graphs(use_case_id)
         return {
             "success": True,
@@ -406,9 +682,17 @@ async def get_projects_with_graphs(use_case_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/hierarchy/projects/{project_id}/files")
-async def get_files_with_graphs(project_id: str):
+@require_auth("read", allow_independent=True)
+async def get_files_with_graphs(project_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get all files in a project that have graph data files"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this project
+        if not user_specific_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
+        
         files = graph_discovery_service.discover_files_with_graphs(project_id)
         return {
             "success": True,
@@ -420,9 +704,17 @@ async def get_files_with_graphs(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/hierarchy/files/{file_id}/graph")
-async def get_file_graph_status(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_file_graph_status(file_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get graph file status for a specific file"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Access denied to this file")
+        
         graph_status = graph_discovery_service.get_graph_file_status(file_id)
         return {
             "success": True,
@@ -433,9 +725,17 @@ async def get_file_graph_status(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/discovery/use-cases")
-async def discover_use_cases_with_graphs():
+@require_auth("read", allow_independent=True)
+async def discover_use_cases_with_graphs(user_context: UserContext = Depends(get_current_user)):
     """Discover use cases with graphs (alias for hierarchy endpoint)"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access use case information")
+        
         use_cases = graph_discovery_service.discover_use_cases_with_graphs()
         return {
             "success": True,
@@ -446,9 +746,17 @@ async def discover_use_cases_with_graphs():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/discovery/projects/{use_case_id}")
-async def discover_projects_with_graphs(use_case_id: str):
-    """Discover projects with graphs for a use case"""
+@require_auth("read", allow_independent=True)
+async def discover_projects_with_graphs(use_case_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Discover projects with graphs (alias for hierarchy endpoint)"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this use case
+        if not user_specific_service.can_access_use_case(use_case_id):
+            raise HTTPException(status_code=403, detail="Access denied to this use case")
+        
         projects = graph_discovery_service.discover_projects_with_graphs(use_case_id)
         return {
             "success": True,
@@ -460,9 +768,17 @@ async def discover_projects_with_graphs(use_case_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/discovery/files/{project_id}")
-async def discover_files_with_graphs(project_id: str):
-    """Discover files with graphs for a project"""
+@require_auth("read", allow_independent=True)
+async def discover_files_with_graphs(project_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Discover files with graphs (alias for hierarchy endpoint)"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this project
+        if not user_specific_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
+        
         files = graph_discovery_service.discover_files_with_graphs(project_id)
         return {
             "success": True,
@@ -474,23 +790,39 @@ async def discover_files_with_graphs(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/discovery/validate/{file_id}")
-async def validate_graph_file(file_id: str):
-    """Validate if a graph file exists and has correct format"""
+@require_auth("read", allow_independent=True)
+async def validate_graph_file(file_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Validate graph file for a specific file"""
     try:
-        is_valid = graph_discovery_service.validate_graph_file(file_id)
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Access denied to this file")
+        
+        validation_result = graph_discovery_service.validate_graph_file(file_id)
         return {
             "success": True,
             "file_id": file_id,
-            "is_valid": is_valid
+            "validation_result": validation_result
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/discovery/status")
-async def get_discovery_status():
-    """Get overall discovery status for all graph data"""
+@require_auth("read", allow_independent=True)
+async def get_discovery_status(user_context: UserContext = Depends(get_current_user)):
+    """Get discovery service status"""
     try:
-        status = graph_discovery_service.get_hierarchical_availability_status()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access discovery status")
+        
+        status = graph_discovery_service.get_discovery_status()
         return {
             "success": True,
             "status": status
@@ -503,369 +835,424 @@ async def get_discovery_status():
 # ============================================================================
 
 @router.get("/config")
-async def get_config():
-    """Get configuration for frontend initialization"""
+@require_auth("read", allow_independent=True)
+async def get_config(user_context: UserContext = Depends(get_current_user)):
+    """Get module configuration"""
     try:
-        return {
-            "success": True,
-            "config": {
-                "api_base_url": "/api/kg-neo4j",
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access configuration")
+        
+        config = {
+            "neo4j_connection": {
                 "docker_enabled": True,
                 "local_enabled": True,
-                "graph_discovery_enabled": True,
-                "hierarchical_data_enabled": True,
-                "features": {
-                    "docker_management": True,
-                    "graph_visualization": True,
-                    "data_management": True,
-                    "analytics": True,
-                    "query_interface": True
-                }
+                "browser_enabled": True
+            },
+            "graph_processing": {
+                "max_nodes": 10000,
+                "max_relationships": 50000,
+                "batch_size": 1000
+            },
+            "visualization": {
+                "default_layout": "force",
+                "max_display_nodes": 1000,
+                "animation_enabled": True
             }
+        }
+        
+        return {
+            "success": True,
+            "config": config
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/visualization-config")
-async def get_visualization_config():
+@require_auth("read", allow_independent=True)
+async def get_visualization_config(user_context: UserContext = Depends(get_current_user)):
     """Get visualization configuration"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access visualization configuration")
+        
+        config = {
+            "layouts": {
+                "force": {
+                    "enabled": True,
+                    "default": True,
+                    "settings": {
+                        "charge": -300,
+                        "linkDistance": 30,
+                        "gravity": 0.1
+                    }
+                },
+                "hierarchical": {
+                    "enabled": True,
+                    "default": False,
+                    "settings": {
+                        "direction": "TB",
+                        "sortMethod": "directed"
+                    }
+                },
+                "circular": {
+                    "enabled": True,
+                    "default": False,
+                    "settings": {
+                        "radius": 200,
+                        "startAngle": 0
+                    }
+                }
+            },
+            "node_styling": {
+                "default_size": 10,
+                "default_color": "#1f77b4",
+                "label_enabled": True,
+                "label_font_size": 12
+            },
+            "edge_styling": {
+                "default_width": 2,
+                "default_color": "#666",
+                "arrow_enabled": True,
+                "label_enabled": True
+            },
+            "interactions": {
+                "zoom_enabled": True,
+                "pan_enabled": True,
+                "drag_enabled": True,
+                "hover_effects": True
+            }
+        }
+        
         return {
             "success": True,
-            "config": {
-                "containerId": "graph-container",
-                "width": 800,
-                "height": 600,
-                "nodeSize": 20,
-                "linkDistance": 100,
-                "charge": -300,
-                "gravity": 0.1,
-                "alpha": 0.3,
-                "colors": {
-                    "default": "#1f77b4",
-                    "person": "#ff7f0e",
-                    "organization": "#2ca02c",
-                    "location": "#d62728",
-                    "concept": "#9467bd",
-                    "event": "#8c564b",
-                    "relationship": "#e377c2"
-                },
-                "nodeLabels": True,
-                "linkLabels": True,
-                "zoomEnabled": True,
-                "panEnabled": True,
-                "dragEnabled": True,
-                "tooltipEnabled": True,
-                "animationEnabled": True,
-                "autoLayout": True,
-                "layoutAlgorithm": "force",
-                "updateInterval": 1000
-            }
+            "config": config
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/initialize")
-async def initialize_module():
+@require_auth("admin", allow_independent=False)
+async def initialize_module(user_context: UserContext = Depends(get_current_user)):
     """Initialize the Knowledge Graph module"""
     try:
-        # Check if services are available
-        discovery_status = graph_discovery_service.get_hierarchical_availability_status()
-        docker_status = kg_neo4j_service.get_docker_status()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can manage docker
+        if not user_specific_service.can_manage_docker():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to initialize module")
+        
+        # Initialize services
+        kg_neo4j_service.initialize()
+        graph_discovery_service.initialize()
         
         return {
             "success": True,
-            "initialized": True,
+            "message": "Knowledge Graph module initialized successfully",
             "services": {
-                "graph_discovery": True,
-                "docker_management": True,
-                "neo4j_integration": True
-            },
-            "status": {
-                "discovery": discovery_status,
-                "docker": docker_status
+                "kg_neo4j_service": "initialized",
+                "graph_discovery_service": "initialized"
             }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/graph-data")
-async def get_graph_data():
+@require_auth("read", allow_independent=True)
+async def get_graph_data(user_context: UserContext = Depends(get_current_user)):
     """Get graph data for visualization"""
     try:
-        # Get all nodes and relationships from Neo4j
-        nodes_query = "MATCH (n) RETURN n"
-        relationships_query = "MATCH (a)-[r]->(b) RETURN a, r, b"
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
         
-        nodes = []
-        relationships = []
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access graph data")
         
-        try:
-            # Use the database stats to get basic info
-            stats = kg_neo4j_service.get_database_stats()
-            logger.info(f"Database stats: {stats}")
-            
-            # Simple queries that should work
-            nodes_query = "MATCH (n) RETURN n LIMIT 100"
-            relationships_query = "MATCH (a)-[r]->(b) RETURN a, r, b LIMIT 100"
-            
-            logger.info("Executing nodes query...")
-            nodes_result = kg_neo4j_service.execute_query_raw(nodes_query)
-            logger.info(f"Nodes query returned {len(nodes_result)} results")
-            
-            logger.info("Executing relationships query...")
-            relationships_result = kg_neo4j_service.execute_query_raw(relationships_query)
-            logger.info(f"Relationships query returned {len(relationships_result)} results")
-            
-            # Process nodes
-            logger.info("Processing nodes...")
-            for record in nodes_result:
-                try:
-                    node = record['n']  # This is now a raw Neo4j Node object
-                    node_dict = dict(node)
-                    
-                    # Extract node ID - prioritize the 'id' property from the data
-                    node_id = node_dict.get('id') or node_dict.get('idShort')
-                    if not node_id:
-                        # Fallback to Neo4j element_id
-                        node_id = node.element_id if hasattr(node, 'element_id') else f"node_{hash(str(node))}"
-                    
-                    # Extract label from Neo4j labels
-                    node_label = list(node.labels)[0] if node.labels else 'Node'
-                    
-                    nodes.append({
-                        'id': str(node_id),
-                        'label': str(node_label),
-                        'properties': node_dict
-                    })
-                except Exception as node_error:
-                    logger.warning(f"Error processing node: {node_error}")
-                    continue
-            
-            # Process relationships
-            logger.info("Processing relationships...")
-            for record in relationships_result:
-                try:
-                    rel = record['r']  # This is now a raw Neo4j Relationship object
-                    a_node = record['a']  # Raw Neo4j Node object
-                    b_node = record['b']  # Raw Neo4j Node object
-                    
-                    # Convert to dictionaries for property access
-                    a_dict = dict(a_node)
-                    b_dict = dict(b_node)
-                    rel_dict = dict(rel)
-                    
-                    # Extract relationship ID from Neo4j element_id
-                    rel_id = rel.element_id if hasattr(rel, 'element_id') else f"rel_{hash(str(rel))}"
-                    
-                    # Extract node IDs - prioritize 'id' property from data
-                    a_id = a_dict.get('id') or a_dict.get('idShort') or a_node.element_id
-                    b_id = b_dict.get('id') or b_dict.get('idShort') or b_node.element_id
-                    
-                    # Extract relationship type from Neo4j object
-                    rel_type = rel.type if hasattr(rel, 'type') else 'RELATES_TO'
-                    
-                    relationships.append({
-                        'id': str(rel_id),
-                        'source': str(a_id),
-                        'target': str(b_id),
-                        'type': str(rel_type),
-                        'properties': rel_dict
-                    })
-                except Exception as rel_error:
-                    logger.warning(f"Error processing relationship: {rel_error}")
-                    continue
-                
-        except Exception as db_error:
-            logger.error(f"Database query failed: {db_error}")
-            # Return empty arrays if database query fails
-            nodes = []
-            relationships = []
+        # Get user-specific graph data
+        user_graph_data = user_specific_service.get_user_graph_data()
         
-        return {
-            "success": True,
-            "nodes": nodes,
-            "relationships": relationships
-        }
+        if user_graph_data:
+            return {
+                "success": True,
+                "data": user_graph_data
+            }
+        else:
+            # Fallback to general graph data if user has access
+            try:
+                result = kg_neo4j_service.get_graph_data()
+                if result['success']:
+                    return {
+                        "success": True,
+                        "data": result['data']
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "error": "No graph data available"
+                    }
+            except Exception:
+                return {
+                    "success": False,
+                    "error": "No graph data available"
+                }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/nodes")
-async def create_node(node_data: Dict[str, Any]):
-    """Create a new node"""
+@require_auth("create", allow_independent=True)
+async def create_node(node_data: Dict[str, Any], user_context: UserContext = Depends(get_current_user)):
+    """Create a new node in the graph"""
     try:
-        import time
-        return {
-            "success": True,
-            "node": {
-                "id": f"node_{len(node_data.get('labels', []))}_{int(time.time() * 1000)}",
-                "labels": node_data.get('labels', []),
-                "properties": node_data.get('properties', {})
-            }
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can create nodes
+        if not user_specific_service.can_create_nodes():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to create nodes")
+        
+        # Add user context to node data
+        node_data['user_id'] = user_context.user_id
+        if user_context.organization_id:
+            node_data['organization_id'] = user_context.organization_id
+        
+        # Create node
+        result = kg_neo4j_service.create_node(node_data)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/nodes/{node_id}")
-async def get_node(node_id: str):
-    """Get a specific node"""
+@require_auth("read", allow_independent=True)
+async def get_node(node_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Get a specific node by ID"""
     try:
-        return {
-            "success": True,
-            "node": {
-                "id": node_id,
-                "labels": [],
-                "properties": {}
-            }
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access graph data")
+        
+        # Get node
+        result = kg_neo4j_service.get_node(node_id)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/nodes/{node_id}")
-async def update_node(node_id: str, node_data: Dict[str, Any]):
-    """Update a specific node"""
+@require_auth("update", allow_independent=True)
+async def update_node(node_id: str, node_data: Dict[str, Any], user_context: UserContext = Depends(get_current_user)):
+    """Update an existing node"""
     try:
-        return {
-            "success": True,
-            "node": {
-                "id": node_id,
-                "labels": node_data.get('labels', []),
-                "properties": node_data.get('properties', {})
-            }
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update nodes
+        if not user_specific_service.can_update_nodes():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to update nodes")
+        
+        # Update node
+        result = kg_neo4j_service.update_node(node_id, node_data)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/nodes/{node_id}")
-async def delete_node(node_id: str):
+@require_auth("delete", allow_independent=True)
+async def delete_node(node_id: str, user_context: UserContext = Depends(get_current_user)):
     """Delete a specific node"""
     try:
-        return {
-            "success": True,
-            "message": f"Node {node_id} deleted"
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can delete nodes
+        if not user_specific_service.can_delete_nodes():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to delete nodes")
+        
+        # Delete node
+        result = kg_neo4j_service.delete_node(node_id)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/relationships")
-async def create_relationship(relationship_data: Dict[str, Any]):
-    """Create a new relationship"""
+@require_auth("create", allow_independent=True)
+async def create_relationship(relationship_data: Dict[str, Any], user_context: UserContext = Depends(get_current_user)):
+    """Create a new relationship between nodes"""
     try:
-        import time
-        return {
-            "success": True,
-            "relationship": {
-                "id": f"rel_{int(time.time() * 1000)}",
-                "startNode": relationship_data.get('startNode'),
-                "endNode": relationship_data.get('endNode'),
-                "type": relationship_data.get('type'),
-                "properties": relationship_data.get('properties', {})
-            }
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can create relationships
+        if not user_specific_service.can_create_relationships():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to create relationships")
+        
+        # Add user context to relationship data
+        relationship_data['user_id'] = user_context.user_id
+        if user_context.organization_id:
+            relationship_data['organization_id'] = user_context.organization_id
+        
+        # Create relationship
+        result = kg_neo4j_service.create_relationship(relationship_data)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/relationships/{relationship_id}")
-async def get_relationship(relationship_id: str):
-    """Get a specific relationship"""
+@require_auth("read", allow_independent=True)
+async def get_relationship(relationship_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Get a specific relationship by ID"""
     try:
-        return {
-            "success": True,
-            "relationship": {
-                "id": relationship_id,
-                "startNode": "",
-                "endNode": "",
-                "type": "",
-                "properties": {}
-            }
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access graph data")
+        
+        # Get relationship
+        result = kg_neo4j_service.get_relationship(relationship_id)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/relationships/{relationship_id}")
-async def update_relationship(relationship_id: str, relationship_data: Dict[str, Any]):
-    """Update a specific relationship"""
+@require_auth("update", allow_independent=True)
+async def update_relationship(relationship_id: str, relationship_data: Dict[str, Any], user_context: UserContext = Depends(get_current_user)):
+    """Update an existing relationship"""
     try:
-        return {
-            "success": True,
-            "relationship": {
-                "id": relationship_id,
-                "startNode": relationship_data.get('startNode'),
-                "endNode": relationship_data.get('endNode'),
-                "type": relationship_data.get('type'),
-                "properties": relationship_data.get('properties', {})
-            }
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update relationships
+        if not user_specific_service.can_update_relationships():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to update relationships")
+        
+        # Update relationship
+        result = kg_neo4j_service.update_relationship(relationship_id, relationship_data)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/relationships/{relationship_id}")
-async def delete_relationship(relationship_id: str):
+@require_auth("delete", allow_independent=True)
+async def delete_relationship(relationship_id: str, user_context: UserContext = Depends(get_current_user)):
     """Delete a specific relationship"""
     try:
-        return {
-            "success": True,
-            "message": f"Relationship {relationship_id} deleted"
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can delete relationships
+        if not user_specific_service.can_delete_relationships():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to delete relationships")
+        
+        # Delete relationship
+        result = kg_neo4j_service.delete_relationship(relationship_id)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/nodes/label/{label}")
-async def get_nodes_by_label(label: str, limit: int = 100):
+@require_auth("read", allow_independent=True)
+async def get_nodes_by_label(label: str, limit: int = 100, user_context: UserContext = Depends(get_current_user)):
     """Get nodes by label"""
     try:
-        return {
-            "success": True,
-            "nodes": []
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access graph data")
+        
+        # Get nodes by label
+        result = kg_neo4j_service.get_nodes_by_label(label, limit)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/relationships/type/{type}")
-async def get_relationships_by_type(type: str, limit: int = 100):
+@require_auth("read", allow_independent=True)
+async def get_relationships_by_type(type: str, limit: int = 100, user_context: UserContext = Depends(get_current_user)):
     """Get relationships by type"""
     try:
-        return {
-            "success": True,
-            "relationships": []
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access graph data")
+        
+        # Get relationships by type
+        result = kg_neo4j_service.get_relationships_by_type(type, limit)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/clear")
-async def clear_all_data():
-    """Clear all graph data"""
+@require_auth("delete", allow_independent=False)
+async def clear_all_data(user_context: UserContext = Depends(get_current_user)):
+    """Clear all data from the graph"""
     try:
-        result = kg_neo4j_service.clear_all_neo4j_data()
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can clear data
+        if not user_specific_service.can_clear_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to clear all data")
+        
+        # Clear all data
+        result = kg_neo4j_service.clear_all_data()
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/export")
-async def export_graph(format: str = "json"):
-    """Export graph data"""
+@require_auth("read", allow_independent=True)
+async def export_graph(format: str = "json", user_context: UserContext = Depends(get_current_user)):
+    """Export the entire graph"""
     try:
-        return {
-            "success": True,
-            "format": format,
-            "data": {
-                "nodes": [],
-                "relationships": []
-            }
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can export data
+        if not user_specific_service.can_export_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to export graph data")
+        
+        # Export graph
+        result = kg_neo4j_service.export_graph(format)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/import")
-async def import_graph(import_data: Dict[str, Any]):
+@require_auth("create", allow_independent=True)
+async def import_graph(import_data: Dict[str, Any], user_context: UserContext = Depends(get_current_user)):
     """Import graph data"""
     try:
-        return {
-            "success": True,
-            "message": "Graph data imported successfully",
-            "imported_nodes": len(import_data.get('nodes', [])),
-            "imported_relationships": len(import_data.get('relationships', []))
-        }
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can import data
+        if not user_specific_service.can_import_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to import graph data")
+        
+        # Add user context to import data
+        import_data['user_id'] = user_context.user_id
+        if user_context.organization_id:
+            import_data['organization_id'] = user_context.organization_id
+        
+        # Import graph
+        result = kg_neo4j_service.import_graph(import_data)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -874,9 +1261,17 @@ async def import_graph(import_data: Dict[str, Any]):
 # ============================================================================
 
 @router.get("/docker-status")
-async def get_docker_status():
+@require_auth("read", allow_independent=True)
+async def get_docker_status(user_context: UserContext = Depends(get_current_user)):
     """Get Docker container status"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access docker status")
+        
         return {
             "success": True,
             "docker_status": kg_neo4j_service.get_docker_status()
@@ -885,9 +1280,17 @@ async def get_docker_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/docker/start")
-async def start_docker_container():
+@require_auth("admin", allow_independent=False)
+async def start_docker_container(user_context: UserContext = Depends(get_current_user)):
     """Start Neo4j Docker container"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can manage Docker
+        if not user_specific_service.can_manage_docker():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to manage Docker containers")
+        
         result = kg_neo4j_service.start_docker_container()
         return {
             "success": True,
@@ -898,9 +1301,17 @@ async def start_docker_container():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/docker/stop")
-async def stop_docker_container():
+@require_auth("admin", allow_independent=False)
+async def stop_docker_container(user_context: UserContext = Depends(get_current_user)):
     """Stop Neo4j Docker container"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can manage Docker
+        if not user_specific_service.can_manage_docker():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to manage Docker containers")
+        
         result = kg_neo4j_service.stop_docker_container()
         return {
             "success": True,
@@ -913,9 +1324,17 @@ async def stop_docker_container():
 # Removed duplicate /status endpoint - using the one with StatusResponse model above
 
 @router.get("/docker/logs")
-async def get_docker_logs():
+@require_auth("read", allow_independent=True)
+async def get_docker_logs(user_context: UserContext = Depends(get_current_user)):
     """Get Docker container logs"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access docker logs")
+        
         logs = kg_neo4j_service.get_docker_logs()
         return {
             "success": True,
@@ -929,9 +1348,17 @@ async def get_docker_logs():
 # ============================================================================
 
 @router.get("/use-cases")
-async def get_use_cases():
+@require_auth("read", allow_independent=True)
+async def get_use_cases(user_context: UserContext = Depends(get_current_user)):
     """Get all use cases regardless of graph data availability"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graph data
+        if not user_specific_service.can_access_graph_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access use case information")
+        
         use_cases = graph_discovery_service.get_all_use_cases()
         return {
             "success": True,
@@ -941,9 +1368,17 @@ async def get_use_cases():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/use-cases/{use_case_id}/projects")
-async def get_projects_by_use_case(use_case_id: str):
+@require_auth("read", allow_independent=True)
+async def get_projects_by_use_case(use_case_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get projects for a specific use case"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this use case
+        if not user_specific_service.can_access_use_case(use_case_id):
+            raise HTTPException(status_code=403, detail="Access denied to this use case")
+        
         projects = graph_discovery_service.get_all_projects_for_use_case(use_case_id)
         return {
             "success": True,
@@ -953,9 +1388,17 @@ async def get_projects_by_use_case(use_case_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects/{project_id}/files")
-async def get_files_by_project(project_id: str):
+@require_auth("read", allow_independent=True)
+async def get_files_by_project(project_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get files for a specific project"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access this project
+        if not user_specific_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
+        
         files = graph_discovery_service.get_all_files_for_project(project_id)
         return {
             "success": True,
@@ -965,11 +1408,25 @@ async def get_files_by_project(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/import/file/{file_id}")
-async def import_file_to_neo4j(file_id: str):
+@require_auth("create", allow_independent=True)
+async def import_file_to_neo4j(file_id: str, user_context: UserContext = Depends(get_current_user)):
     """Import a specific file to Neo4j"""
     try:
-        # This would integrate with the actual Neo4j import logic
-        result = kg_neo4j_service.import_file_to_neo4j(file_id)
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can import data
+        if not user_specific_service.can_import_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to import data")
+        
+        # Add user context to import data
+        import_data = {'file_id': file_id}
+        import_data['user_id'] = user_context.user_id
+        if user_context.organization_id:
+            import_data['organization_id'] = user_context.organization_id
+        
+        # Import graph
+        result = kg_neo4j_service.import_graph(import_data)
         return {
             "success": True,
             "message": f"File {file_id} imported successfully",
@@ -979,11 +1436,25 @@ async def import_file_to_neo4j(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/import/project/{project_id}")
-async def import_project_to_neo4j(project_id: str):
+@require_auth("create", allow_independent=True)
+async def import_project_to_neo4j(project_id: str, user_context: UserContext = Depends(get_current_user)):
     """Import all files in a project to Neo4j"""
     try:
-        # This would integrate with the actual Neo4j import logic
-        result = kg_neo4j_service.import_project_to_neo4j(project_id)
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can import data
+        if not user_specific_service.can_import_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to import data")
+        
+        # Add user context to import data
+        import_data = {'project_id': project_id}
+        import_data['user_id'] = user_context.user_id
+        if user_context.organization_id:
+            import_data['organization_id'] = user_context.organization_id
+        
+        # Import graph
+        result = kg_neo4j_service.import_graph(import_data)
         return {
             "success": True,
             "message": f"Project {project_id} imported successfully",
@@ -993,9 +1464,17 @@ async def import_project_to_neo4j(project_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/import/status")
-async def get_import_status():
+@require_auth("read", allow_independent=True)
+async def get_import_status(user_context: UserContext = Depends(get_current_user)):
     """Get import status for all files"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access import status")
+        
         # This would return the current import status
         return {
             "success": True,
@@ -1010,9 +1489,17 @@ async def get_import_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/query-config")
-async def get_query_config():
+@require_auth("read", allow_independent=True)
+async def get_query_config(user_context: UserContext = Depends(get_current_user)):
     """Get query engine configuration"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access query configuration")
+        
         return {
             "success": True,
             "config": {
@@ -1026,9 +1513,17 @@ async def get_query_config():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/processor-config")
-async def get_processor_config():
+@require_auth("read", allow_independent=True)
+async def get_processor_config(user_context: UserContext = Depends(get_current_user)):
     """Get data processor configuration"""
     try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access processor configuration")
+        
         return {
             "success": True,
             "config": {

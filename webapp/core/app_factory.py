@@ -6,8 +6,19 @@ import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.responses import Response
 from webapp.config.settings import settings
 from webapp.config.middleware import setup_middleware
+
+
+class NoCacheStaticFiles(StaticFiles):
+    """Custom StaticFiles handler that prevents caching"""
+    async def get_response(self, path: str, scope) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +37,10 @@ def create_app() -> FastAPI:
     # Setup middleware
     setup_middleware(app)
     
-    # Mount static files
+    # Mount static files with no-cache headers
     current_dir = os.path.dirname(os.path.abspath(__file__))
     static_dir = os.path.join(os.path.dirname(current_dir), "static")
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    app.mount("/static", NoCacheStaticFiles(directory=static_dir), name="static")
     
     # Setup templates
     templates_dir = os.path.join(os.path.dirname(current_dir), "templates")
@@ -37,6 +48,35 @@ def create_app() -> FastAPI:
     
     # Store templates in app state for access in routes
     app.state.templates = templates
+    
+    # Add root route handler
+    from fastapi.responses import RedirectResponse
+    
+    @app.get("/")
+    async def root():
+        """Root route - redirect to main dashboard page"""
+        return RedirectResponse(url="/api/dashboard")
+    
+    # Add global exception handlers
+    from fastapi import HTTPException, Request
+    from fastapi.responses import JSONResponse
+    
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        """Handle HTTP exceptions globally"""
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail, "status_code": exc.status_code}
+        )
+    
+    @app.exception_handler(Exception)
+    async def general_exception_handler(request: Request, exc: Exception):
+        """Handle general exceptions globally"""
+        logger.error(f"Unhandled exception: {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error", "status_code": 500}
+        )
     
     return app
 
@@ -48,7 +88,7 @@ def include_routers(app: FastAPI) -> None:
     try:
         from webapp.api.routes import health, dashboard, websocket, system
         app.include_router(health.router, prefix="/api", tags=["Health"])
-        app.include_router(dashboard.router, tags=["Dashboard"])
+        app.include_router(dashboard.router, prefix="/api", tags=["Dashboard"])
         app.include_router(websocket.router, tags=["WebSocket"])
         app.include_router(system.router, prefix="/api", tags=["System"])
         logger.info("✅ Loaded system routes")

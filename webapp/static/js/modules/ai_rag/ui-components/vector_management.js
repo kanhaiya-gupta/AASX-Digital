@@ -8,6 +8,65 @@ let vectorDbInfo = {};
 let vectorDataStats = {};
 let backupStatus = {};
 
+// Authentication variables
+let isAuthenticated = false;
+let currentUser = null;
+let authToken = null;
+
+/**
+ * Initialize authentication
+ */
+function initAuthentication() {
+    try {
+        // Check if user is authenticated
+        if (typeof getCurrentUser === 'function') {
+            currentUser = getCurrentUser();
+            if (currentUser) {
+                isAuthenticated = true;
+                authToken = getAuthToken();
+                console.log('🔐 Vector Management: User authenticated:', currentUser.username);
+            } else {
+                console.log('🔐 Vector Management: User not authenticated');
+                isAuthenticated = false;
+            }
+        } else {
+            console.warn('⚠️ Vector Management: getCurrentUser function not available');
+            isAuthenticated = false;
+        }
+    } catch (error) {
+        console.error('❌ Vector Management: Authentication initialization error:', error);
+        isAuthenticated = false;
+    }
+}
+
+/**
+ * Get authentication token
+ */
+function getAuthToken() {
+    try {
+        // Try to get token from localStorage/sessionStorage
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    } catch (error) {
+        console.warn('⚠️ Vector Management: Could not get auth token:', error);
+        return null;
+    }
+}
+
+/**
+ * Get authentication headers for API calls
+ */
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    return headers;
+}
+
 /**
  * Initialize vector management module
  */
@@ -15,6 +74,9 @@ export async function initVectorManagement() {
     console.log('🔍 Vector Management Module: Initializing...');
     
     try {
+        // Initialize authentication
+        initAuthentication();
+        
         // Load initial vector database information
         await refreshVectorDbInfo();
         await loadVectorDataStats();
@@ -87,7 +149,9 @@ export async function refreshVectorDbInfo() {
     console.log('🔄 Vector Management Module: Refreshing vector DB info...');
     
     try {
-        const response = await fetch('/api/ai-rag/vector-db-info');
+        const response = await fetch('/api/ai-rag/vector-db-info', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Vector Management Module: Vector DB info received:', data);
@@ -202,9 +266,7 @@ export async function backupVectorData() {
     try {
         const response = await fetch('/api/ai-rag/backup-vector-data', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 include_metadata: true,
                 include_relationships: true,
@@ -273,9 +335,7 @@ export async function clearVectorData() {
     try {
         const response = await fetch('/api/ai-rag/clear-vector-data', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 confirm_clear: true,
                 include_collections: true
@@ -340,7 +400,9 @@ export async function showDataStats() {
     }
     
     try {
-        const response = await fetch('/api/ai-rag/vector-data-stats');
+        const response = await fetch('/api/ai-rag/vector-data-stats', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Vector Management Module: Vector data stats received:', data);
@@ -402,7 +464,9 @@ export async function loadVectorDataStats() {
     console.log('📊 Vector Management Module: Loading vector data stats...');
     
     try {
-        const response = await fetch('/api/ai-rag/vector-data-stats');
+        const response = await fetch('/api/ai-rag/vector-data-stats', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -488,9 +552,7 @@ export async function createBackup(type) {
     try {
         const response = await fetch('/api/ai-rag/backup', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ type })
         });
         
@@ -514,7 +576,9 @@ export async function showBackupHistory() {
     console.log('🔄 Vector Management Module: Loading backup history...');
     
     try {
-        const response = await fetch('/api/ai-rag/backup/history');
+        const response = await fetch('/api/ai-rag/backup/history', {
+            headers: getAuthHeaders()
+        });
         const history = await response.json();
         
         if (response.ok) {
@@ -551,9 +615,7 @@ export async function clearGlobalVectorData() {
     try {
         const response = await fetch('/api/ai-rag/clear-vector-data', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 confirm_clear: true,
                 include_collections: true
@@ -618,7 +680,9 @@ export async function showStoredDocuments() {
     }
     
     try {
-        const response = await fetch('/api/ai-rag/documents?limit=50');
+        const response = await fetch('/api/ai-rag/documents?limit=50', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Vector Management Module: Stored documents received:', data);

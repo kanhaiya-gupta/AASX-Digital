@@ -7,6 +7,11 @@ import { showAlert } from '/static/js/shared/alerts.js';
 
 export default class RealTimeMetricsComponent {
     constructor() {
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.realTimeData = {
             twins: [],
             total_twins: 0,
@@ -19,10 +24,59 @@ export default class RealTimeMetricsComponent {
         this.connectionStatus = 'Connected';
     }
     
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Real-time Metrics: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Real-time Metrics: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Real-time Metrics: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+    
     async init() {
         console.log('🔧 Initializing Real-time Metrics Component...');
         
         try {
+            // Initialize authentication
+            this.initAuthentication();
             await this.loadRealTimeMetrics();
             this.initializeChart();
             this.setupEventListeners();
@@ -38,10 +92,18 @@ export default class RealTimeMetricsComponent {
     
     async loadRealTimeMetrics() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Real-time Metrics: User not authenticated, skipping metrics load');
+                return;
+            }
+            
             console.log('📊 Loading real-time metrics...');
             
             // Get real-time metrics from API
-            const response = await fetch('/api/federated-learning/monitoring/real-time');
+            const response = await fetch('/api/federated-learning/monitoring/real-time', {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const result = await response.json();
                 if (result.status === 'success' && result.data) {

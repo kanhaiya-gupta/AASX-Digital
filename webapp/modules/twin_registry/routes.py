@@ -6,7 +6,7 @@ FastAPI router for digital twin registry using modular service architecture.
 Follows the same pattern as the AASX module for consistency.
 """
 
-from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -15,12 +15,15 @@ from datetime import datetime
 import os
 from pathlib import Path
 import json
+import logging
 
 # Import our modular services
 from .services.twin_registry_service import TwinRegistryService
 from .services.twin_operations_service import TwinOperationsService
 from .services.twin_monitoring_service import TwinMonitoringService
 from .services.twin_analytics_service import TwinAnalyticsService
+from .services.user_specific_service import TwinRegistryUserSpecificService
+from .services.organization_service import TwinRegistryOrganizationService
 
 # Import shared services (following AASX pattern)
 from src.shared.services.digital_twin_service import DigitalTwinService
@@ -30,8 +33,15 @@ from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.project_repository import ProjectRepository
 
+# Import authentication decorators and context
+from webapp.core.decorators.auth_decorators import require_auth, get_current_user
+from webapp.core.context.user_context import UserContext
+
 # Create router
 router = APIRouter(tags=["twin-registry"])
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 # Template setup (following AASX pattern)
 current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -54,6 +64,9 @@ twin_registry_service = TwinRegistryService(db_manager)
 twin_operations_service = TwinOperationsService(digital_twin_service)
 twin_monitoring_service = TwinMonitoringService(digital_twin_service)
 twin_analytics_service = TwinAnalyticsService(digital_twin_service)
+
+# Note: User-specific and organization services will be initialized per-request
+# to ensure proper user context integration
 
 # Pydantic models
 class TwinRegistration(BaseModel):
@@ -108,21 +121,48 @@ class LifecycleEventCreate(BaseModel):
 # ============================================================================
 
 @router.get("/", response_class=HTMLResponse)
-async def twin_registry_dashboard(request: Request):
-    """Twin registry dashboard"""
+@require_auth("read", allow_independent=True)
+async def twin_registry_dashboard(
+    request: Request, 
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Twin registry dashboard with user-specific data"""
     try:
-        # Get twin statistics for dashboard
-        stats = await twin_registry_service.get_twin_statistics()
+        # Initialize user-specific and organization services
+        user_specific_service = TwinRegistryUserSpecificService(user_context)
+        organization_service = TwinRegistryOrganizationService(user_context)
+        
+        # Get user-specific and organization data
+        user_twins = user_specific_service.get_user_twins()
+        user_relationships = user_specific_service.get_user_twin_relationships()
+        user_instances = user_specific_service.get_user_twin_instances()
+        user_stats = user_specific_service.get_user_twin_statistics()
+        organization_stats = organization_service.get_organization_statistics()
+        
+        # Get general twin statistics
+        general_stats = await twin_registry_service.get_twin_statistics()
         
         return templates.TemplateResponse(
             "twin_registry/index.html",
             {
                 "request": request,
                 "title": "Digital Twin Registry - AASX Digital Twin Analytics Framework",
-                "stats": stats
+                "user": user_context,
+                "can_create": getattr(user_context, 'has_permission', lambda x: False)("write"),
+                "can_manage": getattr(user_context, 'has_permission', lambda x: False)("manage"),
+                "can_delete": getattr(user_context, 'has_permission', lambda x: False)("manage"),
+                "is_independent": getattr(user_context, 'is_independent', False),
+                "user_type": getattr(user_context, 'get_user_type', lambda: 'independent')(),
+                "user_twins": user_twins,
+                "user_relationships": user_relationships,
+                "user_instances": user_instances,
+                "user_stats": user_stats,
+                "organization_stats": organization_stats,
+                "general_stats": general_stats
             }
         )
     except Exception as e:
+        logger.error(f"Dashboard error: {e}")
         raise HTTPException(status_code=500, detail=f"Dashboard error: {str(e)}")
 
 # ============================================================================
@@ -130,27 +170,46 @@ async def twin_registry_dashboard(request: Request):
 # ============================================================================
 
 @router.get("/twins")
+@require_auth("read", allow_independent=True)
 async def get_twins(
     page: int = 1,
     page_size: int = 10,
     twin_type: str = "",
     status: str = "",
-    project_id: str = None
+    project_id: str = None,
+    user_context: UserContext = Depends(get_current_user)
 ):
     """
-    Get all twins with pagination and filtering.
-    Uses modular twin registry service.
+    Get twins accessible to the current user with pagination and filtering.
+    Uses modular twin registry service with user-specific filtering.
     """
     try:
-        result = await twin_registry_service.get_all_twins(
-            page=page,
-            page_size=page_size,
-            twin_type=twin_type,
-            status=status,
-            project_id=project_id
-        )
-        return result
+        # Initialize user-specific service for filtering
+        user_specific_service = TwinRegistryUserSpecificService(user_context)
+        
+        # Get user-specific twins
+        user_twins = user_specific_service.get_user_twins()
+        
+        # Apply additional filtering if needed
+        if twin_type:
+            user_twins = [t for t in user_twins if t.get('twin_type') == twin_type]
+        if status:
+            user_twins = [t for t in user_twins if t.get('status') == status]
+        
+        # Apply pagination
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_twins = user_twins[start_idx:end_idx]
+        
+        return {
+            "data": paginated_twins,
+            "total_count": len(user_twins),
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (len(user_twins) + page_size - 1) // page_size
+        }
     except Exception as e:
+        logger.error(f"Error getting user twins: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/twins/search")
@@ -197,27 +256,59 @@ async def get_twin_by_id(twin_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/twins")
-async def create_twin(twin_data: Dict[str, Any]):
+@require_auth("write", allow_independent=True)
+async def create_twin(
+    twin_data: Dict[str, Any],
+    user_context: UserContext = Depends(get_current_user)
+):
     """Create a new twin"""
     try:
+        # Add user context to twin data
+        twin_data['created_by'] = getattr(user_context, 'user_id', 'unknown')
+        if not getattr(user_context, 'is_independent', False):
+            twin_data['organization_id'] = getattr(user_context, 'organization_id', None)
+        
         result = await twin_registry_service.create_twin(twin_data)
         return result
     except Exception as e:
+        logger.error(f"Error creating twin: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/twins/{twin_id}")
-async def update_twin(twin_id: str, update_data: Dict[str, Any]):
+@require_auth("write", allow_independent=True)
+async def update_twin(
+    twin_id: str, 
+    update_data: Dict[str, Any],
+    user_context: UserContext = Depends(get_current_user)
+):
     """Update an existing twin"""
     try:
+        # Check if user can access this twin
+        user_specific_service = TwinRegistryUserSpecificService(user_context)
+        if not user_specific_service.can_access_twin(twin_id):
+            raise HTTPException(status_code=403, detail="Access denied to this twin")
+        
         result = await twin_registry_service.update_twin(twin_id, update_data)
         return result
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error updating twin {twin_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/twins/{twin_id}")
-async def delete_twin(twin_id: str):
+@require_auth("manage", allow_independent=True)
+async def delete_twin(
+    twin_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Delete a twin"""
     try:
+        # Check if user can access this twin
+        user_specific_service = TwinRegistryUserSpecificService(user_context)
+        if not user_specific_service.can_access_twin(twin_id):
+            raise HTTPException(status_code=403, detail="Access denied to this twin")
+        
         success = await twin_registry_service.delete_twin(twin_id)
         if not success:
             raise HTTPException(status_code=404, detail="Twin not found or could not be deleted")
@@ -225,6 +316,7 @@ async def delete_twin(twin_id: str):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Error deleting twin {twin_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================

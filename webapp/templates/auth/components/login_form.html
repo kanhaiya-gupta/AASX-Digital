@@ -1,39 +1,39 @@
 <form id="loginForm" class="auth-form">
     <div class="form-group">
-        <label for="username" class="form-label">
+        <label for="login_username" class="form-label">
             <i class="fas fa-user me-2"></i>Username
         </label>
         <div class="input-group">
             <span class="input-group-text">
                 <i class="fas fa-user"></i>
             </span>
-            <input type="text" class="form-control auth-form-control" id="username" name="username" 
+            <input type="text" class="form-control auth-form-control" id="login_username" name="username"
                    placeholder="Enter your username" required>
         </div>
     </div>
-    
+
     <div class="form-group">
-        <label for="password" class="form-label">
+        <label for="login_password" class="form-label">
             <i class="fas fa-lock me-2"></i>Password
         </label>
         <div class="input-group">
             <span class="input-group-text">
                 <i class="fas fa-lock"></i>
             </span>
-            <input type="password" class="form-control auth-form-control" id="password" name="password" 
+            <input type="password" class="form-control auth-form-control" id="login_password" name="password"
                    placeholder="Enter your password" required>
         </div>
     </div>
-    
+
     <div class="form-group">
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="rememberMe" name="rememberMe">
-            <label class="form-check-label" for="rememberMe">
+            <input class="form-check-input" type="checkbox" id="login_rememberMe" name="rememberMe">
+            <label class="form-check-label" for="login_rememberMe">
                 Remember me
             </label>
         </div>
     </div>
-    
+
     <!-- Password Expiration Warning -->
     <div id="passwordExpirationWarning" class="alert alert-warning" style="display: none;">
         <i class="fas fa-exclamation-triangle me-2"></i>
@@ -42,14 +42,14 @@
             Change Password
         </button>
     </div>
-    
+
     <button type="submit" class="btn auth-btn auth-btn-primary w-100" id="loginBtn">
         <span class="loading-spinner" id="loadingSpinner"></span>
         <span id="loginText">
             <i class="fas fa-sign-in-alt me-2"></i>Login
         </span>
     </button>
-    
+
     <div class="text-center mt-3">
         <a href="#" onclick="showForgotPasswordModal()" class="text-decoration-none">
             <i class="fas fa-key me-1"></i>Forgot Password?

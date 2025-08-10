@@ -7,6 +7,65 @@
 let systemStatusData = {};
 let statusCheckInterval = null;
 
+// Authentication variables
+let isAuthenticated = false;
+let currentUser = null;
+let authToken = null;
+
+/**
+ * Initialize authentication
+ */
+function initAuthentication() {
+    try {
+        // Check if user is authenticated
+        if (typeof getCurrentUser === 'function') {
+            currentUser = getCurrentUser();
+            if (currentUser) {
+                isAuthenticated = true;
+                authToken = getAuthToken();
+                console.log('🔐 System Status: User authenticated:', currentUser.username);
+            } else {
+                console.log('🔐 System Status: User not authenticated');
+                isAuthenticated = false;
+            }
+        } else {
+            console.warn('⚠️ System Status: getCurrentUser function not available');
+            isAuthenticated = false;
+        }
+    } catch (error) {
+        console.error('❌ System Status: Authentication initialization error:', error);
+        isAuthenticated = false;
+    }
+}
+
+/**
+ * Get authentication token
+ */
+function getAuthToken() {
+    try {
+        // Try to get token from localStorage/sessionStorage
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    } catch (error) {
+        console.warn('⚠️ System Status: Could not get auth token:', error);
+        return null;
+    }
+}
+
+/**
+ * Get authentication headers for API calls
+ */
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    return headers;
+}
+
 /**
  * Initialize system status module
  */
@@ -14,6 +73,9 @@ export async function initSystemStatus() {
     console.log('🔍 System Status Module: Initializing...');
     
     try {
+        // Initialize authentication
+        initAuthentication();
+        
         // Initial status check
         await checkAllServices();
         
@@ -66,7 +128,9 @@ async function checkAllServices() {
  * Check individual service
  */
 function checkService(service) {
-    return fetch(`/api/${service}/status`)
+    return fetch(`/api/${service}/status`, {
+        headers: getAuthHeaders()
+    })
         .then(response => response.json())
         .catch(error => {
             console.error(`System Status Module: Error checking ${service} service:`, error);

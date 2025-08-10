@@ -5,6 +5,11 @@
 
 export default class FederatedLearningUI {
     constructor() {
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.isInitialized = false;
         this.config = {
             apiBaseUrl: '/api/federated-learning',
@@ -30,12 +35,61 @@ export default class FederatedLearningUI {
     }
 
     /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Federated Learning UI: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Federated Learning UI: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Federated Learning UI: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+
+    /**
      * Initialize the Federated Learning UI
      */
     async init() {
         console.log('🔧 Initializing Federated Learning UI...');
 
         try {
+            // Initialize authentication
+            this.initAuthentication();
             await this.loadConfiguration();
             this.initializeUIComponents();
             this.setupEventListeners();
@@ -69,7 +123,15 @@ export default class FederatedLearningUI {
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/ui-config`);
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning UI: User not authenticated, skipping configuration load');
+                return;
+            }
+            
+            const response = await fetch(`${this.config.apiBaseUrl}/ui-config`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const config = await response.json();
                 this.config = { ...this.config, ...config };

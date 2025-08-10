@@ -7,6 +7,11 @@ import { showAlert } from '/static/js/shared/alerts.js';
 
 export default class FederationMetricsComponent {
     constructor() {
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.metricsData = {
             health_scores: [75, 78, 82, 79, 85, 88, 86, 90],
             aggregation_rounds: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -22,10 +27,59 @@ export default class FederationMetricsComponent {
         this.updateInterval = null;
     }
     
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Federation Metrics: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Federation Metrics: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Federation Metrics: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+    
     async init() {
         console.log('🔧 Initializing Federation Metrics Component...');
         
         try {
+            // Initialize authentication
+            this.initAuthentication();
             await this.loadFederationMetrics();
             this.initializeChart();
             this.setupEventListeners();
@@ -40,10 +94,18 @@ export default class FederationMetricsComponent {
     
     async loadFederationMetrics() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federation Metrics: User not authenticated, skipping metrics load');
+                return;
+            }
+            
             console.log('📊 Loading federation metrics...');
             
             // Simulate API call - replace with actual API call
-            const response = await fetch('/api/federated-learning/monitoring/metrics');
+            const response = await fetch('/api/federated-learning/monitoring/metrics', {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const result = await response.json();
                 if (result.status === 'success' && result.data) {

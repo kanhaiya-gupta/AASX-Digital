@@ -9,10 +9,14 @@ from .physics_model_service import PhysicsModelService
 from .simulation_service import SimulationService
 from .validation_service import ValidationService
 from .use_case_service import UseCaseService
+from .user_specific_service import PhysicsModelingUserSpecificService
+from .organization_service import PhysicsModelingOrganizationService
 
 __all__ = [
     'PhysicsModelService',
     'SimulationService', 
     'ValidationService',
-    'UseCaseService'
+    'UseCaseService',
+    'PhysicsModelingUserSpecificService',
+    'PhysicsModelingOrganizationService'
 ] 

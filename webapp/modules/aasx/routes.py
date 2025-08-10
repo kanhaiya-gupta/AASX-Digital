@@ -2,7 +2,7 @@
 AASX ETL API: Thin FastAPI router using modular service architecture.
 Enforces Use Case → Projects → Files hierarchy.
 """
-from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -10,11 +10,22 @@ from typing import List, Optional, Dict, Any
 import os
 from pathlib import Path
 
+# Import authentication decorators and user context
+from webapp.core.decorators.auth_decorators import (
+    require_auth, require_role, require_organization, 
+    get_current_user, require_permission
+)
+from webapp.core.context.user_context import UserContext
+
 # Import our service modules
 from .use_cases import use_case_service
 from .projects import project_service
 from .files import file_service
 from .processor import aasx_processor
+
+# Import new user-specific and organization services
+from .services.user_specific_service import UserSpecificService
+from .services.organization_service import OrganizationService
 
 # Import existing services from src/shared
 from src.shared.services.digital_twin_service import DigitalTwinService
@@ -71,24 +82,52 @@ class UseCaseCreate(BaseModel):
 
 # Dashboard
 @router.get("/", response_class=HTMLResponse)
-async def aasx_dashboard(request: Request):
+@require_auth("read", allow_independent=True)
+async def aasx_dashboard(request: Request, user_context: UserContext = Depends(get_current_user)):
+    """AASX ETL Dashboard - requires read permission, allows independent users"""
+    # Initialize user-specific service
+    user_service = UserSpecificService(user_context)
+    organization_service = OrganizationService(user_context)
+    
+    # Get user-specific data
+    user_projects = user_service.get_user_projects()
+    user_files = user_service.get_user_files()
+    user_stats = user_service.get_user_statistics()
+    organization_stats = organization_service.get_organization_statistics()
+    
     return templates.TemplateResponse(
         "aasx/index.html",
-        {"request": request, "title": "AASX ETL Pipeline - AASX Digital Twin Analytics Framework"}
+        {
+            "request": request, 
+            "title": "AASX ETL Pipeline - AASX Digital Twin Analytics Framework",
+            "user": user_context,
+            "can_upload": getattr(user_context, 'has_permission', lambda x: False)("write"),
+            "can_process": getattr(user_context, 'has_permission', lambda x: False)("write"),
+            "can_delete": getattr(user_context, 'has_permission', lambda x: False)("manage"),
+            "is_independent": getattr(user_context, 'is_independent', False),
+            "user_type": getattr(user_context, 'get_user_type', lambda: 'independent')(),
+            "user_projects": user_projects,
+            "user_files": user_files,
+            "user_stats": user_stats,
+            "organization_stats": organization_stats
+        }
     )
 
 # Use Case Endpoints
 @router.get("/use-cases")
-async def list_use_cases():
-    """Get available use cases for AASX processing from database"""
+@require_auth("read", allow_independent=True)
+async def list_use_cases(user_context: UserContext = Depends(get_current_user)):
+    """List all use cases - requires read permission, allows independent users"""
     try:
-        return use_case_service.list_use_cases()
+        use_cases = use_case_service.list_use_cases()
+        return {"use_cases": use_cases, "total": len(use_cases)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/use-cases/{use_case_id}")
-async def get_use_case(use_case_id: str):
-    """Get a specific use case"""
+@require_auth("read", allow_independent=True)
+async def get_use_case(use_case_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Get specific use case - requires read permission, allows independent users"""
     try:
         use_case = use_case_service.get_use_case(use_case_id)
         if not use_case:
@@ -98,209 +137,187 @@ async def get_use_case(use_case_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/use-cases")
-async def create_use_case(use_case_data: UseCaseCreate):
-    """Create a new use case"""
+@require_auth("write", allow_independent=True)
+async def create_use_case(use_case_data: UseCaseCreate, user_context: UserContext = Depends(get_current_user)):
+    """Create new use case - requires write permission, allows independent users"""
     try:
         use_case_id = use_case_service.create_use_case(use_case_data.dict())
         return {"use_case_id": use_case_id, "message": "Use case created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/use-cases/{use_case_id}")
-async def update_use_case(use_case_id: str, updates: Dict[str, Any]):
-    """Update a use case"""
-    try:
-        success = use_case_service.update_use_case(use_case_id, updates)
-        if not success:
-            raise HTTPException(status_code=404, detail="Use case not found")
-        return {"message": "Use case updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/use-cases/{use_case_id}")
-async def delete_use_case(use_case_id: str):
-    """Delete a use case and all its projects"""
-    try:
-        success = use_case_service.delete_use_case(use_case_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Use case not found")
-        return {"message": "Use case deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/use-cases/{use_case_id}/projects")
-async def get_use_case_projects(use_case_id: str):
-    """Get all projects for a specific use case"""
-    try:
-        projects = project_service.list_projects(use_case_id)
-        return projects
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Project Endpoints
+# Project Endpoints with User-Specific Data
 @router.get("/projects")
-async def list_projects(use_case_id: str = None):
-    """Get all projects, optionally filtered by use case"""
+@require_auth("read", allow_independent=True)
+async def list_projects(use_case_id: str = None, user_context: UserContext = Depends(get_current_user)):
+    """List projects for current user - requires read permission, allows independent users"""
     try:
-        return project_service.list_projects(use_case_id)
+        # Initialize user-specific service
+        user_service = UserSpecificService(user_context)
+        
+        if use_case_id:
+            # Filter by use case if specified
+            all_projects = user_service.get_user_projects()
+            projects = [p for p in all_projects if p.get("use_case_id") == use_case_id]
+        else:
+            # Get all user projects
+            projects = user_service.get_user_projects()
+        
+        return {"projects": projects, "total": len(projects)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects/{project_id}")
-async def get_project(project_id: str):
-    """Get a specific project with its files and use case info"""
+@require_auth("read", allow_independent=True)
+async def get_project(project_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Get specific project - requires read permission, allows independent users"""
     try:
+        # Initialize user-specific service
+        user_service = UserSpecificService(user_context)
+        
+        # Check if user can access this project
+        if not user_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
+        
         project = project_service.get_project(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Add file count
+        project["file_count"] = user_service.get_project_file_count(project_id)
+        
         return project
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/projects")
-async def create_project(project_data: ProjectCreate):
-    """Create a new project (must be linked to a use case)"""
+@require_auth("write", allow_independent=True)
+async def create_project(project_data: ProjectCreate, user_context: UserContext = Depends(get_current_user)):
+    """Create new project - requires write permission, allows independent users"""
     try:
-        project_id = project_service.create_project(project_data.dict(), project_data.use_case_id)
+        # Initialize user-specific service
+        user_service = UserSpecificService(user_context)
+        
+        # Create project with user context
+        project_id = user_service.create_user_project(project_data.dict())
+        
         return {"project_id": project_id, "message": "Project created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/projects/{project_id}")
-async def update_project(project_id: str, updates: Dict[str, Any]):
-    """Update a project"""
-    try:
-        success = project_service.update_project(project_id, updates)
-        if not success:
-            raise HTTPException(status_code=404, detail="Project not found")
-        return {"message": "Project updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/projects/{project_id}")
-async def delete_project(project_id: str):
-    """Delete a project and all its files"""
-    try:
-        success = project_service.delete_project(project_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Project not found")
-        return {"message": "Project deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/projects/{project_id}/validate-hierarchy")
-async def validate_project_hierarchy(project_id: str):
-    """Validate that a project is properly linked to a use case"""
-    try:
-        validation = project_service.validate_project_hierarchy(project_id)
-        return validation
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# File Endpoints
-@router.post("/projects/{project_id}/upload")
-async def upload_file(project_id: str, file: UploadFile = File(...), description: str = Form(None)):
-    """Upload a file to a project (project must be in valid hierarchy)"""
-    try:
-        # Validate project_id format
-        if not project_id or not isinstance(project_id, str):
-            raise HTTPException(status_code=400, detail="Invalid project ID format")
-        
-        # Validate file object
-        if not file or not file.filename:
-            raise HTTPException(status_code=400, detail="No file provided or invalid file object")
-        
-        # Validate file size (max 100MB)
-        MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
-        if hasattr(file, 'size') and file.size and file.size > MAX_FILE_SIZE:
-            raise HTTPException(status_code=413, detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)}MB")
-        
-        # Validate file extension
-        if not file.filename.lower().endswith('.aasx'):
-            raise HTTPException(status_code=400, detail="Only AASX files are allowed")
-        
-        # Validate filename (prevent path traversal)
-        import re
-        if re.search(r'[<>:"/\\|?*]', file.filename):
-            raise HTTPException(status_code=400, detail="Invalid filename. Contains forbidden characters")
-        
-        # Upload file with enhanced error handling
-        file_info = file_service.upload_file(project_id, file, description)
-        return file_info
-        
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
-    except ValueError as e:
-        # Handle validation errors
-        raise HTTPException(status_code=400, detail=f"Validation error: {str(e)}")
-    except FileNotFoundError as e:
-        # Handle file system errors
-        raise HTTPException(status_code=404, detail=f"File system error: {str(e)}")
-    except PermissionError as e:
-        # Handle permission errors
-        raise HTTPException(status_code=403, detail=f"Permission denied: {str(e)}")
-    except OSError as e:
-        # Handle other OS errors
-        raise HTTPException(status_code=500, detail=f"File system error: {str(e)}")
-    except Exception as e:
-        # Handle all other errors
-        import logging
-        logging.error(f"File upload failed for project {project_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-@router.get("/projects/{project_id}/files")
-async def list_project_files(project_id: str):
-    """Get all files for a project (with hierarchy validation)"""
-    try:
-        return file_service.list_project_files(project_id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/projects/{project_id}/files/{file_id}")
-async def get_file(project_id: str, file_id: str):
-    """Get a specific file (with hierarchy validation)"""
-    try:
-        file_info = file_service.get_file(project_id, file_id)
-        if not file_info:
-            raise HTTPException(status_code=404, detail="File not found")
-        return file_info
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/projects/{project_id}/files/{file_id}")
-async def delete_file(project_id: str, file_id: str):
-    """Delete a file from a project (with hierarchy validation)"""
-    try:
-        success = file_service.delete_file(project_id, file_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="File not found")
-        return {"message": "File deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.put("/projects/{project_id}/files/{file_id}")
-async def update_file(project_id: str, file_id: str, updates: Dict[str, Any]):
-    """Update file metadata (with hierarchy validation)"""
-    try:
-        success = file_service.update_file(project_id, file_id, updates)
-        if not success:
-            raise HTTPException(status_code=404, detail="File not found")
-        return {"message": "File updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
+# File Endpoints with User-Specific Data
 @router.get("/files")
-async def list_all_files():
-    """Get all files across all projects (with hierarchy information)"""
+@require_auth("read", allow_independent=True)
+async def list_all_files(user_context: UserContext = Depends(get_current_user)):
+    """List all files for current user - requires read permission, allows independent users"""
     try:
-        return file_service.list_all_files()
+        # Initialize user-specific service
+        user_service = UserSpecificService(user_context)
+        
+        files = user_service.get_user_files()
+        return {"files": files, "total": len(files)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/files/{file_id}")
+@require_auth("read", allow_independent=True)
+async def get_file(file_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Get specific file - requires read permission, allows independent users"""
+    try:
+        # Initialize user-specific service
+        user_service = UserSpecificService(user_context)
+        
+        # Check if user can access this file
+        if not user_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Access denied to this file")
+        
+        file_data = file_service.get_file_by_id(file_id)
+        if not file_data:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        return file_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# User-Specific Statistics
+@router.get("/user/stats")
+@require_auth("read", allow_independent=True)
+async def get_user_stats(user_context: UserContext = Depends(get_current_user)):
+    """Get user-specific statistics - requires read permission, allows independent users"""
+    try:
+        # Initialize user-specific service
+        user_service = UserSpecificService(user_context)
+        organization_service = OrganizationService(user_context)
+        
+        user_stats = user_service.get_user_statistics()
+        organization_stats = organization_service.get_organization_statistics()
+        
+        return {
+            "user_stats": user_stats,
+            "organization_stats": organization_stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Organization-Specific Endpoints
+@router.get("/organization/projects")
+@require_auth("read", allow_independent=False)
+async def get_organization_projects(user_context: UserContext = Depends(get_current_user)):
+    """Get organization projects - requires read permission, organization members only"""
+    try:
+        # Initialize organization service
+        organization_service = OrganizationService(user_context)
+        
+        projects = organization_service.get_organization_projects()
+        return {"projects": projects, "total": len(projects)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/organization/files")
+@require_auth("read", allow_independent=False)
+async def get_organization_files(user_context: UserContext = Depends(get_current_user)):
+    """Get organization files - requires read permission, organization members only"""
+    try:
+        # Initialize organization service
+        organization_service = OrganizationService(user_context)
+        
+        files = organization_service.get_organization_files()
+        return {"files": files, "total": len(files)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/organization/stats")
+@require_auth("read", allow_independent=False)
+async def get_organization_stats(user_context: UserContext = Depends(get_current_user)):
+    """Get organization statistics - requires read permission, organization members only"""
+    try:
+        # Initialize organization service
+        organization_service = OrganizationService(user_context)
+        
+        stats = organization_service.get_organization_statistics()
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/organization/members")
+@require_auth("read", allow_independent=False)
+async def get_organization_members(user_context: UserContext = Depends(get_current_user)):
+    """Get organization members - requires read permission, organization members only"""
+    try:
+        # Initialize organization service
+        organization_service = OrganizationService(user_context)
+        
+        members = organization_service.get_organization_members()
+        return {"members": members, "total": len(members)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Continue with existing endpoints...
 
 # ETL Processing Endpoints
 @router.post("/etl/run")
-async def run_etl_pipeline(config: ETLConfigRequest):
+@require_auth("write", allow_independent=True)
+async def run_etl_pipeline(config: ETLConfigRequest, user_context: UserContext = Depends(get_current_user)):
     """Run ETL pipeline for AASX files with federated learning integration"""
     try:
         print("🔍 ETL Route: Received request")
@@ -367,7 +384,8 @@ async def run_etl_pipeline(config: ETLConfigRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/etl/progress")
-async def get_etl_progress():
+@require_auth("read", allow_independent=True)
+async def get_etl_progress(user_context: UserContext = Depends(get_current_user)):
     """Get ETL processing progress"""
     try:
         return aasx_processor.get_etl_progress()
@@ -375,7 +393,8 @@ async def get_etl_progress():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/etl/status")
-async def get_etl_status():
+@require_auth("read", allow_independent=True)
+async def get_etl_status(user_context: UserContext = Depends(get_current_user)):
     """Get ETL processing status"""
     try:
         return aasx_processor.get_etl_status()
@@ -384,59 +403,137 @@ async def get_etl_status():
 
 # Additional endpoints for frontend compatibility
 @router.get("/files")
-async def list_files_for_etl():
+@require_auth("read", allow_independent=True)
+async def list_files_for_etl(user_context: UserContext = Depends(get_current_user)):
     """Get all files for ETL pipeline (alias for compatibility)"""
     try:
-        return file_service.list_all_files()
+        files = file_service.list_all_files()
+        
+        # Check access permissions for all files
+        is_independent = getattr(user_context, 'is_independent', False)
+        user_id = getattr(user_context, 'user_id', None)
+        organization_id = getattr(user_context, 'organization_id', None)
+        
+        for file_info in files:
+            if is_independent:
+                if file_info.get('created_by') != user_id:
+                    raise HTTPException(status_code=403, detail="Access denied")
+            else:
+                if (file_info.get('organization_id') != organization_id and 
+                    file_info.get('created_by') != user_id):
+                    raise HTTPException(status_code=403, detail="Access denied")
+
+        return files
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/by-path")
-async def get_file_by_path(use_case_name: str, project_name: str, filename: str):
+@require_auth("read", allow_independent=True)
+async def get_file_by_path(use_case_name: str, project_name: str, filename: str, user_context: UserContext = Depends(get_current_user)):
     """Get file information by use case, project, and filename"""
     try:
         file_info = file_service.get_file_by_path(use_case_name, project_name, filename)
         if not file_info:
             raise HTTPException(status_code=404, detail="File not found")
+        
+        # Check access permissions
+        is_independent = getattr(user_context, 'is_independent', False)
+        user_id = getattr(user_context, 'user_id', None)
+        organization_id = getattr(user_context, 'organization_id', None)
+        
+        if is_independent:
+            if file_info.get('created_by') != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
+        else:
+            if (file_info.get('organization_id') != organization_id and 
+                file_info.get('created_by') != user_id):
+                raise HTTPException(status_code=403, detail="Access denied")
+
         return file_info
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/{file_id}/path-info")
-async def get_file_path_info(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_file_path_info(file_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get logical path information for a file (usecase/project/filename)"""
     try:
         path_info = file_service.get_file_path_info(file_id)
         if not path_info:
             raise HTTPException(status_code=404, detail="File not found")
+        
+        # Check access permissions
+        is_independent = getattr(user_context, 'is_independent', False)
+        user_id = getattr(user_context, 'user_id', None)
+        organization_id = getattr(user_context, 'organization_id', None)
+        
+        if is_independent:
+            if path_info.get('created_by') != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
+        else:
+            if (path_info.get('organization_id') != organization_id and 
+                path_info.get('created_by') != user_id):
+                raise HTTPException(status_code=403, detail="Access denied")
+
         return path_info
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/{file_id}/path")
-async def get_file_path(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_file_path(file_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get file hierarchy path from file_id (alias for path-info)"""
     try:
         path_info = file_service.get_file_path_info(file_id)
         if not path_info:
             raise HTTPException(status_code=404, detail="File not found")
+        
+        # Check access permissions
+        is_independent = getattr(user_context, 'is_independent', False)
+        user_id = getattr(user_context, 'user_id', None)
+        organization_id = getattr(user_context, 'organization_id', None)
+        
+        if is_independent:
+            if path_info.get('created_by') != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
+        else:
+            if (path_info.get('organization_id') != organization_id and 
+                path_info.get('created_by') != user_id):
+                raise HTTPException(status_code=403, detail="Access denied")
+
         return path_info
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/by-path/file-id")
-async def get_file_id_by_path(use_case_name: str, project_name: str, filename: str):
+@require_auth("read", allow_independent=True)
+async def get_file_id_by_path(use_case_name: str, project_name: str, filename: str, user_context: UserContext = Depends(get_current_user)):
     """Get file ID by use case, project, and filename"""
     try:
         file_id = file_service.get_file_id_by_path(use_case_name, project_name, filename)
         if not file_id:
             raise HTTPException(status_code=404, detail="File not found")
+        
+        # Check access permissions
+        is_independent = getattr(user_context, 'is_independent', False)
+        user_id = getattr(user_context, 'user_id', None)
+        organization_id = getattr(user_context, 'organization_id', None)
+        
+        if is_independent:
+            if file_id.get('created_by') != user_id:
+                raise HTTPException(status_code=403, detail="Access denied")
+        else:
+            if (file_id.get('organization_id') != organization_id and 
+                file_id.get('created_by') != user_id):
+                raise HTTPException(status_code=403, detail="Access denied")
+
         return {"file_id": file_id, "logical_path": f"{use_case_name}/{project_name}/{filename}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/projects/sync")
-async def sync_projects():
+@require_auth("write", allow_independent=True)
+async def sync_projects(user_context: UserContext = Depends(get_current_user)):
     """Sync projects and refresh statuses"""
     try:
         return project_service.refresh_project_status()
@@ -445,7 +542,8 @@ async def sync_projects():
 
 # Statistics and Utility Endpoints
 @router.get("/stats")
-async def get_aasx_stats():
+@require_auth("read", allow_independent=True)
+async def get_aasx_stats(user_context: UserContext = Depends(get_current_user)):
     """Get AASX processing statistics"""
     try:
         return aasx_processor.get_aasx_statistics()
@@ -453,7 +551,8 @@ async def get_aasx_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/refresh")
-async def refresh_files_and_statuses(project_id: str = None):
+@require_auth("write", allow_independent=True)
+async def refresh_files_and_statuses(project_id: str = None, user_context: UserContext = Depends(get_current_user)):
     """Refresh file statuses and digital twin statuses"""
     try:
         return project_service.refresh_project_status(project_id)
@@ -461,7 +560,8 @@ async def refresh_files_and_statuses(project_id: str = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/files/reset-statuses")
-async def reset_file_statuses_endpoint():
+@require_auth("write", allow_independent=True)
+async def reset_file_statuses_endpoint(user_context: UserContext = Depends(get_current_user)):
     """Manually trigger file status reset when outputs are missing"""
     try:
         return file_service.reset_file_statuses()
@@ -470,7 +570,8 @@ async def reset_file_statuses_endpoint():
 
 # Digital Twin Federated Learning Endpoints
 @router.get("/digital-twins/federated-learning/stats")
-async def get_digital_twin_federated_stats():
+@require_auth("read", allow_independent=True)
+async def get_digital_twin_federated_stats(user_context: UserContext = Depends(get_current_user)):
     """Get federated learning statistics for digital twins"""
     try:
         stats = digital_twin_service.get_repository().get_federated_learning_stats()
@@ -479,13 +580,15 @@ async def get_digital_twin_federated_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/user-consent/federated-learning")
+@require_auth("write", allow_independent=True)
 async def record_user_consent_for_federated_learning(
     user_id: str,
     consent_given: bool,
     data_privacy_level: str = "private",
     consent_terms: str = None,
     project_id: str = None,
-    file_id: str = None
+    file_id: str = None,
+    user_context: UserContext = Depends(get_current_user)
 ):
     """Record user consent for federated learning participation"""
     try:
@@ -502,7 +605,8 @@ async def record_user_consent_for_federated_learning(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/user-consent/{user_id}/federated-learning")
-async def get_user_consent_status(user_id: str):
+@require_auth("read", allow_independent=True)
+async def get_user_consent_status(user_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get user's federated learning consent status"""
     try:
         # For now, return a placeholder
@@ -518,7 +622,8 @@ async def get_user_consent_status(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/federated-learning/consent-terms")
-async def get_federated_learning_consent_terms():
+@require_auth("read", allow_independent=True)
+async def get_federated_learning_consent_terms(user_context: UserContext = Depends(get_current_user)):
     """Get the current federated learning consent terms"""
     try:
         terms = {
@@ -548,7 +653,8 @@ async def get_federated_learning_consent_terms():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/digital-twins/federated-learning/{participation_status}")
-async def get_digital_twins_by_federated_status(participation_status: str):
+@require_auth("read", allow_independent=True)
+async def get_digital_twins_by_federated_status(participation_status: str, user_context: UserContext = Depends(get_current_user)):
     """Get digital twins by federated participation status"""
     try:
         twins = digital_twin_service.get_repository().get_federated_twins(participation_status)
@@ -558,7 +664,8 @@ async def get_digital_twins_by_federated_status(participation_status: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/digital-twins/{twin_id}/federated-learning")
-async def update_digital_twin_federated_learning(twin_id: str, federated_data: Dict[str, Any]):
+@require_auth("write", allow_independent=True)
+async def update_digital_twin_federated_learning(twin_id: str, federated_data: Dict[str, Any], user_context: UserContext = Depends(get_current_user)):
     """Update federated learning settings for a digital twin"""
     try:
         success = digital_twin_service.get_repository().update_federated_metadata(twin_id, federated_data)

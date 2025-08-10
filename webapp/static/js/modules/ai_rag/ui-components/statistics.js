@@ -9,6 +9,65 @@ let digitalTwinStats = {};
 let collectionsData = [];
 let statsRefreshInterval = null;
 
+// Authentication variables
+let isAuthenticated = false;
+let currentUser = null;
+let authToken = null;
+
+/**
+ * Initialize authentication
+ */
+function initAuthentication() {
+    try {
+        // Check if user is authenticated
+        if (typeof getCurrentUser === 'function') {
+            currentUser = getCurrentUser();
+            if (currentUser) {
+                isAuthenticated = true;
+                authToken = getAuthToken();
+                console.log('🔐 Statistics: User authenticated:', currentUser.username);
+            } else {
+                console.log('🔐 Statistics: User not authenticated');
+                isAuthenticated = false;
+            }
+        } else {
+            console.warn('⚠️ Statistics: getCurrentUser function not available');
+            isAuthenticated = false;
+        }
+    } catch (error) {
+        console.error('❌ Statistics: Authentication initialization error:', error);
+        isAuthenticated = false;
+    }
+}
+
+/**
+ * Get authentication token
+ */
+function getAuthToken() {
+    try {
+        // Try to get token from localStorage/sessionStorage
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    } catch (error) {
+        console.warn('⚠️ Statistics: Could not get auth token:', error);
+        return null;
+    }
+}
+
+/**
+ * Get authentication headers for API calls
+ */
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    return headers;
+}
+
 /**
  * Initialize statistics module
  */
@@ -16,6 +75,9 @@ export async function initStatistics() {
     console.log('🔍 Statistics Module: Initializing...');
     
     try {
+        // Initialize authentication
+        initAuthentication();
+        
         // Load initial statistics
         await loadSystemStats();
         await loadCollections();
@@ -42,7 +104,9 @@ export async function loadSystemStats() {
     console.log('📊 Statistics Module: Loading system stats...');
     
     try {
-        const response = await fetch('/api/ai-rag/stats');
+        const response = await fetch('/api/ai-rag/stats', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Statistics Module: System stats received:', data);
@@ -125,7 +189,9 @@ export async function loadCollections() {
     console.log('🗂️ Statistics Module: Loading collections...');
     
     try {
-        const response = await fetch('/api/ai-rag/collections');
+        const response = await fetch('/api/ai-rag/collections', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Statistics Module: Collections received:', data);
@@ -194,7 +260,9 @@ export async function loadDigitalTwinStatistics() {
     console.log('🤖 Statistics Module: Loading digital twin statistics...');
     
     try {
-        const response = await fetch('/api/ai-rag/digital-twin-stats');
+        const response = await fetch('/api/ai-rag/digital-twin-stats', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Statistics Module: Digital twin stats received:', data);

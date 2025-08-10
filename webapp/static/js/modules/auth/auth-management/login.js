@@ -1,6 +1,7 @@
 /**
  * Authentication Login Management
  * Handles login, forgot password, reset password, and verification functionality
+ * CACHE BUST: 2025-08-10-20:07
  */
 
 export default class AuthLogin {
@@ -409,10 +410,9 @@ export default class AuthLogin {
             const result = await authCore.login(username, password, rememberMe);
 
             if (result.success) {
-                this.showSuccessMessage('Login successful! Redirecting...');
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 1500);
+                this.showSuccessMessage('Login successful!');
+                // Let AuthUIManager handle the UI update instead of redirecting
+                // The UI will automatically update to show authenticated state
             } else {
                 this.showErrorMessage(result.error || 'Login failed');
             }
@@ -803,8 +803,8 @@ export default class AuthLogin {
         // Check if user is already logged in
         const authCore = this.authCore;
         if (authCore && authCore.isUserAuthenticated()) {
-            // Redirect to dashboard if already logged in
-            window.location.href = '/dashboard';
+            // Don't redirect - let AuthUIManager handle the UI state
+            console.log('✅ User already authenticated, UI will be updated by AuthUIManager');
         }
     }
 

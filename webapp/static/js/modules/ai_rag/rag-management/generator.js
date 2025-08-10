@@ -24,6 +24,68 @@ export default class AIRAGGenerator {
         this.generationHistory = new Map();
         this.activeGenerations = new Set();
         this.streamingConnections = new Map();
+        
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
+        // Initialize authentication
+        this.initAuthentication();
+    }
+
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            if (typeof getCurrentUser === 'function') {
+                this.currentUser = getCurrentUser();
+                if (this.currentUser) {
+                    this.isAuthenticated = true;
+                    this.authToken = this.getAuthToken();
+                    console.log('🔐 AI RAG Generator: User authenticated:', this.currentUser.username);
+                } else {
+                    console.log('🔐 AI RAG Generator: User not authenticated');
+                    this.isAuthenticated = false;
+                }
+            } else {
+                console.warn('⚠️ AI RAG Generator: getCurrentUser function not available');
+                this.isAuthenticated = false;
+            }
+        } catch (error) {
+            console.error('❌ AI RAG Generator: Authentication initialization error:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        try {
+            // Try to get token from localStorage/sessionStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ AI RAG Generator: Could not get auth token:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
     }
 
     /**
@@ -59,7 +121,9 @@ export default class AIRAGGenerator {
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/generator-config`);
+            const response = await fetch(`${this.config.apiBaseUrl}/generator-config`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const serverConfig = await response.json();
                 this.config = { ...this.config, ...serverConfig };
@@ -74,7 +138,9 @@ export default class AIRAGGenerator {
      */
     async loadModels() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/models`);
+            const response = await fetch(`${this.config.apiBaseUrl}/models`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const models = await response.json();
                 models.forEach(model => {
@@ -300,9 +366,7 @@ export default class AIRAGGenerator {
     async performStandardGeneration(params) {
         const response = await fetch(`${this.config.apiBaseUrl}/generate`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: this.getAuthHeaders(),
             body: JSON.stringify(params)
         });
         

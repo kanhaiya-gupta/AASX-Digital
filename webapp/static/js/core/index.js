@@ -11,6 +11,7 @@ import { FormValidator } from './components/form-validation.js';
 import { ErrorHandler } from './components/error-handling.js';
 import { APIClient } from './api/client.js';
 import { UIHelper } from './ui/helper.js';
+// AuthUIManager is now imported from the auth module when needed
 
 // Import utilities
 import { NotificationManager } from './utils/notifications.js';
@@ -40,6 +41,8 @@ class CoreModule {
             this.components.autoRefresh = new AutoRefreshManager();
             this.components.formValidator = new FormValidator();
             this.components.errorHandler = new ErrorHandler();
+            // AuthUIManager will be initialized by the auth module
+            this.components.authUI = null;
             
             // Initialize API client
             this.components.apiClient = new APIClient();
@@ -58,6 +61,8 @@ class CoreModule {
             await this.components.autoRefresh.init();
             await this.components.formValidator.init();
             await this.components.errorHandler.init();
+            // AuthUIManager will be initialized by the auth module later
+            // await this.components.authUI.init();
             
             // Setup global access
             this.setupGlobalAccess();
@@ -98,6 +103,43 @@ class CoreModule {
         };
         
         // Expose API client globally
+        
+        // Expose authentication functions globally
+        window.logout = async () => {
+            if (this.components.authUI) {
+                await this.components.authUI.handleUserLogout();
+            } else {
+                console.warn('⚠️ AuthUIManager not available, logout not possible');
+            }
+        };
+        
+        window.getCurrentUser = () => {
+            if (this.components.authUI) {
+                return this.components.authUI.getAuthState().currentUser;
+            }
+            return null;
+        };
+        
+        window.isUserAuthenticated = () => {
+            if (this.components.authUI) {
+                return this.components.authUI.getAuthState().isAuthenticated;
+            }
+            return false;
+        };
+        
+        // Global function to update authentication UI
+        window.updateAuthenticationUI = () => {
+            if (this.components.authUI) {
+                return this.components.authUI.checkAuthenticationAndUpdateUI();
+            }
+            return Promise.resolve(false);
+        };
+        
+        // Function to set AuthUIManager from auth module
+        window.setAuthUIManager = (authUI) => {
+            this.components.authUI = authUI;
+            console.log('✅ AuthUIManager set by auth module');
+        };
         window.APIClient = APIClient;
         window.UIHelper = UIHelper;
         window.apiClient = this.components.apiClient;

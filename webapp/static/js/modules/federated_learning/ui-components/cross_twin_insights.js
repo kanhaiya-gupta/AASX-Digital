@@ -7,6 +7,11 @@ import { showAlert } from '/static/js/shared/alerts.js';
 
 export default class CrossTwinInsightsComponent {
     constructor() {
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.insightsData = {
             insights: [
                 {
@@ -43,10 +48,59 @@ export default class CrossTwinInsightsComponent {
         this.updateInterval = null;
     }
     
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Cross-Twin Insights: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Cross-Twin Insights: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Cross-Twin Insights: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+    
     async init() {
         console.log('🔧 Initializing Cross-Twin Insights Component...');
         
         try {
+            // Initialize authentication
+            this.initAuthentication();
             await this.loadCrossTwinInsights();
             this.setupEventListeners();
             this.startAutoRefresh();
@@ -60,10 +114,18 @@ export default class CrossTwinInsightsComponent {
     
     async loadCrossTwinInsights() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Cross-Twin Insights: User not authenticated, skipping insights load');
+                return;
+            }
+            
             console.log('📊 Loading cross-twin insights...');
             
             // Simulate API call - replace with actual API call
-            const response = await fetch('/api/federated-learning/insights/cross-twin');
+            const response = await fetch('/api/federated-learning/insights/cross-twin', {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const result = await response.json();
                 if (result.status === 'success' && result.data) {

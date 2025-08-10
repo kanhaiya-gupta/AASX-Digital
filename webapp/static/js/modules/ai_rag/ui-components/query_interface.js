@@ -11,6 +11,65 @@ let currentModel = 'gpt-3.5-turbo';
 let currentAnalysisType = 'general';
 let autoSelectEnabled = true; // Track if auto-select is enabled
 
+// Authentication variables
+let isAuthenticated = false;
+let currentUser = null;
+let authToken = null;
+
+/**
+ * Initialize authentication for query interface
+ */
+function initAuthentication() {
+    try {
+        // Check if user is authenticated
+        if (typeof getCurrentUser === 'function') {
+            currentUser = getCurrentUser();
+            if (currentUser) {
+                isAuthenticated = true;
+                authToken = getAuthToken();
+                console.log('🔐 Query Interface: User authenticated:', currentUser.username);
+            } else {
+                console.log('🔐 Query Interface: User not authenticated');
+                isAuthenticated = false;
+            }
+        } else {
+            console.warn('⚠️ Query Interface: getCurrentUser function not available');
+            isAuthenticated = false;
+        }
+    } catch (error) {
+        console.error('❌ Query Interface: Authentication initialization error:', error);
+        isAuthenticated = false;
+    }
+}
+
+/**
+ * Get authentication token
+ */
+function getAuthToken() {
+    try {
+        // Try to get token from localStorage/sessionStorage
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    } catch (error) {
+        console.warn('⚠️ Query Interface: Could not get auth token:', error);
+        return null;
+    }
+}
+
+/**
+ * Get authentication headers for API calls
+ */
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    return headers;
+}
+
 /**
  * Initialize query interface module
  */
@@ -18,6 +77,9 @@ export async function initQueryInterface() {
     console.log('🚀 Query Interface Module: FUNCTION CALLED - Starting initialization...');
     console.log('🔍 Query Interface Module: Initializing...');
     console.log('🔍 Query Interface Module: DOM ready state:', document.readyState);
+    
+    // Initialize authentication
+    initAuthentication();
     
     // Check if all required elements exist
     const requiredElements = [
@@ -679,9 +741,7 @@ export async function submitQuery() {
         // Submit the query
         const response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify(requestData)
         });
         

@@ -19,6 +19,68 @@ export default class AIRAGVectorStore {
             lastQuery: null,
             queryCount: 0
         };
+        
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
+        // Initialize authentication
+        this.initAuthentication();
+    }
+
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            if (typeof getCurrentUser === 'function') {
+                this.currentUser = getCurrentUser();
+                if (this.currentUser) {
+                    this.isAuthenticated = true;
+                    this.authToken = this.getAuthToken();
+                    console.log('🔐 AI RAG Vector Store: User authenticated:', this.currentUser.username);
+                } else {
+                    console.log('🔐 AI RAG Vector Store: User not authenticated');
+                    this.isAuthenticated = false;
+                }
+            } else {
+                console.warn('⚠️ AI RAG Vector Store: getCurrentUser function not available');
+                this.isAuthenticated = false;
+            }
+        } catch (error) {
+            console.error('❌ AI RAG Vector Store: Authentication initialization error:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        try {
+            // Try to get token from localStorage/sessionStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ AI RAG Vector Store: Could not get auth token:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
     }
 
     /**
@@ -48,7 +110,9 @@ export default class AIRAGVectorStore {
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/vector-config`);
+            const response = await fetch(`${this.config.apiBaseUrl}/vector-config`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const serverConfig = await response.json();
                 this.config = { ...this.config, ...serverConfig.config };
@@ -63,7 +127,9 @@ export default class AIRAGVectorStore {
      */
     async loadVectorDbInfo() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/vector-db-info`);
+            const response = await fetch(`${this.config.apiBaseUrl}/vector-db-info`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const dbInfo = await response.json();
                 this.statistics.totalVectors = dbInfo.total_vectors || 0;
@@ -83,7 +149,9 @@ export default class AIRAGVectorStore {
             if (collection_name) params.append('collection_name', collection_name);
             params.append('limit', limit.toString());
 
-            const response = await fetch(`${this.config.apiBaseUrl}/vectors?${params}`);
+            const response = await fetch(`${this.config.apiBaseUrl}/vectors?${params}`, {
+                headers: this.getAuthHeaders()
+            });
             
             if (!response.ok) {
                 throw new Error(`Failed to query vectors: ${response.statusText}`);
@@ -118,9 +186,7 @@ export default class AIRAGVectorStore {
             // Use the query endpoint with vector search
             const response = await fetch(`${this.config.apiBaseUrl}/search`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -162,7 +228,9 @@ export default class AIRAGVectorStore {
      */
     async getHealth() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/vector-db-info`);
+            const response = await fetch(`${this.config.apiBaseUrl}/vector-db-info`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const health = await response.json();
                 return {

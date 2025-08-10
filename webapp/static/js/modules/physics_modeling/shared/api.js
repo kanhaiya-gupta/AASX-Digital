@@ -3,7 +3,9 @@
  * Handles all API calls to the physics modeling backend services
  */
 
-class PhysicsModelingAPI {
+import { getAuthToken, getAuthHeaders, isAuthenticated, getCurrentUser, initModuleAuth } from '../../../shared/auth-helper.js';
+
+export default class PhysicsModelingAPI {
     constructor() {
         this.baseURL = '/api/physics-modeling';
         this.endpoints = {
@@ -16,16 +18,49 @@ class PhysicsModelingAPI {
             plugins: `${this.baseURL}/plugins`,
             health: `${this.baseURL}/health`
         };
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+    }
+
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Use centralized auth helper functions
+            this.currentUser = getCurrentUser();
+            this.isAuthenticated = isAuthenticated();
+            this.authToken = getAuthToken();
+            
+            if (this.isAuthenticated) {
+                console.log('🔐 Physics Modeling API: User authenticated:', this.currentUser?.username);
+            } else {
+                console.log('🔐 Physics Modeling API: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Physics Modeling API: Authentication initialization error:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        // Use centralized auth helper for consistent token management
+        return getAuthHeaders();
     }
 
     /**
      * Generic API request method
      */
     async request(endpoint, options = {}) {
+        // Initialize authentication
+        this.initAuthentication();
+        
         const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getAuthHeaders(),
             credentials: 'same-origin'
         };
 

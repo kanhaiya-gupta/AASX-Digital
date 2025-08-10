@@ -31,6 +31,65 @@ const demoQueries = {
     ]
 };
 
+// Authentication variables
+let isAuthenticated = false;
+let currentUser = null;
+let authToken = null;
+
+/**
+ * Initialize authentication
+ */
+function initAuthentication() {
+    try {
+        // Check if user is authenticated
+        if (typeof getCurrentUser === 'function') {
+            currentUser = getCurrentUser();
+            if (currentUser) {
+                isAuthenticated = true;
+                authToken = getAuthToken();
+                console.log('🔐 Quick Actions: User authenticated:', currentUser.username);
+            } else {
+                console.log('🔐 Quick Actions: User not authenticated');
+                isAuthenticated = false;
+            }
+        } else {
+            console.warn('⚠️ Quick Actions: getCurrentUser function not available');
+            isAuthenticated = false;
+        }
+    } catch (error) {
+        console.error('❌ Quick Actions: Authentication initialization error:', error);
+        isAuthenticated = false;
+    }
+}
+
+/**
+ * Get authentication token
+ */
+function getAuthToken() {
+    try {
+        // Try to get token from localStorage/sessionStorage
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    } catch (error) {
+        console.warn('⚠️ Quick Actions: Could not get auth token:', error);
+        return null;
+    }
+}
+
+/**
+ * Get authentication headers for API calls
+ */
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    return headers;
+}
+
 /**
  * Initialize quick actions module
  */
@@ -38,6 +97,9 @@ export async function initQuickActions() {
     console.log('🔍 Quick Actions Module: Initializing...');
     
     try {
+        // Initialize authentication
+        initAuthentication();
+        
         // Set up demo query event listeners
         setupDemoQueryListeners();
         
@@ -144,9 +206,7 @@ async function runAASXAnalysis() {
     try {
         const response = await fetch('/api/ai-rag/aasx-analysis', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 analysis_type: 'comprehensive',
                 include_relationships: true,
@@ -175,9 +235,7 @@ async function exportAASXData() {
     try {
         const response = await fetch('/api/ai-rag/export-aasx', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 format: 'json',
                 include_metadata: true,

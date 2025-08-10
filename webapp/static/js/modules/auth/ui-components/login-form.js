@@ -1,327 +1,185 @@
 /**
- * Login Form UI Component
- * Handles login form interactions and validation
+ * Login Form Handler
+ * Integrates with AuthUIManager for proper authentication flow
+ * CACHE BUST: 2025-08-10-20:07
  */
-
-export default class LoginForm {
+export class LoginForm {
     constructor() {
-        this.form = null;
-        this.submitButton = null;
-        this.loadingSpinner = null;
-        this.alertContainer = null;
-        this.isSubmitting = false;
-    }
-
-    /**
-     * Initialize login form
-     */
-    init() {
-        console.log('🔐 Initializing Login Form...');
-        
+        console.log('🔍 Creating LoginForm instance');
         this.form = document.getElementById('loginForm');
-        this.submitButton = document.getElementById('loginBtn');
-        this.loadingSpinner = document.getElementById('loadingSpinner');
-        this.alertContainer = document.getElementById('alert-container');
-        
+        this.isSubmitting = false;
+        this.init();
+    }
+
+    init() {
         if (this.form) {
-            this.setupEventListeners();
-            console.log('✅ Login Form initialized');
+            this.form.addEventListener('submit', this.handleSubmit.bind(this));
+            console.log('✅ Login form initialized');
         } else {
-            console.warn('⚠️ Login form not found');
+            console.error('❌ Login form not found');
         }
     }
 
-    /**
-     * Setup event listeners
-     */
-    setupEventListeners() {
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-        
-        // Password visibility toggle
-        const passwordToggle = document.getElementById('passwordToggle');
-        if (passwordToggle) {
-            passwordToggle.addEventListener('click', () => this.togglePasswordVisibility());
-        }
-        
-        // Real-time validation
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        
-        if (usernameInput) {
-            usernameInput.addEventListener('input', () => this.validateUsername());
-        }
-        
-        if (passwordInput) {
-            passwordInput.addEventListener('input', () => this.validatePassword());
-        }
-    }
-
-    /**
-     * Handle form submission
-     */
     async handleSubmit(e) {
         e.preventDefault();
         
         if (this.isSubmitting) return;
-        
-        // Validate form
-        if (!this.validateForm()) {
+
+        const username = document.getElementById('login_username').value;
+        const password = document.getElementById('login_password').value;
+        const rememberMe = document.getElementById('login_rememberMe')?.checked || false;
+
+        console.log('🔐 Login form submitted:', { username, rememberMe });
+
+        if (!username || !password) {
+            this.showError('Please enter both username and password');
             return;
         }
-        
+
         this.setSubmittingState(true);
         this.clearAlerts();
-        
+
         try {
-            const formData = new FormData();
-            formData.append('username', document.getElementById('username').value);
-            formData.append('password', document.getElementById('password').value);
-            formData.append('remember_me', document.getElementById('rememberMe')?.checked || false);
-            
+            console.log('📡 Sending login request to /api/auth/login...');
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
             });
-            
+
+            console.log('📡 Login response status:', response.status);
             const result = await response.json();
-            
+            console.log('📡 Login response data:', result);
+
             if (response.ok) {
-                this.showSuccess(result.message || 'Login successful!');
+                console.log('✅ Login successful, storing token...');
+                // Store token with correct key
+                localStorage.setItem('auth_token', result.access_token);
+                console.log('💾 Token stored in localStorage:', result.access_token ? 'YES' : 'NO');
+                console.log('💾 Token value preview:', result.access_token ? result.access_token.substring(0, 20) + '...' : 'NO TOKEN');
                 
-                // Check for password expiration warnings
-                if (result.password_expiration) {
-                    const expiration = result.password_expiration;
-                    if (expiration.expired) {
-                        this.showPasswordExpirationWarning('Your password has expired. Please change it now.', 'expired');
-                    } else if (expiration.days_remaining <= 7) {
-                        this.showPasswordExpirationWarning(
-                            `Your password expires in ${expiration.days_remaining} days. Please change it soon.`, 
-                            'expiring_soon'
-                        );
-                    }
+                // Show success message
+                this.showSuccess('Login successful!');
+                
+                // Use AuthUIManager to handle the login (NO page redirect)
+                if (window.CoreModule && window.CoreModule.components && window.CoreModule.components.authUI) {
+                    console.log('✅ CoreModule and AuthUIManager available');
+                    // Create user object from response
+                    const user = {
+                        username: username,
+                        email: result.user?.email || '',
+                        role: result.user?.role || 'user',
+                        permissions: result.user?.permissions || []
+                    };
+                    
+                    // Let AuthUIManager handle the UI update - pass the STORED token value
+                    const storedToken = localStorage.getItem('auth_token');
+                    console.log('🔑 Passing stored token to AuthUIManager:', storedToken ? 'YES' : 'NO');
+                    await window.CoreModule.components.authUI.handleUserLogin(user, storedToken, rememberMe);
+                    console.log('✅ Login handled by AuthUIManager with stored token');
+                } else {
+                    console.warn('⚠️ CoreModule not ready, waiting for it...');
+                    // Wait for CoreModule to be ready
+                    window.addEventListener('coreModuleReady', async () => {
+                        if (window.CoreModule && window.CoreModule.components && window.CoreModule.components.authUI) {
+                            const user = {
+                                username: username,
+                                email: result.user?.email || '',
+                                role: result.user?.role || 'user',
+                                permissions: result.user?.permissions || []
+                            };
+                            const storedToken = localStorage.getItem('auth_token');
+                            await window.CoreModule.components.authUI.handleUserLogin(user, storedToken, rememberMe);
+                            console.log('✅ Login handled by AuthUIManager after waiting');
+                        } else {
+                            console.warn('⚠️ AuthUIManager still not available, updating UI manually');
+                            this.updateUIManually();
+                        }
+                    });
                 }
                 
-                // Redirect after short delay (unless password is expired)
-                if (!result.password_expiration?.expired) {
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1000);
-                }
             } else {
+                console.error('❌ Login failed:', result.error);
                 this.showError(result.error || 'Login failed. Please try again.');
             }
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('❌ Login error:', error);
             this.showError('Login failed. Please check your connection and try again.');
         } finally {
             this.setSubmittingState(false);
         }
     }
 
-    /**
-     * Validate form
-     */
-    validateForm() {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
+    updateUIManually() {
+        // Simple fallback UI update if AuthUIManager is not available
+        const authenticatedMenu = document.getElementById('authenticatedMenu');
+        const unauthenticatedMenu = document.getElementById('unauthenticatedMenu');
+        const userDisplayName = document.getElementById('userDisplayName');
         
-        let isValid = true;
-        
-        if (!username) {
-            this.showFieldError('username', 'Username is required');
-            isValid = false;
+        if (authenticatedMenu && unauthenticatedMenu) {
+            authenticatedMenu.style.display = 'block';
+            unauthenticatedMenu.style.display = 'none';
         }
         
-        if (!password) {
-            this.showFieldError('password', 'Password is required');
-            isValid = false;
+        if (userDisplayName) {
+            userDisplayName.textContent = document.getElementById('login_username').value;
         }
         
-        return isValid;
+        console.log('✅ UI updated manually');
     }
 
-    /**
-     * Validate username
-     */
-    validateUsername() {
-        const username = document.getElementById('username').value.trim();
-        const field = document.getElementById('username');
-        
-        if (!username) {
-            this.showFieldError('username', 'Username is required');
-            return false;
-        }
-        
-        if (username.length < 3) {
-            this.showFieldError('username', 'Username must be at least 3 characters');
-            return false;
-        }
-        
-        this.clearFieldError('username');
-        return true;
-    }
-
-    /**
-     * Validate password
-     */
-    validatePassword() {
-        const password = document.getElementById('password').value;
-        const field = document.getElementById('password');
-        
-        if (!password) {
-            this.showFieldError('password', 'Password is required');
-            return false;
-        }
-        
-        if (password.length < 6) {
-            this.showFieldError('password', 'Password must be at least 6 characters');
-            return false;
-        }
-        
-        this.clearFieldError('password');
-        return true;
-    }
-
-    /**
-     * Show field error
-     */
-    showFieldError(fieldName, message) {
-        const field = document.getElementById(fieldName);
-        const errorDiv = document.getElementById(`${fieldName}Error`);
-        
-        if (field) {
-            field.classList.add('is-invalid');
-        }
-        
-        if (errorDiv) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-    }
-
-    /**
-     * Clear field error
-     */
-    clearFieldError(fieldName) {
-        const field = document.getElementById(fieldName);
-        const errorDiv = document.getElementById(`${fieldName}Error`);
-        
-        if (field) {
-            field.classList.remove('is-invalid');
-        }
-        
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-        }
-    }
-
-    /**
-     * Toggle password visibility
-     */
-    togglePasswordVisibility() {
-        const passwordInput = document.getElementById('password');
-        const toggleButton = document.getElementById('passwordToggle');
-        const icon = toggleButton.querySelector('i');
-        
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            icon.className = 'fas fa-eye-slash';
-        } else {
-            passwordInput.type = 'password';
-            icon.className = 'fas fa-eye';
-        }
-    }
-
-    /**
-     * Set submitting state
-     */
     setSubmittingState(submitting) {
         this.isSubmitting = submitting;
-        
-        if (this.submitButton) {
-            this.submitButton.disabled = submitting;
-        }
-        
-        if (this.loadingSpinner) {
-            this.loadingSpinner.style.display = submitting ? 'inline-block' : 'none';
-        }
-        
-        const submitText = document.getElementById('loginText');
-        if (submitText) {
-            submitText.textContent = submitting ? 'Logging in...' : 'Login';
+        const loginBtn = document.getElementById('loginBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const loginText = document.getElementById('loginText');
+
+        if (submitting) {
+            loginBtn.disabled = true;
+            loadingSpinner.style.display = 'inline-block';
+            loginText.style.display = 'none';
+        } else {
+            loginBtn.disabled = false;
+            loadingSpinner.style.display = 'none';
+            loginText.style.display = 'inline';
         }
     }
 
-    /**
-     * Show success message
-     */
     showSuccess(message) {
-        if (this.alertContainer) {
-            this.alertContainer.innerHTML = `
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i> ${message}
-                </div>
-            `;
-        }
+        const successAlert = document.getElementById('successAlert') || this.createAlert('success', message);
+        successAlert.style.display = 'block';
+        successAlert.textContent = message;
     }
 
-    /**
-     * Show error message
-     */
     showError(message) {
-        if (this.alertContainer) {
-            this.alertContainer.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i> ${message}
-                </div>
-            `;
-        }
+        const errorAlert = document.getElementById('errorAlert') || this.createAlert('error', message);
+        errorAlert.style.display = 'block';
+        errorAlert.textContent = message;
     }
 
-    /**
-     * Clear alerts
-     */
+    createAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.id = type === 'success' ? 'successAlert' : 'errorAlert';
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        alertDiv.style.display = 'none';
+        alertDiv.textContent = message;
+        
+        // Insert after the form
+        this.form.parentNode.insertBefore(alertDiv, this.form.nextSibling);
+        return alertDiv;
+    }
+
     clearAlerts() {
-        if (this.alertContainer) {
-            this.alertContainer.innerHTML = '';
-        }
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => alert.style.display = 'none');
     }
 
-    /**
-     * Reset form
-     */
-    reset() {
-        if (this.form) {
-            this.form.reset();
-        }
-        this.clearAlerts();
-        this.clearFieldError('username');
-        this.clearFieldError('password');
-    }
-
-    /**
-     * Destroy component
-     */
     destroy() {
         if (this.form) {
-            this.form.removeEventListener('submit', this.handleSubmit);
+            this.form.removeEventListener('submit', this.handleSubmit.bind(this));
         }
+        console.log('✅ Login form destroyed');
     }
-
-    /**
-     * Show password expiration warning
-     */
-    showPasswordExpirationWarning(message, type = 'expiring_soon') {
-        const warningDiv = document.getElementById('passwordExpirationWarning');
-        const messageSpan = document.getElementById('passwordExpirationMessage');
-        
-        if (warningDiv && messageSpan) {
-            messageSpan.textContent = message;
-            warningDiv.className = `alert alert-${type === 'expired' ? 'danger' : 'warning'}`;
-            warningDiv.style.display = 'block';
-            
-            // Scroll to warning
-            warningDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-} 
+}

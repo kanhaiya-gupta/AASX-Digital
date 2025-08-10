@@ -1,6 +1,7 @@
 /**
  * Authentication Profile Management
  * Handles user profile management, settings, and account operations
+ * CACHE BUST: 2025-08-10-20:07
  */
 
 export default class AuthProfile {
@@ -56,6 +57,12 @@ export default class AuthProfile {
     async init() {
         if (this.isInitialized) return;
         
+        // Check if user is authenticated before initializing
+        if (!this.authCore || !this.authCore.isUserAuthenticated()) {
+            console.log('👤 Skipping profile management initialization - user not authenticated');
+            return;
+        }
+        
         console.log('👤 Initializing Auth Profile Management...');
         
         try {
@@ -65,8 +72,8 @@ export default class AuthProfile {
             // Setup event handlers
             this.setupEventHandlers();
             
-            // Load current user data
-            await this.loadUserProfile();
+            // Load current user data - CACHE BUST: 2025-08-10
+            await this.loadProfileData();
             
             // Setup real-time validation
             this.setupRealTimeValidation();
@@ -387,7 +394,7 @@ export default class AuthProfile {
                 throw new Error('Authentication core not available');
             }
 
-            await authCore.loadUserProfile();
+            await authCore.loadProfileData();
             const user = authCore.getCurrentUser();
             if (user) {
                 this.profileData = user;
@@ -866,6 +873,20 @@ export default class AuthProfile {
      */
     async refreshProfile() {
         await this.loadProfileData();
+    }
+
+    /**
+     * Initialize profile management for newly authenticated user
+     * This method is called after successful login
+     */
+    async initForAuthenticatedUser() {
+        if (this.isInitialized) {
+            console.log('👤 Profile management already initialized');
+            return;
+        }
+        
+        console.log('👤 Initializing profile management for authenticated user...');
+        await this.init();
     }
 
     /**

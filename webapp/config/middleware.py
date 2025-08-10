@@ -81,4 +81,14 @@ def setup_middleware(app: FastAPI) -> None:
     
     # Custom middleware
     app.add_middleware(ForwardedHeadersMiddleware)
-    app.add_middleware(LoggingMiddleware) 
+    app.add_middleware(LoggingMiddleware)
+    
+    # Authentication middleware (should be added last to ensure it runs after other middleware)
+    try:
+        from webapp.core.middleware.auth_middleware import AuthMiddleware
+        app.add_middleware(AuthMiddleware)
+        logger.info("✅ Authentication middleware loaded")
+    except ImportError as e:
+        logger.warning(f"Could not load authentication middleware: {e}")
+    except Exception as e:
+        logger.error(f"Error loading authentication middleware: {e}") 

@@ -6,6 +6,12 @@
 export default class FederatedLearningAggregator {
     constructor() {
         this.isInitialized = false;
+        
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.config = {
             apiBaseUrl: '/api/federated-learning',
             aggregationEnabled: true,
@@ -64,12 +70,65 @@ export default class FederatedLearningAggregator {
     }
 
     /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Federated Learning Aggregator: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Federated Learning Aggregator: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Federated Learning Aggregator: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+
+    /**
      * Initialize the Federated Learning Aggregator
      */
     async init() {
         console.log('🔧 Initializing Federated Learning Aggregator...');
 
         try {
+            // Initialize authentication
+            this.initAuthentication();
+            
             // Load configuration
             await this.loadConfiguration();
 
@@ -98,7 +157,15 @@ export default class FederatedLearningAggregator {
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/aggregator-config`);
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Aggregator: User not authenticated, skipping configuration load');
+                return;
+            }
+            
+            const response = await fetch(`${this.config.apiBaseUrl}/aggregator-config`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const config = await response.json();
                 this.config = { ...this.config, ...config };
@@ -165,11 +232,14 @@ export default class FederatedLearningAggregator {
      */
     async fedAvgAggregate(models, weights = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/aggregate/fedavg`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ models, weights })
             });
 
@@ -199,11 +269,14 @@ export default class FederatedLearningAggregator {
      */
     async fedProxAggregate(models, weights = null, mu = 0.01) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/aggregate/fedprox`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ models, weights, mu })
             });
 
@@ -233,11 +306,14 @@ export default class FederatedLearningAggregator {
      */
     async fedSGDAggregate(gradients, weights = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/aggregate/fedsgd`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ gradients, weights })
             });
 
@@ -267,11 +343,14 @@ export default class FederatedLearningAggregator {
      */
     async scaffoldAggregate(models, weights = null, controlVariates = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/aggregate/scaffold`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ models, weights, controlVariates })
             });
 
@@ -358,11 +437,14 @@ export default class FederatedLearningAggregator {
      */
     async checkConvergence(aggregatedModel, previousModels) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/convergence/check`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ aggregatedModel, previousModels })
             });
 
@@ -386,13 +468,16 @@ export default class FederatedLearningAggregator {
      */
     async compressModel(model, compressionRatio = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const ratio = compressionRatio || this.config.compressionRatio;
             
             const response = await fetch(`${this.config.apiBaseUrl}/compress`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ model, compressionRatio: ratio })
             });
 
@@ -412,11 +497,14 @@ export default class FederatedLearningAggregator {
      */
     async decompressModel(compressedModel) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/decompress`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ compressedModel })
             });
 

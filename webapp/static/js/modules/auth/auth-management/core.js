@@ -1,6 +1,7 @@
 /**
  * Authentication Core Module
  * Handles core authentication functionality, session management, and user state
+ * CACHE BUST: 2025-08-10-20:45
  */
 
 export default class AuthCore {
@@ -76,6 +77,16 @@ export default class AuthCore {
      * Check for existing session
      */
     async checkExistingSession() {
+        // For now, always start in unauthenticated state to prevent tab switching
+        console.log('🔐 Starting in unauthenticated state to prevent automatic tab switching');
+        this.isAuthenticated = false;
+        this.sessionToken = null;
+        
+        // Clear any stored tokens to ensure clean state
+        this.clearStoredToken();
+        
+        // Comment out the original logic for now
+        /*
         const token = this.getStoredToken();
         if (token) {
             try {
@@ -83,8 +94,9 @@ export default class AuthCore {
                 if (isValid) {
                     this.sessionToken = token;
                     this.isAuthenticated = true;
-                    await this.loadUserProfile();
-                    console.log('🔑 Existing session restored');
+                    // Don't automatically load user profile to prevent tab switching
+                    // await this.loadUserProfile();
+                    console.log('🔑 Existing session restored (profile loading deferred)');
                 } else {
                     this.clearStoredToken();
                 }
@@ -93,6 +105,7 @@ export default class AuthCore {
                 this.clearStoredToken();
             }
         }
+        */
     }
 
     /**
@@ -535,5 +548,19 @@ export default class AuthCore {
 
         this.isInitialized = false;
         console.log('🧹 Authentication Core destroyed');
+    }
+    
+    /**
+     * Get AuthUIManager instance
+     */
+    async getAuthUIManager() {
+        try {
+            // Import AuthUIManager dynamically
+            const { AuthUIManager } = await import('./auth-ui-manager.js');
+            return new AuthUIManager();
+        } catch (error) {
+            console.error('❌ Failed to get AuthUIManager:', error);
+            return null;
+        }
     }
 } 

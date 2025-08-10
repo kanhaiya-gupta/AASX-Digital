@@ -7,14 +7,72 @@ import { showAlert } from '/static/js/shared/alerts.js';
 
 export default class TrainingManagementComponent {
     constructor() {
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.federationStatus = 'inactive';
         this.isProcessing = false;
+    }
+    
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Training Management: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Training Management: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Training Management: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
     }
     
     async init() {
         console.log('🔧 Initializing Training Management Component...');
         
         try {
+            // Initialize authentication
+            this.initAuthentication();
+            
             this.setupEventListeners();
             
             console.log('✅ Training Management Component initialized');
@@ -59,9 +117,7 @@ export default class TrainingManagementComponent {
             
             const response = await fetch('/api/federated-learning/federation/start', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     auto_start_cycles: true,
                     cycle_interval: 300
@@ -108,9 +164,7 @@ export default class TrainingManagementComponent {
             
             const response = await fetch('/api/federated-learning/federation/stop', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     save_state: true
                 })
@@ -156,9 +210,7 @@ export default class TrainingManagementComponent {
             
             const response = await fetch('/api/federated-learning/training/cycle', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+                headers: this.getAuthHeaders()
             });
             
             if (response.ok) {

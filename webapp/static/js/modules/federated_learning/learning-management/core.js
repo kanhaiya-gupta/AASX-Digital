@@ -6,6 +6,12 @@
 export default class FederatedLearningCore {
     constructor() {
         this.isInitialized = false;
+        
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.config = {
             apiBaseUrl: '/api/federated-learning',
             maxParticipants: 100,
@@ -67,12 +73,65 @@ export default class FederatedLearningCore {
     }
 
     /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Federated Learning: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Federated Learning: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Federated Learning: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        return headers;
+    }
+
+    /**
      * Initialize the Federated Learning Core
      */
     async init() {
         console.log('🔧 Initializing Federated Learning Core...');
 
         try {
+            // Initialize authentication
+            this.initAuthentication();
+            
             // Load configuration
             await this.loadConfiguration();
 
@@ -106,7 +165,15 @@ export default class FederatedLearningCore {
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/config`);
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning: User not authenticated, skipping configuration load');
+                return;
+            }
+            
+            const response = await fetch(`${this.config.apiBaseUrl}/config`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const config = await response.json();
                 this.config = { ...this.config, ...config };
@@ -121,8 +188,14 @@ export default class FederatedLearningCore {
      */
     async initializeFederationSystem() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/initialize`, {
-                method: 'POST'
+                method: 'POST',
+                headers: this.getAuthHeaders()
             });
             
             if (!response.ok) {
@@ -176,11 +249,14 @@ export default class FederatedLearningCore {
      */
     async createFederation(federationConfig) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/federations`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(federationConfig)
             });
 
@@ -213,13 +289,19 @@ export default class FederatedLearningCore {
      */
     async startFederation(federationId = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const id = federationId || this.federation.id;
             if (!id) {
                 throw new Error('No federation ID provided');
             }
 
             const response = await fetch(`${this.config.apiBaseUrl}/federations/${id}/start`, {
-                method: 'POST'
+                method: 'POST',
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {
@@ -252,13 +334,19 @@ export default class FederatedLearningCore {
      */
     async stopFederation(federationId = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const id = federationId || this.federation.id;
             if (!id) {
                 throw new Error('No federation ID provided');
             }
 
             const response = await fetch(`${this.config.apiBaseUrl}/federations/${id}/stop`, {
-                method: 'POST'
+                method: 'POST',
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {
@@ -291,11 +379,14 @@ export default class FederatedLearningCore {
      */
     async addParticipant(federationId, participantConfig) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/federations/${federationId}/participants`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(participantConfig)
             });
 
@@ -326,8 +417,14 @@ export default class FederatedLearningCore {
      */
     async removeParticipant(federationId, participantId) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/federations/${federationId}/participants/${participantId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {
@@ -355,11 +452,14 @@ export default class FederatedLearningCore {
      */
     async runFederatedRound(federationId, roundConfig = {}) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/federations/${federationId}/rounds`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(roundConfig)
             });
 
@@ -394,12 +494,19 @@ export default class FederatedLearningCore {
      */
     async getFederationStatus(federationId = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const id = federationId || this.federation.id;
             if (!id) {
                 throw new Error('No federation ID provided');
             }
 
-            const response = await fetch(`${this.config.apiBaseUrl}/federations/${id}/status`);
+            const response = await fetch(`${this.config.apiBaseUrl}/federations/${id}/status`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const status = await response.json();
                 
@@ -421,12 +528,19 @@ export default class FederatedLearningCore {
      */
     async getFederationMetrics(federationId = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
             const id = federationId || this.federation.id;
             if (!id) {
                 throw new Error('No federation ID provided');
             }
 
-            const response = await fetch(`${this.config.apiBaseUrl}/federations/${id}/metrics`);
+            const response = await fetch(`${this.config.apiBaseUrl}/federations/${id}/metrics`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const metrics = await response.json();
                 
@@ -448,7 +562,14 @@ export default class FederatedLearningCore {
      */
     async getParticipantPerformance(federationId, participantId) {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/federations/${federationId}/participants/${participantId}/performance`);
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
+            const response = await fetch(`${this.config.apiBaseUrl}/federations/${federationId}/participants/${participantId}/performance`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 return await response.json();
             } else {
@@ -465,7 +586,14 @@ export default class FederatedLearningCore {
      */
     async getCrossParticipantInsights(federationId) {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/federations/${federationId}/insights`);
+            // Check authentication
+            if (!this.isAuthenticated) {
+                throw new Error('User not authenticated');
+            }
+            
+            const response = await fetch(`${this.config.apiBaseUrl}/federations/${federationId}/insights`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 return await response.json();
             } else {
@@ -736,6 +864,12 @@ export default class FederatedLearningCore {
      */
     async refreshData() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning: User not authenticated, skipping data refresh');
+                return;
+            }
+            
             // Refresh federation status
             if (this.federation.id) {
                 await this.getFederationStatus();

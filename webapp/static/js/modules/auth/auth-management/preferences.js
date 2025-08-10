@@ -1,6 +1,7 @@
 /**
  * User Preferences Management Module
  * Handles user preferences UI and API interactions
+ * CACHE BUST: 2025-08-10-20:07
  */
 
 export default class UserPreferences {

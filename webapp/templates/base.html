@@ -103,20 +103,20 @@
                                         <!-- Core Processing -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Core Processing</h6>
-                                            <a class="dropdown-item" href="/aasx-etl">
+                                            <a class="dropdown-item" href="/aasx-etl" data-module="aasx-etl">
                                                 <i class="fas fa-cogs text-primary"></i> ETL Pipeline
                                             </a>
-                                            <a class="dropdown-item" href="/twin-registry">
+                                            <a class="dropdown-item" href="/twin-registry" data-module="twin-registry">
                                                 <i class="fas fa-sync text-success"></i> Twin Registry
                                             </a>
                                         </div>
                                         <!-- Intelligence -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Intelligence</h6>
-                                            <a class="dropdown-item" href="/ai-rag">
+                                            <a class="dropdown-item" href="/ai-rag" data-module="ai-rag">
                                                 <i class="fas fa-robot text-info"></i> AI/RAG System
                                             </a>
-                                            <a class="dropdown-item" href="/kg-neo4j">
+                                            <a class="dropdown-item" href="/kg-neo4j" data-module="kg-neo4j">
                                                 <i class="fas fa-project-diagram text-warning"></i> Knowledge Graph
                                             </a>
                                         </div>
@@ -125,20 +125,20 @@
                                         <!-- Advanced Features -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Advanced Features</h6>
-                                            <a class="dropdown-item" href="/federated-learning">
+                                            <a class="dropdown-item" href="/federated-learning" data-module="federated-learning">
                                                 <i class="fas fa-network-wired text-secondary"></i> Federated Learning
                                             </a>
-                                            <a class="dropdown-item" href="/physics-modeling">
+                                            <a class="dropdown-item" href="/physics-modeling" data-module="physics-modeling">
                                                 <i class="fas fa-atom text-dark"></i> Physics Modeling
                                             </a>
                                         </div>
                                         <!-- Management -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Management</h6>
-                                            <a class="dropdown-item" href="/certificate-manager">
+                                            <a class="dropdown-item" href="/certificate-manager" data-module="certificate-manager">
                                                 <i class="fas fa-certificate text-danger"></i> Certificate Manager
                                             </a>
-                                            <a class="dropdown-item" href="/auth">
+                                            <a class="dropdown-item" href="/api/auth/" data-module="auth">
                                                 <i class="fas fa-users-cog text-muted"></i> User Management
                                             </a>
                                         </div>
@@ -172,17 +172,17 @@
                             <i class="fas fa-bolt"></i> Quick Actions
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/aasx-etl">
+                            <li><a class="dropdown-item" href="/aasx-etl" data-quick-action="aasx-etl">
                                 <i class="fas fa-upload text-primary"></i> Upload AASX
                             </a></li>
-                            <li><a class="dropdown-item" href="/twin-registry">
+                            <li><a class="dropdown-item" href="/twin-registry" data-quick-action="twin-registry">
                                 <i class="fas fa-plus text-success"></i> Create Twin
                             </a></li>
-                            <li><a class="dropdown-item" href="/ai-rag">
+                            <li><a class="dropdown-item" href="/ai-rag" data-quick-action="ai-rag">
                                 <i class="fas fa-search text-info"></i> Analyze File
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/certificate-manager">
+                            <li><a class="dropdown-item" href="/certificate-manager" data-quick-action="certificate-manager">
                                 <i class="fas fa-certificate text-warning"></i> Generate Certificate
                             </a></li>
                         </ul>
@@ -248,7 +248,7 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <!-- Unauthenticated State -->
-                            <div id="unauthenticatedMenu">
+                            <div id="unauthenticatedMenu" data-auth-optional>
                                 <li><h6 class="dropdown-header">Account</h6></li>
                                 <li><a class="dropdown-item" href="/api/auth/">
                                     <i class="fas fa-sign-in-alt me-2"></i>Login
@@ -259,7 +259,7 @@
                             </div>
                             
                             <!-- Authenticated State -->
-                            <div id="authenticatedMenu" style="display: none;">
+                            <div id="authenticatedMenu" style="display: none;" data-auth-required>
                                 <li><h6 class="dropdown-header">Welcome back, <span id="userDisplayName">User</span>!</h6></li>
                                 <li><a class="dropdown-item" href="/api/auth/">
                                     <i class="fas fa-user"></i> Profile
@@ -268,7 +268,7 @@
                                     <i class="fas fa-users-cog"></i> User Management
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <li><a class="dropdown-item" href="#" id="logoutButton">
                                     <i class="fas fa-sign-out-alt"></i> Logout
                                 </a></li>
                             </div>

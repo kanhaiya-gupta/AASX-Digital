@@ -2,12 +2,21 @@
 
 {% block title %}Authentication - AASX Digital Twin Analytics Framework{% endblock %}
 
+<!-- CACHE BUST: 2025-08-10-21:22 -->
+
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', path='css/auth.css') }}">
 {% endblock %}
 
-{% block extra_js %}
-<script type="module" src="{{ url_for('static', path='js/modules/auth/index.js') }}"></script>
+{% block extra_scripts %}
+<!-- Test script to verify static file serving -->
+<script>
+    console.log('🔍 Test script loaded successfully');
+    console.log('🔍 Testing static file path resolution...');
+</script>
+
+        <!-- Load the authentication module -->
+                 <script type="module" src="{{ url_for('static', path='js/modules/auth/index-auth.js') }}?v=2025-08-10-21:22"></script>
 <script>
     // Pass current user data to JavaScript
     window.currentUser = {% if current_user %}{{ current_user | tojson | safe }}{% else %}null{% endif %};
@@ -15,21 +24,45 @@
 {% endblock %}
 
 {% block content %}
+<!-- Auth-specific UI elements for AuthUIManager -->
+<div id="authAuthenticatedMenu" style="display: none;">
+    <div class="alert alert-success" role="alert">
+        <i class="fas fa-check-circle me-2"></i>
+        Welcome back, <span id="authUserDisplayName">User</span>!
+        <button class="btn btn-sm btn-outline-success ms-2" onclick="window.location.href='/'">
+            <i class="fas fa-home me-1"></i>Go to Dashboard
+        </button>
+        <button class="btn btn-sm btn-outline-danger ms-2" onclick="logoutUser()">
+            <i class="fas fa-sign-out-alt me-1"></i>Logout
+        </button>
+    </div>
+</div>
+
+<div id="authUnauthenticatedMenu">
+    <!-- This will be hidden when user is authenticated -->
+</div>
+
+<!-- Admin elements -->
+<div id="authAdminUsersLink" style="display: none;">
+    <a href="#" class="btn btn-outline-primary">
+        <i class="fas fa-users-cog me-1"></i>User Management
+    </a>
+</div>
 <!-- Navigation Tabs -->
 <div class="auth-container-fluid container-fluid mb-4">
     <div class="auth-row row">
         <div class="auth-col-12 col-12">
             <ul class="auth-nav-tabs nav nav-tabs" id="authTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="auth-nav-link nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
-                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="auth-nav-link nav-link" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">
-                        <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </button>
-                </li>
+                                 <li class="nav-item" role="presentation">
+                     <button class="auth-nav-link nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                     </button>
+                 </li>
+                 <li class="nav-item" role="presentation">
+                     <button class="auth-nav-link nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">
+                         <i class="fas fa-sign-in-alt me-2"></i>Login
+                     </button>
+                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="auth-nav-link nav-link" id="signup-tab" data-bs-toggle="tab" data-bs-target="#signup" type="button" role="tab">
                         <i class="fas fa-user-plus me-2"></i>Sign Up
@@ -68,7 +101,7 @@
 <!-- Tab Content -->
 <div class="auth-tab-content tab-content" id="authTabContent">
     <!-- Dashboard Tab -->
-    <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+    <div class="tab-pane fade" id="dashboard" role="tabpanel">
         <div class="auth-container-fluid container-fluid">
             <!-- Page Header -->
             <div class="auth-row row mb-4">
@@ -169,7 +202,7 @@
     </div>
 
     <!-- Login Tab -->
-    <div class="tab-pane fade" id="login" role="tabpanel">
+    <div class="tab-pane fade show active" id="login" role="tabpanel">
         {% include 'auth/components/login_section.html' %}
     </div>
 

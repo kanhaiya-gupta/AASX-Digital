@@ -64,34 +64,142 @@ async def auth_dashboard(request: Request):
         user = None
         try:
             user = await get_user_from_request(request)
-        except:
-            pass  # User not authenticated, which is fine for the dashboard
+            logger.info(f"User from request: {user}")
+        except Exception as e:
+            logger.warning(f"Could not get user from request: {e}")
+            user = None  # User not authenticated, which is fine for the dashboard
         
         # Get all users for admin section (if user is admin)
         users = []
-        if user and has_permission(user["role"], "admin"):
-            users = auth_db.get_all_users()
+        try:
+            if user and has_permission(user["role"], "admin"):
+                users = auth_db.get_all_users()
+                logger.info(f"Retrieved {len(users)} users for admin")
+        except Exception as e:
+            logger.warning(f"Could not get users for admin section: {e}")
+            users = []
         
         # Get all active organizations for signup/profile forms
-        organizations = auth_db.get_active_organizations()
+        organizations = []
+        try:
+            organizations = auth_db.get_active_organizations()
+            logger.info(f"Retrieved {len(organizations)} active organizations")
+        except Exception as e:
+            logger.warning(f"Could not get active organizations: {e}")
+            organizations = []
         
-        return request.app.state.templates.TemplateResponse(
-            "auth/index.html",
-            {
-                "request": request, 
-                "title": "Authentication - AASX Digital Twin Analytics Framework",
-                "current_user": user,
-                "users": users,
-                "organizations": organizations
-            }
-        )
+        # Prepare template context with safe defaults
+        template_context = {
+            "request": request, 
+            "title": "Authentication - AASX Digital Twin Analytics Framework",
+            "current_user": user or {},
+            "users": users or [],
+            "organizations": organizations or []
+        }
+        
+        logger.info(f"Template context prepared: {template_context.keys()}")
+        
+        # Try to render template
+        try:
+            return request.app.state.templates.TemplateResponse(
+                "auth/index.html",
+                template_context
+            )
+        except Exception as template_error:
+            logger.error(f"Template rendering failed: {template_error}")
+            # Try fallback template
+            try:
+                return request.app.state.templates.TemplateResponse(
+                    "auth/index.html",
+                    {
+                        "request": request, 
+                        "title": "Authentication - AASX Digital Twin Analytics Framework",
+                        "current_user": {},
+                        "users": [],
+                        "organizations": [],
+                        "error": "Some features are temporarily unavailable"
+                    }
+                )
+            except:
+                # If even the error template fails, return a simple HTML response
+                return HTMLResponse(content="""
+                <!DOCTYPE html>
+                <html>
+                <head><title>Authentication</title></head>
+                <body>
+                    <h1>Authentication System</h1>
+                    <p>Welcome to the AASX Digital Twin Analytics Framework</p>
+                    <p><a href="/api/auth/login">Login</a> | <a href="/api/auth/signup">Sign Up</a></p>
+                    <p><a href="/">Back to Home</a></p>
+                </body>
+                </html>
+                """)
+                
     except Exception as e:
         logger.error(f"Error rendering auth dashboard: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        # Return a simple error page instead of raising an exception
+        try:
+            return request.app.state.templates.TemplateResponse(
+                "auth/index.html",
+                {
+                    "request": request, 
+                    "title": "Authentication - AASX Digital Twin Analytics Framework",
+                    "current_user": {},
+                    "users": [],
+                    "organizations": [],
+                    "error": "Some features are temporarily unavailable"
+                }
+            )
+        except:
+            # If even the error template fails, return a simple HTML response
+            return HTMLResponse(content="""
+            <!DOCTYPE html>
+            <html>
+            <head><title>Authentication</title></head>
+            <body>
+                <h1>Authentication System</h1>
+                <p>Welcome to the AASX Digital Twin Analytics Framework</p>
+                <p><a href="/api/auth/login">Login</a> | <a href="/api/auth/signup">Sign Up</a></p>
+                <p><a href="/">Back to Home</a></p>
+            </body>
+            </html>
+            """)
 
 # ============================================================================
 # API ROUTES (JSON responses)
 # ============================================================================
+
+@router.get("/config")
+async def get_auth_config(request: Request):
+    """Get authentication configuration for the frontend"""
+    try:
+        # Return basic auth configuration
+        config = {
+            "sessionTimeoutMinutes": 30,
+            "autoRefreshIntervalMinutes": 5,
+            "maxLoginAttempts": 5,
+            "lockoutDurationMinutes": 15,
+            "passwordMinLength": 8,
+            "requireMFA": False,
+            "socialLoginEnabled": False,
+            "features": {
+                "mfa": True,
+                "social_login": False,
+                "password_reset": True,
+                "profile_verification": True,
+                "audit_logs": True,
+                "rate_limiting": True
+            }
+        }
+        
+        return {
+            "success": True,
+            "config": config
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting auth config: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.post("/login")
 async def login(login_data: UserLogin, request: Request):

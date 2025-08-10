@@ -7,6 +7,11 @@ import { showAlert } from '/static/js/shared/alerts.js';
 
 export default class PrivacySecurityComponent {
     constructor() {
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.privacyData = {
             privacy_score: 95.2,
             security_status: 'secure',
@@ -25,10 +30,59 @@ export default class PrivacySecurityComponent {
         this.updateInterval = null;
     }
     
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Privacy & Security: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Privacy & Security: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Privacy & Security: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+    
     async init() {
         console.log('🔧 Initializing Privacy & Security Component...');
         
         try {
+            // Initialize authentication
+            this.initAuthentication();
             await this.loadPrivacySecurity();
             this.setupEventListeners();
             this.startAutoRefresh();
@@ -42,10 +96,18 @@ export default class PrivacySecurityComponent {
     
     async loadPrivacySecurity() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Privacy & Security: User not authenticated, skipping privacy data load');
+                return;
+            }
+            
             console.log('📊 Loading privacy and security data...');
             
             // Simulate API call - replace with actual API call
-            const response = await fetch('/api/federated-learning/privacy/status');
+            const response = await fetch('/api/federated-learning/privacy/status', {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const result = await response.json();
                 if (result.status === 'success' && result.data) {

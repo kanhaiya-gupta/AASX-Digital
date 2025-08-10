@@ -8,11 +8,148 @@ import { showSuccess, showError, showWarning } from '/static/js/shared/alerts.js
 
 export class DataManager {
     constructor() {
+        this.isInitialized = false;
+        this.isProcessing = false;
         this.projects = [];
         this.useCases = [];
-        this.categories = {};
-        this.selectedUseCase = null;
-        this.autoRefreshInterval = null;
+        this.currentProject = null;
+        this.currentUseCase = null;
+        this.currentFile = null;
+        this.fileList = [];
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
+        // Initialize authentication
+        this.initAuthentication();
+        
+        // Initialize other components
+        this.initComponents();
+    }
+
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            if (typeof getCurrentUser === 'function') {
+                this.currentUser = getCurrentUser();
+                if (this.currentUser) {
+                    this.isAuthenticated = true;
+                    this.authToken = this.getAuthToken();
+                    console.log('🔐 User authenticated:', this.currentUser.username);
+                    this.showUserInfo();
+                } else {
+                    console.log('🔐 User not authenticated');
+                    this.isAuthenticated = false;
+                }
+            } else {
+                console.warn('⚠️ getCurrentUser function not available');
+                this.isAuthenticated = false;
+            }
+        } catch (error) {
+            console.error('❌ Authentication initialization error:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        try {
+            // Try to get token from localStorage/sessionStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Could not get auth token:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Show user information
+     */
+    showUserInfo() {
+        if (this.currentUser && this.currentUser.username) {
+            console.log('👤 Current user:', this.currentUser.username);
+            
+            // Update the user display name in the navigation
+            const userDisplayName = document.getElementById('userDisplayName');
+            if (userDisplayName) {
+                userDisplayName.textContent = this.currentUser.username;
+                console.log('✅ Updated user display name in navigation');
+            }
+            
+            // Show authenticated menu and hide unauthenticated menu
+            const authenticatedMenu = document.getElementById('authenticatedMenu');
+            const unauthenticatedMenu = document.getElementById('unauthenticatedMenu');
+            
+            if (authenticatedMenu) {
+                authenticatedMenu.style.display = 'block';
+                console.log('✅ Showed authenticated menu');
+            }
+            
+            if (unauthenticatedMenu) {
+                unauthenticatedMenu.style.display = 'none';
+                console.log('✅ Hid unauthenticated menu');
+            }
+            
+            // Show admin users link if user is super admin
+            if (this.currentUser.role === 'super_admin') {
+                const adminUsersLink = document.getElementById('adminUsersLink');
+                if (adminUsersLink) {
+                    adminUsersLink.style.display = 'block';
+                    console.log('✅ Showed admin users link for super admin');
+                }
+            }
+            
+            // Try to display username in other UI elements
+            const userInfoElement = document.getElementById('user-info') || 
+                                  document.querySelector('.user-info') ||
+                                  document.querySelector('[data-user-info]');
+            
+            if (userInfoElement) {
+                userInfoElement.textContent = `Welcome, ${this.currentUser.username}`;
+                userInfoElement.style.display = 'block';
+            }
+        } else {
+            // User not authenticated - show unauthenticated menu and hide authenticated menu
+            const authenticatedMenu = document.getElementById('authenticatedMenu');
+            const unauthenticatedMenu = document.getElementById('unauthenticatedMenu');
+            
+            if (authenticatedMenu) {
+                authenticatedMenu.style.display = 'none';
+                console.log('✅ Hid authenticated menu');
+            }
+            
+            if (unauthenticatedMenu) {
+                unauthenticatedMenu.style.display = 'block';
+                console.log('✅ Showed unauthenticated menu');
+            }
+            
+            // Hide admin users link
+            const adminUsersLink = document.getElementById('adminUsersLink');
+            if (adminUsersLink) {
+                adminUsersLink.style.display = 'none';
+                console.log('✅ Hid admin users link');
+            }
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
     }
 
     async init() {
@@ -187,11 +324,22 @@ export class DataManager {
     async loadProjects() {
         console.log('🔄 Loading projects and use cases...');
         
+        // Check if user is authenticated
+        if (!this.isAuthenticated) {
+            console.log('🔐 User not authenticated, redirecting to login');
+            this.showAuthenticationRequired();
+            return;
+        }
+        
         try {
-            // Load both projects and use cases
+            // Load both projects and use cases with authentication
             const [projectsResponse, useCasesResponse] = await Promise.all([
-                fetch('/api/aasx-etl/projects'),
-                fetch('/api/aasx-etl/use-cases')
+                fetch('/api/aasx-etl/projects', {
+                    headers: this.getAuthHeaders()
+                }),
+                fetch('/api/aasx-etl/use-cases', {
+                    headers: this.getAuthHeaders()
+                })
             ]);
             
             console.log('📡 Projects response status:', projectsResponse.status);
@@ -222,7 +370,19 @@ export class DataManager {
                     'Projects API': projectsResponse.status + ' ' + projectsResponse.statusText,
                     'Use Cases API': useCasesResponse.status + ' ' + useCasesResponse.statusText
                 });
-                this.showDatabaseError('Failed to load data from database. Please ensure the database is properly initialized.');
+                
+                // Handle different error types appropriately
+                if (projectsResponse.status === 401 || useCasesResponse.status === 401) {
+                    // User is not authenticated - show login prompt instead of database error
+                    console.log('🔐 Authentication required - user needs to login');
+                    this.showAuthenticationRequired();
+                } else if (projectsResponse.status >= 500 || useCasesResponse.status >= 500) {
+                    // Server/database error
+                    this.showDatabaseError('Failed to load data from database. Please ensure the database is properly initialized.');
+                } else {
+                    // Other client errors (403, 404, etc.)
+                    this.showErrorMessage('Failed to load data. Please check your permissions and try again.');
+                }
             }
             
         } catch (error) {
@@ -252,7 +412,8 @@ export class DataManager {
     async refreshAndSync() {
         try {
             const response = await fetch('/api/aasx-etl/projects/sync', {
-                method: 'POST'
+                method: 'POST',
+                headers: this.getAuthHeaders()
             });
             
             if (response.ok) {
@@ -306,6 +467,25 @@ export class DataManager {
             console.error('❌ Database Error:', message);
         }
     }
+    
+    // Authentication required handler
+    showAuthenticationRequired() {
+        console.log('🔐 Showing authentication required message');
+        
+        // Show a user-friendly message about authentication
+        if (typeof showWarning === 'function') {
+            showWarning('Please log in to access this data. You will be redirected to the login page.');
+        } else {
+            console.warn('⚠️ Authentication required - please log in');
+        }
+        
+        // Optionally redirect to login page after a short delay
+        setTimeout(() => {
+            if (window.location.pathname !== '/auth') {
+                window.location.href = '/api/auth/';
+            }
+        }, 2000);
+    }
 
     // Update stats with fallback values
     async updateStatsWithFallback() {
@@ -331,7 +511,9 @@ export class DataManager {
     // Update stats from API
     async updateStats() {
         try {
-            const response = await fetch('/api/aasx-etl/stats');
+            const response = await fetch('/api/aasx-etl/stats', {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const stats = await response.json();
                 
@@ -344,7 +526,20 @@ export class DataManager {
                 return stats;
             } else {
                 console.error('Stats API failed:', response.status, response.statusText);
-                this.showDatabaseError('Failed to load statistics from database');
+                
+                // Handle different error types appropriately
+                if (response.status === 401) {
+                    // User is not authenticated - don't show database error
+                    console.log('🔐 Stats API requires authentication');
+                    return this.updateStatsWithFallback();
+                } else if (response.status >= 500) {
+                    // Server/database error
+                    this.showDatabaseError('Failed to load statistics from database');
+                } else {
+                    // Other client errors (403, 404, etc.)
+                    console.warn('Stats API client error:', response.status, response.statusText);
+                }
+                
                 return this.updateStatsWithFallback();
             }
         } catch (error) {
@@ -378,7 +573,9 @@ export class DataManager {
             try {
                 // Load projects for each use case using the same API as dropdown manager
                 console.log(`🔍 Data Manager: Loading projects for use case ${useCase.id} (${useCase.name})`);
-                const response = await fetch(`/api/aasx-etl/use-cases/${useCase.id}/projects`);
+                const response = await fetch(`/api/aasx-etl/use-cases/${useCase.id}/projects`, {
+                    headers: this.getAuthHeaders()
+                });
                 if (response.ok) {
                     const projects = await response.json();
                     console.log(`📁 Data Manager: Raw projects response for ${useCase.name}:`, projects);

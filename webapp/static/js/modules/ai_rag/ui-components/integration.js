@@ -10,6 +10,65 @@ let projectData = {};
 let selectedProject = null;
 let selectedTwin = null;
 
+// Authentication variables
+let isAuthenticated = false;
+let currentUser = null;
+let authToken = null;
+
+/**
+ * Initialize authentication
+ */
+function initAuthentication() {
+    try {
+        // Check if user is authenticated
+        if (typeof getCurrentUser === 'function') {
+            currentUser = getCurrentUser();
+            if (currentUser) {
+                isAuthenticated = true;
+                authToken = getAuthToken();
+                console.log('🔐 Integration: User authenticated:', currentUser.username);
+            } else {
+                console.log('🔐 Integration: User not authenticated');
+                isAuthenticated = false;
+            }
+        } else {
+            console.warn('⚠️ Integration: getCurrentUser function not available');
+            isAuthenticated = false;
+        }
+    } catch (error) {
+        console.error('❌ Integration: Authentication initialization error:', error);
+        isAuthenticated = false;
+    }
+}
+
+/**
+ * Get authentication token
+ */
+function getAuthToken() {
+    try {
+        // Try to get token from localStorage/sessionStorage
+        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    } catch (error) {
+        console.warn('⚠️ Integration: Could not get auth token:', error);
+        return null;
+    }
+}
+
+/**
+ * Get authentication headers for API calls
+ */
+function getAuthHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    
+    return headers;
+}
+
 /**
  * Initialize integration module
  */
@@ -17,6 +76,9 @@ export async function initIntegration() {
     console.log('🔍 Integration Module: Initializing...');
     
     try {
+        // Initialize authentication
+        initAuthentication();
+        
         // Load ETL pipeline status
         await loadETLStatus();
         
@@ -105,7 +167,9 @@ export async function loadETLStatus() {
     console.log('🔄 Integration Module: Loading ETL status...');
     
     try {
-        const response = await fetch('/api/ai-rag/etl/status');
+        const response = await fetch('/api/ai-rag/etl/status', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Integration Module: ETL status received:', data);
@@ -203,7 +267,9 @@ export async function loadDigitalTwinData() {
     
     try {
         // Use Twin Registry API instead of AI/RAG endpoint
-        const response = await fetch('/api/twin-registry/twins');
+        const response = await fetch('/api/twin-registry/twins', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Integration Module: Digital twin data received:', data);
@@ -299,7 +365,9 @@ export async function loadProjectData() {
     
     try {
         // Use AASX API instead of AI/RAG endpoint
-        const response = await fetch('/api/aasx/projects');
+        const response = await fetch('/api/aasx/projects', {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Integration Module: Project data received:', data);
@@ -419,7 +487,9 @@ async function loadProjectDetails(projectId) {
     console.log('🔍 Integration Module: Loading project details for:', projectId);
     
     try {
-        const response = await fetch(`/ai-rag/project/${projectId}`);
+        const response = await fetch(`/ai-rag/project/${projectId}`, {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Integration Module: Project details received:', data);
@@ -476,7 +546,9 @@ async function loadTwinDetails(twinId) {
     console.log('🔍 Integration Module: Loading twin details for:', twinId);
     
     try {
-        const response = await fetch(`/ai-rag/twin/${twinId}`);
+        const response = await fetch(`/ai-rag/twin/${twinId}`, {
+            headers: getAuthHeaders()
+        });
         const data = await response.json();
         
         console.log('✅ Integration Module: Twin details received:', data);

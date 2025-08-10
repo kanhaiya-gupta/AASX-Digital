@@ -722,4 +722,56 @@
 .permission-badge:hover {
     background: rgba(30, 60, 114, 0.2);
     transform: scale(1.05);
+}
+
+/* Authentication UI State Management */
+#userTab .fa-user-check {
+    color: #28a745 !important;
+    transition: color 0.3s ease;
+}
+
+#userTab .fa-user-circle {
+    color: #6c757d !important;
+    transition: color 0.3s ease;
+}
+
+#authenticatedMenu,
+#unauthenticatedMenu {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#authenticatedMenu[style*="display: none"],
+#unauthenticatedMenu[style*="display: none"] {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+#authenticatedMenu:not([style*="display: none"]),
+#unauthenticatedMenu:not([style*="display: none"]) {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* User profile link styles */
+#authenticatedMenu a[href="/api/auth/"] {
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+#authenticatedMenu a[href="/api/auth/"]:hover {
+    color: #007bff;
+    transform: translateX(5px);
+}
+
+/* Logout button styles */
+#logoutButton {
+    color: #dc3545 !important;
+    transition: all 0.2s ease;
+}
+
+#logoutButton:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
+    transform: translateX(5px);
 } 

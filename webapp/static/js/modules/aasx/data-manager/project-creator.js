@@ -10,6 +10,9 @@ class ProjectCreator {
         this.currentCreationType = null; // 'existing' or 'new'
         this.useCases = [];
         this.isInitialized = false;
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
         this.init();
     }
 
@@ -17,6 +20,9 @@ class ProjectCreator {
         if (this.isInitialized) return;
         
         console.log('🚀 Project Creator initializing...');
+        
+        // Initialize authentication
+        this.initAuthentication();
         
         // Check if modal elements exist
         if ($('#projectCreationModal').length === 0) {
@@ -40,6 +46,60 @@ class ProjectCreator {
         this.loadUseCases();
         this.isInitialized = true;
         console.log('✅ Project Creator initialized successfully');
+    }
+
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            if (typeof getCurrentUser === 'function') {
+                this.currentUser = getCurrentUser();
+                if (this.currentUser) {
+                    this.isAuthenticated = true;
+                    this.authToken = this.getAuthToken();
+                    console.log('🔐 Project Creator: User authenticated:', this.currentUser.username);
+                } else {
+                    console.log('🔐 Project Creator: User not authenticated');
+                    this.isAuthenticated = false;
+                }
+            } else {
+                console.warn('⚠️ Project Creator: getCurrentUser function not available');
+                this.isAuthenticated = false;
+            }
+        } catch (error) {
+            console.error('❌ Project Creator: Authentication initialization error:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        try {
+            // Try to get token from localStorage/sessionStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Project Creator: Could not get auth token:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
     }
 
     setupEventListeners() {
@@ -104,7 +164,16 @@ class ProjectCreator {
     async loadUseCases() {
         try {
             console.log('📋 Loading use cases for project creation...');
-            const response = await fetch('/api/aasx-etl/use-cases');
+            
+            // Check if user is authenticated
+            if (!this.isAuthenticated) {
+                console.log('🔐 Project Creator: User not authenticated, cannot load use cases');
+                return;
+            }
+            
+            const response = await fetch('/api/aasx-etl/use-cases', {
+                headers: this.getAuthHeaders()
+            });
             
             if (response.ok) {
                 this.useCases = await response.json();
@@ -227,9 +296,7 @@ class ProjectCreator {
 
         const response = await fetch('/api/aasx-etl/projects', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getAuthHeaders(),
             body: JSON.stringify(projectData)
         });
 
@@ -286,9 +353,7 @@ class ProjectCreator {
         // Step 1: Create use case
         const useCaseResponse = await fetch('/api/aasx-etl/use-cases', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getAuthHeaders(),
             body: JSON.stringify(useCaseData)
         });
 
@@ -307,9 +372,7 @@ class ProjectCreator {
 
         const projectResponse = await fetch('/api/aasx-etl/projects', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: this.getAuthHeaders(),
             body: JSON.stringify(projectData)
         });
 

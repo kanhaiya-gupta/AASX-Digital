@@ -9,18 +9,21 @@ export default class TwinRegistryCore {
         this.registryData = [];
         this.twinCache = new Map();
         this.registrationQueue = [];
-                    this.config = {
-                apiBaseUrl: '/api/twin-registry',
-                endpoints: {
-                    twins: '/api/twin-registry/twins',
-                    register: '/api/twin-registry/twins',
-                    update: '/api/twin-registry/twins',
-                    delete: '/api/twin-registry/twins',
-                    search: '/api/twin-registry/twins/search',
-                    status: '/api/twin-registry/status',
-                    health: '/api/twin-registry/health',
-                    performance: '/api/twin-registry/twins/statistics'
-                },
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        this.config = {
+            apiBaseUrl: '/api/twin-registry',
+            endpoints: {
+                twins: '/api/twin-registry/twins',
+                register: '/api/twin-registry/twins',
+                update: '/api/twin-registry/twins',
+                delete: '/api/twin-registry/twins',
+                search: '/api/twin-registry/twins/search',
+                status: '/api/twin-registry/status',
+                health: '/api/twin-registry/health',
+                performance: '/api/twin-registry/twins/statistics'
+            },
             refreshInterval: 30000, // 30 seconds
             maxRetries: 3,
             retryDelay: 1000
@@ -36,6 +39,9 @@ export default class TwinRegistryCore {
         console.log('🔧 Initializing Twin Registry Core...');
 
         try {
+            // Initialize authentication
+            this.initAuthentication();
+
             // Load configuration
             await this.loadConfiguration();
 
@@ -58,11 +64,67 @@ export default class TwinRegistryCore {
     }
 
     /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            if (typeof getCurrentUser === 'function') {
+                this.currentUser = getCurrentUser();
+                if (this.currentUser) {
+                    this.isAuthenticated = true;
+                    this.authToken = this.getAuthToken();
+                    console.log('🔐 Twin Registry: User authenticated:', this.currentUser.username);
+                } else {
+                    console.log('🔐 Twin Registry: User not authenticated');
+                    this.isAuthenticated = false;
+                }
+            } else {
+                console.warn('⚠️ Twin Registry: getCurrentUser function not available');
+                this.isAuthenticated = false;
+            }
+        } catch (error) {
+            console.error('❌ Twin Registry: Authentication initialization error:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        try {
+            // Try to get token from localStorage/sessionStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Twin Registry: Could not get auth token:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
+    }
+
+    /**
      * Load registry configuration
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(this.config.endpoints.status);
+            const response = await fetch(this.config.endpoints.status, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const status = await response.json();
                 // Use status data to update config if needed
@@ -78,7 +140,9 @@ export default class TwinRegistryCore {
      */
     async loadRegistryData() {
         try {
-            const response = await fetch(this.config.endpoints.twins);
+            const response = await fetch(this.config.endpoints.twins, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const data = await response.json();
                 this.registryData = data.twins || [];
@@ -123,9 +187,7 @@ export default class TwinRegistryCore {
 
             const response = await fetch(this.config.endpoints.register, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(twinData)
             });
 
@@ -161,9 +223,7 @@ export default class TwinRegistryCore {
 
             const response = await fetch(`${this.config.endpoints.update}/${twinId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(updateData)
             });
 
@@ -203,7 +263,8 @@ export default class TwinRegistryCore {
             console.log('🗑️ Deleting twin:', twinId);
 
             const response = await fetch(`${this.config.endpoints.delete}/${twinId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
             });
 
             const result = await response.json();
@@ -237,9 +298,7 @@ export default class TwinRegistryCore {
         try {
             const response = await fetch(this.config.endpoints.search, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {
@@ -377,7 +436,9 @@ export default class TwinRegistryCore {
      */
     async getRegistryStatus() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/status`);
+            const response = await fetch(`${this.config.apiBaseUrl}/status`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 return await response.json();
             }

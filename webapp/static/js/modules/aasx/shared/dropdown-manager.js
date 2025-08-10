@@ -13,6 +13,9 @@ export class DropdownManager {
         this.currentUseCaseId = null;
         this.currentProjectId = null;
         this.isInitialized = false;
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     async init() {
@@ -22,10 +25,68 @@ export class DropdownManager {
         }
         
         console.log('🔄 Dropdown Manager initializing...');
+        
+        // Initialize authentication
+        this.initAuthentication();
+        
         await this.loadUseCases();
         this.setupEventListeners();
         this.isInitialized = true;
         console.log('✅ Dropdown Manager initialized');
+    }
+
+    /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            // Check if user is authenticated
+            if (typeof getCurrentUser === 'function') {
+                this.currentUser = getCurrentUser();
+                if (this.currentUser) {
+                    this.isAuthenticated = true;
+                    this.authToken = this.getAuthToken();
+                    console.log('🔐 Dropdown Manager: User authenticated:', this.currentUser.username);
+                } else {
+                    console.log('🔐 Dropdown Manager: User not authenticated');
+                    this.isAuthenticated = false;
+                }
+            } else {
+                console.warn('⚠️ Dropdown Manager: getCurrentUser function not available');
+                this.isAuthenticated = false;
+            }
+        } catch (error) {
+            console.error('❌ Dropdown Manager: Authentication initialization error:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        try {
+            // Try to get token from localStorage/sessionStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Dropdown Manager: Could not get auth token:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
     }
 
     setupEventListeners() {
@@ -44,7 +105,15 @@ export class DropdownManager {
 
     async loadUseCases() {
         try {
-            const response = await fetch('/api/aasx-etl/use-cases');
+            // Check if user is authenticated
+            if (!this.isAuthenticated) {
+                console.log('🔐 Dropdown Manager: User not authenticated, cannot load use cases');
+                return;
+            }
+            
+            const response = await fetch('/api/aasx-etl/use-cases', {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 this.useCases = await response.json();
                 this.populateUseCaseDropdowns();
@@ -60,7 +129,9 @@ export class DropdownManager {
     async loadProjectsForUseCase(useCaseId) {
         try {
             console.log(`🔍 Dropdown Manager: Loading projects for use case ${useCaseId}`);
-            const response = await fetch(`/api/aasx-etl/use-cases/${useCaseId}/projects`);
+            const response = await fetch(`/api/aasx-etl/use-cases/${useCaseId}/projects`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 this.projects = await response.json();
                 console.log(`📁 Dropdown Manager: Loaded ${this.projects.length} projects for use case ${useCaseId}`);
@@ -78,7 +149,9 @@ export class DropdownManager {
 
     async loadFilesForProject(projectId) {
         try {
-            const response = await fetch(`/api/aasx-etl/projects/${projectId}/files`);
+            const response = await fetch(`/api/aasx-etl/projects/${projectId}/files`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 this.files = await response.json();
                 console.log(`📄 Loaded ${this.files.length} files for project ${projectId}`);

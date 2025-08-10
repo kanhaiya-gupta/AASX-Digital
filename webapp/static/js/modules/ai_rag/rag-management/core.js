@@ -253,6 +253,7 @@ export default class AIRAGCore {
         } catch (error) {
             console.error('❌ Failed to refresh data:', error);
         }
+
     }
 
     /**

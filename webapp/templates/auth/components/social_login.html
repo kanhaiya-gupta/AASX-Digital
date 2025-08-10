@@ -103,7 +103,7 @@
                 alert(`Successfully logged in with ${provider}!`);
                 
                 // Redirect to dashboard or refresh page
-                window.location.href = '/auth';
+                window.location.href = '/api/auth/';
             } else {
                 throw new Error(result.error || 'Failed to complete social login');
             }

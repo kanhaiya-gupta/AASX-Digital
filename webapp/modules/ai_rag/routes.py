@@ -4,7 +4,7 @@ Provides REST API endpoints for the AI/RAG system frontend
 Uses modular service architecture for clean separation of concerns
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -12,10 +12,16 @@ from typing import Dict, Any, List, Optional
 import logging
 from datetime import datetime
 
+# Import authentication components
+from webapp.core.context.user_context import UserContext
+from webapp.core.decorators.auth_decorators import require_auth, get_current_user
+
 # Import our service modules
 from .query_service import QueryService
 from .system_service import SystemService
 from .project_service import ProjectService
+from .services.user_specific_service import AIRAGUserSpecificService
+from .services.organization_service import AIRAGOrganizationService
 
 # Import the new modular RAG system
 try:
@@ -170,31 +176,75 @@ class FileIDExtractionResponse(BaseModel):
 
 # Main page
 @router.get("/", response_class=HTMLResponse)
-async def ai_rag_page(request: Request):
+@require_auth("read", allow_independent=True)
+async def ai_rag_page(
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
     """AI/RAG system main page"""
-    templates = Jinja2Templates(directory="webapp/templates")
-    
-    # Check if system is available
-    system_available = RAGManager is not None
-    
-    return templates.TemplateResponse(
-        "ai_rag/index.html",
-        {
-            "request": request,
-            "title": "AI/RAG System",
-            "description": "Advanced AI/RAG system with multiple techniques",
-            "system_available": system_available
-        }
-    )
+    try:
+        templates = Jinja2Templates(directory="webapp/templates")
+        
+        # Initialize user-specific and organization services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        organization_service = AIRAGOrganizationService(user_context)
+        
+        # Check if system is available
+        system_available = RAGManager is not None
+        
+        # Get user-specific data
+        user_projects = user_specific_service.get_user_projects()
+        user_files = user_specific_service.get_user_files()
+        user_stats = user_specific_service.get_user_statistics()
+        organization_stats = organization_service.get_organization_statistics()
+        
+        # Get user permissions and capabilities
+        can_create_project = user_specific_service.can_create_project()
+        can_create_file = user_specific_service.can_create_file()
+        can_manage_org = organization_service.can_manage_organization()
+        
+        return templates.TemplateResponse(
+            "ai_rag/index.html",
+            {
+                "request": request,
+                "title": "AI/RAG System",
+                "description": "Advanced AI/RAG system with multiple techniques",
+                "system_available": system_available,
+                "user_context": user_context,
+                "can_create_project": can_create_project,
+                "can_create_file": can_create_file,
+                "can_manage_org": can_manage_org,
+                "is_independent": getattr(user_context, 'is_independent', None),
+                "user_type": getattr(user_context, 'get_user_type', lambda: 'independent')(),
+                "user_projects": user_projects,
+                "user_files": user_files,
+                "user_stats": user_stats,
+                "organization_stats": organization_stats
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error rendering AI/RAG page: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Query processing endpoints
 @router.post("/query", response_model=QueryResponse)
-async def query_ai_rag(request: QueryRequest):
+@require_auth("read", allow_independent=True)
+async def query_ai_rag(
+    request: QueryRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Process a query using the RAG system"""
     try:
         # Validate query is not empty
         if not request.query or not request.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
+        
+        # Initialize user-specific service for access control
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Validate project access if project_id is provided
+        if request.project_id and not user_specific_service.can_access_project(request.project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
         
         query_service, _, _ = get_services()
         
@@ -226,78 +276,150 @@ async def query_ai_rag(request: QueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/enhanced-query", response_model=EnhancedQueryResponse)
-async def enhanced_query_ai_rag(request: EnhancedQueryRequest):
-    """Process a query with complete file context using src/shared/ methods"""
+@require_auth("read", allow_independent=True)
+async def enhanced_query_ai_rag(
+    request: EnhancedQueryRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Enhanced query with context and file-specific information"""
     try:
-        # Validate query is not empty
-        if not request.query or not request.query.strip():
-            raise HTTPException(status_code=400, detail="Query cannot be empty")
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        query_service, _, _ = get_services()
+        # Check if user can access enhanced queries
+        if not user_specific_service.can_access_enhanced_queries():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access enhanced queries")
         
-        result = query_service.process_query_with_context(
-            query=request.query,
-            file_id=request.file_id,
-            technique_id=request.technique_id,
-            search_limit=request.search_limit,
-            llm_model=request.llm_model,
-            enable_auto_selection=request.enable_auto_selection
-        )
+        # Get services
+        query_service, system_service, project_service = get_services()
         
-        return EnhancedQueryResponse(**result)
+        # Add user context to request
+        if hasattr(request, 'user_id'):
+            request.user_id = user_context.user_id
+        if hasattr(request, 'organization_id') and user_context.organization_id:
+            request.organization_id = user_context.organization_id
         
-    except HTTPException:
-        raise
+        # Execute enhanced query
+        result = query_service.enhanced_query(request)
+        return result
     except Exception as e:
-        logger.error(f"Error processing enhanced query: {e}")
+        logger.error(f"Enhanced query failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/auto-extract-query", response_model=AutoExtractionQueryResponse)
-async def auto_extract_query_ai_rag(request: AutoExtractionQueryRequest):
-    """Process a query with automatic file_id extraction from natural language"""
+@require_auth("read", allow_independent=True)
+async def auto_extract_query_ai_rag(
+    request: AutoExtractionQueryRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Auto-extract file ID and process query"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        result = query_service.process_query_with_auto_extraction(
-            query=request.query,
-            technique_id=request.technique_id,
-            search_limit=request.search_limit,
-            llm_model=request.llm_model,
-            enable_auto_selection=request.enable_auto_selection
-        )
+        # Check if user can access auto-extraction queries
+        if not user_specific_service.can_access_auto_extraction():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access auto-extraction queries")
         
-        return AutoExtractionQueryResponse(**result)
+        # Get services
+        query_service, system_service, project_service = get_services()
         
+        # Add user context to request
+        if hasattr(request, 'user_id'):
+            request.user_id = user_context.user_id
+        if hasattr(request, 'organization_id') and user_context.organization_id:
+            request.organization_id = user_context.organization_id
+        
+        # Execute auto-extraction query
+        result = query_service.auto_extract_query(request)
+        return result
     except Exception as e:
-        logger.error(f"Error processing auto-extract query: {e}")
+        logger.error(f"Auto-extraction query failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/extract-file-id", response_model=FileIDExtractionResponse)
-async def extract_file_id(request: FileIDExtractionRequest):
-    """Extract file_id from natural language query"""
+@require_auth("read", allow_independent=True)
+async def extract_file_id(
+    request: FileIDExtractionRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Extract file ID from natural language query"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        extracted_file_id = query_service.extract_file_id_from_query(request.query)
+        # Check if user can access file ID extraction
+        if not user_specific_service.can_access_file_extraction():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access file ID extraction")
         
-        return FileIDExtractionResponse(
-            query=request.query,
-            extracted_file_id=extracted_file_id,
-            extraction_success=extracted_file_id is not None,
-            timestamp=datetime.now().isoformat()
-        )
+        # Get services
+        query_service, system_service, project_service = get_services()
         
+        # Add user context to request
+        if hasattr(request, 'user_id'):
+            request.user_id = user_context.user_id
+        if hasattr(request, 'organization_id') and user_context.organization_id:
+            request.organization_id = user_context.organization_id
+        
+        # Execute file ID extraction
+        result = query_service.extract_file_id(request)
+        return result
     except Exception as e:
-        logger.error(f"Error extracting file_id: {e}")
+        logger.error(f"File ID extraction failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 
 @router.get("/reverse-engineer/{file_id}")
-async def reverse_engineer_file(file_id: str):
-    """Get complete file context using src/shared/ methods"""
+@require_auth("read", allow_independent=True)
+async def reverse_engineer_file(
+    file_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Reverse engineer AASX file structure"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access reverse engineering
+        if not user_specific_service.can_access_reverse_engineering():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access reverse engineering")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        # Check if user can access this specific file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access this file")
+        
+        # Execute reverse engineering
+        result = query_service.reverse_engineer_file(file_id)
+        return result
+    except Exception as e:
+        logger.error(f"Reverse engineering failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/file-context/{file_id}")
+@require_auth("read", allow_independent=True)
+async def get_file_context(
+    file_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get file context using src/shared/ methods"""
+    try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access file context
+        if not user_specific_service.can_access_file_context():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access file context")
+        
+        # Check if user can access this specific file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access this file")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
         
         context = query_service.get_file_context(file_id)
         if not context:
@@ -312,38 +434,32 @@ async def reverse_engineer_file(file_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error reverse engineering file {file_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/file-context/{file_id}")
-async def get_file_context(file_id: str):
-    """Get file context with project and use case info"""
-    try:
-        query_service, _, _ = get_services()
-        
-        context = query_service.get_file_trace(file_id)
-        if not context:
-            raise HTTPException(status_code=404, detail=f"File {file_id} not found")
-        
-        return {
-            "file_id": file_id,
-            "context": context,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
         logger.error(f"Error getting file context for {file_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/project-context/{file_id}")
-async def get_project_context(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_project_context(
+    file_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get project context for a file"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        context = query_service.get_project_context_for_file(file_id)
+        # Check if user can access project context
+        if not user_specific_service.can_access_project_context():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access project context")
+        
+        # Check if user can access this specific file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access this file")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        context = query_service.get_project_context(file_id)
         if not context:
             raise HTTPException(status_code=404, detail=f"Project context not found for file {file_id}")
         
@@ -356,16 +472,32 @@ async def get_project_context(file_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting project context for file {file_id}: {e}")
+        logger.error(f"Error getting project context for {file_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/use-case-context/{file_id}")
-async def get_use_case_context(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_use_case_context(
+    file_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get use case context for a file"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        context = query_service.get_use_case_context_for_file(file_id)
+        # Check if user can access use case context
+        if not user_specific_service.can_access_use_case_context():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access use case context")
+        
+        # Check if user can access this specific file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access this file")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        context = query_service.get_use_case_context(file_id)
         if not context:
             raise HTTPException(status_code=404, detail=f"Use case context not found for file {file_id}")
         
@@ -378,16 +510,32 @@ async def get_use_case_context(file_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting use case context for file {file_id}: {e}")
+        logger.error(f"Error getting use case context for {file_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/digital-twin-context/{file_id}")
-async def get_digital_twin_context(file_id: str):
+@require_auth("read", allow_independent=True)
+async def get_digital_twin_context(
+    file_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get digital twin context for a file"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        context = query_service.get_digital_twin_context_for_file(file_id)
+        # Check if user can access digital twin context
+        if not user_specific_service.can_access_digital_twin_context():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access digital twin context")
+        
+        # Check if user can access this specific file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access this file")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        context = query_service.get_digital_twin_context(file_id)
         if not context:
             raise HTTPException(status_code=404, detail=f"Digital twin context not found for file {file_id}")
         
@@ -400,240 +548,349 @@ async def get_digital_twin_context(file_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting digital twin context for file {file_id}: {e}")
+        logger.error(f"Error getting digital twin context for {file_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/related-files/{file_id}")
-async def get_related_files(file_id: str):
-    """Get related files for a file (same project)"""
+@require_auth("read", allow_independent=True)
+async def get_related_files(
+    file_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get related files for a given file"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        files = query_service.get_related_files_for_file(file_id)
+        # Check if user can access related files
+        if not user_specific_service.can_access_related_files():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access related files")
         
+        # Check if user can access this specific file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access this file")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        related_files = query_service.get_related_files(file_id)
         return {
             "file_id": file_id,
-            "related_files": files,
-            "count": len(files),
+            "related_files": related_files,
+            "count": len(related_files),
             "timestamp": datetime.now().isoformat()
         }
         
     except Exception as e:
-        logger.error(f"Error getting related files for file {file_id}: {e}")
+        logger.error(f"Error getting related files for {file_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/digital-twin-health/{file_id}")
-async def get_digital_twin_health(file_id: str):
-    """Get digital twin health information for a file"""
+@require_auth("read", allow_independent=True)
+async def get_digital_twin_health(
+    file_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get digital twin health metrics for a file"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        health = query_service.get_digital_twin_health_for_file(file_id)
-        if not health:
-            raise HTTPException(status_code=404, detail=f"Digital twin health not found for file {file_id}")
+        # Check if user can access digital twin health
+        if not user_specific_service.can_access_digital_twin_health():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access digital twin health")
         
+        # Check if user can access this specific file
+        if not user_specific_service.can_access_file(file_id):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access this file")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        health_metrics = query_service.get_digital_twin_health(file_id)
         return {
             "file_id": file_id,
-            "health": health,
+            "health_metrics": health_metrics,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting digital twin health for {file_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/search-files")
+@require_auth("read", allow_independent=True)
+async def search_files_by_content(
+    search_term: str, 
+    project_id: Optional[str] = None,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Search files by content using src/shared/ methods"""
+    try:
+        # Initialize user-specific service for access control
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        if project_id:
+            # Check if user can access this project
+            if not user_specific_service.can_access_project(project_id):
+                raise HTTPException(status_code=403, detail="Access denied to this project")
+            # Search within specific project
+            files = user_specific_service.get_user_files(project_id)
+        else:
+            # Search across all accessible files
+            files = user_specific_service.get_user_files()
+        
+        # Filter files by search term (mock implementation - replace with actual search)
+        filtered_files = [f for f in files if search_term.lower() in f.get('name', '').lower()]
+        
+        return {
+            "search_term": search_term,
+            "project_id": project_id,
+            "files": filtered_files,
+            "count": len(filtered_files),
             "timestamp": datetime.now().isoformat()
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting digital twin health for file {file_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/search-files")
-async def search_files_by_content(search_term: str, project_id: Optional[str] = None):
-    """Search files by content using src/shared/ methods"""
-    try:
-        query_service, _, _ = get_services()
-        
-        files = query_service.search_files_by_content(search_term, project_id)
-        
-        return {
-            "search_term": search_term,
-            "project_id": project_id,
-            "files": files,
-            "count": len(files),
-            "timestamp": datetime.now().isoformat()
-        }
-        
-    except Exception as e:
         logger.error(f"Error searching files with term '{search_term}': {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/techniques/compare", response_model=TechniqueComparisonResponse)
-async def compare_techniques(request: TechniqueComparisonRequest):
-    """Compare multiple RAG techniques on the same query"""
+@require_auth("read", allow_independent=True)
+async def compare_techniques(
+    request: TechniqueComparisonRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Compare different RAG techniques"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        comparison = query_service.compare_techniques(
-            query=request.query,
-            technique_ids=request.technique_ids,
-            project_id=request.project_id,
-            search_limit=request.search_limit
-        )
+        # Check if user can access technique comparison
+        if not user_specific_service.can_access_technique_comparison():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access technique comparison")
         
-        return TechniqueComparisonResponse(**comparison)
+        # Get services
+        query_service, system_service, project_service = get_services()
         
+        # Add user context to request
+        if hasattr(request, 'user_id'):
+            request.user_id = user_context.user_id
+        if hasattr(request, 'organization_id') and user_context.organization_id:
+            request.organization_id = user_context.organization_id
+        
+        # Execute technique comparison
+        result = query_service.compare_techniques(request)
+        return result
     except Exception as e:
-        logger.error(f"Error comparing techniques: {e}")
+        logger.error(f"Technique comparison failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/techniques/recommendations", response_model=TechniqueRecommendationResponse)
-async def get_technique_recommendations(request: TechniqueRecommendationRequest):
+@require_auth("read", allow_independent=True)
+async def get_technique_recommendations(
+    request: TechniqueRecommendationRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get technique recommendations for a query"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        recommendations = query_service.get_technique_recommendations(request.query)
+        # Check if user can access technique recommendations
+        if not user_specific_service.can_access_technique_recommendations():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access technique recommendations")
         
-        return TechniqueRecommendationResponse(recommendations=recommendations)
+        # Get services
+        query_service, system_service, project_service = get_services()
         
+        # Add user context to request
+        if hasattr(request, 'user_id'):
+            request.user_id = user_context.user_id
+        if hasattr(request, 'organization_id') and user_context.organization_id:
+            request.organization_id = user_context.organization_id
+        
+        # Execute technique recommendations
+        result = query_service.get_technique_recommendations(request)
+        return result
     except Exception as e:
-        logger.error(f"Error getting technique recommendations: {e}")
+        logger.error(f"Technique recommendations failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Add missing status endpoints that JavaScript is calling
 @router.get("/ai_rag/status")
-async def get_ai_rag_status():
-    """Get AI/RAG status (called by JavaScript with underscore)"""
+@require_auth("read", allow_independent=True)
+async def get_ai_rag_status(user_context: UserContext = Depends(get_current_user)):
+    """Get AI/RAG system status"""
     try:
-        _, system_service, _ = get_services()
-        status = system_service.get_system_status()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access system status")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        status = system_service.get_ai_rag_status()
         return {
-            "status": "connected" if status["vector_db_connected"] else "disconnected",
-            "qdrant_status": "connected" if status["vector_db_connected"] else "disconnected",
-            "openai_status": "connected",
-            "available_techniques": status["available_techniques"],
+            "success": True,
+            "status": status,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting AI/RAG status: {e}")
-        return {
-            "status": "error",
-            "qdrant_status": "disconnected",
-            "openai_status": "disconnected",
-            "available_techniques": 0,
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get AI/RAG status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/etl/status")
-async def get_etl_status():
-    """Get ETL status"""
+@require_auth("read", allow_independent=True)
+async def get_etl_status(user_context: UserContext = Depends(get_current_user)):
+    """Get ETL system status"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access ETL status
+        if not user_specific_service.can_access_etl_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access ETL status")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        status = system_service.get_etl_status()
         return {
-            "status": "available",
-            "pipeline_status": "running",
-            "last_processed": datetime.now().isoformat(),
+            "success": True,
+            "status": status,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting ETL status: {e}")
-        return {
-            "status": "error",
-            "pipeline_status": "stopped",
-            "last_processed": None,
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get ETL status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/kg/status")
-async def get_kg_status():
-    """Get Knowledge Graph status"""
+@require_auth("read", allow_independent=True)
+async def get_kg_status(user_context: UserContext = Depends(get_current_user)):
+    """Get Knowledge Graph system status"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access KG status
+        if not user_specific_service.can_access_kg_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access Knowledge Graph status")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        status = system_service.get_kg_status()
         return {
-            "status": "connected",
-            "neo4j_status": "connected",
-            "database_status": "healthy",
+            "success": True,
+            "status": status,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting KG status: {e}")
-        return {
-            "status": "disconnected",
-            "neo4j_status": "disconnected",
-            "database_status": "unhealthy",
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get KG status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/twin/status")
-async def get_twin_status():
-    """Get Twin Registry status"""
+@require_auth("read", allow_independent=True)
+async def get_twin_status(user_context: UserContext = Depends(get_current_user)):
+    """Get Digital Twin system status"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access Digital Twin status
+        if not user_specific_service.can_access_digital_twin_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access Digital Twin status")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        status = system_service.get_digital_twin_status()
         return {
-            "status": "connected",
-            "registry_status": "active",
-            "total_twins": 2,
-            "active_twins": 2,
+            "success": True,
+            "status": status,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting twin status: {e}")
-        return {
-            "status": "disconnected",
-            "registry_status": "inactive",
-            "total_twins": 0,
-            "active_twins": 0,
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get Digital Twin status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/system/status")
-async def get_system_status_general():
+@require_auth("read", allow_independent=True)
+async def get_system_status_general(user_context: UserContext = Depends(get_current_user)):
     """Get general system status"""
     try:
-        return {
-            "status": "healthy",
-            "uptime": "24h",
-            "memory_usage": "45%",
-            "cpu_usage": "12%",
-            "timestamp": datetime.now().isoformat()
-        }
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access system status")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        status = system_service.get_system_status()
+        return status
     except Exception as e:
-        logger.error(f"Error getting system status: {e}")
-        return {
-            "status": "unhealthy",
-            "uptime": "0h",
-            "memory_usage": "0%",
-            "cpu_usage": "0%",
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get system status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Add missing endpoints that JavaScript is calling
-@router.get("/techniques")
-async def get_techniques():
-    """Get available RAG techniques (called by JavaScript)"""
+@router.get("/techniques", response_model=List[Dict[str, Any]])
+@require_auth("read", allow_independent=True)
+async def get_techniques(user_context: UserContext = Depends(get_current_user)):
+    """Get available RAG techniques"""
     try:
-        _, system_service, _ = get_services()
-        techniques = system_service.get_available_techniques()
-        return {
-            "status": "success",
-            "techniques": techniques,
-            "timestamp": datetime.now().isoformat()
-        }
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access techniques
+        if not user_specific_service.can_access_techniques():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access techniques")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        techniques = query_service.get_available_techniques()
+        return techniques
     except Exception as e:
-        logger.error(f"Error getting techniques: {e}")
-        return {
-            "status": "error",
-            "techniques": [],
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get techniques: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/stats")
-async def get_stats():
-    """Get system statistics (called by JavaScript)"""
+@require_auth("read", allow_independent=True)
+async def get_stats(user_context: UserContext = Depends(get_current_user)):
+    """Get system statistics for the current user"""
     try:
-        _, system_service, _ = get_services()
-        stats = system_service.get_statistics()
-        return {
-            "status": "success",
-            "stats": stats,
+        # Initialize user-specific and organization services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        organization_service = AIRAGOrganizationService(user_context)
+        
+        # Get user-specific statistics
+        user_stats = user_specific_service.get_user_statistics()
+        organization_stats = organization_service.get_organization_statistics()
+        
+        # Combine statistics
+        combined_stats = {
+            "user_stats": user_stats,
+            "organization_stats": organization_stats,
             "timestamp": datetime.now().isoformat()
         }
+        
+        return {
+            "status": "success",
+            "stats": combined_stats,
+            "timestamp": datetime.now().isoformat()
+        }
+        
     except Exception as e:
-        logger.error(f"Error getting stats: {e}")
+        logger.error(f"Error getting user statistics: {e}")
         return {
             "status": "error",
             "stats": {},
@@ -641,452 +898,593 @@ async def get_stats():
         }
 
 @router.get("/collections")
-async def get_collections():
-    """Get vector collections (called by JavaScript)"""
+@require_auth("read", allow_independent=True)
+async def get_collections(user_context: UserContext = Depends(get_current_user)):
+    """Get vector database collections"""
     try:
-        _, system_service, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access collections
+        if not user_specific_service.can_access_collections():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access collections")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
         collections = system_service.get_collections()
         return {
-            "status": "success",
+            "success": True,
             "collections": collections,
+            "count": len(collections),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting collections: {e}")
-        return {
-            "status": "error",
-            "collections": [],
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get collections: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/digital-twin-stats")
-async def get_digital_twin_stats():
-    """Get digital twin statistics (called by JavaScript)"""
+@require_auth("read", allow_independent=True)
+async def get_digital_twin_stats(user_context: UserContext = Depends(get_current_user)):
+    """Get digital twin statistics"""
     try:
-        return {
-            "status": "success",
-            "total_twins": 2,
-            "active_twins": 2,
-            "inactive_twins": 0,
-            "error_twins": 0,
-            "timestamp": datetime.now().isoformat()
-        }
-    except Exception as e:
-        logger.error(f"Error getting digital twin stats: {e}")
-        return {
-            "status": "error",
-            "total_twins": 0,
-            "active_twins": 0,
-            "inactive_twins": 0,
-            "error_twins": 0,
-            "timestamp": datetime.now().isoformat()
-        }
-
-@router.get("/vector-data-stats")
-async def get_vector_data_stats():
-    """Get vector data statistics (called by JavaScript)"""
-    try:
-        _, system_service, _ = get_services()
-        stats = system_service.get_vector_data_stats()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        # Return the stats directly as the JavaScript expects
+        # Check if user can access digital twin stats
+        if not user_specific_service.can_access_digital_twin_stats():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access digital twin statistics")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        stats = system_service.get_digital_twin_stats()
         return {
             "success": True,
-            "total_collections": stats.get("total_collections", 0),
-            "total_points": stats.get("total_points", 0),
-            "total_storage": stats.get("total_storage", "Unknown"),
-            "largest_collection": stats.get("largest_collection", "None"),
-            "collection_stats": stats.get("collection_stats", []),
+            "stats": stats,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting vector data stats: {e}")
+        logger.error(f"Failed to get digital twin stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/vector-data-stats")
+@require_auth("read", allow_independent=True)
+async def get_vector_data_stats(user_context: UserContext = Depends(get_current_user)):
+    """Get vector data statistics"""
+    try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access vector data stats
+        if not user_specific_service.can_access_vector_data_stats():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access vector data statistics")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        stats = system_service.get_vector_data_stats()
         return {
-            "success": False,
-            "error": str(e),
-            "total_collections": 0,
-            "total_points": 0,
-            "total_storage": "Unknown",
-            "largest_collection": "None",
-            "collection_stats": [],
+            "success": True,
+            "stats": stats,
             "timestamp": datetime.now().isoformat()
         }
+    except Exception as e:
+        logger.error(f"Failed to get vector data stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/generator-config")
-async def get_generator_config():
-    """Get generator configuration (called by JavaScript)"""
+@require_auth("read", allow_independent=True)
+async def get_generator_config(user_context: UserContext = Depends(get_current_user)):
+    """Get generator configuration"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access generator config
+        if not user_specific_service.can_access_generator_config():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access generator configuration")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        config = system_service.get_generator_config()
         return {
-            "status": "success",
-            "config": {
-                "default_model": "gpt-3.5-turbo",
-                "max_tokens": 4000,
-                "temperature": 0.7,
-                "streaming_enabled": True
-            },
+            "success": True,
+            "config": config,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting generator config: {e}")
-        return {
-            "status": "error",
-            "config": {},
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get generator config: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/models")
-async def get_models():
-    """Get available models (called by JavaScript)"""
+@require_auth("read", allow_independent=True)
+async def get_models(user_context: UserContext = Depends(get_current_user)):
+    """Get available AI models"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access models
+        if not user_specific_service.can_access_models():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access models")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        models = system_service.get_available_models()
         return {
-            "status": "success",
-            "models": [
-                {
-                    "id": "gpt-3.5-turbo",
-                    "name": "GPT-3.5 Turbo",
-                    "provider": "openai",
-                    "max_tokens": 4096
-                },
-                {
-                    "id": "gpt-4",
-                    "name": "GPT-4",
-                    "provider": "openai",
-                    "max_tokens": 8192
-                }
-            ],
+            "success": True,
+            "models": models,
+            "count": len(models),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting models: {e}")
-        return {
-            "status": "error",
-            "models": [],
-            "timestamp": datetime.now().isoformat()
-        }
+        logger.error(f"Failed to get models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Project management endpoints
 @router.get("/projects")
-async def get_projects():
-    """Get list of available projects"""
+@require_auth("read", allow_independent=True)
+async def get_projects(user_context: UserContext = Depends(get_current_user)):
+    """Get list of available projects for the current user"""
     try:
-        _, _, project_service = get_services()
+        # Initialize user-specific service
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        projects = project_service.get_projects()
+        # Get user-specific projects
+        user_projects = user_specific_service.get_user_projects()
         
-        return projects
-        
+        return {
+            "projects": user_projects,
+            "count": len(user_projects),
+            "timestamp": datetime.now().isoformat(),
+            "user_id": getattr(user_context, 'user_id', None),
+            "organization_id": getattr(user_context, 'organization_id', None)
+        }
     except Exception as e:
-        logger.error(f"Error getting projects: {e}")
+        logger.error(f"Error getting user projects: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects/{project_id}/files")
-async def get_project_files(project_id: str):
+@require_auth("read", allow_independent=True)
+async def get_project_files(
+    project_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get files for a specific project"""
     try:
-        _, _, project_service = get_services()
+        # Initialize user-specific service for access control
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        files = project_service.get_project_files(project_id)
+        # Check if user can access this project
+        if not user_specific_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
         
-        return files
+        # Get user-specific files for this project
+        user_files = user_specific_service.get_user_files(project_id)
         
+        return {
+            "files": user_files,
+            "count": len(user_files),
+            "project_id": project_id,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting project files: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Configuration endpoints
 @router.get("/config")
-async def get_config():
-    """Get AI/RAG system configuration"""
+@require_auth("read", allow_independent=True)
+async def get_config(user_context: UserContext = Depends(get_current_user)):
+    """Get system configuration"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access system config
+        if not user_specific_service.can_access_system_config():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access system configuration")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        config = system_service.get_system_config()
         return {
-            "status": "success",
-            "config": {
-                "vector_db_enabled": True,
-                "llm_model": "gpt-3.5-turbo",
-                "max_search_results": 10,
-                "auto_technique_selection": True,
-                "available_techniques": ["basic", "hybrid", "multi_step"]
-            },
+            "success": True,
+            "config": config,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting config: {e}")
+        logger.error(f"Failed to get system config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/query-config")
-async def get_query_config():
-    """Get query processing configuration"""
+@require_auth("read", allow_independent=True)
+async def get_query_config(user_context: UserContext = Depends(get_current_user)):
+    """Get query configuration"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access query config
+        if not user_specific_service.can_access_query_config():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access query configuration")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        config = query_service.get_query_config()
         return {
-            "status": "success",
-            "config": {
-                "default_search_limit": 10,
-                "default_llm_model": "gpt-3.5-turbo",
-                "enable_auto_selection": True,
-                "max_query_length": 1000,
-                "supported_languages": ["en", "de", "fr"]
-            },
+            "success": True,
+            "config": config,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting query config: {e}")
+        logger.error(f"Failed to get query config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/vector-config")
-async def get_vector_config():
+@require_auth("read", allow_independent=True)
+async def get_vector_config(user_context: UserContext = Depends(get_current_user)):
     """Get vector database configuration"""
     try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access vector config
+        if not user_specific_service.can_access_vector_config():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access vector database configuration")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        config = system_service.get_vector_config()
         return {
-            "status": "success",
-            "config": {
-                "vector_db_type": "qdrant",
-                "embedding_model": "text-embedding-ada-002",
-                "vector_dimension": 1536,
-                "similarity_metric": "cosine",
-                "index_type": "hnsw"
-            },
+            "success": True,
+            "config": config,
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting vector config: {e}")
+        logger.error(f"Failed to get vector config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Vector query endpoints
 @router.get("/vectors")
-async def get_vectors(collection_name: Optional[str] = None, limit: int = 100):
-    """Get vectors from vector database (query only)"""
+@require_auth("read", allow_independent=True)
+async def get_vectors(
+    collection_name: Optional[str] = None, 
+    limit: int = 100,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get vector data"""
     try:
-        _, system_service, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access vectors
+        if not user_specific_service.can_access_vectors():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access vector data")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
         
         vectors = system_service.get_vectors(collection_name, limit)
-        
-        return vectors
-        
+        return {
+            "success": True,
+            "vectors": vectors,
+            "count": len(vectors),
+            "collection": collection_name,
+            "limit": limit,
+            "timestamp": datetime.now().isoformat()
+        }
     except Exception as e:
-        logger.error(f"Error getting vectors: {e}")
+        logger.error(f"Failed to get vectors: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Integration endpoints
 @router.get("/project-data")
-async def get_project_data():
-    """Get project data for integration"""
+@require_auth("read", allow_independent=True)
+async def get_project_data(user_context: UserContext = Depends(get_current_user)):
+    """Get project data"""
     try:
-        _, _, project_service = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        projects = project_service.get_projects()
+        # Check if user can access project data
+        if not user_specific_service.can_access_project_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access project data")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        # Get user-specific project data
+        project_data = user_specific_service.get_user_project_data()
         
         return {
-            "status": "success",
-            "projects": projects.get("projects", []),
-            "total": projects.get("count", 0),
+            "success": True,
+            "project_data": project_data,
+            "count": len(project_data),
             "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
-        logger.error(f"Error getting project data: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+        logger.error(f"Failed to get project data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # System management endpoints
 @router.get("/status", response_model=SystemStatusResponse)
-async def get_system_status():
-    """Get overall system status"""
+@require_auth("read", allow_independent=True)
+async def get_system_status(user_context: UserContext = Depends(get_current_user)):
+    """Get system status"""
     try:
-        _, system_service, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access system status")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
         
         status = system_service.get_system_status()
-        
         return SystemStatusResponse(**status)
-        
     except Exception as e:
-        logger.error(f"Error getting system status: {e}")
+        logger.error(f"Failed to get system status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/health")
-async def health_check():
+@require_auth("read", allow_independent=True)
+async def health_check(user_context: UserContext = Depends(get_current_user)):
     """Health check endpoint"""
     try:
-        _, system_service, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access health check
+        if not user_specific_service.can_access_health_check():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access health check")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
         
         health = system_service.get_health_status()
-        
-        return health
-        
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
         return {
-            "status": "unhealthy",
-            "message": f"Health check failed: {str(e)}",
+            "success": True,
+            "status": "healthy",
+            "health": health,
             "timestamp": datetime.now().isoformat()
         }
-
-@router.get("/vector-db-info")
-async def get_vector_db_info():
-    """Get vector database information"""
-    try:
-        _, system_service, _ = get_services()
-        
-        db_info = system_service.get_vector_db_info()
-        
-        return db_info
-        
     except Exception as e:
-        logger.error(f"Error getting vector DB info: {e}")
-        return {
-            "status": "error",
-            "error": str(e),
-            "collection_info": None,
-            "collection_name": None
-        }
-
-@router.get("/techniques", response_model=List[Dict[str, Any]])
-async def get_available_techniques():
-    """Get list of available RAG techniques"""
-    try:
-        query_service, _, _ = get_services()
-        
-        techniques = query_service.get_available_techniques()
-        
-        return techniques
-        
-    except Exception as e:
-        logger.error(f"Error getting available techniques: {e}")
+        logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/demo")
-async def run_demo_queries():
-    """Run demo queries to showcase the system"""
+@router.get("/vector-db-info")
+@require_auth("read", allow_independent=True)
+async def get_vector_db_info(user_context: UserContext = Depends(get_current_user)):
+    """Get vector database information"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        results = query_service.run_demo_queries()
+        # Check if user can access vector database info
+        if not user_specific_service.can_access_vector_db_info():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access vector database information")
         
-        return results
+        # Get services
+        query_service, system_service, project_service = get_services()
         
+        info = system_service.get_vector_db_info()
+        return {
+            "success": True,
+            "info": info,
+            "timestamp": datetime.now().isoformat()
+        }
     except Exception as e:
-        logger.error(f"Error running demo queries: {e}")
+        logger.error(f"Failed to get vector database info: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@router.post("/demo")
+@require_auth("read", allow_independent=True)
+async def run_demo_queries(user_context: UserContext = Depends(get_current_user)):
+    """Run demo queries for testing purposes"""
+    try:
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access demo functionality
+        if not user_specific_service.can_access_demo():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access demo functionality")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        # Run demo queries
+        demo_results = query_service.run_demo_queries()
+        return {
+            "success": True,
+            "demo_results": demo_results,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to run demo queries: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/search")
+@require_auth("read", allow_independent=True)
 async def search_similar_documents(
     query: str, 
     project_id: Optional[str] = None, 
-    limit: int = 10
+    limit: int = 10,
+    user_context: UserContext = Depends(get_current_user)
 ):
     """Search for similar documents using vector similarity"""
     try:
-        query_service, _, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        results = query_service.search_similar_documents(
-            query=query,
-            project_id=project_id,
-            limit=limit
-        )
+        # Check if user can access search functionality
+        if not user_specific_service.can_access_search():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access search functionality")
         
-        return results
+        # If project_id is provided, check if user can access this project
+        if project_id and not user_specific_service.can_access_project(project_id):
+            raise HTTPException(status_code=403, detail="Access denied to this project")
         
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        # Perform search
+        search_results = query_service.search_similar_documents(query, project_id, limit)
+        return {
+            "success": True,
+            "query": query,
+            "results": search_results,
+            "count": len(search_results),
+            "timestamp": datetime.now().isoformat()
+        }
     except Exception as e:
-        logger.error(f"Error searching documents: {e}")
+        logger.error(f"Failed to search documents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/backup-vector-data")
-async def backup_vector_data():
+@require_auth("admin", allow_independent=False)
+async def backup_vector_data(user_context: UserContext = Depends(get_current_user)):
     """Backup vector database data"""
     try:
-        _, system_service, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        result = system_service.backup_vector_data()
+        # Check if user can manage vector data
+        if not user_specific_service.can_manage_vector_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to backup vector data")
         
-        return result
+        # Get services
+        query_service, system_service, project_service = get_services()
         
+        # Perform backup
+        backup_result = system_service.backup_vector_data()
+        return {
+            "success": True,
+            "backup_result": backup_result,
+            "timestamp": datetime.now().isoformat()
+        }
     except Exception as e:
-        logger.error(f"Error backing up vector data: {e}")
+        logger.error(f"Failed to backup vector data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/clear-vector-data")
-async def clear_vector_data():
-    """Clear vector database data"""
+@require_auth("admin", allow_independent=False)
+async def clear_vector_data(user_context: UserContext = Depends(get_current_user)):
+    """Clear all vector database data"""
     try:
-        _, system_service, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        result = system_service.clear_vector_data()
+        # Check if user can manage vector data
+        if not user_specific_service.can_manage_vector_data():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to clear vector data")
         
-        return result
+        # Get services
+        query_service, system_service, project_service = get_services()
         
+        # Clear vector data
+        clear_result = system_service.clear_vector_data()
+        return {
+            "success": True,
+            "clear_result": clear_result,
+            "timestamp": datetime.now().isoformat()
+        }
     except Exception as e:
-        logger.error(f"Error clearing vector data: {e}")
+        logger.error(f"Failed to clear vector data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/aasx-analysis")
-async def aasx_analysis():
-    """Perform AASX analysis"""
+@require_auth("read", allow_independent=True)
+async def aasx_analysis(user_context: UserContext = Depends(get_current_user)):
+    """Perform AASX file analysis"""
     try:
-        # Placeholder for AASX analysis functionality
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access AASX analysis
+        if not user_specific_service.can_access_aasx_analysis():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access AASX analysis")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        # Perform AASX analysis
+        analysis_result = system_service.analyze_aasx_files()
         return {
-            "status": "success",
-            "message": "AASX analysis completed",
+            "success": True,
+            "analysis_result": analysis_result,
             "timestamp": datetime.now().isoformat()
         }
-        
     except Exception as e:
-        logger.error(f"Error performing AASX analysis: {e}")
+        logger.error(f"Failed to perform AASX analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/export-aasx")
-async def export_aasx():
+@require_auth("read", allow_independent=True)
+async def export_aasx(user_context: UserContext = Depends(get_current_user)):
     """Export AASX data"""
     try:
-        # Placeholder for AASX export functionality
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
+        
+        # Check if user can access AASX export
+        if not user_specific_service.can_access_aasx_export():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access AASX export")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        # Export AASX data
+        export_result = system_service.export_aasx_data()
         return {
-            "status": "success",
-            "message": "AASX export completed",
+            "success": True,
+            "export_result": export_result,
             "timestamp": datetime.now().isoformat()
         }
-        
     except Exception as e:
-        logger.error(f"Error exporting AASX data: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+        logger.error(f"Failed to export AASX data: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/documents")
-async def get_stored_documents(limit: int = 50):
-    """Get list of documents stored in Qdrant with their file_ids"""
+@require_auth("read", allow_independent=True)
+async def get_stored_documents(
+    limit: int = 50,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get stored documents from the system"""
     try:
-        _, system_service, _ = get_services()
+        # Initialize authentication services
+        user_specific_service = AIRAGUserSpecificService(user_context)
         
-        if system_service.rag_manager and system_service.rag_manager.vector_uploader and system_service.rag_manager.vector_uploader.vector_db:
-            vector_db = system_service.rag_manager.vector_uploader.vector_db
-            
-            if vector_db.is_connected:
-                # Get all documents from Qdrant
-                documents = vector_db.get_all_documents(limit=limit)
-                
-                return {
-                    "success": True,
-                    "total_documents": len(documents),
-                    "documents": documents,
-                    "timestamp": datetime.now().isoformat()
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": "Vector database not connected",
-                    "total_documents": 0,
-                    "documents": [],
-                    "timestamp": datetime.now().isoformat()
-                }
-        else:
-            return {
-                "success": False,
-                "error": "Vector database not available",
-                "total_documents": 0,
-                "documents": [],
-                "timestamp": datetime.now().isoformat()
-            }
-            
-    except Exception as e:
-        logger.error(f"Error getting stored documents: {e}")
+        # Check if user can access documents
+        if not user_specific_service.can_access_documents():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access documents")
+        
+        # Get services
+        query_service, system_service, project_service = get_services()
+        
+        # Get documents (filtered by user access)
+        documents = user_specific_service.get_user_documents(limit)
         return {
-            "success": False,
-            "error": str(e),
-            "total_documents": 0,
-            "documents": [],
+            "success": True,
+            "documents": documents,
+            "count": len(documents),
+            "limit": limit,
             "timestamp": datetime.now().isoformat()
-        } 
+        }
+    except Exception as e:
+        logger.error(f"Failed to get stored documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) 

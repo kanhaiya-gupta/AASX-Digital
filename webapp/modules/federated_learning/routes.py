@@ -6,7 +6,7 @@ FastAPI router for federated learning using modular service architecture.
 Follows the same pattern as other modules for consistency.
 """
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -15,11 +15,20 @@ import logging
 import os
 from pathlib import Path
 
+# Import authentication dependencies
+from src.core.auth.decorators import require_auth
+from src.core.auth.user_context import UserContext
+from src.core.auth.dependencies import get_current_user
+
 # Import our modular services
 from .federation_service import FederationService
 from .twin_performance_service import TwinPerformanceService
 from .insights_service import InsightsService
 from .monitoring_service import MonitoringService
+
+# Import authentication services
+from .services.user_specific_service import FederatedLearningUserSpecificService
+from .services.organization_service import FederatedLearningOrganizationService
 
 # Import shared services and database managers (following twin_registry pattern)
 from src.federated_learning.core.federated_learning_service import FederatedLearningService
@@ -80,15 +89,29 @@ class FederationStatusResponse(BaseModel):
 # ============================================================================
 
 @router.get("/", response_class=HTMLResponse)
-async def federated_learning_dashboard(request: Request):
+@require_auth("read", allow_independent=True)
+async def federated_learning_dashboard(
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Federated learning dashboard"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Get user-specific data
+        user_federations = user_specific_service.get_user_federations()
+        user_limits = user_specific_service.get_user_federation_limits()
+        
         return templates.TemplateResponse(
             "federated_learning/index.html",
             {
                 "request": request,
                 "title": "Federated Learning - AASX Digital Twin Analytics Framework",
-                "active_page": "federated-learning"
+                "active_page": "federated-learning",
+                "user_context": user_context,
+                "user_federations": user_federations,
+                "user_limits": user_limits
             }
         )
     except Exception as e:
@@ -100,158 +123,427 @@ async def federated_learning_dashboard(request: Request):
 # ============================================================================
 
 @router.post("/federation/start")
-async def start_federation(request: FederationStartRequest):
+@require_auth("create", allow_independent=True)
+async def start_federation(
+    request: FederationStartRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Start federated learning process"""
     try:
+        # Initialize user-specific service for permission checking
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Check if user can start federations
+        if not user_specific_service.can_start_federation():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to start federated learning")
+        
+        # Get user limits
+        user_limits = user_specific_service.get_user_federation_limits()
+        
+        # Check if user has reached federation limit
+        current_federations = len(user_specific_service.get_user_federations())
+        if current_federations >= user_limits['max_federations']:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Federation limit reached. Maximum allowed: {user_limits['max_federations']}"
+            )
+        
+        # Check privacy level restrictions
+        if request.privacy_level not in user_limits['privacy_levels']:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Privacy level '{request.privacy_level}' not allowed. Allowed levels: {user_limits['privacy_levels']}"
+            )
+        
         federation_service, _, _, _ = get_services()
+        
+        # Add user context to request
+        federation_data = request.dict()
+        federation_data['created_by'] = user_context.user_id
+        federation_data['organization_id'] = getattr(user_context, 'organization_id', None)
+        
         result = federation_service.start_federation(
-            twin_ids=request.twin_ids,
-            model_type=request.model_type,
-            rounds=request.rounds,
-            privacy_level=request.privacy_level
+            twin_ids=federation_data['twin_ids'],
+            model_type=federation_data['model_type'],
+            rounds=federation_data['rounds'],
+            privacy_level=federation_data['privacy_level'],
+            created_by=federation_data['created_by'],
+            organization_id=federation_data['organization_id']
         )
+        
         return {
             "status": "success",
             "data": result
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error starting federation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/federation/status")
-async def get_federation_status():
+@require_auth("read", allow_independent=True)
+async def get_federation_status(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get federation status"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Get user-specific federations
+        user_federations = user_specific_service.get_user_federations()
+        
         federation_service, _, _, _ = get_services()
-        status = federation_service.get_federation_status()
+        
+        # Get status for user's federations
+        if user_federations:
+            status = federation_service.get_federation_status()
+            # Filter to only show user's federations
+            filtered_status = {
+                'federations': [f for f in status.get('federations', []) 
+                               if f.get('id') in [uf.get('id') for uf in user_federations]],
+                'total_count': len(user_federations),
+                'active_count': len([f for f in user_federations if f.get('status') == 'active'])
+            }
+        else:
+            filtered_status = {
+                'federations': [],
+                'total_count': 0,
+                'active_count': 0
+            }
+        
         return {
             "status": "success",
-            "data": status
+            "data": filtered_status
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting federation status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/federation/stop")
-async def stop_federation():
+@require_auth("update", allow_independent=True)
+async def stop_federation(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Stop federated learning process"""
     try:
+        # Initialize user-specific service for permission checking
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Check if user can stop federations
+        if not user_specific_service.can_stop_federation():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to stop federated learning")
+        
         federation_service, _, _, _ = get_services()
         result = federation_service.stop_federation()
+        
         return {
             "status": "success",
             "data": result
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error stopping federation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/twin/performance")
-async def get_twin_performance():
+@require_auth("read", allow_independent=True)
+async def get_twin_performance(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get twin performance metrics"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Get user-specific twin performance data
+        user_twin_performance = user_specific_service.get_user_twin_performance()
+        
         _, twin_performance_service, _, _ = get_services()
-        performance = twin_performance_service.get_twin_performance()
+        
+        # Get performance data and filter for user's twins
+        if user_twin_performance:
+            performance = twin_performance_service.get_twin_performance()
+            # Filter to only show user's twins
+            filtered_performance = [p for p in performance if p.get('twin_id') in 
+                                  [utp.get('twin_id') for utp in user_twin_performance]]
+        else:
+            filtered_performance = []
+        
         return {
             "status": "success",
-            "data": performance
+            "data": filtered_performance
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting twin performance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/twins/performance")
-async def get_twins_performance():
+@require_auth("read", allow_independent=True)
+async def get_twins_performance(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get twins performance metrics (alias for twin/performance)"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Get user-specific twin performance data
+        user_twin_performance = user_specific_service.get_user_twin_performance()
+        
         _, twin_performance_service, _, _ = get_services()
-        performance = twin_performance_service.get_twin_performance()
+        
+        # Get performance data and filter for user's twins
+        if user_twin_performance:
+            performance = twin_performance_service.get_twin_performance()
+            # Filter to only show user's twins
+            filtered_performance = [p for p in performance if p.get('twin_id') in 
+                                  [utp.get('twin_id') for utp in user_twin_performance]]
+        else:
+            filtered_performance = []
+        
         return {
             "status": "success",
-            "data": performance
+            "data": filtered_performance
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting twins performance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/insights/cross-twin")
-async def get_cross_twin_insights():
+@router.get("/insights")
+@require_auth("read", allow_independent=True)
+async def get_insights(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get cross-twin insights"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Check if user can access insights
+        if not user_specific_service.can_access_insights():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access insights")
+        
+        # Get user-specific insights data
+        user_insights = user_specific_service.get_user_insights()
+        
         _, _, insights_service, _ = get_services()
-        insights = insights_service.get_cross_twin_insights()
+        
+        # Get insights and filter for user's data
+        if user_insights:
+            insights = insights_service.get_insights()
+            # Filter to only show insights relevant to user's twins
+            filtered_insights = [i for i in insights if i.get('twin_id') in 
+                               [ui.get('twin_id') for ui in user_insights]]
+        else:
+            filtered_insights = []
+        
         return {
             "status": "success",
-            "data": insights
+            "data": filtered_insights
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error getting cross-twin insights: {e}")
+        logger.error(f"Error getting insights: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/metrics/federation")
-async def get_federation_metrics():
+@require_auth("read", allow_independent=True)
+async def get_federation_metrics(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get federation metrics"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Get user-specific federations
+        user_federations = user_specific_service.get_user_federations()
+        
         _, _, _, monitoring_service = get_services()
-        metrics = monitoring_service.get_federation_metrics()
+        
+        # Get metrics and filter for user's federations
+        if user_federations:
+            metrics = monitoring_service.get_federation_metrics()
+            # Filter to only show metrics relevant to user's federations
+            filtered_metrics = {k: v for k, v in metrics.items() 
+                              if k in ['system_overview', 'general_stats'] or 
+                              any(fed_id in str(v) for fed_id in [uf.get('id') for uf in user_federations])}
+        else:
+            # If no user-specific data, show basic system metrics
+            metrics = monitoring_service.get_federation_metrics()
+            filtered_metrics = {k: v for k, v in metrics.items() 
+                              if k in ['system_overview', 'general_stats']}
+        
         return {
             "status": "success",
-            "data": metrics
+            "data": filtered_metrics
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting federation metrics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/monitoring/metrics")
-async def get_monitoring_metrics():
-    """Get monitoring metrics (alias for federation metrics)"""
+@router.get("/monitoring")
+@require_auth("read", allow_independent=True)
+async def get_monitoring(
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get monitoring metrics"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Check if user can access monitoring
+        if not user_specific_service.can_access_monitoring():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access monitoring")
+        
+        # Get user-specific monitoring data
+        user_monitoring = user_specific_service.get_user_monitoring_metrics()
+        
         _, _, _, monitoring_service = get_services()
-        metrics = monitoring_service.get_federation_metrics()
+        
+        # Get monitoring data and filter for user's data
+        if user_monitoring:
+            monitoring = monitoring_service.get_monitoring_metrics()
+            # Filter to only show monitoring relevant to user's federations
+            filtered_monitoring = {k: v for k, v in monitoring.items() 
+                                 if k in user_monitoring or k in ['system_status', 'overall_health']}
+        else:
+            # If no user-specific data, show basic system monitoring
+            monitoring = monitoring_service.get_monitoring_metrics()
+            filtered_monitoring = {k: v for k, v in monitoring.items() 
+                                 if k in ['system_status', 'overall_health']}
+        
         return {
             "status": "success",
-            "data": metrics
+            "data": filtered_monitoring
         }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting monitoring: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/monitoring/metrics")
+@require_auth("read", allow_independent=True)
+async def get_monitoring_metrics(
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get monitoring metrics (alias for federation metrics)"""
+    try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Get user-specific monitoring data
+        user_monitoring = user_specific_service.get_user_monitoring_metrics()
+        
+        _, _, _, monitoring_service = get_services()
+        
+        # Get metrics and filter for user's data
+        if user_monitoring:
+            metrics = monitoring_service.get_federation_metrics()
+            # Filter to only show metrics relevant to user's federations
+            filtered_metrics = {k: v for k, v in metrics.items() 
+                              if k in ['system_overview', 'general_stats'] or 
+                              any(fed_id in str(v) for fed_id in user_monitoring.get('federation_ids', []))}
+        else:
+            # If no user-specific data, show basic system metrics
+            metrics = monitoring_service.get_federation_metrics()
+            filtered_metrics = {k: v for k, v in metrics.items() 
+                              if k in ['system_overview', 'general_stats']}
+        
+        return {
+            "status": "success",
+            "data": filtered_metrics
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting monitoring metrics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/privacy/status")
-async def get_privacy_status():
+@require_auth("read", allow_independent=True)
+async def get_privacy_status(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get privacy and security status"""
     try:
-        # Return privacy status data
-        privacy_data = {
-            "privacy_level": "high",
-            "differential_privacy_enabled": True,
-            "secure_aggregation_enabled": True,
-            "data_encryption": "AES-256",
-            "compliance_status": "compliant",
-            "last_audit": "2024-01-15",
-            "privacy_metrics": {
-                "data_leakage_risk": "low",
-                "privacy_loss": 0.1,
-                "anonymization_level": "high"
-            }
-        }
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Check if user can access privacy status
+        if not user_specific_service.can_access_privacy_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access privacy status")
+        
+        # Get user-specific privacy data
+        user_privacy = user_specific_service.get_user_privacy_status()
+        
+        # Get organization privacy settings if applicable
+        if not user_specific_service.is_independent:
+            org_service = FederatedLearningOrganizationService(user_context)
+            org_collaboration = org_service.get_organization_collaboration_settings()
+            user_privacy.update(org_collaboration)
+        
         return {
             "status": "success",
-            "data": privacy_data
+            "data": user_privacy
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting privacy status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/monitoring/real-time")
-async def get_real_time_metrics():
+@require_auth("read", allow_independent=True)
+async def get_real_time_metrics(
+    user_context: UserContext = Depends(get_current_user)
+):
     """Get real-time monitoring metrics"""
     try:
+        # Initialize user-specific service for access control
+        user_specific_service = FederatedLearningUserSpecificService(user_context)
+        
+        # Check if user can access monitoring
+        if not user_specific_service.can_access_monitoring():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access real-time monitoring")
+        
+        # Get user-specific monitoring data
+        user_monitoring = user_specific_service.get_user_monitoring_metrics()
+        
         _, _, _, monitoring_service = get_services()
-        real_time_data = monitoring_service.get_real_time_metrics()
+        
+        # Get real-time metrics and filter for user's data
+        if user_monitoring:
+            real_time_metrics = monitoring_service.get_real_time_metrics()
+            # Filter to only show metrics relevant to user's federations
+            filtered_metrics = {k: v for k, v in real_time_metrics.items() 
+                              if k in ['system_status', 'overall_health'] or 
+                              any(fed_id in str(v) for fed_id in user_monitoring.get('federation_ids', []))}
+        else:
+            # If no user-specific data, show basic system metrics
+            real_time_metrics = monitoring_service.get_real_time_metrics()
+            filtered_metrics = {k: v for k, v in real_time_metrics.items() 
+                              if k in ['system_status', 'overall_health']}
+        
         return {
             "status": "success",
-            "data": real_time_data
+            "data": filtered_metrics
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting real-time metrics: {e}")
         raise HTTPException(status_code=500, detail=str(e)) 

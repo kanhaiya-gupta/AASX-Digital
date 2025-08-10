@@ -5,6 +5,11 @@
 
 export default class FederatedLearningPrivacy {
     constructor() {
+        // Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
+        
         this.isInitialized = false;
         this.config = {
             apiBaseUrl: '/api/federated-learning',
@@ -64,12 +69,61 @@ export default class FederatedLearningPrivacy {
     }
 
     /**
+     * Initialize authentication
+     */
+    initAuthentication() {
+        try {
+            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+            
+            if (token && userData) {
+                this.authToken = token;
+                this.currentUser = JSON.parse(userData);
+                this.isAuthenticated = true;
+                console.log('🔐 Federated Learning Privacy: User authenticated as', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                console.log('🔐 Federated Learning Privacy: User not authenticated');
+            }
+        } catch (error) {
+            console.error('❌ Federated Learning Privacy: Authentication initialization failed:', error);
+            this.isAuthenticated = false;
+        }
+    }
+
+    /**
+     * Get authentication token
+     */
+    getAuthToken() {
+        if (!this.authToken) {
+            this.initAuthentication();
+        }
+        return this.authToken;
+    }
+
+    /**
+     * Get authentication headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        const token = this.getAuthToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+
+    /**
      * Initialize the Federated Learning Privacy Module
      */
     async init() {
         console.log('🔧 Initializing Federated Learning Privacy Module...');
 
         try {
+            // Initialize authentication
+            this.initAuthentication();
             // Load configuration
             await this.loadConfiguration();
 
@@ -115,7 +169,15 @@ export default class FederatedLearningPrivacy {
      */
     async loadConfiguration() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/privacy-config`);
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping configuration load');
+                return;
+            }
+            
+            const response = await fetch(`${this.config.apiBaseUrl}/privacy-config`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const config = await response.json();
                 this.config = { ...this.config, ...config };
@@ -163,8 +225,15 @@ export default class FederatedLearningPrivacy {
      */
     async initializeEncryption() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping encryption initialization');
+                return;
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/encryption/initialize`, {
-                method: 'POST'
+                method: 'POST',
+                headers: this.getAuthHeaders()
             });
             
             if (!response.ok) {
@@ -186,11 +255,15 @@ export default class FederatedLearningPrivacy {
      */
     async initializeSecureAggregation() {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping secure aggregation initialization');
+                return;
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/secure-aggregation/initialize`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     threshold: this.config.secureAggregation.threshold,
                     keySize: this.config.secureAggregation.keySize,
@@ -243,14 +316,18 @@ export default class FederatedLearningPrivacy {
      */
     async applyDifferentialPrivacy(data, epsilon = null, delta = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping differential privacy application');
+                return;
+            }
+            
             const eps = epsilon || this.config.differentialPrivacy.epsilon;
             const del = delta || this.config.differentialPrivacy.delta;
             
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/differential-privacy`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     data,
                     epsilon: eps,
@@ -286,13 +363,17 @@ export default class FederatedLearningPrivacy {
      */
     async applySecureAggregation(data, threshold = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping secure aggregation application');
+                return;
+            }
+            
             const thresh = threshold || this.config.secureAggregation.threshold;
             
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/secure-aggregation`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     data,
                     threshold: thresh,
@@ -325,15 +406,19 @@ export default class FederatedLearningPrivacy {
      */
     async applyAnonymization(data, k = null, l = null, t = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping anonymization application');
+                return;
+            }
+            
             const kValue = k || this.config.anonymization.kAnonymity;
             const lValue = l || this.config.anonymization.lDiversity;
             const tValue = t || this.config.anonymization.tCloseness;
             
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/anonymization`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     data,
                     k: kValue,
@@ -369,13 +454,17 @@ export default class FederatedLearningPrivacy {
      */
     async encryptData(data, key = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping data encryption');
+                return;
+            }
+            
             const encryptionKey = key || this.encryptionKeys.get('current');
             
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/encrypt`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     data,
                     algorithm: this.config.encryption.algorithm,
@@ -410,13 +499,17 @@ export default class FederatedLearningPrivacy {
      */
     async decryptData(encryptedData, key = null) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping data decryption');
+                return;
+            }
+            
             const encryptionKey = key || this.encryptionKeys.get('current');
             
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/decrypt`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     encryptedData,
                     algorithm: this.config.encryption.algorithm,
@@ -450,11 +543,15 @@ export default class FederatedLearningPrivacy {
      */
     async checkPrivacyCompliance(data, requirements = {}) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping privacy compliance check');
+                return;
+            }
+            
             const response = await fetch(`${this.config.apiBaseUrl}/privacy/compliance/check`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     data,
                     requirements: {
@@ -500,7 +597,15 @@ export default class FederatedLearningPrivacy {
      */
     async monitorPrivacyMetrics() {
         try {
-            const response = await fetch(`${this.config.apiBaseUrl}/privacy/metrics`);
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping privacy metrics monitoring');
+                return;
+            }
+            
+            const response = await fetch(`${this.config.apiBaseUrl}/privacy/metrics`, {
+                headers: this.getAuthHeaders()
+            });
             if (response.ok) {
                 const metrics = await response.json();
                 
@@ -568,11 +673,15 @@ export default class FederatedLearningPrivacy {
      */
     async sendAuditLog(logEntry) {
         try {
+            // Check authentication
+            if (!this.isAuthenticated) {
+                console.warn('⚠️ Federated Learning Privacy: User not authenticated, skipping audit log send');
+                return;
+            }
+            
             await fetch(`${this.config.apiBaseUrl}/privacy/audit/log`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(logEntry)
             });
         } catch (error) {
