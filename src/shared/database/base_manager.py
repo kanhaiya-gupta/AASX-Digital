@@ -59,8 +59,8 @@ class BaseDatabaseManager:
     
     def get_table_schema(self, table_name: str) -> List[Dict[str, Any]]:
         """Get the schema for a table."""
-        query = "PRAGMA table_info(?)"
-        return self.execute_query(query, (table_name,))
+        query = f"PRAGMA table_info({table_name})"
+        return self.execute_query(query, ())
     
     def begin_transaction(self):
         """Begin a database transaction."""

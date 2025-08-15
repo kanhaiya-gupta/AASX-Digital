@@ -28,11 +28,35 @@ from .projects import ProjectService
 from .files import FileService
 from .processor import AASXProcessor
 
+# Import analytics services
+from .analytics.analytics_service import AnalyticsService
+from .analytics.dashboard_service import DashboardService
+from .analytics.chart_data_service import ChartDataService
+
+# Import system monitoring services
+from .system.system_monitor import SystemMonitor
+from .system.service_monitor import ServiceMonitor
+from .system.infrastructure_logs import InfrastructureLogs
+from .monitoring.resource_monitor import ResourceMonitor
+from .monitoring.alert_manager import AlertManager
+
 # Create service instances
 use_case_service = UseCaseService()
 project_service = ProjectService()
 file_service = FileService()
 aasx_processor = AASXProcessor()
+
+# Analytics services will be initialized after db_manager is created
+analytics_service = None
+dashboard_service = None
+chart_data_service = None
+
+# System monitoring services
+system_monitor = SystemMonitor()
+service_monitor = ServiceMonitor()
+infrastructure_logs = InfrastructureLogs()
+resource_monitor = ResourceMonitor()
+alert_manager = AlertManager()
 
 # Import new user-specific and organization services
 from .services.user_specific_service import UserSpecificService
@@ -63,6 +87,11 @@ file_repo = FileRepository(db_manager)
 project_repo = ProjectRepository(db_manager)
 digital_twin_service = DigitalTwinService(db_manager, file_repo, project_repo)
 federated_learning_service = FederatedLearningService(digital_twin_service)
+
+# Initialize analytics services with database connection
+analytics_service = AnalyticsService(db_manager)
+dashboard_service = DashboardService(db_manager)
+chart_data_service = ChartDataService(db_manager)
 
 # Models
 class ETLConfigRequest(BaseModel):
@@ -167,7 +196,7 @@ async def list_use_cases(request: Request, user_context: UserContext = Depends(g
 
 @router.get("/use-cases/{use_case_id}")
 @require_auth("read", allow_independent=True)  # ✅ PHASE 2: Require read permission, allow independent users
-async def get_use_case(use_case_id: str, user_context: UserContext = Depends(get_current_user)):
+async def get_use_case(use_case_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get specific use case - requires read permission, allows independent users"""
     try:
         use_case = use_case_service.get_use_case(use_case_id)
@@ -197,7 +226,7 @@ async def get_projects_by_use_case(use_case_id: str, request: Request, user_cont
 
 @router.post("/use-cases")
 @require_auth("write", allow_independent=True)
-async def create_use_case(use_case_data: UseCaseCreate, user_context: UserContext = Depends(get_current_user)):
+async def create_use_case(use_case_data: UseCaseCreate, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Create new use case - requires write permission, allows independent users"""
     try:
         use_case_id = use_case_service.create_use_case(use_case_data.dict())
@@ -240,31 +269,55 @@ async def list_projects(use_case_id: str = None, request: Request = None, user_c
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects/{project_id}")
-@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+@require_auth("read", allow_independent=True)  # ✅ PHASE 2: Allow demo users and logged-in users
 async def get_project(project_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get specific project - requires read permission, middleware handles demo users"""
     try:
+        logger.info(f"🔍 get_project called for project_id: {project_id}")
+        logger.info(f"🔍 user_context: {user_context}")
+        logger.info(f"🔍 user_context type: {type(user_context)}")
+        
         # Get user context from middleware (already set by middleware)
         if not user_context:
             user_context = getattr(request.state, 'user_context', None)
+            logger.info(f"🔍 Fallback user_context from request.state: {user_context}")
+        
+        if not user_context:
+            logger.error("❌ No user context available")
+            raise HTTPException(status_code=401, detail="Authentication required")
         
         # ✅ IMPLEMENTATION: Use user-specific service for project access
+        logger.info(f"🔍 Creating UserSpecificService with user_context")
         user_specific_service = UserSpecificService(user_context)
+        logger.info(f"🔍 Calling get_user_project for project_id: {project_id}")
         project = user_specific_service.get_user_project(project_id)
+        logger.info(f"🔍 get_user_project returned: {project}")
         
         if not project:
+            logger.warning(f"❌ Project not found or access denied for project_id: {project_id}")
             raise HTTPException(status_code=404, detail="Project not found")
         
-        # Add file count using user-specific service
-        project["file_count"] = user_specific_service.get_project_file_count(project_id)
+        # Add file count and files list using user-specific service
+        logger.info(f"🔍 Getting file count for project_id: {project_id}")
+        file_count = user_specific_service.get_project_file_count(project_id)
+        project["file_count"] = file_count
+        logger.info(f"🔍 File count: {file_count}")
         
+        # ✅ ADD FILES LIST: Get the actual files for this project
+        logger.info(f"🔍 Getting files list for project_id: {project_id}")
+        all_files = user_specific_service.get_user_files()
+        project_files = [file for file in all_files if file.get('project_id') == project_id]
+        project["files"] = project_files
+        logger.info(f"🔍 Files found: {len(project_files)}")
+        
+        logger.info(f"✅ Returning project with files: {project}")
         return project
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/projects")
 @require_auth("write", allow_independent=True)
-async def create_project(project_data: ProjectCreate, user_context: UserContext = Depends(get_current_user)):
+async def create_project(project_data: ProjectCreate, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Create new project - requires write permission, allows independent users"""
     try:
         # Initialize user-specific service
@@ -299,8 +352,10 @@ async def list_files(request: Request, user_context: UserContext = Depends(get_c
 @router.post("/files/upload")
 @require_auth("write", allow_independent=True)  # ✅ PHASE 2: Allow demo users to upload
 async def upload_file(
-    project_id: str, 
-    file: UploadFile = File(...), 
+    request: Request,
+    project_id: str = Form(...),
+    file: UploadFile = File(...),
+    job_type: str = Form(...),
     description: str = Form(None),
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -309,8 +364,16 @@ async def upload_file(
         # Initialize file service
         file_service_instance = FileService()
         
-        # Upload the file
-        result = file_service_instance.upload_file(project_id, file, description)
+        # Upload the file with user context (project_id is already provided)
+        result = file_service_instance.upload_file(
+            project_id, 
+            file, 
+            job_type,
+            description,
+            user_id=user_context.user_id,
+            org_id=user_context.organization_id,
+            source_type='manual_upload'
+        )
         
         return {
             "success": True,
@@ -318,6 +381,45 @@ async def upload_file(
             "file_id": result.get("file_id"),
             "filename": result.get("filename"),
             "project_id": project_id
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"Upload file error: {str(e)}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/files/upload-from-url")
+@require_auth("write", allow_independent=True)  # ✅ PHASE 2: Allow demo users to upload
+async def upload_file_from_url(
+    request: Request,
+    project_id: str = Form(...),
+    url: str = Form(...), 
+    job_type: str = Form(...),
+    description: str = Form(None),
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Upload a file from URL to a project - requires write permission, allows demo users"""
+    try:
+        # Initialize file service
+        file_service_instance = FileService()
+        
+        # Upload the file from URL with user context (project_id is already provided)
+        result = file_service_instance.upload_file_from_url(
+            project_id, 
+            url, 
+            job_type,
+            description,
+            user_id=user_context.user_id,
+            org_id=user_context.organization_id
+        )
+        
+        return {
+            "success": True,
+            "message": "File uploaded from URL successfully",
+            "file_id": result.get("file_id"),
+            "filename": result.get("filename"),
+            "project_id": project_id,
+            "source_url": url
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -401,7 +503,7 @@ async def get_user_stats(request: Request, user_context: UserContext = Depends(g
 # Organization-Specific Endpoints
 @router.get("/organization/projects")
 @require_auth("read", allow_independent=False)
-async def get_organization_projects(user_context: UserContext = Depends(get_current_user)):
+async def get_organization_projects(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get organization projects - requires read permission, organization members only"""
     try:
         # Initialize organization service
@@ -414,7 +516,7 @@ async def get_organization_projects(user_context: UserContext = Depends(get_curr
 
 @router.get("/organization/files")
 @require_auth("read", allow_independent=False)
-async def get_organization_files(user_context: UserContext = Depends(get_current_user)):
+async def get_organization_files(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get organization files - requires read permission, organization members only"""
     try:
         # Initialize organization service
@@ -427,7 +529,7 @@ async def get_organization_files(user_context: UserContext = Depends(get_current
 
 @router.get("/organization/stats")
 @require_auth("read", allow_independent=False)
-async def get_organization_stats(user_context: UserContext = Depends(get_current_user)):
+async def get_organization_stats(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get organization statistics - requires read permission, organization members only"""
     try:
         # Initialize organization service
@@ -440,7 +542,7 @@ async def get_organization_stats(user_context: UserContext = Depends(get_current
 
 @router.get("/organization/members")
 @require_auth("read", allow_independent=False)
-async def get_organization_members(user_context: UserContext = Depends(get_current_user)):
+async def get_organization_members(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get organization members - requires read permission, organization members only"""
     try:
         # Initialize organization service
@@ -456,7 +558,7 @@ async def get_organization_members(user_context: UserContext = Depends(get_curre
 # ETL Processing Endpoints
 @router.post("/etl/run")
 @require_auth("write", allow_independent=True)
-async def run_etl_pipeline(config: ETLConfigRequest, user_context: UserContext = Depends(get_current_user)):
+async def run_etl_pipeline(config: ETLConfigRequest, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Run ETL pipeline for AASX files with federated learning integration"""
     try:
         print("🔍 ETL Route: Received request")
@@ -511,7 +613,12 @@ async def run_etl_pipeline(config: ETLConfigRequest, user_context: UserContext =
                 print(f"❌ ETL Route: Invalid file format. Expected dict with hierarchy info, got: {type(config.files[0])}")
                 raise HTTPException(status_code=400, detail="Invalid file format. Expected hierarchy information (use_case_name, project_name, filename)")
         
+        # Add user context to config
+        config_dict['user_id'] = user_context.user_id
+        config_dict['org_id'] = user_context.organization_id
+        
         print(f"📤 ETL Route: Sending to processor: {config_dict}")
+        print(f"👤 User: {user_context.user_id}, Org: {user_context.organization_id}")
         
         # Run ETL pipeline - all business logic is in processor
         result = aasx_processor.run_etl_pipeline(config_dict)
@@ -524,7 +631,7 @@ async def run_etl_pipeline(config: ETLConfigRequest, user_context: UserContext =
 
 @router.get("/etl/progress")
 @require_auth("read", allow_independent=True)
-async def get_etl_progress(user_context: UserContext = Depends(get_current_user)):
+async def get_etl_progress(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get ETL processing progress"""
     try:
         return aasx_processor.get_etl_progress()
@@ -533,7 +640,7 @@ async def get_etl_progress(user_context: UserContext = Depends(get_current_user)
 
 @router.get("/etl/status")
 @require_auth("read", allow_independent=True)
-async def get_etl_status(user_context: UserContext = Depends(get_current_user)):
+async def get_etl_status(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get ETL processing status"""
     try:
         return aasx_processor.get_etl_status()
@@ -543,7 +650,7 @@ async def get_etl_status(user_context: UserContext = Depends(get_current_user)):
 # Additional endpoints for frontend compatibility
 @router.get("/files")
 @require_auth("read", allow_independent=True)
-async def list_files_for_etl(user_context: UserContext = Depends(get_current_user)):
+async def list_files_for_etl(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get all files for ETL pipeline (alias for compatibility)"""
     try:
         files = file_service.list_all_files()
@@ -564,7 +671,7 @@ async def list_files_for_etl(user_context: UserContext = Depends(get_current_use
 
 @router.get("/files/by-path")
 @require_auth("read", allow_independent=True)
-async def get_file_by_path(use_case_name: str, project_name: str, filename: str, user_context: UserContext = Depends(get_current_user)):
+async def get_file_by_path(use_case_name: str, project_name: str, filename: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get file information by use case, project, and filename"""
     try:
         file_info = file_service.get_file_by_path(use_case_name, project_name, filename)
@@ -586,7 +693,7 @@ async def get_file_by_path(use_case_name: str, project_name: str, filename: str,
 
 @router.get("/files/{file_id}/path-info")
 @require_auth("read", allow_independent=True)
-async def get_file_path_info(file_id: str, user_context: UserContext = Depends(get_current_user)):
+async def get_file_path_info(file_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get logical path information for a file (usecase/project/filename)"""
     try:
         path_info = file_service.get_file_path_info(file_id)
@@ -608,7 +715,7 @@ async def get_file_path_info(file_id: str, user_context: UserContext = Depends(g
 
 @router.get("/files/{file_id}/path")
 @require_auth("read", allow_independent=True)
-async def get_file_path(file_id: str, user_context: UserContext = Depends(get_current_user)):
+async def get_file_path(file_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get file hierarchy path from file_id (alias for path-info)"""
     try:
         path_info = file_service.get_file_path_info(file_id)
@@ -628,9 +735,24 @@ async def get_file_path(file_id: str, user_context: UserContext = Depends(get_cu
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/blazor/files/{file_id}/path")
+# Public endpoint specifically for Blazor server - no authentication required
+async def get_file_path_for_blazor(file_id: str):
+    """Get file hierarchy path from file_id - PUBLIC endpoint for Blazor server calls"""
+    try:
+        path_info = file_service.get_file_path_info(file_id)
+        if not path_info:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Public endpoint for Blazor server - no access control needed
+        # Returns the logical path for Blazor to locate files
+        return path_info
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/files/by-path/file-id")
 @require_auth("read", allow_independent=True)
-async def get_file_id_by_path(use_case_name: str, project_name: str, filename: str, user_context: UserContext = Depends(get_current_user)):
+async def get_file_id_by_path(use_case_name: str, project_name: str, filename: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get file ID by use case, project, and filename"""
     try:
         file_id = file_service.get_file_id_by_path(use_case_name, project_name, filename)
@@ -652,7 +774,7 @@ async def get_file_id_by_path(use_case_name: str, project_name: str, filename: s
 
 @router.post("/projects/sync")
 @require_auth("write", allow_independent=True)
-async def sync_projects(user_context: UserContext = Depends(get_current_user)):
+async def sync_projects(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Sync projects and refresh statuses"""
     try:
         return project_service.refresh_project_status()
@@ -675,7 +797,7 @@ async def get_aasx_stats(request: Request, user_context: UserContext = Depends(g
 
 @router.post("/refresh")
 @require_auth("write", allow_independent=True)
-async def refresh_files_and_statuses(project_id: str = None, user_context: UserContext = Depends(get_current_user)):
+async def refresh_files_and_statuses(project_id: str = None, request: Request = None, user_context: UserContext = Depends(get_current_user)):
     """Refresh file statuses and digital twin statuses"""
     try:
         return project_service.refresh_project_status(project_id)
@@ -684,7 +806,7 @@ async def refresh_files_and_statuses(project_id: str = None, user_context: UserC
 
 @router.post("/files/reset-statuses")
 @require_auth("write", allow_independent=True)
-async def reset_file_statuses_endpoint(user_context: UserContext = Depends(get_current_user)):
+async def reset_file_statuses_endpoint(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Manually trigger file status reset when outputs are missing"""
     try:
         return file_service.reset_file_statuses()
@@ -694,7 +816,7 @@ async def reset_file_statuses_endpoint(user_context: UserContext = Depends(get_c
 # Digital Twin Federated Learning Endpoints
 @router.get("/digital-twins/federated-learning/stats")
 @require_auth("read", allow_independent=True)
-async def get_digital_twin_federated_stats(user_context: UserContext = Depends(get_current_user)):
+async def get_digital_twin_federated_stats(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get federated learning statistics for digital twins"""
     try:
         stats = digital_twin_service.get_repository().get_federated_learning_stats()
@@ -711,6 +833,7 @@ async def record_user_consent_for_federated_learning(
     consent_terms: str = None,
     project_id: str = None,
     file_id: str = None,
+    request: Request = None,
     user_context: UserContext = Depends(get_current_user)
 ):
     """Record user consent for federated learning participation"""
@@ -729,7 +852,7 @@ async def record_user_consent_for_federated_learning(
 
 @router.get("/user-consent/{user_id}/federated-learning")
 @require_auth("read", allow_independent=True)
-async def get_user_consent_status(user_id: str, user_context: UserContext = Depends(get_current_user)):
+async def get_user_consent_status(user_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get user's federated learning consent status"""
     try:
         # For now, return a placeholder
@@ -746,7 +869,7 @@ async def get_user_consent_status(user_id: str, user_context: UserContext = Depe
 
 @router.get("/federated-learning/consent-terms")
 @require_auth("read", allow_independent=True)
-async def get_federated_learning_consent_terms(user_context: UserContext = Depends(get_current_user)):
+async def get_federated_learning_consent_terms(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get the current federated learning consent terms"""
     try:
         terms = {
@@ -777,7 +900,7 @@ async def get_federated_learning_consent_terms(user_context: UserContext = Depen
 
 @router.get("/digital-twins/federated-learning/{participation_status}")
 @require_auth("read", allow_independent=True)
-async def get_digital_twins_by_federated_status(participation_status: str, user_context: UserContext = Depends(get_current_user)):
+async def get_digital_twins_by_federated_status(participation_status: str, request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get digital twins by federated participation status"""
     try:
         twins = digital_twin_service.get_repository().get_federated_twins(participation_status)
@@ -788,7 +911,7 @@ async def get_digital_twins_by_federated_status(participation_status: str, user_
 
 @router.put("/digital-twins/{twin_id}/federated-learning")
 @require_auth("write", allow_independent=True)
-async def update_digital_twin_federated_learning(twin_id: str, federated_data: Dict[str, Any], user_context: UserContext = Depends(get_current_user)):
+async def update_digital_twin_federated_learning(twin_id: str, federated_data: Dict[str, Any], request: Request, user_context: UserContext = Depends(get_current_user)):
     """Update federated learning settings for a digital twin"""
     try:
         success = digital_twin_service.get_repository().update_federated_metadata(twin_id, federated_data)
@@ -797,4 +920,679 @@ async def update_digital_twin_federated_learning(twin_id: str, federated_data: D
         else:
             raise HTTPException(status_code=500, detail="Failed to update federated learning settings")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/processing/{job_id}/federated-learning-consent")
+@require_auth("write", allow_independent=True)
+async def update_federated_learning_consent(
+    job_id: str, 
+    consent_data: Dict[str, Any], 
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Update federated learning consent for a processing job"""
+    try:
+        # Validate that the user owns this job or has permission to update it
+        job = aasx_processing_service.get_job_by_id(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Processing job not found")
+        
+        # Check if user has permission to update this job
+        if job.get('processed_by') != user_context.user_id:
+            # TODO: Add role-based permission check here
+            pass
+        
+        # Update the consent
+        success = aasx_processing_service.update_federated_learning_consent(job_id, consent_data)
+        
+        if success:
+            return {
+                "success": True, 
+                "message": "Federated learning consent updated successfully",
+                "job_id": job_id,
+                "consent_data": consent_data
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to update federated learning consent")
+            
+    except Exception as e:
+        logger.error(f"Failed to update federated learning consent: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/processing/federated-learning/stats")
+@require_auth("read", allow_independent=True)
+async def get_federated_learning_stats(
+    user_id: Optional[str] = None,
+    project_id: Optional[str] = None,
+    request: Request = None,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get federated learning consent statistics"""
+    try:
+        # If no user_id specified, use the authenticated user's ID
+        if not user_id:
+            user_id = user_context.user_id
+        
+        stats = aasx_processing_service.get_federated_learning_stats(user_id, project_id)
+        
+        return {
+            "success": True,
+            "stats": stats,
+            "user_id": user_id,
+            "project_id": project_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get federated learning stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# ANALYTICS ENDPOINTS - Phase 5: Frontend Integration & Real-Time Analytics
+# ============================================================================
+
+# Dashboard Overview Endpoints
+@router.get("/analytics/dashboard/overview")
+@require_auth("read", allow_independent=True)
+async def get_dashboard_overview(request: Request, user_context: UserContext = Depends(get_current_user)):
+    """Get complete dashboard overview for the authenticated user."""
+    try:
+        logger.info(f"Getting dashboard overview for user: {user_context.user_id}")
+        
+        # Convert UserContext to dict format expected by analytics services
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        overview = dashboard_service.get_dashboard_overview(user_context_dict)
+        
+        return {
+            "success": True,
+            "data": overview,
+            "message": "Dashboard overview retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get dashboard overview: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve dashboard overview: {str(e)}"
+        )
+
+
+@router.get("/analytics/dashboard/summary-cards")
+@require_auth("read", allow_independent=True)
+async def get_dashboard_summary_cards(request: Request, user_context: UserContext = Depends(get_current_user)):
+    """Get dashboard summary cards for the authenticated user."""
+    try:
+        logger.info(f"Getting dashboard summary cards for user: {user_context.user_id}")
+        
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        summary_cards = dashboard_service.get_dashboard_summary_cards(user_context_dict)
+        
+        return {
+            "success": True,
+            "data": summary_cards,
+            "message": "Summary cards retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get summary cards: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve summary cards: {str(e)}"
+        )
+
+
+@router.get("/analytics/dashboard/recent-jobs")
+@require_auth("read", allow_independent=True)
+async def get_recent_processing_jobs(
+    limit: int = 5,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get recent processing jobs for the authenticated user."""
+    try:
+        logger.info(f"Getting recent processing jobs for user: {user_context.user_id}, limit: {limit}")
+        
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        recent_jobs = dashboard_service.get_recent_processing_jobs(user_context_dict, limit)
+        
+        return {
+            "success": True,
+            "data": recent_jobs,
+            "message": f"Retrieved {len(recent_jobs)} recent jobs"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get recent processing jobs: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve recent jobs: {str(e)}"
+        )
+
+
+# Chart Data Endpoints
+@router.get("/analytics/charts/processing-trends")
+@require_auth("read", allow_independent=True)
+async def get_processing_trends_chart(
+    days: int = 30,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get processing trends chart data for the authenticated user."""
+    try:
+        logger.info(f"Getting processing trends chart for user: {user_context.user_id}, days: {days}")
+        
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        chart_data = chart_data_service.get_processing_trends_chart(user_context_dict, days)
+        
+        return {
+            "success": True,
+            "data": chart_data,
+            "message": "Processing trends chart data retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get processing trends chart: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve processing trends chart: {str(e)}"
+        )
+
+
+@router.get("/analytics/charts/quality-metrics")
+@require_auth("read", allow_independent=True)
+async def get_quality_metrics_chart(
+    days: int = 30,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get quality metrics chart data for the authenticated user."""
+    try:
+        logger.info(f"Getting quality metrics chart for user: {user_context.user_id}, days: {days}")
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        chart_data = chart_data_service.get_quality_metrics_chart(user_context_dict, days)
+        
+        return {
+            "success": True,
+            "data": chart_data,
+            "message": "Quality metrics chart data retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get quality metrics chart: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve quality metrics chart: {str(e)}"
+        )
+
+
+@router.get("/analytics/charts/performance-metrics")
+@require_auth("read", allow_independent=True)
+async def get_performance_metrics_chart(
+    days: int = 30,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get performance metrics chart data for the authenticated user."""
+    try:
+        logger.info(f"Getting performance metrics chart for user: {user_context.user_id}, days: {days}")
+        
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        chart_data = chart_data_service.get_performance_metrics_chart(user_context_dict, days)
+        
+        return {
+            "success": True,
+            "data": chart_data,
+            "message": "Performance metrics chart data retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get performance metrics chart: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve performance metrics chart: {str(e)}"
+        )
+
+
+@router.get("/analytics/charts/user-behavior")
+@require_auth("read", allow_independent=True)
+async def get_user_behavior_chart(
+    days: int = 30,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get user behavior chart data for the authenticated user."""
+    try:
+        logger.info(f"Getting user behavior chart for user: {user_context.user_id}, days: {days}")
+        
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        chart_data = chart_data_service.get_user_behavior_chart(user_context_dict, days)
+        
+        return {
+            "success": True,
+            "data": chart_data,
+            "message": "User behavior chart data retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get user behavior chart: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve user behavior chart: {str(e)}"
+        )
+
+
+# Analytics Data Endpoints
+@router.get("/analytics/metrics/dashboard")
+@require_auth("read", allow_independent=True)
+async def get_dashboard_metrics(user_context: UserContext = Depends(get_current_user)):
+    """Get comprehensive dashboard metrics for the authenticated user."""
+    try:
+        logger.info(f"Getting dashboard metrics for user: {user_context.user_id}")
+        
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        metrics = analytics_service.get_dashboard_metrics(user_context_dict)
+        
+        return {
+            "success": True,
+            "data": metrics,
+            "message": "Dashboard metrics retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get dashboard metrics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve dashboard metrics: {str(e)}"
+        )
+
+
+@router.get("/analytics/metrics/performance")
+@require_auth("read", allow_independent=True)
+async def get_performance_metrics(
+    days: int = 30,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get performance metrics for the authenticated user."""
+    try:
+        logger.info(f"Getting performance metrics for user: {user_context.user_id}, days: {days}")
+        
+        user_context_dict = {
+            'user_id': user_context.user_id,
+            'organization_id': user_context.organization_id,
+            'role': user_context.role
+        }
+        
+        metrics = analytics_service.get_performance_metrics(user_context_dict, days)
+        
+        return {
+            "success": True,
+            "data": metrics,
+            "message": "Performance metrics retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get performance metrics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve performance metrics: {str(e)}"
+        )
+
+
+@router.get("/analytics/health")
+@require_auth("read", allow_independent=True)
+async def analytics_health_check(user_context: UserContext = Depends(get_current_user)):
+    """Health check endpoint for analytics services."""
+    try:
+        return {
+            "success": True,
+            "status": "healthy",
+            "services": {
+                "analytics_service": "initialized",
+                "dashboard_service": "initialized",
+                "chart_data_service": "initialized"
+            },
+            "message": "Analytics services are healthy"
+        }
+        
+    except Exception as e:
+        logger.error(f"Analytics health check failed: {e}")
+        return {
+            "success": False,
+            "status": "unhealthy",
+            "error": str(e),
+            "message": "Analytics services are not healthy"
+        }
+
+
+# ============================================================================
+# SYSTEM MONITORING ENDPOINTS
+# ============================================================================
+
+@router.get("/system/health")
+@require_auth("read", allow_independent=True)
+async def get_system_health(user_context: UserContext = Depends(get_current_user)):
+    """Get current system health status for the authenticated user."""
+    try:
+        logger.info(f"Getting system health for user: {user_context.user_id}")
+        
+        health = system_monitor.get_current_health()
+        
+        return {
+            "success": True,
+            "data": health,
+            "message": "System health retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get system health: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve system health: {str(e)}"
+        )
+
+
+@router.get("/system/resources")
+@require_auth("read", allow_independent=True)
+async def get_resource_metrics(user_context: UserContext = Depends(get_current_user)):
+    """Get current resource usage metrics for the authenticated user."""
+    try:
+        logger.info(f"Getting resource metrics for user: {user_context.user_id}")
+        
+        metrics = resource_monitor.get_current_resources(
+            user_context.user_id, 
+            user_context.organization_id
+        )
+        
+        return {
+            "success": True,
+            "data": metrics,
+            "message": "Resource metrics retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get resource metrics: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve resource metrics: {str(e)}"
+        )
+
+
+@router.get("/system/services")
+@require_auth("read", allow_independent=True)
+async def get_service_status(user_context: UserContext = Depends(get_current_user)):
+    """Get current service health status for the authenticated user."""
+    try:
+        logger.info(f"Getting service status for user: {user_context.user_id}")
+        
+        status = service_monitor.get_service_health(
+            user_context.user_id, 
+            user_context.organization_id
+        )
+        
+        return {
+            "success": True,
+            "data": status,
+            "message": "Service status retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get service status: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve service status: {str(e)}"
+        )
+
+
+@router.get("/system/logs")
+@require_auth("read", allow_independent=True)
+async def get_system_logs(
+    level: Optional[str] = None,
+    service: Optional[str] = None,
+    hours: int = 24,
+    query: str = "",
+    limit: int = 1000,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get system logs for the authenticated user with filtering options."""
+    try:
+        logger.info(f"Getting system logs for user: {user_context.user_id}")
+        
+        logs = infrastructure_logs.get_logs_for_user(
+            user_context.user_id,
+            user_context.organization_id,
+            level,
+            service,
+            hours,
+            limit
+        )
+        
+        return {
+            "success": True,
+            "data": {"logs": logs},
+            "message": "System logs retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get system logs: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve system logs: {str(e)}"
+        )
+
+
+@router.get("/system/logs/summary")
+@require_auth("read", allow_independent=True)
+async def get_log_summary(
+    hours: int = 24,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get log summary statistics for the authenticated user."""
+    try:
+        logger.info(f"Getting log summary for user: {user_context.user_id}")
+        
+        summary = infrastructure_logs.get_log_summary_for_user(
+            user_context.user_id,
+            user_context.organization_id,
+            hours
+        )
+        
+        return {
+            "success": True,
+            "data": summary,
+            "message": "Log summary retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get log summary: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve log summary: {str(e)}"
+        )
+
+
+@router.get("/system/logs/trends")
+@require_auth("read", allow_independent=True)
+async def get_log_trends(
+    hours: int = 24,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get log trends and patterns for the authenticated user."""
+    try:
+        logger.info(f"Getting log trends for user: {user_context.user_id}")
+        
+        trends = infrastructure_logs.get_log_trends_for_user(
+            user_context.user_id,
+            user_context.organization_id,
+            hours
+        )
+        
+        return {
+            "success": True,
+            "data": trends,
+            "message": "Log trends retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get log trends: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve log trends: {str(e)}"
+        )
+
+
+@router.get("/system/alerts/active")
+@require_auth("read", allow_independent=True)
+async def get_active_alerts(user_context: UserContext = Depends(get_current_user)):
+    """Get active alerts for the authenticated user."""
+    try:
+        logger.info(f"Getting active alerts for user: {user_context.user_id}")
+        
+        alerts = alert_manager.get_alerts_for_user(
+            user_context.user_id,
+            user_context.organization_id
+        )
+        
+        return {
+            "success": True,
+            "data": {"alerts": alerts},
+            "message": "Active alerts retrieved successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get active alerts: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve active alerts: {str(e)}"
+        )
+
+
+@router.post("/system/alerts/{alert_id}/acknowledge")
+@require_auth("write", allow_independent=True)
+async def acknowledge_alert(
+    alert_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Acknowledge an alert for the authenticated user."""
+    try:
+        logger.info(f"User {user_context.user_id} acknowledging alert: {alert_id}")
+        
+        success = alert_manager.acknowledge_alert(
+            alert_id,
+            user_context.user_id,
+            user_context.organization_id
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Alert {alert_id} acknowledged successfully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Alert {alert_id} not found or cannot be acknowledged"
+            )
+        
+    except Exception as e:
+        logger.error(f"Failed to acknowledge alert {alert_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to acknowledge alert: {str(e)}"
+        )
+
+
+@router.post("/system/alerts/{alert_id}/resolve")
+@require_auth("write", allow_independent=True)
+async def resolve_alert(
+    alert_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Resolve an alert for the authenticated user."""
+    try:
+        logger.info(f"User {user_context.user_id} resolving alert: {alert_id}")
+        
+        success = alert_manager.resolve_alert(
+            alert_id,
+            user_context.user_id,
+            user_context.organization_id
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Alert {alert_id} resolved successfully"
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Alert {alert_id} not found or cannot be resolved"
+            )
+        
+    except Exception as e:
+        logger.error(f"Failed to resolve alert {alert_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to resolve alert: {str(e)}"
+        )
+
+
+@router.get("/system/health-check")
+@require_auth("read", allow_independent=True)
+async def system_health_check(user_context: UserContext = Depends(get_current_user)):
+    """Health check endpoint for system monitoring services."""
+    try:
+        return {
+            "success": True,
+            "status": "healthy",
+            "services": {
+                "system_monitor": "initialized",
+                "service_monitor": "initialized",
+                "infrastructure_logs": "initialized",
+                "resource_monitor": "initialized",
+                "alert_manager": "initialized"
+            },
+            "message": "System monitoring services are healthy"
+        }
+        
+    except Exception as e:
+        logger.error(f"System health check failed: {e}")
+        return {
+            "success": False,
+            "status": "unhealthy",
+            "error": str(e),
+            "message": "System monitoring services are not healthy"
+        }

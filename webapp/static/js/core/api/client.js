@@ -220,7 +220,8 @@ export class APIClient {
         formData.append('file', file);
         return this.request(this.endpoints.aasx_etl.upload, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {} // Override default Content-Type for FormData
         });
     }
 

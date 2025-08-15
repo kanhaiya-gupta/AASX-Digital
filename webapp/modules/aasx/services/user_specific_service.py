@@ -84,7 +84,7 @@ class UserSpecificService:
             api_projects = []
             for project in projects:
                 api_project = {
-                    "id": project["project_id"],
+                    "project_id": project["project_id"],
                     "name": project["name"],
                     "description": project["description"],
                     "use_case_id": project["use_case_id"],
@@ -116,6 +116,10 @@ class UserSpecificService:
             List of project dictionaries
         """
         try:
+            logger.info(f"get_projects_by_use_case called for use_case_id: {use_case_id}")
+            logger.info(f"User context: {getattr(self.user_context, 'username', 'unknown')}")
+            logger.info(f"Organization ID: {self.organization_id}")
+            
             # All users are organization users - strict org filtering
             query = """
                 SELECT p.*, puc.use_case_id, uc.name as use_case_name, uc.category as use_case_category
@@ -126,12 +130,13 @@ class UserSpecificService:
                 ORDER BY p.created_at DESC
             """
             projects = self.db_manager.execute_query(query, (use_case_id, self.organization_id))
+            logger.info(f"Query returned: {len(projects) if projects else 0} projects")
             
             # Transform to API format
             api_projects = []
             for project in projects:
                 api_project = {
-                    "id": project["project_id"],
+                    "project_id": project["project_id"],
                     "name": project["name"],
                     "description": project["description"],
                     "use_case_id": project["use_case_id"],
@@ -176,19 +181,22 @@ class UserSpecificService:
             api_files = []
             for file in files:
                 api_file = {
-                    "id": file["file_id"],
+                    "file_id": file["file_id"],
                     "filename": file["filename"],
                     "original_filename": file["original_filename"],
                     "project_id": file["project_id"],
                     "project_name": file["project_name"],
                     "use_case_name": file["use_case_name"],
-                    "file_path": file["file_path"],
+                    "file_path": file["filepath"],  # ✅ Fixed: database column is 'filepath' not 'file_path'
                     "file_size": file["size"],
                     "user_id": file["user_id"],
                     "created_at": file["created_at"],
                     "updated_at": file["updated_at"],
                     "status": file.get("status", "active"),
-                    "description": file.get("description", "")
+                    "description": file.get("description", ""),
+                    "job_type": file.get("job_type"),  # ✅ Added job_type for ETL filtering!
+                    "source_type": file.get("source_type", "manual_upload"),
+                    "source_url": file.get("source_url")
                 }
                 api_files.append(api_file)
             
@@ -360,7 +368,7 @@ class UserSpecificService:
             
             # Transform to API format
             api_project = {
-                "id": project["project_id"],
+                "project_id": project["project_id"],
                 "name": project["name"],
                 "description": project.get("description", ""),
                 "use_case_id": project["use_case_id"],
@@ -532,7 +540,7 @@ class UserSpecificService:
             api_use_cases = []
             for use_case in use_cases:
                 api_use_case = {
-                    "id": use_case["use_case_id"],
+                    "use_case_id": use_case["use_case_id"],  # ✅ Use consistent field name
                     "name": use_case["name"],
                     "description": use_case.get("description", ""),
                     "category": use_case.get("category", ""),
@@ -608,7 +616,7 @@ class UserSpecificService:
             
             # Transform to API format
             api_file = {
-                "id": file_data["file_id"],
+                "file_id": file_data["file_id"],
                 "filename": file_data["filename"],
                 "file_path": file_data.get("file_path", ""),
                 "file_size": file_data.get("size", 0),
@@ -660,7 +668,7 @@ class UserSpecificService:
             
             # Transform to API format
             api_file = {
-                "id": file_data["file_id"],
+                "file_id": file_data["file_id"],
                 "filename": file_data["filename"],
                 "original_filename": file_data.get("original_filename", ""),
                 "file_path": file_data.get("file_path", ""),

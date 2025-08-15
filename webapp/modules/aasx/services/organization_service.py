@@ -74,7 +74,7 @@ class OrganizationService:
             api_projects = []
             for project in projects:
                 api_project = {
-                    "id": project["project_id"],
+                    "project_id": project["project_id"],
                     "name": project["name"],
                     "description": project["description"],
                     "use_case_id": project["use_case_id"],
@@ -119,7 +119,7 @@ class OrganizationService:
             api_files = []
             for file in files:
                 api_file = {
-                    "id": file["file_id"],
+                    "file_id": file["file_id"],
                     "filename": file["filename"],
                     "original_filename": file["original_filename"],
                     "project_id": file["project_id"],

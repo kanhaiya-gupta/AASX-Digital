@@ -10,6 +10,7 @@ export class DataManager {
     constructor() {
         this.isInitialized = false;
         this.isProcessing = false;
+        this.isViewingProjects = false; // Flag to track if user is viewing projects
         this.projects = [];
         this.useCases = [];
         this.currentProject = null;
@@ -306,6 +307,13 @@ export class DataManager {
             this.deleteProject(projectId);
         });
 
+        // Refresh data button handler
+        $(document).on('click', '#refreshDataBtn', (e) => {
+            e.preventDefault();
+            console.log('🔄 Refresh Data button clicked');
+            this.refreshData();
+        });
+
         console.log('📋 Event listeners setup complete');
     }
 
@@ -427,6 +435,18 @@ export class DataManager {
         });
     }
 
+    // Refresh all data
+    async refreshData() {
+        console.log('🔄 Refreshing all data...');
+        try {
+            await this.loadProjects();
+            showSuccess('Data refreshed successfully');
+        } catch (error) {
+            console.error('❌ Error refreshing data:', error);
+            showError('Failed to refresh data');
+        }
+    }
+
     async loadProjects() {
         console.log('🔄 Loading projects and use cases...');
         console.log(`🔐 Current auth state: ${this.isAuthenticated ? 'Authenticated' : 'Demo mode'}`);
@@ -459,8 +479,10 @@ export class DataManager {
                 // Group projects by use case (now async)
                 await this.groupProjectsByUseCase();
                 
-                // Show use cases by default
-                await this.showUseCases();
+                // Only show use cases if user is not currently viewing projects
+                if (!this.isViewingProjects) {
+                    await this.showUseCases();
+                }
                 
                 // Update stats
                 await this.updateStats();
@@ -667,6 +689,15 @@ export class DataManager {
         // 🚫 CRITICAL FIX: Prevent duplicate API calls by caching grouped data
         if (this._groupedUseCasesCache && this._groupedUseCasesCache.timestamp > Date.now() - 30000) {
             console.log('📋 Data Manager: Using cached grouped use cases data (cache age: < 30s)');
+            console.log('🔍 DEBUG: Cached data structure:', this._groupedUseCasesCache.data.map(uc => ({
+                use_case_id: uc.use_case_id,
+                name: uc.name,
+                hasProjects: 'projects' in uc,
+                projectsLength: Array.isArray(uc.projects) ? uc.projects.length : 'not array'
+            })));
+            
+            // ✅ CRITICAL: Update this.useCases with cached data!
+            this.useCases = this._groupedUseCasesCache.data;
             return this._groupedUseCasesCache.data;
         }
         
@@ -676,13 +707,13 @@ export class DataManager {
         for (const useCase of this.useCases) {
             try {
                 // Load projects for each use case using the same API as dropdown manager
-                console.log(`🔍 Data Manager: Loading projects for use case ${useCase.id} (${useCase.name})`);
+                console.log(`🔍 Data Manager: Loading projects for use case ${useCase.use_case_id} (${useCase.name})`);
                 
                 // Always use auth headers - the backend will handle authentication
                 const headers = this.getAuthHeaders();
                 console.log(`🔐 Loading projects for use case ${useCase.name} with auth: ${this.isAuthenticated ? 'Yes' : 'No'}`);
                 
-                const response = await fetch(`/api/aasx-etl/use-cases/${useCase.id}/projects`, {
+                const response = await fetch(`/api/aasx-etl/use-cases/${useCase.use_case_id}/projects`, {
                     headers: headers
                 });
                 if (response.ok) {
@@ -695,29 +726,23 @@ export class DataManager {
                     });
                     
                     useCasesWithProjects.push({
-                        id: useCase.id,
-                        name: useCase.name,
-                        description: useCase.description,
-                        projects: projects
+                        ...useCase,  // ✅ Preserve ALL original properties
+                        projects: projects  // ✅ Add projects array
                     });
                     console.log(`📁 Data Manager: Loaded ${projects.length} projects for use case: ${useCase.name}`);
                     console.log(`📋 Data Manager: Project names:`, projects.map(p => p.name));
                 } else {
                     console.warn(`Failed to load projects for use case: ${useCase.name}`);
                     useCasesWithProjects.push({
-                        id: useCase.id,
-                        name: useCase.name,
-                        description: useCase.description,
-                        projects: []
+                        ...useCase,  // ✅ Preserve ALL original properties
+                        projects: []  // ✅ Empty projects array on failure
                     });
                 }
             } catch (error) {
                 console.error(`Error loading projects for use case ${useCase.name}:`, error);
                 useCasesWithProjects.push({
-                    id: useCase.id,
-                    name: useCase.name,
-                    description: useCase.description,
-                    projects: []
+                    ...useCase,  // ✅ Preserve ALL original properties
+                    projects: []  // ✅ Empty projects array on error
                 });
             }
         }
@@ -728,7 +753,28 @@ export class DataManager {
             timestamp: Date.now()
         };
         
+        // Store the enhanced use cases with projects
         this.useCases = useCasesWithProjects;
+        
+        // Also store the original use cases separately for reference
+        this._originalUseCases = this.useCases.filter(uc => !uc.projects);
+        
+        console.log('✅ Data Manager: Updated useCases with projects:', this.useCases.map(uc => ({
+            use_case_id: uc.use_case_id,
+            name: uc.name,
+            projectCount: uc.projects ? uc.projects.length : 0
+        })));
+        
+        // Debug: Log the actual structure of each use case
+        console.log('🔍 Detailed use case structure:', this.useCases.map(uc => ({
+            use_case_id: uc.use_case_id,
+            name: uc.name,
+            hasProjectsProperty: 'projects' in uc,
+            projectsType: typeof uc.projects,
+            projectsLength: Array.isArray(uc.projects) ? uc.projects.length : 'not array',
+            projectsKeys: uc.projects ? Object.keys(uc.projects) : 'no projects'
+        })));
+        
         return this.useCases;
     }
 
@@ -901,6 +947,9 @@ export class DataManager {
             return;
         }
         
+        // Reset flag to indicate user is viewing use cases
+        this.isViewingProjects = false;
+        
         // Hide projects section, show use cases
         projectsSection.hide();
         container.show();
@@ -929,12 +978,19 @@ export class DataManager {
 
     // Render a single use case card
     renderUseCaseCard(useCase) {
+        console.log(`🔍 renderUseCaseCard called for: ${useCase.name}`, {
+            id: useCase.id,
+            hasProjects: !!useCase.projects,
+            projectCount: useCase.projects ? useCase.projects.length : 0,
+            projects: useCase.projects
+        });
+        
         const projectCount = useCase.projects ? useCase.projects.length : 0;
         const categoryIcon = this.getCategoryIcon(useCase.category || 'general');
         
         return `
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card use-case-card h-100" data-use-case-id="${useCase.id}" style="cursor: pointer;">
+                <div class="card use-case-card h-100" data-use-case-id="${useCase.use_case_id}" style="cursor: pointer;">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h6 class="card-title mb-0">
@@ -945,7 +1001,7 @@ export class DataManager {
                         <p class="card-text text-muted small">${useCase.description || 'No description'}</p>
                     </div>
                     <div class="card-footer bg-transparent">
-                        <button class="btn btn-sm btn-outline-primary w-100">
+                        <button class="btn btn-sm btn-outline-primary w-100" onclick="window.dataManager.selectUseCase('${useCase.use_case_id}')">
                             <i class="fas fa-eye me-1"></i>View Projects
                         </button>
                     </div>
@@ -956,12 +1012,22 @@ export class DataManager {
 
     // Handle use case selection
     selectUseCase(useCaseId) {
-        const useCase = this.useCases.find(uc => uc.id === useCaseId);
+        console.log(`🔍 selectUseCase called with ID: ${useCaseId}`);
+        console.log(`🔍 Current useCases array:`, this.useCases.map(uc => ({
+            use_case_id: uc.use_case_id,
+            name: uc.name,
+            hasProjects: !!uc.projects,
+            projectCount: uc.projects ? uc.projects.length : 0
+        })));
+        
+        const useCase = this.useCases.find(uc => uc.use_case_id === useCaseId);
         if (!useCase) {
-            console.error('Use case not found:', useCaseId);
+            console.error('❌ Use case not found:', useCaseId);
+            console.error('❌ Available use case IDs:', this.useCases.map(uc => uc.use_case_id));
             return;
         }
         
+        console.log(`✅ Found use case: ${useCase.name} with ${useCase.projects ? useCase.projects.length : 0} projects`);
         this.selectedUseCase = useCase;
         this.showProjectsForUseCase(useCase);
     }
@@ -973,16 +1039,26 @@ export class DataManager {
         const selectedUseCaseName = $('#selectedUseCaseName');
         const projectsContainer = $('#projectsContainer');
         
+        // Set flag to indicate user is viewing projects
+        this.isViewingProjects = true;
+        
         // Update UI
         selectedUseCaseName.text(useCase.name);
         useCasesContainer.hide();
         projectsSection.show();
         
         console.log(`🔍 showProjectsForUseCase: Use case ${useCase.name} has ${useCase.projects ? useCase.projects.length : 0} projects`);
+        console.log(`🔍 Full useCase object:`, useCase);
+        console.log(`🔍 useCase.projects property:`, useCase.projects);
+        console.log(`🔍 useCase.projects type:`, typeof useCase.projects);
+        console.log(`🔍 useCase.projects is array:`, Array.isArray(useCase.projects));
+        
         if (useCase.projects) {
             useCase.projects.forEach(project => {
                 console.log(`🔍 Project ${project.name}: file_count = ${project.file_count}`);
             });
+        } else {
+            console.log(`❌ No projects property found on use case:`, useCase);
         }
         
         // Render projects
@@ -1028,12 +1104,12 @@ export class DataManager {
     // Get status color
     getStatusColor(status) {
         const colors = {
-            'active': 'success',
-            'inactive': 'secondary',
-            'error': 'danger',
-            'processing': 'warning'
+            'active': 'active',
+            'inactive': 'inactive',
+            'error': 'error',
+            'processing': 'processing'
         };
-        return colors[status] || 'secondary';
+        return colors[status] || 'inactive';
     }
 
     // Update project selects
@@ -1047,7 +1123,7 @@ export class DataManager {
                 select.append('<option value="">Select a project...</option>');
                 
                 this.projects.forEach(project => {
-                    select.append(`<option value="${project.id}">${project.name}</option>`);
+                    select.append(`<option value="${project.project_id}">${project.name}</option>`);
                 });
             }
         });
@@ -1106,14 +1182,25 @@ export class DataManager {
 
     // Find project by ID across all use cases
     findProjectById(projectId) {
+        console.log(`🔍 findProjectById: Looking for project ID: ${projectId}`);
+        console.log(`🔍 findProjectById: Available use cases:`, this.useCases.map(uc => ({
+            name: uc.name,
+            projectCount: uc.projects ? uc.projects.length : 0,
+            projectIds: uc.projects ? uc.projects.map(p => p.project_id) : [],
+            sampleProject: uc.projects && uc.projects[0] ? Object.keys(uc.projects[0]) : []
+        })));
+        
         for (const useCase of this.useCases) {
             if (useCase.projects) {
                 const project = useCase.projects.find(p => p.project_id === projectId);
                 if (project) {
+                    console.log(`✅ findProjectById: Found project ${project.name} in use case ${useCase.name}`);
                     return { ...project, useCase: useCase };
                 }
             }
         }
+        
+        console.log(`❌ findProjectById: Project ${projectId} not found in any use case`);
         return null;
     }
 
@@ -1155,13 +1242,20 @@ export class DataManager {
         
         try {
             // Fetch detailed project information including files
-            const response = await fetch(`/api/aasx-etl/projects/${project.project_id}`);
+            console.log(`🔍 Fetching project details for project ID: ${project.project_id}`);
+            const response = await fetch(`/api/aasx-etl/projects/${project.project_id}`, {
+                headers: this.getAuthHeaders()
+            });
+            console.log(`🔍 Response status: ${response.status}`);
+            
             if (!response.ok) {
                 throw new Error(`Failed to fetch project details: ${response.status}`);
             }
             
             const projectDetails = await response.json();
             console.log(`🔍 Project details loaded:`, projectDetails);
+            console.log(`🔍 Project details type:`, typeof projectDetails);
+            console.log(`🔍 Project details keys:`, Object.keys(projectDetails));
             
             // Update modal with detailed information
             this.updateProjectDetailsModal(projectDetails);
@@ -1174,13 +1268,29 @@ export class DataManager {
     
     // Update project details modal with comprehensive information
     updateProjectDetailsModal(projectDetails, errorMessage = null) {
+        console.log(`🔍 updateProjectDetailsModal called with:`, { projectDetails, errorMessage });
+        console.log(`🔍 projectDetails type:`, typeof projectDetails);
+        console.log(`🔍 projectDetails value:`, projectDetails);
+        
         const modalBody = $('#projectDetailsModal .modal-body');
         
         if (errorMessage) {
+            console.log(`🔍 Showing error message: ${errorMessage}`);
             modalBody.html(`
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     Error loading project details: ${errorMessage}
+                </div>
+            `);
+            return;
+        }
+        
+        if (!projectDetails) {
+            console.error(`❌ projectDetails is undefined or null`);
+            modalBody.html(`
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error: Project details not available
                 </div>
             `);
             return;
@@ -1266,8 +1376,8 @@ export class DataManager {
                             </div>
                             <div class="aasx-info-card-body">
                                 <div class="aasx-use-case-info">
-                                    <span class="aasx-use-case-name">${useCase ? useCase.name : 'Unknown'}</span>
-                                    ${useCase && useCase.description ? `<small class="text-muted d-block mt-1">${useCase.description}</small>` : ''}
+                                    <span class="aasx-use-case-name">${projectDetails.use_case_name || 'Unknown'}</span>
+                                    ${projectDetails.use_case_description ? `<small class="text-muted d-block mt-1">${projectDetails.use_case_description}</small>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1304,7 +1414,7 @@ export class DataManager {
                         <h6><i class="fas fa-file-alt me-2"></i>Files in Project</h6>
                         <span class="aasx-file-count">${files.length} file${files.length !== 1 ? 's' : ''}</span>
                     </div>
-                    ${this.renderProjectFiles(files)}
+                    ${this.renderProjectFiles(files, projectDetails)}
                 </div>
             </div>
         `;
@@ -1314,7 +1424,7 @@ export class DataManager {
         // Add modal footer
         const modalFooter = `
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-danger" onclick="dataManager.deleteProject('${projectDetails.project_id}')">
+                    <button type="button" class="btn btn-outline-danger" onclick="dataManager.deleteProject('${projectDetails.project_id}')">
                     <i class="fas fa-trash me-1"></i>Delete Project
                 </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -1328,7 +1438,7 @@ export class DataManager {
     }
     
     // Render project files with detailed information
-    renderProjectFiles(files) {
+    renderProjectFiles(files, projectDetails) {
         if (!files || files.length === 0) {
             return `
                 <div class="aasx-empty-state">
@@ -1352,6 +1462,9 @@ export class DataManager {
                             <tr>
                                 <th class="aasx-table-header">
                                     <i class="fas fa-file me-1"></i>File Name
+                                </th>
+                                <th class="aasx-table-header">
+                                    <i class="fas fa-tasks me-1"></i>Job Type
                                 </th>
                                 <th class="aasx-table-header">
                                     <i class="fas fa-info-circle me-1"></i>Status
@@ -1392,6 +1505,12 @@ export class DataManager {
                             </div>
                         </div>
                     </td>
+                    <td class="aasx-file-job-type">
+                        <span class="aasx-job-type-badge aasx-job-type-${file.job_type || 'unknown'}">
+                            <i class="fas fa-${file.job_type === 'extraction' ? 'arrow-right' : file.job_type === 'generation' ? 'arrow-left' : 'question'} me-1"></i>
+                            ${file.job_type || 'unknown'}
+                        </span>
+                    </td>
                     <td class="aasx-file-status">
                         <span class="aasx-status-badge aasx-status-${statusColor}">
                             <i class="fas fa-circle me-1"></i>
@@ -1412,9 +1531,15 @@ export class DataManager {
                     </td>
                     <td class="aasx-file-actions">
                         <div class="aasx-action-buttons">
-                            <button class="aasx-action-btn aasx-action-view" title="View File in Blazor" onclick="dataManager.viewFileInBlazor('${file.file_id}')">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                            ${file.job_type === 'extraction' ? `
+                                <button class="aasx-action-btn aasx-action-view" title="View AASX File in Blazor" onclick="dataManager.viewFileInBlazor('${file.file_id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            ` : `
+                                <button class="aasx-action-btn aasx-action-view aasx-action-disabled" title="ZIP files cannot be viewed in Blazor" disabled>
+                                    <i class="fas fa-eye-slash"></i>
+                                </button>
+                            `}
                             <button class="aasx-action-btn aasx-action-edit" title="Edit File" onclick="dataManager.editFile('${file.file_id}')">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -1496,7 +1621,7 @@ export class DataManager {
     // View file in Blazor viewer
     async viewFileInBlazor(fileId) {
         try {
-            console.log(`🔍 Opening file in Blazor viewer: ${fileId}`);
+            console.log(`🔍 Opening AASX file in Blazor viewer: ${fileId}`);
             
             // Validate file_id
             if (!fileId) {
@@ -1504,8 +1629,9 @@ export class DataManager {
                 return;
             }
             
-                             // Construct Blazor viewer URL (direct container access for local development)
-                 const blazorUrl = `http://localhost:5001/?file=${fileId}`;
+            // ✅ ENHANCED BLAZOR URL: Pass file_id directly - Blazor will resolve the correct path via API
+            // The backend API now includes job_type in the logical_path for proper file location
+            const blazorUrl = `http://localhost:5001/?file=${fileId}`;
             
             console.log(`🌐 Opening Blazor URL: ${blazorUrl}`);
             
@@ -1526,7 +1652,8 @@ export class DataManager {
         if (confirm('Are you sure you want to delete this file? This action cannot be undone.')) {
             try {
                 const response = await fetch(`/api/aasx-etl/files/${fileId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: this.getAuthHeaders()
                 });
                 
                 if (response.ok) {
@@ -1545,8 +1672,8 @@ export class DataManager {
     
     // Navigate to upload section with pre-selected project
     navigateToUploadWithProject(project) {
-        // Scroll to file upload section
-        const uploadSection = $('.card-header:contains("File Upload & Management")').closest('.card');
+        // Scroll to file upload section - look for the Bidirectional File Hub section
+        const uploadSection = $('.aasx-section-title:contains("Bidirectional File Hub")').closest('.aasx-file-upload-section');
         if (uploadSection.length) {
             $('html, body').animate({
                 scrollTop: uploadSection.offset().top - 100
@@ -1557,14 +1684,14 @@ export class DataManager {
                 this.preSelectUploadOptions(project);
             }, 600);
         } else {
-            showError('File upload section not found');
+            showError('File upload section not found. Please make sure you are on the File Upload tab.');
         }
     }
 
     // Pre-select upload options
     preSelectUploadOptions(project) {
         // Find the use case ID for this project
-        const useCaseId = project.useCase ? project.useCase.id : null;
+        const useCaseId = project.useCase ? project.useCase.use_case_id : null;
         
         if (useCaseId) {
             // Select use case in upload dropdowns
@@ -1650,6 +1777,7 @@ export class DataManager {
             const response = await fetch(`/api/aasx-etl/projects/${project.project_id}`, {
                 method: 'DELETE',
                 headers: {
+                    ...this.getAuthHeaders(),
                     'Content-Type': 'application/json'
                 }
             });

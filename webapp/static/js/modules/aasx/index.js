@@ -2,6 +2,8 @@
  * AASX Module Entry Point
  * Main entry point for AASX Digital Twin Analytics Framework
  * Imports and initializes all AASX components
+ * 
+ * Phase 5.2: Frontend Data Integration - Analytics modules added
  */
 
 console.log('📦 AASX index.js: Module loading started...');
@@ -21,10 +23,19 @@ import ProjectCreator from './data-manager/project-creator.js';
 import AasxFileUploadManager from './file-upload/core.js';
 console.log('✅ AASX index.js: AASX modules imported');
 
+// Import Analytics modules for Phase 5.2
+console.log('📦 AASX index.js: Importing Analytics modules for Phase 5.2...');
+import './analytics/analytics-api.js';
+import './analytics/dashboard-stats.js';
+import './analytics/analytics-charts.js';
+console.log('✅ AASX index.js: Analytics modules imported');
+
 // Global instances
 let dataManager = null;
 let aasxETLPipeline = null;
 let etlConfigManager = null;
+let dashboardStats = null;
+let analyticsCharts = null;
 let isInitialized = false;
 
 /**
@@ -34,9 +45,20 @@ let isInitialized = false;
 export async function initAASXModule() {
     if (isInitialized) {
         console.log('⚠️ AASX module already initialized, skipping...');
-        return;
+        return window.aasxModules;
     }
     
+    // Prevent multiple simultaneous initializations
+    if (window.aasxInitializationInProgress) {
+        console.log('⚠️ AASX module initialization already in progress, waiting...');
+        // Wait for initialization to complete
+        while (window.aasxInitializationInProgress) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return window.aasxModules;
+    }
+    
+    window.aasxInitializationInProgress = true;
     console.log('🚀 AASX Digital Twin Analytics Framework initializing...');
     
     try {
@@ -47,26 +69,42 @@ export async function initAASXModule() {
         dataManager = new DataManager();
         await dataManager.init();
         
-        // Initialize ETL Pipeline
+        // Initialize Dropdown Manager FIRST (before ETL Pipeline)
+        await dropdownManager.init();
+        
+        // Make dropdown manager globally accessible
+        window.dropdownManager = dropdownManager;
+        
+        // Initialize ETL Pipeline (now dropdown manager is ready)
         aasxETLPipeline = new AASXETLPipeline();
         await aasxETLPipeline.init();
         
         // Make ETL pipeline globally accessible for HTML callbacks
         window.aasxETLPipeline = aasxETLPipeline;
         
-        // Initialize Dropdown Manager
-        await dropdownManager.init();
-        
-        // Make dropdown manager globally accessible
-        window.dropdownManager = dropdownManager;
-        
         // Initialize Project Creator
         const projectCreator = new ProjectCreator();
         window.projectCreator = projectCreator;
         
-        // Initialize File Upload Manager
+        // Initialize File Upload Manager and wait for it to be ready
         const fileUploadManager = new AasxFileUploadManager();
+        await fileUploadManager.init();
         window.fileUploadManager = fileUploadManager;
+        
+        // Initialize Analytics modules for Phase 5.2
+        console.log('📊 Initializing Analytics modules for Phase 5.2...');
+        
+        // Initialize Dashboard Stats
+        dashboardStats = new window.DashboardStats();
+        await dashboardStats.init();
+        window.dashboardStats = dashboardStats;
+        
+        // Initialize Analytics Charts
+        analyticsCharts = new window.AnalyticsCharts();
+        await analyticsCharts.init();
+        window.analyticsCharts = analyticsCharts;
+        
+        console.log('✅ Analytics modules initialized for Phase 5.2');
         
         // Initialize ETL Configuration Manager (lazy load when needed)
         // This will be initialized when the ETL configuration form is accessed
@@ -81,7 +119,9 @@ export async function initAASXModule() {
             etlPipeline: aasxETLPipeline,
             dropdownManager: dropdownManager,
             projectCreator: projectCreator,
-            fileUploadManager: fileUploadManager
+            fileUploadManager: fileUploadManager,
+            dashboardStats: dashboardStats,
+            analyticsCharts: analyticsCharts
         };
         
         isInitialized = true;
@@ -100,6 +140,9 @@ export async function initAASXModule() {
     } catch (error) {
         console.error('❌ AASX module initialization failed:', error);
         throw error;
+    } finally {
+        // Always clear the initialization in progress flag
+        window.aasxInitializationInProgress = false;
     }
 }
 
@@ -122,6 +165,20 @@ export function getAASXETLPipeline() {
  */
 export function getETLConfigurationManager() {
     return etlConfigManager;
+}
+
+/**
+ * Get Dashboard Stats Instance
+ */
+export function getDashboardStats() {
+    return dashboardStats;
+}
+
+/**
+ * Get Analytics Charts Instance
+ */
+export function getAnalyticsCharts() {
+    return analyticsCharts;
 }
 
 /**
@@ -178,7 +235,18 @@ export function cleanupAASXModule() {
         dropdownManager.destroy();
     }
     
+    if (dashboardStats) {
+        dashboardStats.destroy();
+        dashboardStats = null;
+    }
+    
+    if (analyticsCharts) {
+        analyticsCharts.destroy();
+        analyticsCharts = null;
+    }
+    
     isInitialized = false;
+    window.aasxInitializationInProgress = false;
     console.log('🧹 AASX module cleaned up');
 }
 
@@ -187,7 +255,9 @@ export function cleanupAASXModule() {
  */
 export function isAASXModuleReady() {
     return dataManager && aasxETLPipeline &&
-           dataManager.isInitialized && aasxETLPipeline.isInitialized;
+           dataManager.isInitialized && aasxETLPipeline.isInitialized &&
+           dashboardStats && analyticsCharts &&
+           dashboardStats.isInitialized && analyticsCharts.isInitialized;
 }
 
 /**
@@ -198,23 +268,32 @@ export async function refreshAASXData() {
         await dataManager.loadProjects();
     }
     
-    if (aasxETLPipeline) {
-        await aasxETLPipeline.refreshFiles();
+    if (dashboardStats) {
+        await dashboardStats.refreshDashboard();
+    }
+    
+    if (analyticsCharts) {
+        await analyticsCharts.refreshAnalytics();
     }
 }
 
 // Auto-initialize when DOM is ready
 let autoInitCalled = false;
+let initializationInProgress = false;
 
 function initializeWhenReady() {
     // 🚫 CRITICAL FIX: Initialize on any page, not just /aasx pages
     // This ensures PostLoginOrchestrator can access AASX modules from auth pages
-    if (!autoInitCalled) {
+    if (!autoInitCalled && !initializationInProgress) {
         autoInitCalled = true;
+        initializationInProgress = true;
         console.log('🚀 AASX index.js: Auto-initializing AASX module...');
-        initAASXModule().catch(error => {
+        initAASXModule().then(() => {
+            initializationInProgress = false;
+        }).catch(error => {
             console.error('❌ AASX index.js: Failed to initialize AASX module:', error);
             autoInitCalled = false; // Reset flag on error
+            initializationInProgress = false;
         });
     }
 }

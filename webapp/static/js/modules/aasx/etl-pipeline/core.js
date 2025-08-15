@@ -26,14 +26,16 @@ export class AASXETLPipeline {
     async init() {
         console.log('🚀 AASX ETL Pipeline initializing...');
         
-
+        // Wait for auth manager to be ready first
+        await this.waitForAuthManager();
         
         // Initialize UI components
         this.initializeProgressCircles();
         this.setupModeSwitching();
         this.initializeEventListeners();
         
-        // Load initial data
+        // Initialize dropdowns and load initial data
+        await this.initializeDropdowns();
         await this.refreshFiles();
         
         console.log('✅ AASX ETL Pipeline initialized');
@@ -187,6 +189,10 @@ export class AASXETLPipeline {
 
     initializeEventListeners() {
         // ETL pipeline controls
+        $('#startEtlBtn').on('click', () => {
+            console.log('🔘 Start ETL button clicked');
+            this.runETLPipeline();
+        });
         $('#runSelectedPipeline').on('click', () => {
             console.log('🔘 Run Selected Pipeline button clicked');
             this.runETLPipeline();
@@ -195,7 +201,18 @@ export class AASXETLPipeline {
             console.log('🔘 Run All Data button clicked');
             this.runETLPipeline();
         });
-        $('#refreshEtlFiles').on('click', () => this.refreshFiles());
+        // Refresh button
+        $('#refreshEtlFiles').on('click', async () => {
+            console.log('🔄 ETL Pipeline: Refresh button clicked');
+            
+            // Refresh dropdowns first
+            if (window.dropdownManager) {
+                await window.dropdownManager.refreshETLPipelineDropdowns();
+            }
+            
+            // Then refresh files
+            await this.refreshFiles();
+        });
         
         // File selection
         $('#selectAllFiles').on('change', (e) => this.toggleSelectAll(e.target.checked));
@@ -214,7 +231,18 @@ export class AASXETLPipeline {
         });
         
         // Project selection change
-        $('#etlProjectSelect').on('change', () => this.refreshFiles());
+        $('#etlProjectSelect').on('change', () => {
+            const projectId = $('#etlProjectSelect').val();
+            if (!projectId) {
+                // Clear files when no project is selected
+                this.files = [];
+                this.selectedFiles.clear();
+                this.renderFileList();
+            } else {
+                // Refresh files for selected project
+                this.refreshFiles();
+            }
+        });
         
         console.log('📋 ETL Pipeline (Bidirectional) event listeners setup complete');
     }
@@ -250,6 +278,86 @@ export class AASXETLPipeline {
         
         // Update display
         this.updateConversionModeDisplay();
+        
+        // 🔄 Refresh data when switching modes to provide clean slate
+        this.refreshDataForModeSwitch();
+    }
+    
+    refreshDataForModeSwitch() {
+        console.log(`🔄 Refreshing data for mode switch to: ${this.conversionMode}`);
+        
+        // Show refresh indicator
+        this.showModeChangeIndicator();
+        
+        // Clear current selections
+        this.selectedFiles.clear();
+        this.updateSelectedCount();
+        
+        // Reset dropdowns to default state
+        this.resetDropdowns();
+        
+        // Reload use cases and projects
+        this.loadProjectsAndUseCases();
+        
+        // Clear file list until new project is selected
+        this.clearFileList();
+        
+        // Update UI to reflect fresh state
+        this.updateUIForFreshState();
+    }
+    
+    showModeChangeIndicator() {
+        // Show a brief indicator that the mode has changed
+        const modeText = this.conversionMode === 'aasx-to-structured' ? 'AASX → Structured' : 'Structured → AASX';
+        console.log(`🔄 Mode switched to: ${modeText}`);
+        
+        // You can add a toast notification here if needed
+        // For now, console log provides feedback
+    }
+    
+    resetDropdowns() {
+        console.log('🔄 Resetting dropdowns for fresh mode');
+        
+        // Reset use case dropdown
+        const useCaseSelect = document.querySelector('#useCaseSelect');
+        if (useCaseSelect) {
+            useCaseSelect.selectedIndex = 0;
+        }
+        
+        // Reset project dropdown
+        const projectSelect = document.querySelector('#projectSelect');
+        if (projectSelect) {
+            projectSelect.innerHTML = '<option value="">Select a project...</option>';
+            projectSelect.selectedIndex = 0;
+        }
+    }
+    
+    clearFileList() {
+        console.log('🔄 Clearing file list for mode switch');
+        
+        const container = $('#fileListContainer');
+        if (container.length) {
+            container.html(`
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-arrow-up fa-3x mb-3"></i>
+                    <p>Select a use case and project to view available files</p>
+                </div>
+            `);
+        }
+    }
+    
+    updateUIForFreshState() {
+        console.log('🔄 Updating UI for fresh state');
+        
+        // Disable ETL button until files are selected
+        const startButton = document.querySelector('#startEtlBtn');
+        if (startButton) {
+            startButton.disabled = true;
+            startButton.textContent = 'Select Files to Process';
+        }
+        
+        // Update file count display
+        this.updateSelectedCount();
     }
 
     updateConversionModeDisplay() {
@@ -259,32 +367,32 @@ export class AASXETLPipeline {
     }
 
     updateFileListForExtraction() {
-        // Update file list to show AASX files for extraction
+        // Update file list to show files uploaded for extraction (job_type = 'extraction')
         const fileListContainer = $('#etlFilesList');
         if (fileListContainer.length) {
             fileListContainer.find('.file-item').each((index, element) => {
-                const fileName = $(element).find('.file-name').text();
-                if (fileName.toLowerCase().endsWith('.aasx')) {
-                    $(element).show();
+                const fileElement = $(element);
+                const jobType = fileElement.data('job-type') || fileElement.attr('data-job-type');
+                if (jobType === 'extraction') {
+                    fileElement.show();
                 } else {
-                    $(element).hide();
+                    fileElement.hide();
                 }
             });
         }
     }
 
     updateFileListForGeneration() {
-        // Update file list to show structured data files for generation
+        // Update file list to show files uploaded for generation (job_type = 'generation')
         const fileListContainer = $('#etlFilesList');
         if (fileListContainer.length) {
             fileListContainer.find('.file-item').each((index, element) => {
-                const fileName = $(element).find('.file-name').text();
-                if (fileName.toLowerCase().endsWith('.zip') || 
-                    fileName.toLowerCase().endsWith('.json') ||
-                    fileName.toLowerCase().endsWith('.yaml')) {
-                    $(element).show();
+                const fileElement = $(element);
+                const jobType = fileElement.data('job-type') || fileElement.attr('data-job-type');
+                if (jobType === 'generation') {
+                    fileElement.show();
                 } else {
-                    $(element).hide();
+                    fileElement.hide();
                 }
             });
         }
@@ -324,6 +432,64 @@ export class AASXETLPipeline {
         circle.style.strokeDashoffset = offset;
         
         text.textContent = `${Math.round(progress)}%`;
+    }
+
+    getETLConfiguration() {
+        // Get configuration from the ETL configuration form
+        const config = {
+            processingMode: 'standard',
+            parallelProcessing: true,
+            dataQuality: 'basic',
+            outputFormats: ['json', 'yaml'],
+            databaseExport: ['sqlite'],
+            federatedLearningConsent: 'not_allowed',
+            aiRag: false,
+            embeddingModel: 'openai'
+        };
+        
+        try {
+            // Get federated learning consent from radio buttons
+            const federatedLearningRadio = document.querySelector('input[name="federatedLearningConsent"]:checked');
+            if (federatedLearningRadio) {
+                config.federatedLearningConsent = federatedLearningRadio.value;
+            }
+            
+            // Get processing mode
+            const processingModeRadio = document.querySelector('input[name="processingMode"]:checked');
+            if (processingModeRadio) {
+                config.processingMode = processingModeRadio.value;
+            }
+            
+            // Get data quality
+            const dataQualityRadio = document.querySelector('input[name="dataQuality"]:checked');
+            if (dataQualityRadio) {
+                config.dataQuality = dataQualityRadio.value;
+            }
+            
+            // Get parallel processing
+            const parallelCheckbox = document.getElementById('parallelProcessing');
+            if (parallelCheckbox) {
+                config.parallelProcessing = parallelCheckbox.checked;
+            }
+            
+            // Get AI/RAG setting
+            const aiRagCheckbox = document.getElementById('enableAiRag');
+            if (aiRagCheckbox) {
+                config.aiRag = aiRagCheckbox.checked;
+            }
+            
+            // Get embedding model
+            const embeddingSelect = document.getElementById('embeddingModel');
+            if (embeddingSelect) {
+                config.embeddingModel = embeddingSelect.value;
+            }
+            
+            console.log('📋 ETL Configuration retrieved:', config);
+        } catch (error) {
+            console.warn('⚠️ Error getting ETL configuration, using defaults:', error);
+        }
+        
+        return config;
     }
 
     async runETLPipeline() {
@@ -586,6 +752,7 @@ export class AASXETLPipeline {
             if (!projectId) {
                 console.log('⚠️ No project selected, clearing file list');
                 this.files = [];
+                this.selectedFiles.clear();
                 this.renderFileList();
                 return;
             }
@@ -607,6 +774,8 @@ export class AASXETLPipeline {
             this.files = [];
         }
         
+        // Clear selected files when refreshing
+        this.selectedFiles.clear();
         this.renderFileList();
     }
 
@@ -620,8 +789,8 @@ export class AASXETLPipeline {
         if (checked) {
             // Select all files based on current mode
             this.files.forEach(file => {
-                if (this.isFileCompatibleWithMode(file.name)) {
-                    this.selectedFiles.add(file.name);
+                if (this.isFileCompatibleWithMode(file)) {
+                    this.selectedFiles.add(file.filename || file.name);
                 }
             });
         } else {
@@ -632,13 +801,12 @@ export class AASXETLPipeline {
         this.renderFileList();
     }
 
-    isFileCompatibleWithMode(fileName) {
+    isFileCompatibleWithMode(file) {
+        // ✅ Updated to use job_type instead of filename extensions
         if (this.conversionMode === 'aasx-to-structured') {
-            return fileName.toLowerCase().endsWith('.aasx');
+            return file.job_type === 'extraction';
         } else {
-            return fileName.toLowerCase().endsWith('.zip') || 
-                   fileName.toLowerCase().endsWith('.json') ||
-                   fileName.toLowerCase().endsWith('.yaml');
+            return file.job_type === 'generation';
         }
     }
 
@@ -646,11 +814,12 @@ export class AASXETLPipeline {
         console.log('🔘 Invert Selection');
         
         this.files.forEach(file => {
-            if (this.isFileCompatibleWithMode(file.name)) {
-                if (this.selectedFiles.has(file.name)) {
-                    this.selectedFiles.delete(file.name);
+            if (this.isFileCompatibleWithMode(file)) {
+                const fileName = file.filename || file.name;
+                if (this.selectedFiles.has(fileName)) {
+                    this.selectedFiles.delete(fileName);
                 } else {
-                    this.selectedFiles.add(file.name);
+                    this.selectedFiles.add(fileName);
                 }
             }
         });
@@ -816,34 +985,161 @@ export class AASXETLPipeline {
         }
 
         const fileItems = this.files
-            .filter(file => this.isFileCompatibleWithMode(file.name))
-            .map(file => `
-                <div class="file-item d-flex align-items-center p-3 border-bottom">
-                    <div class="form-check me-3">
-                        <input class="form-check-input" type="checkbox" 
-                               id="file_${file.name}" 
-                               ${this.selectedFiles.has(file.name) ? 'checked' : ''}
-                               onchange="window.aasxETLPipeline.toggleFileSelection('${file.name}', this.checked)">
-                    </div>
-                    <div class="file-icon me-3">
-                        <i class="fas fa-${this.getFileIcon(file.name)} text-primary"></i>
-                    </div>
-                    <div class="file-info flex-grow-1">
-                        <div class="file-name fw-bold">${file.name}</div>
-                        <div class="file-details text-muted">
-                            <small>${formatFileSize(file.size)} • ${file.uploadDate}</small>
+            .filter(file => this.isFileCompatibleWithMode(file))
+            .map(file => {
+                const statusColor = this.getFileStatusColor(file.status);
+                const statusText = this.getFileStatusText(file.status);
+                const processingStatus = this.getProcessingStatus(file);
+                const fileIcon = this.getFileIcon(file.filename || file.name);
+                const sourceIcon = file.source_type === 'url_upload' ? 'globe' : 'upload';
+                const isProcessing = this.isFileProcessing(file);
+                const isProcessed = this.isFileProcessed(file);
+                const isSelectable = !isProcessing && !isProcessed;
+                
+                return `
+                <div class="file-item-enhanced border rounded mb-3 p-4 shadow-sm bg-white ${!isSelectable ? 'file-not-selectable' : ''}">
+                    <!-- Header Section -->
+                    <div class="file-header d-flex align-items-start justify-content-between mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="form-check me-3 mt-1">
+                                <input class="form-check-input" type="checkbox" 
+                                       id="file_${file.file_id || file.filename}" 
+                                       ${this.selectedFiles.has(file.filename || file.name) ? 'checked' : ''}
+                                       ${!isSelectable ? 'disabled' : ''}
+                                       onchange="window.aasxETLPipeline.toggleFileSelection('${file.filename || file.name}', this.checked)">
+                            </div>
+                            <div class="file-icon-large me-3">
+                                <div class="icon-container p-3 rounded-3 bg-light border">
+                                    <i class="fas fa-${fileIcon} fa-2x text-primary"></i>
+                                </div>
+                            </div>
+                            <div class="file-main-info">
+                                <h6 class="file-name mb-1 fw-bold text-dark">${file.filename || file.name}</h6>
+                                <div class="file-meta d-flex align-items-center gap-3 text-muted mb-2">
+                                    <span><i class="fas fa-weight-hanging me-1"></i>${formatFileSize(file.file_size || file.size)}</span>
+                                    <span><i class="fas fa-calendar-alt me-1"></i>${this.formatDate(file.created_at || file.uploadDate)}</span>
+                                    <span><i class="fas fa-${sourceIcon} me-1"></i>${file.source_type === 'url_upload' ? 'URL Upload' : 'Manual Upload'}</span>
+                                    <span class="badge bg-${this.getOriginalFileStatusColor(file.status)} ms-2">${this.getOriginalFileStatusText(file.status)}</span>
+                                </div>
+                                ${file.description ? `<p class="file-description mb-2 text-muted small">${file.description}</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="file-status-section text-end">
+                            <div class="file-availability-status">
+                                <small class="text-muted d-block">ETL Status</small>
+                                <span class="badge bg-${statusColor} fs-6">${statusText}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="file-status">
-                        <span class="badge bg-${this.getFileStatusColor(file.status)}">
-                            ${this.getFileStatusText(file.status)}
-                        </span>
+                    
+                    <!-- Metadata Section -->
+                    <div class="file-metadata">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">File Type</small>
+                                <span class="fw-medium">${file.file_type || this.getFileTypeFromName(file.filename || file.name)}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Job Type</small>
+                                <span class="badge bg-info">${file.job_type || 'Unknown'}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Project</small>
+                                <span class="fw-medium">${file.project_name || 'Unknown Project'}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Use Case</small>
+                                <span class="fw-medium">${file.use_case_name || 'Unknown Use Case'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions Section -->
+                    <div class="file-actions mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <div class="file-actions-left">
+                            ${file.source_url ? `<a href="${file.source_url}" target="_blank" class="btn btn-outline-secondary btn-sm me-2"><i class="fas fa-external-link-alt me-1"></i>Source</a>` : ''}
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="window.aasxETLPipeline.viewFileDetails('${file.file_id}')">
+                                <i class="fas fa-info-circle me-1"></i>Details
+                            </button>
+                        </div>
+                        <div class="file-actions-right">
+                            <small class="text-muted">
+                                ${isSelectable ? 
+                                    `Ready for ${file.job_type === 'extraction' ? 'AASX → Structured' : 'Structured → AASX'} processing` :
+                                    `${isProcessed ? 'Already processed' : 'Currently processing'} - Not available for ETL`
+                                }
+                            </small>
+                        </div>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
         container.html(fileItems);
         this.updateSelectedCount();
+    }
+
+    getProcessingStatus(file) {
+        // Determine processing status based on file status and processing history
+        const status = file.status || 'not_processed';
+        
+        switch (status) {
+            case 'processed':
+            case 'completed':
+                return { color: 'success', text: 'Processed' };
+            case 'processing':
+            case 'in_progress':
+                return { color: 'warning', text: 'Processing' };
+            case 'failed':
+            case 'error':
+                return { color: 'danger', text: 'Failed' };
+            case 'not_processed':
+            case 'pending':
+            default:
+                return { color: 'secondary', text: 'Unprocessed' };
+        }
+    }
+
+    getFileTypeFromName(filename) {
+        const ext = filename.toLowerCase().split('.').pop();
+        const typeMap = {
+            'aasx': 'AAS Package',
+            'zip': 'Archive',
+            'json': 'JSON Data',
+            'yaml': 'YAML Config',
+            'yml': 'YAML Config',
+            'xml': 'XML Document'
+        };
+        return typeMap[ext] || 'Unknown';
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return 'Unknown';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } catch (e) {
+            return 'Invalid Date';
+        }
+    }
+
+    viewFileDetails(fileId) {
+        // Implementation for viewing detailed file information
+        console.log(`🔍 Viewing details for file: ${fileId}`);
+        // TODO: Implement file details modal or navigation
+        alert(`File details feature coming soon for file: ${fileId}`);
+    }
+
+    isFileProcessing(file) {
+        // Check if file is currently being processed
+        const status = file.status || 'not_processed';
+        return status === 'processing' || status === 'in_progress';
+    }
+
+    isFileProcessed(file) {
+        // Check if file has already been processed successfully
+        const status = file.status || 'not_processed';
+        return status === 'processed' || status === 'completed';
     }
 
     getFileIcon(fileName) {
@@ -864,25 +1160,63 @@ export class AASXETLPipeline {
     }
 
     getFileStatusColor(status) {
-        const colors = {
-            'ready': 'success',
-            'processing': 'warning',
-            'completed': 'success',
-            'failed': 'danger',
-            'pending': 'secondary'
-        };
-        return colors[status] || 'secondary';
+        // Simplified colors to match availability logic
+        const processingStates = ['processing', 'in_progress'];
+        const completedStates = ['completed', 'processed'];
+        
+        if (processingStates.includes(status)) {
+            return 'warning';     // Orange for processing
+        } else if (completedStates.includes(status)) {
+            return 'info';        // Blue for already processed
+        } else {
+            return 'success';     // Green for available
+        }
     }
 
     getFileStatusText(status) {
+        // Simplified to show processing availability for ETL
+        const processingStates = ['processing', 'in_progress'];
+        const completedStates = ['completed', 'processed'];
+        
+        if (processingStates.includes(status)) {
+            return 'Processing';  // Cannot be selected
+        } else if (completedStates.includes(status)) {
+            return 'Processed';   // Cannot be selected (already done)
+        } else {
+            return 'Available';   // Can be selected for processing
+        }
+    }
+
+    getOriginalFileStatusText(status) {
+        // Traditional file status for the top badge
         const texts = {
+            'not_processed': 'Unprocessed',
             'ready': 'Ready',
+            'active': 'Active',
             'processing': 'Processing',
-            'completed': 'Completed',
+            'completed': 'Completed', 
+            'processed': 'Processed',
             'failed': 'Failed',
+            'error': 'Error',
             'pending': 'Pending'
         };
-        return texts[status] || 'Unknown';
+        return texts[status] || 'Active';
+    }
+
+    getOriginalFileStatusColor(status) {
+        // Traditional colors for the top badge
+        const colors = {
+            'not_processed': 'secondary',
+            'ready': 'success',
+            'active': 'success',
+            'processing': 'warning',
+            'completed': 'info',
+            'processed': 'info', 
+            'failed': 'danger',
+            'error': 'danger',
+            'pending': 'secondary'
+        };
+        return colors[status] || 'success';
     }
 
     destroy() {
@@ -904,6 +1238,118 @@ export class AASXETLPipeline {
         
         this.isInitialized = false;
         console.log('🧹 AASX ETL Pipeline destroyed');
+    }
+
+    /**
+     * Initialize dropdowns and integrate with dropdown manager
+     */
+    async initializeDropdowns() {
+        console.log('🔄 ETL Pipeline: Initializing dropdowns...');
+        
+        // Wait for dropdown manager to be ready
+        await this.waitForDropdownManager();
+        
+        // Populate ETL Pipeline dropdowns
+        if (window.dropdownManager.populateETLPipelineDropdownsOnDemand()) {
+            console.log('✅ ETL Pipeline: Dropdowns populated successfully');
+        } else {
+            console.warn('⚠️ ETL Pipeline: Failed to populate dropdowns');
+        }
+        
+        // Set up use case change handler
+        this.setupUseCaseChangeHandler();
+        
+        console.log('✅ ETL Pipeline: Dropdowns initialized');
+    }
+
+    /**
+     * Wait for dropdown manager to be ready
+     */
+    async waitForDropdownManager() {
+        console.log('⏳ ETL Pipeline: Waiting for dropdown manager...');
+        
+        // Wait for dropdown manager to be ready with proper timeout
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait
+        
+        while (!window.dropdownManager || !window.dropdownManager.isReady()) {
+            if (attempts >= maxAttempts) {
+                console.error('❌ ETL Pipeline: Timeout waiting for dropdown manager');
+                throw new Error('Dropdown manager not ready after timeout');
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        console.log('✅ ETL Pipeline: Dropdown manager ready');
+    }
+
+    /**
+     * Set up use case change handler to load projects
+     */
+    setupUseCaseChangeHandler() {
+        const useCaseSelect = document.getElementById('useCaseSelect');
+        if (useCaseSelect) {
+            useCaseSelect.addEventListener('change', async (e) => {
+                const useCaseId = e.target.value;
+                console.log(`🔄 ETL Pipeline: Use case changed to ${useCaseId}`);
+                
+                if (useCaseId) {
+                    await this.loadProjectsForUseCase(useCaseId);
+                } else {
+                    // Clear project dropdown
+                    const projectSelect = document.getElementById('etlProjectSelect');
+                    if (projectSelect) {
+                        projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+                    }
+                    // Clear files
+                    this.files = [];
+                    this.selectedFiles.clear();
+                    this.renderFileList();
+                }
+            });
+        }
+    }
+
+    /**
+     * Load projects for a selected use case
+     */
+    async loadProjectsForUseCase(useCaseId) {
+        try {
+            console.log(`🔍 ETL Pipeline: Loading projects for use case ${useCaseId}`);
+            
+            // Use the dropdown manager to load projects
+            const projects = await window.dropdownManager.loadProjectsForUseCase(useCaseId);
+            
+            // Find the project select element
+            const projectSelect = document.getElementById('etlProjectSelect');
+            if (!projectSelect) return;
+            
+            // Clear existing options
+            projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+            
+            // Add projects
+            if (projects && projects.length > 0) {
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.project_id;
+                    option.textContent = project.name;
+                    projectSelect.appendChild(option);
+                });
+                
+                console.log(`✅ ETL Pipeline: Populated project dropdown with ${projects.length} options`);
+            } else {
+                projectSelect.innerHTML = '<option value="">Choose a project...</option><option value="" disabled>No projects available for this use case</option>';
+                console.log('⚠️ ETL Pipeline: No projects available for the selected use case');
+            }
+            
+            // Clear files when project changes
+            this.files = [];
+            this.selectedFiles.clear();
+            this.renderFileList();
+        } catch (error) {
+            console.error('❌ ETL Pipeline: Failed to load projects:', error);
+        }
     }
 }
 

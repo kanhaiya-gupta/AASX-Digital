@@ -138,7 +138,7 @@
                     <div class="tab-pane fade show active" id="performance" role="tabpanel">
                         <div class="row g-4">
                             <div class="col-lg-6">
-                                <div class="aasx-chart-container">
+                                <div class="aasx-chart-container" id="performance-chart-container">
                                     <h4>Processing Performance</h4>
                                     <div class="aasx-chart-placeholder">
                                         <i class="fas fa-chart-bar"></i>
@@ -162,7 +162,7 @@
                     <div class="tab-pane fade" id="trends" role="tabpanel">
                         <div class="row g-4">
                             <div class="col-lg-8">
-                                <div class="aasx-chart-container">
+                                <div class="aasx-chart-container" id="trends-chart-container">
                                     <h4>Data Processing Trends</h4>
                                     <div class="aasx-chart-placeholder">
                                         <i class="fas fa-chart-area"></i>
@@ -221,6 +221,14 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Add chart container for insights -->
+                        <div class="aasx-chart-container" id="insights-chart-container">
+                            <h4>Quality Insights</h4>
+                            <div class="aasx-chart-placeholder">
+                                <i class="fas fa-chart-pie"></i>
+                                <p>Quality Metrics Chart</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Reports Tab -->
@@ -257,6 +265,14 @@
                                         Download
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                        <!-- Add chart container for reports -->
+                        <div class="aasx-chart-container" id="reports-chart-container">
+                            <h4>User Behavior Analytics</h4>
+                            <div class="aasx-chart-placeholder">
+                                <i class="fas fa-chart-radar"></i>
+                                <p>User Behavior Chart</p>
                             </div>
                         </div>
                     </div>

@@ -28,9 +28,15 @@ class File(BaseModel):
     status: str = "not_processed"
     file_type: str = ""
     file_type_description: str = ""
+    source_type: str = "manual_upload"
+    source_url: Optional[str] = None
+    org_id: Optional[str] = None
+    use_case_id: Optional[str] = None
+    job_type: Optional[str] = None
+    tags: Optional[str] = None
+    metadata: Optional[str] = None
     user_id: Optional[str] = None
     upload_date: Optional[str] = None
-    federated_learning: str = "not_allowed"  # "allowed", "not_allowed", "conditional"
     
     def __post_init__(self):
         """Initialize the model."""
@@ -84,7 +90,11 @@ class File(BaseModel):
         if hasattr(self, 'file_id') and self.file_id:
             data['file_id'] = self.file_id
         # Ensure all required fields are present
-        required_fields = ['file_id', 'filename', 'original_filename', 'project_id', 'filepath', 'size', 'status', 'federated_learning']
+        required_fields = [
+            'file_id', 'filename', 'original_filename', 'project_id', 'filepath', 
+            'size', 'status', 'file_type', 'file_type_description', 'source_type',
+            'created_at'
+        ]
         for field in required_fields:
             if field not in data and hasattr(self, field):
                 data[field] = getattr(self, field)

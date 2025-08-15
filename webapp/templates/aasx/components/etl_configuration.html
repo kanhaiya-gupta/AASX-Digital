@@ -253,20 +253,69 @@
                 
                 <div class="aasx-config-content">
                     <div class="aasx-config-group">
-                        <label class="aasx-config-label">User Consent</label>
-                        <div class="aasx-checkbox-option">
-                            <input type="checkbox" id="enableFederatedLearning">
-                            <label for="enableFederatedLearning">
-                                <div class="aasx-checkbox-content">
-                                    <div class="aasx-checkbox-icon">
-                                        <i class="fas fa-network-wired"></i>
+                        <label class="aasx-config-label">Federated Learning Consent</label>
+                        <div class="aasx-radio-group">
+                            <div class="aasx-radio-option">
+                                <input type="radio" name="federatedLearningConsent" id="flNotAllowed" value="not_allowed" checked>
+                                <label for="flNotAllowed">
+                                    <div class="aasx-radio-content">
+                                        <div class="aasx-radio-icon">
+                                            <i class="fas fa-ban text-danger"></i>
+                                        </div>
+                                        <div class="aasx-radio-text">
+                                            <span class="aasx-radio-title">No Participation</span>
+                                            <span class="aasx-radio-description">Keep data private, no federated learning</span>
+                                        </div>
                                     </div>
-                                    <div class="aasx-checkbox-text">
-                                        <span class="aasx-checkbox-title">Enable Federated Learning</span>
-                                        <span class="aasx-checkbox-description">Participate in distributed learning</span>
+                                </label>
+                            </div>
+                            <div class="aasx-radio-option">
+                                <input type="radio" name="federatedLearningConsent" id="flConditional" value="conditional">
+                                <label for="flConditional">
+                                    <div class="aasx-radio-content">
+                                        <div class="aasx-radio-icon">
+                                            <i class="fas fa-question-circle text-warning"></i>
+                                        </div>
+                                        <div class="aasx-radio-text">
+                                            <span class="aasx-radio-title">Conditional Participation</span>
+                                            <span class="aasx-radio-description">Participate only with non-sensitive data</span>
+                                        </div>
                                     </div>
+                                </label>
+                            </div>
+                            <div class="aasx-radio-option">
+                                <input type="radio" name="federatedLearningConsent" id="flAllowed" value="allowed">
+                                <label for="flAllowed">
+                                    <div class="aasx-radio-content">
+                                        <div class="aasx-radio-icon">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        </div>
+                                        <div class="aasx-radio-text">
+                                            <span class="aasx-radio-title">Full Participation</span>
+                                            <span class="aasx-radio-description">Participate in federated learning with all data</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Consent Information -->
+                        <div class="aasx-consent-info mt-3">
+                            <div class="aasx-alert aasx-alert-info">
+                                <div class="aasx-alert-icon">
+                                    <i class="fas fa-info-circle"></i>
                                 </div>
-                            </label>
+                                <div class="aasx-alert-content">
+                                    <h5>What is Federated Learning?</h5>
+                                    <p>Federated learning allows your data to contribute to improving AI models without sharing raw data. Your data stays on your system while contributing to collaborative learning.</p>
+                                    <ul class="aasx-consent-benefits">
+                                        <li><i class="fas fa-shield-alt text-success"></i> <strong>Privacy Preserved:</strong> Raw data never leaves your system</li>
+                                        <li><i class="fas fa-chart-line text-primary"></i> <strong>Better Models:</strong> Contribute to improved AI performance</li>
+                                        <li><i class="fas fa-users text-info"></i> <strong>Collaborative:</strong> Learn from diverse data sources</li>
+                                        <li><i class="fas fa-clock text-warning"></i> <strong>Opt-out Anytime:</strong> Change consent settings at any time</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -327,6 +376,10 @@
                         <div class="aasx-summary-item">
                             <span class="aasx-summary-label">Privacy:</span>
                             <span class="aasx-summary-value" id="privacySummary">Standard</span>
+                        </div>
+                        <div class="aasx-summary-item">
+                            <span class="aasx-summary-label">Federated Learning:</span>
+                            <span class="aasx-summary-value" id="federatedLearningSummary">No Participation</span>
                         </div>
                         <div class="aasx-summary-item">
                             <span class="aasx-summary-label">AI/RAG:</span>

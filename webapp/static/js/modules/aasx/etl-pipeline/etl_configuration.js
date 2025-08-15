@@ -11,7 +11,7 @@ class ETLConfigurationManager {
             dataQuality: 'basic',
             outputFormats: ['json', 'yaml'],
             databaseExport: ['sqlite'],
-            federatedLearning: false,
+            federatedLearningConsent: 'not_allowed',
             aiRag: false,
             embeddingModel: 'openai'
         };
@@ -87,15 +87,14 @@ class ETLConfigurationManager {
             }
         });
         
-        // Federated learning
-        const flCheckbox = document.getElementById('enableFederatedLearning');
-        if (flCheckbox) {
-            flCheckbox.addEventListener('change', (e) => {
-                this.config.federatedLearning = e.target.checked;
+        // Federated learning consent
+        document.querySelectorAll('input[name="federatedLearningConsent"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.config.federatedLearningConsent = e.target.value;
                 this.updateConfigurationSummary();
                 this.validateConfiguration();
             });
-        }
+        });
         
         // AI/RAG processing
         const aiRagCheckbox = document.getElementById('enableAiRag');
@@ -182,7 +181,18 @@ class ETLConfigurationManager {
         // Update privacy summary
         const privacySummary = document.getElementById('privacySummary');
         if (privacySummary) {
-            privacySummary.textContent = this.config.federatedLearning ? 'Federated Learning Enabled' : 'Standard';
+            privacySummary.textContent = 'Standard';
+        }
+        
+        // Update federated learning summary
+        const federatedLearningSummary = document.getElementById('federatedLearningSummary');
+        if (federatedLearningSummary) {
+            const consentLabels = {
+                'not_allowed': 'No Participation',
+                'conditional': 'Conditional Participation',
+                'allowed': 'Full Participation'
+            };
+            federatedLearningSummary.textContent = consentLabels[this.config.federatedLearningConsent] || 'No Participation';
         }
         
         // Update AI summary
@@ -213,7 +223,7 @@ class ETLConfigurationManager {
             warnings.push('Vector DB export requires AI/RAG processing to be enabled');
         }
         
-        if (this.config.federatedLearning && !this.config.aiRag) {
+        if (this.config.federatedLearningConsent !== 'not_allowed' && !this.config.aiRag) {
             warnings.push('Federated learning works best with AI/RAG processing enabled');
         }
         
@@ -307,10 +317,10 @@ class ETLConfigurationManager {
             }
         });
         
-        // Update federated learning
-        const flCheckbox = document.getElementById('enableFederatedLearning');
-        if (flCheckbox) {
-            flCheckbox.checked = this.config.federatedLearning;
+        // Update federated learning consent
+        const flRadio = document.querySelector(`input[name="federatedLearningConsent"][value="${this.config.federatedLearningConsent}"]`);
+        if (flRadio) {
+            flRadio.checked = true;
         }
         
         // Update AI/RAG
@@ -336,7 +346,7 @@ class ETLConfigurationManager {
             dataQuality: 'basic',
             outputFormats: ['json', 'yaml'],
             databaseExport: ['sqlite'],
-            federatedLearning: false,
+            federatedLearningConsent: 'not_allowed',
             aiRag: false,
             embeddingModel: 'openai'
         });

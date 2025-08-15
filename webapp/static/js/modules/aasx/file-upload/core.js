@@ -3,18 +3,159 @@
  * Handles both AASX → Structured Data and Structured Data → AASX conversions
  */
 
+import { dropdownManager } from '../shared/dropdown-manager.js';
+import { getAuthHeaders } from '../../shared/auth-helper.js';
+
 class AasxFileUploadManager {
     constructor() {
         this.currentMode = 'aasx-to-structured';
         this.uploadHistory = [];
-        this.init();
+        // Don't auto-initialize - let the caller control initialization
     }
 
-    init() {
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        return getAuthHeaders();
+    }
+
+    async init() {
+        console.log('🚀 AASX File Upload Manager initializing...');
+        
+        // Wait for dropdown manager to be ready
+        await this.waitForDropdownManager();
+        
         this.setupModeSwitching();
         this.setupEventListeners();
         this.loadUploadHistory();
         this.updateStatistics();
+        
+        // Load use cases and projects for dropdowns using dropdown manager
+        await this.loadDropdownData();
+        
+        console.log('✅ AASX File Upload Manager initialized');
+    }
+
+    async waitForDropdownManager() {
+        console.log('⏳ File Upload Manager: Waiting for dropdown manager...');
+        
+        // Debug: Show current state
+        if (window.dropdownManager) {
+            const status = window.dropdownManager.getStatus();
+            console.log('📊 File Upload Manager: Current dropdown manager status:', status);
+        } else {
+            console.log('📊 File Upload Manager: No dropdown manager found in window object');
+        }
+        
+        // Wait for dropdown manager to be ready with proper timeout
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait
+        
+        while (!window.dropdownManager || !window.dropdownManager.isReady()) {
+            if (attempts >= maxAttempts) {
+                console.error('❌ File Upload Manager: Timeout waiting for dropdown manager');
+                throw new Error('Dropdown manager not ready after timeout');
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+            
+            // Debug: Show progress
+            if (attempts % 10 === 0) {
+                console.log(`⏳ File Upload Manager: Still waiting... (attempt ${attempts}/${maxAttempts})`);
+                if (window.dropdownManager) {
+                    const status = window.dropdownManager.getStatus();
+                    console.log('📊 File Upload Manager: Current status:', status);
+                }
+            }
+        }
+        
+        console.log('✅ File Upload Manager: Dropdown manager ready');
+    }
+
+    async loadDropdownData() {
+        try {
+            console.log('📋 File Upload Manager: Loading dropdown data...');
+            
+            // Ensure dropdown manager is ready
+            if (!window.dropdownManager || !window.dropdownManager.isReady()) {
+                console.error('❌ File Upload Manager: Dropdown manager not ready');
+                const status = window.dropdownManager ? window.dropdownManager.getStatus() : 'No dropdown manager';
+                console.log('📊 Dropdown Manager Status:', status);
+                return;
+            }
+            
+            // Use the dropdown manager to load use cases
+            await window.dropdownManager.loadUseCases();
+            
+            // Request dropdown manager to populate dropdowns for this component
+            const success = await window.dropdownManager.populateDropdownsForComponent('file-upload');
+            if (!success) {
+                console.warn('⚠️ File Upload Manager: Failed to populate dropdowns');
+            }
+            
+            // Set up change event listeners for cascading dropdowns
+            this.setupCascadingDropdowns();
+            
+            console.log('✅ File Upload Manager: Dropdown data loaded');
+        } catch (error) {
+            console.error('❌ File Upload Manager: Failed to load dropdown data:', error);
+        }
+    }
+
+    setupCascadingDropdowns() {
+        console.log('🔗 File Upload Manager: Setting up cascading dropdowns...');
+        
+        // AASX Upload Form
+        const aasxUseCaseSelect = document.getElementById('aasxUploadUseCaseSelect');
+        if (aasxUseCaseSelect) {
+            aasxUseCaseSelect.addEventListener('change', (e) => {
+                const useCaseId = e.target.value;
+                this.onUseCaseChange(useCaseId, 'aasxUploadProjectSelect');
+            });
+        }
+        
+        // Structured Upload Form
+        const structuredUseCaseSelect = document.getElementById('structuredUploadUseCaseSelect');
+        if (structuredUseCaseSelect) {
+            structuredUseCaseSelect.addEventListener('change', (e) => {
+                const useCaseId = e.target.value;
+                this.onUseCaseChange(useCaseId, 'structuredUploadProjectSelect');
+            });
+        }
+        
+        // AASX URL Form
+        const aasxUrlUseCaseSelect = document.getElementById('aasxUrlUseCaseSelect');
+        if (aasxUrlUseCaseSelect) {
+            aasxUrlUseCaseSelect.addEventListener('change', (e) => {
+                const useCaseId = e.target.value;
+                this.onUseCaseChange(useCaseId, 'aasxUrlProjectSelect');
+            });
+        }
+        
+        // Structured URL Form
+        const structuredUrlUseCaseSelect = document.getElementById('structuredUrlUseCaseSelect');
+        if (structuredUrlUseCaseSelect) {
+            structuredUrlUseCaseSelect.addEventListener('change', (e) => {
+                const useCaseId = e.target.value;
+                this.onUseCaseChange(useCaseId, 'structuredUrlProjectSelect');
+            });
+        }
+    }
+
+    async onUseCaseChange(useCaseId, projectSelectId) {
+        console.log(`🔄 File Upload Manager: Use case changed to ${useCaseId}, updating project dropdown ${projectSelectId}`);
+        
+        if (useCaseId && window.dropdownManager) {
+            // Use the dropdown manager to handle the use case change
+            await window.dropdownManager.handleUseCaseChange(useCaseId, projectSelectId);
+        } else {
+            // Clear project dropdown
+            const projectSelect = document.getElementById(projectSelectId);
+            if (projectSelect) {
+                projectSelect.innerHTML = '<option value="">Choose a project...</option><option value="" disabled>Select a use case first</option>';
+            }
+        }
     }
 
     setupModeSwitching() {
@@ -116,23 +257,27 @@ class AasxFileUploadManager {
         const browseAasxFilesBtn = document.getElementById('browseAasxFilesBtn');
         
         if (browseAasxFilesBtn && aasxFileInput) {
-            browseAasxFilesBtn.addEventListener('click', () => aasxFileInput.click());
+            browseAasxFilesBtn.addEventListener('click', () => {
+                aasxFileInput.click();
+            });
             aasxFileInput.addEventListener('change', (e) => {
                 this.handleFileSelection(e, 'aasx');
             });
         }
-
+        
         // Structured Data Input
         const structuredDataInput = document.getElementById('structuredDataInput');
         const browseStructuredFilesBtn = document.getElementById('browseStructuredFilesBtn');
         
         if (browseStructuredFilesBtn && structuredDataInput) {
-            browseStructuredFilesBtn.addEventListener('click', () => structuredDataInput.click());
+            browseStructuredFilesBtn.addEventListener('click', () => {
+                structuredDataInput.click();
+            });
             structuredDataInput.addEventListener('change', (e) => {
                 this.handleFileSelection(e, 'structured');
             });
         }
-
+        
         // Drag and drop handlers
         this.setupDragAndDrop();
     }
@@ -273,11 +418,9 @@ class AasxFileUploadManager {
         }
 
         formData.append('file', fileInput.files[0]);
-        formData.append('use_case', useCase);
-        formData.append('project', project);
+        formData.append('project_id', project);  // Send project ID directly
         formData.append('description', description);
-        formData.append('extract_structured_data', document.getElementById('extractStructuredData').checked);
-        formData.append('extract_documents', document.getElementById('extractDocuments').checked);
+        formData.append('job_type', 'extraction');
 
         await this.uploadFile(formData, 'aasx-extraction');
     }
@@ -288,7 +431,6 @@ class AasxFileUploadManager {
         const useCase = document.getElementById('structuredUploadUseCaseSelect').value;
         const project = document.getElementById('structuredUploadProjectSelect').value;
         const description = document.getElementById('structuredFileDescription').value;
-        const outputFileName = document.getElementById('outputAasxFileName').value;
 
         if (!fileInput.files[0]) {
             this.showError('Please select a structured data ZIP file');
@@ -300,18 +442,10 @@ class AasxFileUploadManager {
             return;
         }
 
-        if (!outputFileName) {
-            this.showError('Please specify output AASX file name');
-            return;
-        }
-
         formData.append('file', fileInput.files[0]);
-        formData.append('use_case', useCase);
-        formData.append('project', project);
+        formData.append('project_id', project);  // Send project ID directly
         formData.append('description', description);
-        formData.append('output_filename', outputFileName);
-        formData.append('include_structured_data', document.getElementById('includeStructuredData').checked);
-        formData.append('include_documents', document.getElementById('includeDocuments').checked);
+        formData.append('job_type', 'generation');
 
         await this.uploadFile(formData, 'aasx-generation');
     }
@@ -329,11 +463,8 @@ class AasxFileUploadManager {
 
         const data = {
             url: url,
-            use_case: useCase,
-            project: project,
-            description: description,
-            extract_structured_data: document.getElementById('extractStructuredData').checked,
-            extract_documents: document.getElementById('extractDocuments').checked
+            project_id: project,  // Send project ID directly
+            description: description
         };
 
         await this.uploadFromUrl(data, 'aasx-extraction');
@@ -344,21 +475,16 @@ class AasxFileUploadManager {
         const useCase = document.getElementById('structuredUrlUseCaseSelect').value;
         const project = document.getElementById('structuredUrlProjectSelect').value;
         const description = document.getElementById('structuredUrlFileDescription').value;
-        const outputFileName = document.getElementById('urlOutputAasxFileName').value;
 
-        if (!url || !useCase || !project || !outputFileName) {
+        if (!url || !useCase || !project) {
             this.showError('Please fill in all required fields');
             return;
         }
 
         const data = {
             url: url,
-            use_case: useCase,
-            project: project,
-            description: description,
-            output_filename: outputFileName,
-            include_structured_data: document.getElementById('includeStructuredData').checked,
-            include_documents: document.getElementById('includeDocuments').checked
+            project_id: project,  // Send project ID directly
+            description: description
         };
 
         await this.uploadFromUrl(data, 'aasx-generation');
@@ -368,27 +494,101 @@ class AasxFileUploadManager {
         try {
             this.showLoading(`Processing ${operation === 'aasx-extraction' ? 'AASX extraction' : 'AASX generation'}...`);
             
-            // Simulate upload progress
+            // Show upload progress
             this.simulateUploadProgress(operation === 'aasx-extraction' ? 'aasx' : 'structured');
 
-            // Mock API call (replace with actual endpoint)
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            // Get form data
+            const file = formData.get('file');
+            const projectId = formData.get('project_id');
+            const description = formData.get('description');
+            
+            // Determine job type based on operation
+            const jobType = operation === 'aasx-extraction' ? 'extraction' : 'generation';
+            
+            // Get authentication headers
+            const authHeaders = this.getAuthHeaders();
+            
+            // Debug: Log what's being sent
+            console.log('📤 Upload FormData contents:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}: ${value}`);
+            }
+            console.log('🔐 Auth headers:', authHeaders);
+            
+            // Remove Content-Type header to let browser set it automatically for FormData
+            const uploadHeaders = { ...authHeaders };
+            delete uploadHeaders['Content-Type'];
+            
+            // Make real API call to upload file
+            const response = await fetch(`/api/aasx-etl/files/upload`, {
+                method: 'POST',
+                headers: uploadHeaders,
+                body: formData
+            });
 
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('❌ Upload response error:', errorData);
+                console.error('❌ Error details:', JSON.stringify(errorData, null, 2));
+                
+                // Handle different error response formats
+                let errorMessage = '';
+                if (errorData.detail) {
+                    if (Array.isArray(errorData.detail)) {
+                        errorMessage = errorData.detail.map(err => {
+                            if (typeof err === 'object') {
+                                return `${err.loc?.join('.') || 'field'}: ${err.msg || err.message || JSON.stringify(err)}`;
+                            }
+                            return err;
+                        }).join(', ');
+                    } else {
+                        errorMessage = errorData.detail;
+                    }
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (Array.isArray(errorData)) {
+                    errorMessage = errorData.map(err => err.msg || err.message || JSON.stringify(err)).join(', ');
+                } else if (typeof errorData === 'object') {
+                    errorMessage = JSON.stringify(errorData);
+                } else {
+                    errorMessage = `Upload failed with status ${response.status}`;
+                }
+                
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            
+            // Create upload record for history
             const uploadRecord = {
                 id: Date.now(),
-                fileName: formData.get('file').name,
+                fileName: file.name,
                 operation: operation,
                 status: 'completed',
                 timestamp: new Date().toISOString(),
-                size: formData.get('file').size
+                size: file.size,
+                projectId: projectId,
+                fileId: result.file_id
             };
 
             this.uploadHistory.unshift(uploadRecord);
             this.updateUploadHistory();
             this.updateStatistics();
+            
+            // Show success message
             this.showSuccess(`${operation === 'aasx-extraction' ? 'AASX extraction' : 'AASX generation'} completed successfully!`);
+            
+            // Refresh Data Management view to show new files
+            if (window.dataManager) {
+                console.log('🔄 Refreshing Data Management view after file upload...');
+                await window.dataManager.refreshData();
+            }
+            
+            // Reset form
+            this.resetUploadForm(operation === 'aasx-extraction' ? 'aasx' : 'structured');
 
         } catch (error) {
+            console.error('❌ Upload failed:', error);
             this.showError(`Upload failed: ${error.message}`);
         }
     }
@@ -397,26 +597,111 @@ class AasxFileUploadManager {
         try {
             this.showLoading(`Processing ${operation === 'aasx-extraction' ? 'AASX extraction' : 'AASX generation'} from URL...`);
             
-            // Mock API call (replace with actual endpoint)
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            // Determine job type based on operation
+            const jobType = operation === 'aasx-extraction' ? 'extraction' : 'generation';
+            
+            // Make real API call to upload from URL
+            const formData = new FormData();
+            formData.append('url', data.url);
+            formData.append('project_id', data.project_id);
+            formData.append('description', data.description || '');
+            formData.append('job_type', jobType);  // Send job type for URL uploads
+            
+            // Get authentication headers (but don't set Content-Type for FormData)
+            const authHeaders = this.getAuthHeaders();
+            // Remove Content-Type header to let browser set it automatically for FormData
+            const uploadHeaders = { ...authHeaders };
+            delete uploadHeaders['Content-Type'];
+            
+            const response = await fetch('/api/aasx-etl/files/upload-from-url', {
+                method: 'POST',
+                headers: uploadHeaders,
+                body: formData
+            });
 
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('❌ URL upload response error:', errorData);
+                
+                // Handle different error response formats
+                let errorMessage = '';
+                if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (Array.isArray(errorData)) {
+                    errorMessage = errorData.map(err => err.msg || err.message || JSON.stringify(err)).join(', ');
+                } else if (typeof errorData === 'object') {
+                    errorMessage = JSON.stringify(errorData);
+                } else {
+                    errorMessage = `URL upload failed with status ${response.status}`;
+                }
+                
+                throw new Error(errorMessage);
+            }
+
+            const result = await response.json();
+            
+            // Create upload record for history
             const uploadRecord = {
                 id: Date.now(),
                 fileName: data.url.split('/').pop(),
                 operation: operation,
                 status: 'completed',
                 timestamp: new Date().toISOString(),
-                size: 'Unknown'
+                size: 'Unknown',
+                projectId: data.project_id,
+                fileId: result.file_id
             };
 
             this.uploadHistory.unshift(uploadRecord);
             this.updateUploadHistory();
             this.updateStatistics();
+            
+            // Show success message
             this.showSuccess(`${operation === 'aasx-extraction' ? 'AASX extraction' : 'AASX generation'} from URL completed successfully!`);
+            
+            // Refresh Data Management view to show new files
+            if (window.dataManager) {
+                console.log('🔄 Refreshing Data Management view after URL upload...');
+                await window.dataManager.refreshData();
+            }
 
         } catch (error) {
+            console.error('❌ URL upload failed:', error);
             this.showError(`URL upload failed: ${error.message}`);
         }
+    }
+
+    // Reset upload form after successful upload
+    resetUploadForm(type) {
+        if (type === 'aasx') {
+            const form = document.getElementById('aasxFileUploadForm');
+            if (form) {
+                form.reset();
+                // Reset file input
+                const fileInput = document.getElementById('aasxFileInput');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+            }
+        } else if (type === 'structured') {
+            const form = document.getElementById('structuredDataUploadForm');
+            if (form) {
+                form.reset();
+                // Reset file input
+                const fileInput = document.getElementById('structuredDataInput');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+            }
+        }
+        
+        // Hide progress bars
+        const progressElements = document.querySelectorAll('.aasx-upload-progress');
+        progressElements.forEach(element => {
+            element.style.display = 'none';
+        });
     }
 
     simulateUploadProgress(type) {
@@ -606,10 +891,5 @@ class AasxFileUploadManager {
         console.log('Loading:', message);
     }
 }
-
-// Initialize the upload manager when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    window.aasxUploadManager = new AasxFileUploadManager();
-});
 
 export default AasxFileUploadManager; 

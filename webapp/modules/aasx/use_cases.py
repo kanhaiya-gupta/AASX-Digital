@@ -61,7 +61,7 @@ class UseCaseService:
                         metadata = use_case.metadata
                 
                 api_use_case = {
-                    "id": use_case.use_case_id,
+                    "use_case_id": use_case.use_case_id,  # ✅ Use consistent field name
                     "name": use_case.name,
                     "description": use_case.description,
                     "category": use_case.category,
