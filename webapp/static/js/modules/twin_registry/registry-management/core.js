@@ -40,7 +40,9 @@ export default class TwinRegistryCore {
 
         try {
             // Initialize authentication
-            this.initAuthentication();
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
 
             // Load configuration
             await this.loadConfiguration();
@@ -66,41 +68,341 @@ export default class TwinRegistryCore {
     /**
      * Initialize authentication
      */
-    initAuthentication() {
-        try {
-            // Check if user is authenticated
-            if (typeof getCurrentUser === 'function') {
-                this.currentUser = getCurrentUser();
-                if (this.currentUser) {
-                    this.isAuthenticated = true;
-                    this.authToken = this.getAuthToken();
-                    console.log('🔐 Twin Registry: User authenticated:', this.currentUser.username);
-                } else {
-                    console.log('🔐 Twin Registry: User not authenticated');
-                    this.isAuthenticated = false;
+    async waitForAuthSystem() {
+        console.log('🔐 Twin Registry: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Twin Registry: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Twin Registry: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
                 }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Registry: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state from central auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) {
+            console.log('⚠️ Twin Registry: No auth manager available');
+            return;
+        }
+        
+        try {
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 Twin Registry: Auth state update:', sessionInfo);
+            
+            if (sessionInfo && sessionInfo.isAuthenticated) {
+                this.isAuthenticated = true;
+                this.currentUser = {
+                    user_id: sessionInfo.user_id,
+                    username: sessionInfo.username,
+                    role: sessionInfo.role,
+                    organization_id: sessionInfo.organization_id
+                };
+                this.authToken = window.authManager.getStoredToken();
+                console.log('🔐 Twin Registry: User authenticated:', this.currentUser.username);
             } else {
-                console.warn('⚠️ Twin Registry: getCurrentUser function not available');
                 this.isAuthenticated = false;
+                this.currentUser = null;
+                this.authToken = null;
+                console.log('🔐 Twin Registry: User not authenticated (demo mode)');
             }
         } catch (error) {
-            console.error('❌ Twin Registry: Authentication initialization error:', error);
+            console.warn('⚠️ Twin Registry: Error updating auth state:', error);
             this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
         }
     }
 
     /**
-     * Get authentication token
+     * Setup authentication listeners
      */
-    getAuthToken() {
+    setupAuthListeners() {
+        // Listen for auth state changes
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 Twin Registry: Auth state changed, updating...');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+        
+        // Listen for login success
+        window.addEventListener('loginSuccess', async () => {
+            console.log('🔐 Twin Registry: Login success detected');
+            this.updateAuthState();
+            await this.handleLoginSuccess();
+        });
+        
+        // Listen for logout
+        window.addEventListener('logout', () => {
+            console.log('🔐 Twin Registry: Logout detected');
+            this.updateAuthState();
+            this.handleLogout();
+        });
+    }
+
+    /**
+     * Handle login success
+     */
+    async handleLoginSuccess() {
+        // Refresh user-specific data after login
         try {
-            // Try to get token from localStorage/sessionStorage
-            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+            await this.loadRegistryData();
+            console.log('✅ Twin Registry: User data refreshed after login');
         } catch (error) {
-            console.warn('⚠️ Twin Registry: Could not get auth token:', error);
-            return null;
+            console.error('❌ Twin Registry: Failed to refresh user data after login:', error);
         }
     }
+
+    /**
+     * Handle logout
+     */
+    handleLogout() {
+        // Clear user-specific data
+        this.registryData = [];
+        this.twinCache.clear();
+        this.currentUser = null;
+        this.isAuthenticated = false;
+        console.log('🔐 Twin Registry: User data cleared after logout');
+    }
+
+    /**
+     * Handle auth state change
+     */
+    handleAuthStateChange() {
+        if (this.isAuthenticated && this.currentUser) {
+            if (this.currentUser.is_demo) {
+                // Show demo features prominently
+                this.showDemoFeatures();
+                this.showLoginPrompt();
+            } else {
+                // Show authenticated user features
+                this.showAuthenticatedFeatures();
+                this.hideLoginPrompt();
+            }
+        } else {
+            // Show demo mode
+            this.showDemoMode();
+        }
+    }
+
+    /**
+     * Show demo features
+     */
+    showDemoFeatures() {
+        // Highlight impressive demo capabilities
+        this.displayMessage(
+            '🎉 Experience the full power of Digital Twin management! ' +
+            'Create your account to save your work and access advanced features.'
+        );
+        
+        // Show login/signup buttons prominently
+        this.showLoginButtons();
+    }
+
+    /**
+     * Show login buttons
+     */
+    showLoginButtons() {
+        // Add login/signup buttons to the UI
+        const loginButton = document.createElement('button');
+        loginButton.textContent = 'Sign In to Save Your Work';
+        loginButton.className = 'btn btn-primary btn-lg';
+        loginButton.onclick = () => window.location.href = '/auth';
+        
+        const signupButton = document.createElement('button');
+        signupButton.textContent = 'Create Free Account';
+        signupButton.className = 'btn btn-outline-primary btn-lg';
+        signupButton.onclick = () => window.location.href = '/auth?mode=signup';
+        
+        // Add to prominent location in UI
+        this.addProminentButtons(loginButton, signupButton);
+    }
+
+    /**
+     * Show authenticated features
+     */
+    showAuthenticatedFeatures() {
+        // Hide demo prompts and show authenticated user features
+        this.hideLoginPrompt();
+        console.log('🔐 Twin Registry: Showing authenticated user features');
+    }
+
+    /**
+     * Show demo mode
+     */
+    showDemoMode() {
+        // Show demo content and encourage signup
+        this.showDemoFeatures();
+    }
+
+    /**
+     * Hide login prompt
+     */
+    hideLoginPrompt() {
+        // Remove login/signup buttons from UI
+        const loginButtons = document.querySelectorAll('.twin-registry-login-buttons');
+        loginButtons.forEach(button => button.remove());
+    }
+
+    /**
+     * Add prominent buttons to UI
+     */
+    addProminentButtons(loginButton, signupButton) {
+        // Add a container for the buttons
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'twin-registry-login-buttons';
+        buttonContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        `;
+        
+        buttonContainer.appendChild(loginButton);
+        buttonContainer.appendChild(signupButton);
+        
+        // Add to body
+        document.body.appendChild(buttonContainer);
+    }
+
+    /**
+     * Display message to user
+     */
+    displayMessage(message) {
+        console.log('💬 Twin Registry:', message);
+        // You can implement a more sophisticated message display system here
+    }
+
+    /**
+     * Create demo user context
+     */
+    createDemoUserContext() {
+        return {
+            user_id: 'demo-user',
+            username: 'demo_user',
+            role: 'demo',
+            organization_id: null,
+            permissions: ['read', 'write', 'manage'],
+            is_demo: true
+        };
+    }
+
+    /**
+     * Load demo data
+     */
+    loadDemoData() {
+        return {
+            twins: this.getDemoTwins(),
+            relationships: this.getDemoRelationships(),
+            instances: this.getDemoInstances(),
+            statistics: this.getDemoStatistics()
+        };
+    }
+
+    /**
+     * Get demo twins
+     */
+    getDemoTwins() {
+        return [
+            {
+                twin_id: 'demo-industrial-plant',
+                twin_name: 'Industrial Plant Digital Twin',
+                twin_type: 'industrial',
+                status: 'active',
+                description: 'Advanced digital twin for industrial plant monitoring',
+                health_score: 95,
+                last_update: new Date().toISOString()
+            },
+            {
+                twin_id: 'demo-smart-city',
+                twin_name: 'Smart City Infrastructure',
+                twin_type: 'urban',
+                status: 'active',
+                description: 'Comprehensive smart city digital twin system',
+                health_score: 92,
+                last_update: new Date().toISOString()
+            }
+        ];
+    }
+
+    /**
+     * Get demo relationships
+     */
+    getDemoRelationships() {
+        return [
+            {
+                relationship_id: 'demo-rel-1',
+                source_twin: 'demo-industrial-plant',
+                target_twin: 'demo-smart-city',
+                relationship_type: 'supports',
+                description: 'Industrial plant supports smart city infrastructure'
+            }
+        ];
+    }
+
+    /**
+     * Get demo instances
+     */
+    getDemoInstances() {
+        return [
+            {
+                instance_id: 'demo-inst-1',
+                twin_id: 'demo-industrial-plant',
+                instance_name: 'Plant Alpha Instance',
+                status: 'running',
+                last_heartbeat: new Date().toISOString()
+            }
+        ];
+    }
+
+    /**
+     * Get demo statistics
+     */
+    getDemoStatistics() {
+        return {
+            total_twins: 2,
+            active_twins: 2,
+            total_relationships: 1,
+            average_health_score: 93.5,
+            last_updated: new Date().toISOString()
+        };
+    }
+
+
 
     /**
      * Get authentication headers for API calls
@@ -110,8 +412,12 @@ export default class TwinRegistryCore {
             'Content-Type': 'application/json'
         };
         
-        if (this.authToken) {
-            headers['Authorization'] = `Bearer ${this.authToken}`;
+        // ✅ CORRECT: Get token from central auth manager
+        if (window.authManager) {
+            const token = window.authManager.getStoredToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
         }
         
         return headers;

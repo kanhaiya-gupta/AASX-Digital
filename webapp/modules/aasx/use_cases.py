@@ -23,11 +23,17 @@ class UseCaseService:
         self.use_case_repo = UseCaseRepository(self.db_manager)
         self.project_repo = ProjectRepository(self.db_manager)
     
-    def list_use_cases(self) -> List[Dict[str, Any]]:
-        """Get all use cases with formatted API response"""
+    def list_use_cases(self, user_context=None) -> List[Dict[str, Any]]:
+        """Get use cases based on user context - demo data for guests, user-specific for authenticated users"""
         try:
-            # Get use cases from database
-            use_cases = self.use_case_repo.get_all()
+            # If no user context or demo user, show demo use cases
+            if not user_context or getattr(user_context, 'username', None) == 'demo':
+                # Get demo use cases (all use cases for inspiration)
+                use_cases = self.use_case_repo.get_all()
+            else:
+                # For authenticated users, get their specific use cases
+                # For now, show all use cases (can be filtered later based on user permissions)
+                use_cases = self.use_case_repo.get_all()
             
             # Transform to API format
             api_use_cases = []

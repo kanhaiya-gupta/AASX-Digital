@@ -41,7 +41,7 @@ class RoleBasedNavigation {
             'aasx-etl': {
                 title: 'ETL Pipeline',
                 icon: 'fas fa-cogs',
-                path: '/aasx-etl',
+                path: '/api/aasx-etl',
                 permissions: ['read', 'write'],
                 allowIndependent: true,
                 description: 'Process and transform AASX files'
@@ -49,7 +49,7 @@ class RoleBasedNavigation {
             'twin-registry': {
                 title: 'Twin Registry',
                 icon: 'fas fa-sync',
-                path: '/twin-registry',
+                path: '/api/twin-registry',
                 permissions: ['read', 'write'],
                 allowIndependent: true,
                 description: 'Manage digital twins'
@@ -57,7 +57,7 @@ class RoleBasedNavigation {
             'ai-rag': {
                 title: 'AI/RAG System',
                 icon: 'fas fa-robot',
-                path: '/ai-rag',
+                path: '/api/ai-rag',
                 permissions: ['read', 'write'],
                 allowIndependent: true,
                 description: 'AI-powered analysis and retrieval'
@@ -65,7 +65,7 @@ class RoleBasedNavigation {
             'kg-neo4j': {
                 title: 'Knowledge Graph',
                 icon: 'fas fa-project-diagram',
-                path: '/kg-neo4j',
+                path: '/api/kg-neo4j',
                 permissions: ['read', 'write'],
                 allowIndependent: true,
                 description: 'Knowledge graph management'
@@ -73,7 +73,7 @@ class RoleBasedNavigation {
             'certificate-manager': {
                 title: 'Certificate Manager',
                 icon: 'fas fa-certificate',
-                path: '/certificate-manager',
+                path: '/api/certificate-manager',
                 permissions: ['read', 'write', 'manage'],
                 allowIndependent: false,
                 description: 'Manage certificates and compliance'
@@ -81,7 +81,7 @@ class RoleBasedNavigation {
             'federated-learning': {
                 title: 'Federated Learning',
                 icon: 'fas fa-network-wired',
-                path: '/federated-learning',
+                path: '/api/federated-learning',
                 permissions: ['read', 'write', 'manage'],
                 allowIndependent: false,
                 description: 'Federated learning system'
@@ -89,7 +89,7 @@ class RoleBasedNavigation {
             'physics-modeling': {
                 title: 'Physics Modeling',
                 icon: 'fas fa-atom',
-                path: '/physics-modeling',
+                path: '/api/physics-modeling',
                 permissions: ['read', 'write', 'manage'],
                 allowIndependent: false,
                 description: 'Physics-based modeling'
@@ -371,22 +371,27 @@ class RoleBasedNavigation {
      * Show unauthenticated state
      */
     showUnauthenticatedState() {
-        // Hide all module-specific navigation
-        const moduleItems = document.querySelectorAll('[data-module]');
-        moduleItems.forEach(item => {
-            item.style.display = 'none';
-            item.classList.add('d-none');
-        });
+        console.log('🌐 Showing unauthenticated state - all modules visible for exploration');
         
-        // Show only public modules
-        const publicModules = ['aasx-etl', 'twin-registry'];
-        publicModules.forEach(module => {
+        // Show ALL modules for public exploration (Inspire First philosophy)
+        const allModules = [
+            'aasx-etl', 'twin-registry', 'ai-rag', 'kg-neo4j', 
+            'certificate-manager', 'federated-learning', 'physics-modeling'
+        ];
+        
+        allModules.forEach(module => {
             const items = document.querySelectorAll(`[data-module="${module}"]`);
             items.forEach(item => {
                 item.style.display = 'block';
                 item.classList.remove('d-none');
+                
+                // Add visual indicator that this is for exploration
+                item.classList.add('public-exploration');
+                item.title = `Explore ${module.replace('-', ' ')} capabilities`;
             });
         });
+        
+        console.log('✅ All modules now visible for public exploration');
     }
     
     /**

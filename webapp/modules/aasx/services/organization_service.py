@@ -28,13 +28,8 @@ class OrganizationService:
         self.user_context = user_context
         self.user_id = getattr(user_context, 'user_id', None)
         self.organization_id = getattr(user_context, 'organization_id', None)
-        # Check if user is independent based on organization_id
-        user_is_independent = getattr(user_context, 'is_independent', None)
-        if user_is_independent is None:
-            self.is_independent = self.organization_id is None
-        else:
-            self.is_independent = user_is_independent
-        self.user_type = getattr(user_context, 'get_user_type', lambda: 'independent')()
+        # All users are organization users - no independent users
+        self.user_type = getattr(user_context, 'get_user_type', lambda: 'organization')()
         
         # Initialize database connection
         from src.shared.database.connection_manager import DatabaseConnectionManager
@@ -58,21 +53,19 @@ class OrganizationService:
     
     def get_organization_projects(self) -> List[Dict[str, Any]]:
         """
-        Get all projects for the organization
+        Get all projects for the organization - organization-only access
         
         Returns:
             List of project dictionaries
         """
         try:
-            if self.is_independent:
-                # Independent users don't have organization projects
-                return []
-            
+            # All users are organization users - get organization projects
             query = """
-                SELECT p.*, uc.name as use_case_name, uc.category as use_case_category
+                SELECT p.*, puc.use_case_id, uc.name as use_case_name, uc.category as use_case_category
                 FROM projects p
-                LEFT JOIN use_cases uc ON p.use_case_id = uc.use_case_id
-                WHERE p.organization_id = ?
+                LEFT JOIN project_use_case_links puc ON p.project_id = puc.project_id
+                LEFT JOIN use_cases uc ON puc.use_case_id = uc.use_case_id
+                WHERE p.org_id = ?
                 ORDER BY p.created_at DESC
             """
             projects = self.db_manager.execute_query(query, (self.organization_id,))
@@ -104,22 +97,20 @@ class OrganizationService:
     
     def get_organization_files(self) -> List[Dict[str, Any]]:
         """
-        Get all files for the organization
+        Get all files for the organization - organization-only access
         
         Returns:
             List of file dictionaries
         """
         try:
-            if self.is_independent:
-                # Independent users don't have organization files
-                return []
-            
+            # All users are organization users - get organization files
             query = """
                 SELECT f.*, p.name as project_name, uc.name as use_case_name
                 FROM files f
                 LEFT JOIN projects p ON f.project_id = p.project_id
-                LEFT JOIN use_cases uc ON p.use_case_id = uc.use_case_id
-                WHERE p.organization_id = ?
+                LEFT JOIN project_use_case_links puc ON p.project_id = puc.project_id
+                LEFT JOIN use_cases uc ON puc.use_case_id = uc.use_case_id
+                WHERE p.org_id = ?
                 ORDER BY f.created_at DESC
             """
             files = self.db_manager.execute_query(query, (self.organization_id,))
@@ -135,8 +126,8 @@ class OrganizationService:
                     "project_name": file["project_name"],
                     "use_case_name": file["use_case_name"],
                     "file_path": file["file_path"],
-                    "file_size": file["file_size"],
-                    "created_by": file["created_by"],
+                    "file_size": file["size"],
+                    "user_id": file["user_id"],
                     "created_at": file["created_at"],
                     "updated_at": file["updated_at"],
                     "status": file["status"],
@@ -152,47 +143,36 @@ class OrganizationService:
     
     def get_organization_statistics(self) -> Dict[str, Any]:
         """
-        Get organization statistics
+        Get organization statistics - organization-only access
         
         Returns:
             Dictionary containing organization statistics
         """
         try:
-            if self.is_independent:
-                # Independent users don't have organization statistics
-                return {
-                    "organization_id": None,
-                    "organization_name": None,
-                    "total_projects": 0,
-                    "total_files": 0,
-                    "total_storage": 0,
-                    "member_count": 0,
-                    "is_organization": False
-                }
-            
+            # All users are organization users - get organization statistics
             # Get organization statistics
             project_query = """
                 SELECT COUNT(*) as project_count
                 FROM projects
-                WHERE organization_id = ?
+                WHERE org_id = ?
             """
             project_result = self.db_manager.execute_query(project_query, (self.organization_id,))
             project_count = project_result[0]["project_count"] or 0
             
             file_query = """
-                SELECT COUNT(*) as file_count, SUM(file_size) as total_storage
+                SELECT COUNT(*) as file_count, SUM(size) as total_storage
                 FROM files f
                 LEFT JOIN projects p ON f.project_id = p.project_id
-                WHERE p.organization_id = ?
+                WHERE p.org_id = ?
             """
             file_result = self.db_manager.execute_query(file_query, (self.organization_id,))
             file_count = file_result[0]["file_count"] or 0
             total_storage = file_result[0]["total_storage"] or 0
             
             member_query = """
-                SELECT COUNT(DISTINCT created_by) as member_count
+                SELECT COUNT(DISTINCT user_id) as member_count
                 FROM projects
-                WHERE organization_id = ?
+                WHERE p.org_id = ?
             """
             member_result = self.db_manager.execute_query(member_query, (self.organization_id,))
             member_count = member_result[0]["member_count"] or 0
@@ -216,20 +196,17 @@ class OrganizationService:
     
     def get_organization_members(self) -> List[Dict[str, Any]]:
         """
-        Get organization members
+        Get organization members - organization-only access
         
         Returns:
             List of member dictionaries
         """
         try:
-            if self.is_independent:
-                # Independent users don't have organization members
-                return []
-            
+            # All users are organization users - get organization members
             query = """
                 SELECT DISTINCT p.created_by, COUNT(p.project_id) as project_count
                 FROM projects p
-                WHERE p.organization_id = ?
+                WHERE p.org_id = ?
                 GROUP BY p.created_by
                 ORDER BY project_count DESC
             """
@@ -253,19 +230,19 @@ class OrganizationService:
     
     def can_manage_organization(self) -> bool:
         """
-        Check if user can manage organization
+        Check if user can manage the organization - organization-only access
         
         Returns:
-            True if user can manage organization, False otherwise
+            True if user can manage, False otherwise
         """
         try:
-            # Super admins can manage all organizations
+            # Super admins can manage everything
             user_role = getattr(self.user_context, 'role', 'viewer')
             if user_role == "super_admin":
                 return True
             
             # Organization admins can manage their organization
-            if user_role == "admin" and not self.is_independent:
+            if user_role == "admin":
                 return True
             
             return False
@@ -276,21 +253,13 @@ class OrganizationService:
     
     def get_organization_settings(self) -> Dict[str, Any]:
         """
-        Get organization settings
+        Get organization settings - organization-only access
         
         Returns:
             Dictionary containing organization settings
         """
         try:
-            if self.is_independent:
-                # Independent users don't have organization settings
-                return {
-                    "organization_id": None,
-                    "organization_name": None,
-                    "settings": {},
-                    "can_manage": False
-                }
-            
+            # All users are organization users - get organization settings
             # Get organization settings from database
             query = """
                 SELECT organization_id, organization_name, settings
@@ -323,7 +292,7 @@ class OrganizationService:
     
     def update_organization_settings(self, settings: Dict[str, Any]) -> bool:
         """
-        Update organization settings
+        Update organization settings - organization-only access
         
         Args:
             settings: Settings dictionary to update
@@ -335,9 +304,7 @@ class OrganizationService:
             if not self.can_manage_organization():
                 raise Exception("User does not have permission to manage organization")
             
-            if self.is_independent:
-                raise Exception("Independent users cannot update organization settings")
-            
+            # All users are organization users - can update organization settings
             # Update organization settings in database
             query = """
                 UPDATE organizations
@@ -355,7 +322,7 @@ class OrganizationService:
     
     def get_project_file_count(self, project_id: str) -> int:
         """
-        Get file count for a project (if user can access it)
+        Get file count for a project - organization-only access
         
         Args:
             project_id: Project ID
@@ -364,25 +331,14 @@ class OrganizationService:
             File count
         """
         try:
-            # Check if user can access this project
-            if self.is_independent:
-                # Independent users can only access their own projects
-                query = """
-                    SELECT COUNT(*) as file_count
-                    FROM files f
-                    LEFT JOIN projects p ON f.project_id = p.project_id
-                    WHERE p.project_id = ? AND p.created_by = ?
-                """
-                result = self.db_manager.execute_query(query, (project_id, self.user_id))
-            else:
-                # Organization users can access organization projects
-                query = """
-                    SELECT COUNT(*) as file_count
-                    FROM files f
-                    LEFT JOIN projects p ON f.project_id = p.project_id
-                    WHERE p.project_id = ? AND (p.created_by = ? OR p.organization_id = ?)
-                """
-                result = self.db_manager.execute_query(query, (project_id, self.user_id, self.organization_id))
+            # All users are organization users - can access organization projects
+            query = """
+                SELECT COUNT(*) as file_count
+                FROM files f
+                LEFT JOIN projects p ON f.project_id = p.project_id
+                WHERE p.project_id = ? AND (p.created_by = ? OR p.organization_id = ?)
+            """
+            result = self.db_manager.execute_query(query, (project_id, self.user_id, self.organization_id))
             
             return result[0]["file_count"] or 0
             

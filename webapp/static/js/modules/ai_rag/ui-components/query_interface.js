@@ -17,42 +17,103 @@ let currentUser = null;
 let authToken = null;
 
 /**
- * Initialize authentication for query interface
+ * Wait for central auth system to be ready
  */
-function initAuthentication() {
-    try {
-        // Check if user is authenticated
-        if (typeof getCurrentUser === 'function') {
-            currentUser = getCurrentUser();
-            if (currentUser) {
-                isAuthenticated = true;
-                authToken = getAuthToken();
-                console.log('🔐 Query Interface: User authenticated:', currentUser.username);
-            } else {
-                console.log('🔐 Query Interface: User not authenticated');
-                isAuthenticated = false;
+async function waitForAuthSystem() {
+    console.log('🔐 Query Interface: Waiting for central auth system...');
+    
+    if (window.authSystemReady && window.authManager) {
+        console.log('🔐 Query Interface: Auth system already ready');
+        return;
+    }
+    
+    return new Promise((resolve) => {
+        const handleReady = () => {
+            console.log('🚀 Query Interface: Auth system ready event received');
+            window.removeEventListener('authSystemReady', handleReady);
+            resolve();
+        };
+        
+        window.addEventListener('authSystemReady', handleReady);
+        
+        // Fallback: check periodically
+        const checkInterval = setInterval(() => {
+            if (window.authSystemReady && window.authManager) {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
             }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            window.removeEventListener('authSystemReady', handleReady);
+            console.warn('⚠️ Query Interface: Timeout waiting for auth system');
+            resolve();
+        }, 10000);
+    });
+}
+
+/**
+ * Update authentication state from central auth manager
+ */
+function updateAuthState() {
+    if (!window.authManager) {
+        console.log('⚠️ Query Interface: No auth manager available');
+        return;
+    }
+    
+    try {
+        const sessionInfo = window.authManager.getSessionInfo();
+        console.log('🔐 Query Interface: Auth state update:', sessionInfo);
+        
+        if (sessionInfo && sessionInfo.isAuthenticated) {
+            isAuthenticated = true;
+            currentUser = sessionInfo.user;
+            authToken = window.authManager.getStoredToken();
+            console.log('🔐 Query Interface: User authenticated:', currentUser.username);
         } else {
-            console.warn('⚠️ Query Interface: getCurrentUser function not available');
             isAuthenticated = false;
+            currentUser = null;
+            authToken = null;
+            console.log('🔐 Query Interface: User not authenticated (demo mode)');
         }
     } catch (error) {
-        console.error('❌ Query Interface: Authentication initialization error:', error);
+        console.warn('⚠️ Query Interface: Error updating auth state:', error);
         isAuthenticated = false;
+        currentUser = null;
+        authToken = null;
     }
 }
 
 /**
- * Get authentication token
+ * Setup authentication listeners
  */
-function getAuthToken() {
-    try {
-        // Try to get token from localStorage/sessionStorage
-        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    } catch (error) {
-        console.warn('⚠️ Query Interface: Could not get auth token:', error);
-        return null;
-    }
+function setupAuthListeners() {
+    // Listen for auth state changes
+    window.addEventListener('authStateChanged', () => {
+        console.log('🔄 Query Interface: Auth state changed, updating...');
+        updateAuthState();
+    });
+    
+    // Listen for login success
+    window.addEventListener('loginSuccess', async () => {
+        console.log('🔐 Query Interface: Login success detected');
+        updateAuthState();
+        // Refresh data after login
+        await initializeRAGTechniques();
+        await initializeProjects();
+        await initializeDigitalTwins();
+    });
+    
+    // Listen for logout
+    window.addEventListener('logout', () => {
+        console.log('🔐 Query Interface: Logout detected');
+        updateAuthState();
+        // Clear sensitive data after logout
+        // No sensitive data to clear in query interface
+    });
 }
 
 /**
@@ -63,8 +124,12 @@ function getAuthHeaders() {
         'Content-Type': 'application/json'
     };
     
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+    // ✅ CORRECT: Get token from central auth manager
+    if (window.authManager) {
+        const token = window.authManager.getStoredToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
     }
     
     return headers;
@@ -78,8 +143,14 @@ export async function initQueryInterface() {
     console.log('🔍 Query Interface Module: Initializing...');
     console.log('🔍 Query Interface Module: DOM ready state:', document.readyState);
     
-    // Initialize authentication
-    initAuthentication();
+    // ✅ CORRECT: Wait for central auth system first
+    await waitForAuthSystem();
+    
+    // ✅ CORRECT: Update auth state from central system
+    updateAuthState();
+    
+    // ✅ CORRECT: Listen for auth state changes
+    setupAuthListeners();
     
     // Check if all required elements exist
     const requiredElements = [
@@ -127,7 +198,7 @@ export async function initQueryInterface() {
         console.log('🔧 Query Interface Module: Initializing digital twins...');
         await initializeDigitalTwins();
         
-        console.log('✅ Query Interface Module: Initialized successfully');
+        console.log('✅ Query Interface Module: Initialized with central auth integration');
     } catch (error) {
         console.error('❌ Query Interface Module: Initialization failed:', error);
         throw error;

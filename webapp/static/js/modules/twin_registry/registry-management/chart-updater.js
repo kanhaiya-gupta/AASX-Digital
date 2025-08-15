@@ -17,6 +17,9 @@ export default class TwinRegistryChartUpdater {
             light: '#f8f9fa',
             dark: '#343a40'
         };
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     /**
@@ -26,6 +29,11 @@ export default class TwinRegistryChartUpdater {
         console.log('🔧 Initializing Twin Registry Chart Updater...');
         
         try {
+            // Initialize authentication
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
+            
             // Initialize all charts
             await this.initializeCharts();
             
@@ -601,8 +609,12 @@ export default class TwinRegistryChartUpdater {
         try {
             // Fetch latest data
             const [twinsResponse, statsResponse] = await Promise.all([
-                fetch('/api/twin-registry/twins'),
-                fetch('/api/twin-registry/twins/statistics')
+                fetch('/api/twin-registry/twins', {
+                    headers: this.getAuthHeaders()
+                }),
+                fetch('/api/twin-registry/twins/statistics', {
+                    headers: this.getAuthHeaders()
+                })
             ]);
 
             if (twinsResponse.ok && statsResponse.ok) {
@@ -625,6 +637,108 @@ export default class TwinRegistryChartUpdater {
                 chart.resize();
             }
         });
+    }
+
+    /**
+     * Wait for central authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Twin Registry Chart Updater: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Twin Registry Chart Updater: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Twin Registry Chart Updater: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Registry Chart Updater: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Twin Registry Chart Updater: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Twin Registry Chart Updater: No auth manager available');
+        }
+    }
+
+    /**
+     * Setup authentication event listeners
+     */
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.charts = {};
+        console.log('🧹 Twin Registry Chart Updater: Sensitive data cleared');
     }
 
     /**

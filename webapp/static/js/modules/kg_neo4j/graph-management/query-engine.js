@@ -6,6 +6,10 @@
 export default class KGQueryEngine {
     constructor() {
         this.isInitialized = false;
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.organizationId = null;
+        
         this.config = {
             apiBaseUrl: '/api/kg-neo4j',
             maxQueryLength: 10000,
@@ -29,12 +33,136 @@ export default class KGQueryEngine {
     }
 
     /**
+     * 🔐 Wait for authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Knowledge Graph Query Engine: Waiting for authentication system...');
+        
+        return new Promise((resolve) => {
+            if (window.authSystemReady && window.authManager) {
+                console.log('🔐 Knowledge Graph Query Engine: Auth system already ready');
+                resolve();
+                return;
+            }
+            
+            const handleReady = () => {
+                console.log('🚀 Knowledge Graph Query Engine: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Knowledge Graph Query Engine: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * 🔐 Update authentication state from global auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) {
+            console.log('⚠️ Knowledge Graph Query Engine: No auth manager available');
+            return;
+        }
+        
+        try {
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 Knowledge Graph Query Engine: Auth state update:', sessionInfo);
+            
+            this.isAuthenticated = sessionInfo.isAuthenticated;
+            this.currentUser = sessionInfo.user;
+            this.organizationId = sessionInfo.user?.organization_id;
+            
+            console.log(`🔐 Knowledge Graph Query Engine: User ${this.currentUser?.username || 'unauthenticated'} (org: ${this.organizationId || 'none'})`);
+            
+        } catch (error) {
+            console.warn('⚠️ Knowledge Graph Query Engine: Error updating auth state:', error);
+        }
+    }
+
+    /**
+     * 🔐 Setup authentication event listeners
+     */
+    setupAuthEventListeners() {
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 Knowledge Graph Query Engine: Auth state changed, updating...');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+        
+        window.addEventListener('logout', () => {
+            console.log('🔐 Knowledge Graph Query Engine: Logout detected');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+    }
+
+    /**
+     * 🔐 Handle authentication state changes
+     */
+    handleAuthStateChange() {
+        if (this.isAuthenticated && this.organizationId) {
+            console.log(`🔐 Knowledge Graph Query Engine: User authenticated, clearing query cache for ${this.currentUser.username}`);
+            // Clear query cache when user changes
+            this.queryCache.clear();
+        } else {
+            console.log('🔐 Knowledge Graph Query Engine: User not authenticated, clearing query cache');
+            // Clear query cache for unauthenticated users
+            this.queryCache.clear();
+        }
+    }
+
+    /**
+     * 🔐 Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = window.authManager?.getStoredToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log(`🔐 Knowledge Graph Query Engine: Making authenticated API call for user ${this.currentUser?.username || 'unknown'}`);
+        } else {
+            console.log('🔐 Knowledge Graph Query Engine: Making unauthenticated API call');
+        }
+        
+        return headers;
+    }
+
+    /**
      * Initialize the Query Engine
      */
     async init() {
         console.log('🔧 Initializing Knowledge Graph Query Engine...');
 
         try {
+            // 🔐 CRITICAL: Wait for authentication system to be ready
+            await this.waitForAuthSystem();
+            
+            // Update authentication state
+            this.updateAuthState();
+            
+            // Setup authentication event listeners
+            this.setupAuthEventListeners();
+
             // Load configuration
             await this.loadConfiguration();
 
@@ -54,7 +182,7 @@ export default class KGQueryEngine {
             this.loadQueryHistory();
 
             this.isInitialized = true;
-            console.log('✅ Knowledge Graph Query Engine initialized');
+            console.log('✅ Knowledge Graph Query Engine initialized with authentication');
 
         } catch (error) {
             console.error('❌ Knowledge Graph Query Engine initialization failed:', error);
@@ -451,14 +579,13 @@ export default class KGQueryEngine {
             // Execute query
             const response = await fetch(`${this.config.apiBaseUrl}/query`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     query: optimizedQuery,
                     parameters: optimizedParams,
                     explain: this.config.explainQueries,
-                    timeout: options.timeout || this.config.timeout
+                    timeout: options.timeout || this.config.timeout,
+                    org_id: this.organizationId || 'demo' // 🔐 Include organization ID for query filtering
                 })
             });
 

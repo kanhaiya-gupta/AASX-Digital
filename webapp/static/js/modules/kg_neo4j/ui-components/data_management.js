@@ -1,6 +1,7 @@
 /**
  * Data Management Component
  * Handles import/export operations with dropdown selection from centralized database
+ * Now with full authentication integration for user-specific data
  */
 
 class DataManagementComponent {
@@ -9,32 +10,159 @@ class DataManagementComponent {
         this.currentUseCase = null;
         this.currentProject = null;
         this.currentFile = null;
-        this.init();
+        
+        // 🔐 Authentication properties
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.organizationId = null;
+        
+        // Track loading state to prevent duplicates
+        this.projectsLoaded = false;
+        
+        // 🔐 Wait for authentication before initializing
+        this.waitForAuthAndInit();
     }
 
-    init() {
-        this.loadUseCases();
+    /**
+     * 🔐 Wait for authentication system to be ready before initializing
+     */
+    async waitForAuthAndInit() {
+        console.log('🔐 DataManagement: Waiting for authentication system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 DataManagement: Auth system already ready');
+            this.init();
+        } else {
+            console.log('🔐 DataManagement: Waiting for auth system ready event...');
+            window.addEventListener('authSystemReady', () => {
+                console.log('🚀 DataManagement: Auth system ready, initializing...');
+                this.init();
+            });
+        }
+    }
+
+    async init() {
+        // 🔐 Update authentication state
+        this.updateAuthState();
+        
+        // 🔐 Setup authentication event listeners
+        this.setupAuthEventListeners();
+        
+        // Load user-specific data
+        await this.loadUseCases();
         this.bindEvents();
         this.updateUI();
     }
 
+    /**
+     * 🔐 Update authentication state from global auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) {
+            console.log('⚠️ DataManagement: No auth manager available');
+            return;
+        }
+        
+        try {
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 DataManagement: Auth state update:', sessionInfo);
+            
+            this.isAuthenticated = sessionInfo.isAuthenticated;
+            this.currentUser = sessionInfo.user;
+            this.organizationId = sessionInfo.user?.organization_id;
+            
+            console.log(`🔐 DataManagement: User ${this.currentUser?.username || 'unauthenticated'} (org: ${this.organizationId || 'none'})`);
+            
+        } catch (error) {
+            console.warn('⚠️ DataManagement: Error updating auth state:', error);
+        }
+    }
+
+    /**
+     * 🔐 Setup authentication event listeners
+     */
+    setupAuthEventListeners() {
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 DataManagement: Auth state changed, updating...');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+        
+        window.addEventListener('logout', () => {
+            console.log('🔐 DataManagement: Logout detected');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+    }
+
+    /**
+     * 🔐 Handle authentication state changes
+     */
+    handleAuthStateChange() {
+        if (this.isAuthenticated && this.organizationId) {
+            console.log(`🔐 DataManagement: User authenticated, reloading data for ${this.currentUser.username}`);
+            // Reload data for the authenticated user
+            this.loadUseCases();
+        } else {
+            console.log('🔐 DataManagement: User not authenticated, clearing data');
+            // Clear data and show demo/empty state
+            this.clearData();
+        }
+    }
+
+    /**
+     * 🔐 Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = window.authManager?.getStoredToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log(`🔐 DataManagement: Making authenticated API call for user ${this.currentUser?.username || 'unknown'}`);
+        } else {
+            console.log('🔐 DataManagement: Making unauthenticated API call');
+        }
+        
+        return headers;
+    }
+
+    /**
+     * 🔐 Clear data when user is not authenticated
+     */
+    clearData() {
+        console.log('🔐 DataManagement: Clearing data for unauthenticated user');
+        this.currentUseCase = null;
+        this.currentProject = null;
+        this.currentFile = null;
+        
+        // Clear ONLY Knowledge Graph specific dropdowns
+        $('#use-case-select').empty().append('<option value="">Select Use Case...</option>').prop('disabled', true);
+        $('#project-select').empty().append('<option value="">Select Project...</option>').prop('disabled', true);
+        $('#file-select').empty().append('<option value="">Select File...</option>').prop('disabled', true);
+        
+        this.updateUI();
+    }
+
     bindEvents() {
-        // Use case selection - using jQuery like AASX
-        $('.use-case-select').on('change', (e) => {
+        // Use case selection - ONLY for Knowledge Graph specific dropdowns
+        $('#use-case-select').on('change', (e) => {
             const useCaseId = $(e.target).val();
             console.log('🔍 DataManagement: Use case changed to:', useCaseId);
             this.onUseCaseChange(useCaseId, $(e.target).closest('.dropdown-section'));
         });
 
-        // Project selection - using jQuery like AASX
-        $('.project-select').on('change', (e) => {
+        // Project selection - ONLY for Knowledge Graph specific dropdowns
+        $('#project-select').on('change', (e) => {
             const projectId = $(e.target).val();
             console.log('🔍 DataManagement: Project changed to:', projectId);
             this.onProjectChange(projectId, $(e.target).closest('.dropdown-section'));
         });
 
-        // File selection - using jQuery like AASX
-        $('.file-select').on('change', (e) => {
+        // File selection - ONLY for Knowledge Graph specific dropdowns
+        $('#file-select').on('change', (e) => {
             const fileId = $(e.target).val();
             console.log('🔍 DataManagement: File changed to:', fileId);
             this.currentFile = fileId;
@@ -64,17 +192,26 @@ class DataManagementComponent {
 
     async loadUseCases() {
         try {
-            console.log('🔍 DataManagement: Loading use cases from:', `${this.apiBaseUrl}/use-cases`);
-            const response = await fetch(`${this.apiBaseUrl}/use-cases`);
+            // 🔐 Use centralized AASX API for use cases (same as AASX module)
+            const aasxApiUrl = '/api/aasx-etl/use-cases';
+            console.log('🔍 DataManagement: Loading use cases from centralized AASX API:', aasxApiUrl);
+            
+            const response = await fetch(aasxApiUrl, { 
+                headers: this.getAuthHeaders() 
+            });
             const data = await response.json();
             console.log('📊 DataManagement: Use cases response:', data);
             
-            if (data.success) {
-                console.log('✅ DataManagement: Populating dropdown with', data.use_cases.length, 'use cases');
+            // Handle both direct array response and success-wrapped response
+            if (Array.isArray(data)) {
+                console.log('✅ DataManagement: Populating dropdown with', data.length, 'use cases (direct array)');
+                this.populateUseCaseDropdown(data);
+            } else if (data.success && Array.isArray(data.use_cases)) {
+                console.log('✅ DataManagement: Populating dropdown with', data.use_cases.length, 'use cases (success-wrapped)');
                 this.populateUseCaseDropdown(data.use_cases);
             } else {
-                console.error('❌ DataManagement: Failed to load use cases:', data);
-                this.showError('Failed to load use cases');
+                console.error('❌ DataManagement: Failed to load use cases - invalid response format:', data);
+                this.showError('Failed to load use cases - invalid response format');
             }
         } catch (error) {
             console.error('❌ DataManagement: Error loading use cases:', error);
@@ -82,37 +219,20 @@ class DataManagementComponent {
         }
     }
 
-    async loadProjects() {
-        if (!this.currentUseCase) return;
 
-        try {
-            console.log('🔍 DataManagement: Loading projects for use case:', this.currentUseCase);
-            const response = await fetch(`${this.apiBaseUrl}/use-cases/${this.currentUseCase}/projects`);
-            const data = await response.json();
-            console.log('📊 DataManagement: Projects response:', data);
-            
-            if (data.success) {
-                console.log('✅ DataManagement: Populating project dropdown with', data.projects.length, 'projects');
-                this.populateProjectDropdown(data.projects);
-            } else {
-                console.error('❌ DataManagement: Failed to load projects:', data);
-                this.showError('Failed to load projects');
-            }
-        } catch (error) {
-            console.error('❌ DataManagement: Error loading projects:', error);
-            this.showError('Error loading projects');
-        }
-    }
 
     async onUseCaseChange(useCaseId, container) {
         this.currentUseCase = useCaseId;
         
-        // Reset project selection
-        const $projectSelect = container.find('.project-select');
+        // Reset loading state for new use case
+        this.projectsLoaded = false;
+        
+        // Reset project selection - ONLY Knowledge Graph specific dropdown
+        const $projectSelect = $('#project-select');
         $projectSelect.val('');
         
-        // Reset file selection
-        const $fileSelect = container.find('.file-select');
+        // Reset file selection - ONLY Knowledge Graph specific dropdown
+        const $fileSelect = $('#file-select');
         $fileSelect.val('');
         
         if (useCaseId) {
@@ -133,8 +253,8 @@ class DataManagementComponent {
     async onProjectChange(projectId, container) {
         this.currentProject = projectId;
         
-        // Reset file selection
-        const $fileSelect = container.find('.file-select');
+        // Reset file selection - ONLY Knowledge Graph specific dropdown
+        const $fileSelect = $('#file-select');
         $fileSelect.val('');
         
         if (projectId) {
@@ -149,18 +269,36 @@ class DataManagementComponent {
     }
 
     async loadProjects(useCaseId, container) {
+        // Prevent duplicate loading for the same use case
+        if (this.currentUseCase === useCaseId && this.projectsLoaded) {
+            console.log('🔍 DataManagement: Projects already loaded for use case:', useCaseId, 'skipping duplicate load');
+            return;
+        }
+        
         try {
-            console.log('🔍 DataManagement: Loading projects for use case:', useCaseId);
-            const response = await fetch(`${this.apiBaseUrl}/use-cases/${useCaseId}/projects`);
+            // 🔐 Use centralized AASX API for projects (same as AASX module)
+            const aasxApiUrl = `/api/aasx-etl/use-cases/${useCaseId}/projects`;
+            console.log('🔍 DataManagement: Loading projects for use case:', useCaseId, 'from centralized AASX API:', aasxApiUrl);
+            
+            const response = await fetch(aasxApiUrl, { 
+                headers: this.getAuthHeaders() 
+            });
             const data = await response.json();
             console.log('📊 DataManagement: Projects response:', data);
+            console.log('🔍 DataManagement: Sample project structure:', data[0] || 'No projects');
             
-            if (data.success) {
-                console.log('✅ DataManagement: Populating project dropdown with', data.projects.length, 'projects');
+            // Handle both direct array response and success-wrapped response
+            if (Array.isArray(data)) {
+                console.log('✅ DataManagement: Populating project dropdown with', data.length, 'projects (direct array)');
+                this.populateProjectDropdown(data, container);
+                this.projectsLoaded = true;
+            } else if (data.success && Array.isArray(data.projects)) {
+                console.log('✅ DataManagement: Populating project dropdown with', data.projects.length, 'projects (success-wrapped)');
                 this.populateProjectDropdown(data.projects, container);
+                this.projectsLoaded = true;
             } else {
-                console.error('❌ DataManagement: Failed to load projects:', data);
-                this.showError('Failed to load projects');
+                console.error('❌ DataManagement: Failed to load projects - invalid response format:', data);
+                this.showError('Failed to load projects - invalid response format');
             }
         } catch (error) {
             console.error('❌ DataManagement: Error loading projects:', error);
@@ -170,17 +308,51 @@ class DataManagementComponent {
 
     async loadFiles(projectId, container) {
         try {
-            console.log('🔍 DataManagement: Loading files for project:', projectId);
-            const response = await fetch(`${this.apiBaseUrl}/projects/${projectId}/files`);
+            // 🔐 Use centralized AASX API for project files (same as AASX module)
+            const aasxApiUrl = `/api/aasx-etl/projects/${projectId}/files`;
+            console.log('🔍 DataManagement: Loading files for project:', projectId, 'from centralized AASX API:', aasxApiUrl);
+            
+            const response = await fetch(aasxApiUrl, { 
+                headers: this.getAuthHeaders() 
+            });
             const data = await response.json();
             console.log('📊 DataManagement: Files response:', data);
             
-            if (data.success) {
-                console.log('✅ DataManagement: Populating file dropdown with', data.files.length, 'files');
-                this.populateFileDropdown(data.files, container);
+            // Handle different response formats
+            if (Array.isArray(data)) {
+                // Direct array response
+                if (data.length === 0) {
+                    console.log('⚠️ DataManagement: No files found for project, showing empty state');
+                    this.populateFileDropdown([], container, true); // true = show empty state
+                } else {
+                    console.log('✅ DataManagement: Populating file dropdown with', data.length, 'files (direct array)');
+                    this.populateFileDropdown(data, container);
+                }
+            } else if (data.files && Array.isArray(data.files)) {
+                // Object with files array (our new endpoint format)
+                if (data.files.length === 0) {
+                    console.log('⚠️ DataManagement: No files found for project, showing empty state');
+                    this.populateFileDropdown([], container, true); // true = show empty state
+                } else {
+                    console.log('✅ DataManagement: Populating file dropdown with', data.files.length, 'files (object format)');
+                    this.populateFileDropdown(data.files, container);
+                }
+            } else if (data.success && Array.isArray(data.files)) {
+                // Success-wrapped response
+                if (data.files.length === 0) {
+                    console.log('⚠️ DataManagement: No files found for project, showing empty state');
+                    this.populateFileDropdown([], container, true); // true = show empty state
+                } else {
+                    console.log('✅ DataManagement: Populating file dropdown with', data.files.length, 'files (success-wrapped)');
+                    this.populateFileDropdown(data.files, container);
+                }
+            } else if (data.detail === 'Not Found') {
+                // Handle 404 case - project has no files yet
+                console.log('⚠️ DataManagement: Project has no files yet (404)');
+                this.populateFileDropdown([], container, true); // true = show empty state
             } else {
-                console.error('❌ DataManagement: Failed to load files:', data);
-                this.showError('Failed to load files');
+                console.error('❌ DataManagement: Failed to load files - invalid response format:', data);
+                this.showError('Failed to load files - invalid response format');
             }
         } catch (error) {
             console.error('❌ DataManagement: Error loading files:', error);
@@ -199,10 +371,13 @@ class DataManagementComponent {
         console.log('✅ DataManagement: Found use-case-select element, populating...');
         select.innerHTML = '<option value="">Select Use Case...</option>';
         useCases.forEach(useCase => {
-            console.log('🔍 DataManagement: Adding use case:', useCase.use_case_name, 'with ID:', useCase.use_case_id);
+            // Handle both use_case_name/use_case_id and name/id structures
+            const useCaseName = useCase.use_case_name || useCase.name || 'Unnamed Use Case';
+            const useCaseId = useCase.use_case_id || useCase.id || useCase.useCaseId;
+            console.log('🔍 DataManagement: Adding use case:', useCaseName, 'with ID:', useCaseId);
             const option = document.createElement('option');
-            option.value = useCase.use_case_id;
-            option.textContent = useCase.use_case_name;
+            option.value = useCaseId;
+            option.textContent = useCaseName;
             select.appendChild(option);
         });
         console.log('✅ DataManagement: Dropdown populated with', useCases.length, 'use cases');
@@ -210,41 +385,63 @@ class DataManagementComponent {
 
     populateProjectDropdown(projects, container) {
         console.log('🔍 DataManagement: populateProjectDropdown called with:', projects);
-        const $select = container.find('.project-select');
         
-        console.log('✅ DataManagement: Found project-select element, populating...');
+        // ONLY target the Knowledge Graph specific project dropdown by ID
+        const $select = $('#project-select');
+        
+        if (!$select.length) {
+            console.error('❌ DataManagement: Knowledge Graph project-select element not found');
+            return;
+        }
+        
+        console.log('✅ DataManagement: Found Knowledge Graph project-select element, clearing and populating...');
+        
+        // Clear existing options completely
         $select.empty();
         $select.append('<option value="">Select Project...</option>');
         $select.prop('disabled', false);
         
+        // Add new project options
         projects.forEach(project => {
-            console.log('🔍 DataManagement: Adding project:', project.project_name, 'with ID:', project.project_id);
-            $select.append(`<option value="${project.project_id}">${project.project_name}</option>`);
+            // Handle both project_name/project_id and name/id structures
+            const projectName = project.project_name || project.name || 'Unnamed Project';
+            const projectId = project.project_id || project.id || project.projectId;
+            console.log('🔍 DataManagement: Adding project:', projectName, 'with ID:', projectId);
+            $select.append(`<option value="${projectId}">${projectName}</option>`);
         });
-        console.log('✅ DataManagement: Project dropdown populated with', projects.length, 'projects');
+        
+        console.log('✅ DataManagement: Knowledge Graph project dropdown populated with', projects.length, 'projects');
 
         // Clear file dropdown
         this.clearFileDropdown(container);
     }
 
-    populateFileDropdown(files, container) {
-        console.log('🔍 DataManagement: populateFileDropdown called with:', files);
+    populateFileDropdown(files, container, showEmptyState = false) {
+        console.log('🔍 DataManagement: populateFileDropdown called with:', files, 'showEmptyState:', showEmptyState);
         const $select = container.find('.file-select');
         
         console.log('✅ DataManagement: Found file-select element, populating...');
         $select.empty();
-        $select.append('<option value="">Select File...</option>');
-        $select.prop('disabled', false);
         
-        files.forEach(file => {
-            console.log('🔍 DataManagement: Adding file:', file.filename, 'with ID:', file.file_id);
-            $select.append(`<option value="${file.file_id}">${file.filename}</option>`);
-        });
-        console.log('✅ DataManagement: File dropdown populated with', files.length, 'files');
+        if (showEmptyState || files.length === 0) {
+            $select.append('<option value="">No files available</option>');
+            $select.prop('disabled', true);
+            console.log('⚠️ DataManagement: File dropdown shows no files available');
+        } else {
+            $select.append('<option value="">Select File...</option>');
+            $select.prop('disabled', false);
+            
+            files.forEach(file => {
+                console.log('🔍 DataManagement: Adding file:', file.filename, 'with ID:', file.file_id);
+                $select.append(`<option value="${file.file_id}">${file.filename}</option>`);
+            });
+            console.log('✅ DataManagement: File dropdown populated with', files.length, 'files');
+        }
     }
 
     clearFileDropdown(container) {
-        const $select = container.find('.file-select');
+        // ONLY target the Knowledge Graph specific file dropdown by ID
+        const $select = $('#file-select');
         $select.empty();
         $select.append('<option value="">Select File...</option>');
         $select.prop('disabled', true);
@@ -262,9 +459,7 @@ class DataManagementComponent {
             
             const response = await fetch(`${this.apiBaseUrl}/import/file/${this.currentFile}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getAuthHeaders()
             });
 
             const data = await response.json();
@@ -330,12 +525,12 @@ class DataManagementComponent {
             console.log('🔍 Loading graph data for file:', fileId);
             
             // First check if the file has graph data
-            const checkResponse = await fetch(`${this.apiBaseUrl}/files/${fileId}/graph-exists`);
+            const checkResponse = await fetch(`${this.apiBaseUrl}/files/${fileId}/graph-exists`, { headers: this.getAuthHeaders() });
             const checkData = await checkResponse.json();
             
             if (checkData.exists) {
                 // Load the graph data
-                const response = await fetch(`${this.apiBaseUrl}/files/${fileId}/graph-data`);
+                const response = await fetch(`${this.apiBaseUrl}/files/${fileId}/graph-data`, { headers: this.getAuthHeaders() });
                 const data = await response.json();
                 
                 if (data.success && data.graph_data) {
@@ -371,7 +566,7 @@ class DataManagementComponent {
     async refreshAnalyticsDashboard() {
         try {
             console.log('📊 Refreshing analytics dashboard...');
-            const response = await fetch('/api/kg-neo4j/database-stats');
+            const response = await fetch('/api/kg-neo4j/database-stats', { headers: this.getAuthHeaders() });
             const data = await response.json();
             
             if (data.success) {
@@ -407,9 +602,7 @@ class DataManagementComponent {
             
             const response = await fetch(`${this.apiBaseUrl}/import/project/${this.currentProject}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: this.getAuthHeaders()
             });
 
             const data = await response.json();
@@ -443,7 +636,7 @@ class DataManagementComponent {
                 ? `${this.apiBaseUrl}/export/file/${this.currentFile}`
                 : `${this.apiBaseUrl}/export/project/${this.currentProject}`;
             
-            const response = await fetch(`${endpoint}?format=${format}`);
+            const response = await fetch(`${endpoint}?format=${format}`, { headers: this.getAuthHeaders() });
             
             if (response.ok) {
                 const blob = await response.blob();
@@ -472,7 +665,7 @@ class DataManagementComponent {
     async updateImportStatus() {
         // Update the import status display
         try {
-            const response = await fetch(`${this.apiBaseUrl}/import/status`);
+            const response = await fetch(`${this.apiBaseUrl}/import/status`, { headers: this.getAuthHeaders() });
             const data = await response.json();
             
             if (data.success) {
@@ -586,6 +779,10 @@ class DataManagementComponent {
 
     showError(message) {
         this.showNotification(message, 'error');
+    }
+
+    showInfo(message) {
+        this.showNotification(message, 'info');
     }
 
     showNotification(message, type) {

@@ -32,9 +32,21 @@ class KGNeo4jService:
     """Service for Knowledge Graph Neo4j operations"""
     
     def __init__(self):
+        logger.info("🔧 Initializing KGNeo4jService...")
         self.docker_container_name = "aasx-digital-neo4j"
-        self._initialize_central_data_management()
-        self._initialize_connections()
+        try:
+            self._initialize_central_data_management()
+            logger.info("✅ Centralized data management initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize centralized data management: {e}")
+            raise
+            
+        try:
+            self._initialize_connections()
+            logger.info("✅ Connections initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize connections: {e}")
+            # Don't raise here, allow service to continue with limited functionality
         
     def _initialize_central_data_management(self):
         """Initialize centralized data management system"""
@@ -84,25 +96,48 @@ class KGNeo4jService:
     def _initialize_connections(self):
         """Initialize connections to existing Neo4j business logic"""
         try:
+            logger.info("🔧 Initializing Neo4j connections...")
+            
             # Import existing Neo4j managers from src/kg_neo4j/
+            logger.info("📦 Importing Neo4jManager...")
             from src.kg_neo4j.neo4j_manager import Neo4jManager
+            logger.info("✅ Neo4jManager imported successfully")
+            
+            logger.info("📦 Importing AASXGraphAnalyzer...")
             from src.kg_neo4j.graph_analyzer import AASXGraphAnalyzer
+            logger.info("✅ AASXGraphAnalyzer imported successfully")
             
             # Get Neo4j connection parameters from settings
+            logger.info("🔧 Getting Neo4j connection parameters...")
             from webapp.config.settings import settings
             neo4j_uri = settings.neo4j_uri
             neo4j_user = settings.neo4j_user
             neo4j_password = settings.neo4j_password
+            logger.info(f"🔧 Neo4j URI: {neo4j_uri}, User: {neo4j_user}")
             
             # Initialize with existing business logic and connection parameters
+            logger.info("🔧 Creating Neo4jManager instance...")
             self.neo4j_manager = Neo4jManager(neo4j_uri, neo4j_user, neo4j_password)
+            logger.info("✅ Neo4jManager created successfully")
             
+            logger.info("🔧 Creating AASXGraphAnalyzer instance...")
             self.graph_analyzer = AASXGraphAnalyzer(neo4j_uri, neo4j_user, neo4j_password)
+            logger.info("✅ AASXGraphAnalyzer created successfully")
             
             logger.info("✓ Neo4j managers initialized from src/kg_neo4j/")
             
         except ImportError as e:
-            logger.warning(f"Could not import Neo4j modules: {e}")
+            logger.error(f"❌ ImportError in _initialize_connections: {e}")
+            logger.error(f"❌ ImportError type: {type(e)}")
+            import traceback
+            logger.error(f"❌ ImportError traceback: {traceback.format_exc()}")
+            self.neo4j_manager = None
+            self.graph_analyzer = None
+        except Exception as e:
+            logger.error(f"❌ Unexpected error in _initialize_connections: {e}")
+            logger.error(f"❌ Error type: {type(e)}")
+            import traceback
+            logger.error(f"❌ Error traceback: {traceback.format_exc()}")
             self.neo4j_manager = None
             self.graph_analyzer = None
     
@@ -716,7 +751,7 @@ class KGNeo4jService:
         try:
             # Check if container already exists
             result = subprocess.run(
-                ['docker', 'ps', '-a', '--filter', f'name={self.docker_container_name}', '--format', 'json'],
+                ['docker', 'ps', '-a', '--filter', f'name={self.docker_container_name}'],
                 capture_output=True,
                 text=True
             )

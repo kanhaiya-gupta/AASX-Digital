@@ -1,313 +1,182 @@
-<!-- User Preferences Section -->
-<div class="auth-container" id="preferencesSection">
-    <div class="auth-card">
-        <div class="auth-header">
-            <h1><i class="fas fa-cog"></i> User Preferences</h1>
-            <p>Customize your experience and settings to match your workflow</p>
+<!-- Preferences Section -->
+<div class="auth-container-fluid container-fluid">
+        <!-- Page Header -->
+        <div class="auth-row row mb-4">
+            <div class="auth-col-12 col-12">
+                <div class="auth-page-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="auth-page-title h4 mb-0">
+                            <i class="fas fa-cog me-2"></i>
+                            User Preferences
+                        </h2>
+                        <p class="auth-page-subtitle mb-0">Customize your account settings and preferences</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div id="preferences-alert-container"></div>
-        
+
         <!-- Preferences Form -->
-        <form id="preferencesForm" class="needs-validation" novalidate>
-            <div class="row g-4">
-                <!-- UI/UX Preferences -->
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-palette me-2"></i>UI/UX Preferences
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <label for="theme" class="form-label fw-bold">
-                                    <i class="fas fa-paint-brush me-2"></i>Theme
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-moon"></i>
-                                    </span>
-                                    <select class="form-control auth-form-control" id="theme" name="theme">
-                                        <option value="light">Light Theme</option>
-                                        <option value="dark">Dark Theme</option>
-                                        <option value="auto">Auto (System)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="language" class="form-label fw-bold">
-                                    <i class="fas fa-globe me-2"></i>Language
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-flag"></i>
-                                    </span>
-                                    <select class="form-control auth-form-control" id="language" name="language">
-                                        <option value="en">English</option>
-                                        <option value="es">Español</option>
-                                        <option value="fr">Français</option>
-                                        <option value="de">Deutsch</option>
-                                        <option value="zh">中文</option>
-                                        <option value="ja">日本語</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="timezone" class="form-label fw-bold">
-                                    <i class="fas fa-clock me-2"></i>Timezone
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                    </span>
-                                    <select class="form-control auth-form-control" id="timezone" name="timezone">
-                                        <option value="UTC">UTC (Coordinated Universal Time)</option>
-                                        <option value="America/New_York">Eastern Time (ET)</option>
-                                        <option value="America/Chicago">Central Time (CT)</option>
-                                        <option value="America/Denver">Mountain Time (MT)</option>
-                                        <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                                        <option value="Europe/London">London (GMT)</option>
-                                        <option value="Europe/Paris">Paris (CET)</option>
-                                        <option value="Asia/Tokyo">Tokyo (JST)</option>
-                                        <option value="Asia/Shanghai">Shanghai (CST)</option>
-                                        <option value="Australia/Sydney">Sydney (AEDT)</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+        <div class="auth-row row">
+            <div class="auth-col-12 col-12">
+                <div class="auth-card card">
+                    <div class="auth-card-header card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-cog me-2"></i>
+                            Account Preferences
+                        </h5>
                     </div>
-                </div>
+                    <div class="auth-card-body card-body">
+                        <form id="preferencesForm" data-action="save-preferences">
+                            <!-- Notification Preferences -->
+                            <div class="preferences-section mb-4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-bell me-2"></i>Notification Preferences
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="emailNotifications" name="emailNotifications" checked>
+                                            <label class="form-check-label" for="emailNotifications">
+                                                Email notifications
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="smsNotifications" name="smsNotifications">
+                                            <label class="form-check-label" for="smsNotifications">
+                                                SMS notifications
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="pushNotifications" name="pushNotifications" checked>
+                                            <label class="form-check-label" for="pushNotifications">
+                                                Push notifications
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="securityAlerts" name="securityAlerts" checked>
+                                            <label class="form-check-label" for="securityAlerts">
+                                                Security alerts
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="weeklyReports" name="weeklyReports">
+                                            <label class="form-check-label" for="weeklyReports">
+                                                Weekly activity reports
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="marketingEmails" name="marketingEmails">
+                                            <label class="form-check-label" for="marketingEmails">
+                                                Marketing emails
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- Notification Preferences -->
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-bell me-2"></i>Notification Preferences
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="emailNotifications" name="email_notifications">
-                                    <label class="form-check-label fw-bold" for="emailNotifications">
-                                        <i class="fas fa-envelope me-2"></i>Email Notifications
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">Receive important updates via email</small>
+                            <!-- Privacy Preferences -->
+                            <div class="preferences-section mb-4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-shield-alt me-2"></i>Privacy Preferences
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="profileVisibility" name="profileVisibility">
+                                            <label class="form-check-label" for="profileVisibility">
+                                                Make profile visible to other users
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="activitySharing" name="activitySharing">
+                                            <label class="form-check-label" for="activitySharing">
+                                                Share activity with team members
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="dataAnalytics" name="dataAnalytics" checked>
+                                            <label class="form-check-label" for="dataAnalytics">
+                                                Allow data analytics
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="thirdPartySharing" name="thirdPartySharing">
+                                            <label class="form-check-label" for="thirdPartySharing">
+                                                Allow third-party data sharing
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mb-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="smsNotifications" name="sms_notifications">
-                                    <label class="form-check-label fw-bold" for="smsNotifications">
-                                        <i class="fas fa-sms me-2"></i>SMS Notifications
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">Get urgent alerts via SMS</small>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="pushNotifications" name="push_notifications">
-                                    <label class="form-check-label fw-bold" for="pushNotifications">
-                                        <i class="fas fa-mobile-alt me-2"></i>Push Notifications
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">Receive real-time push notifications</small>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="securityAlerts" name="security_alerts">
-                                    <label class="form-check-label fw-bold" for="securityAlerts">
-                                        <i class="fas fa-shield-alt me-2"></i>Security Alerts
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">Get notified about security events</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Additional Preferences -->
-            <div class="row g-4 mt-2">
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-chart-line me-2"></i>Analytics & Privacy
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="usageAnalytics" name="usage_analytics">
-                                    <label class="form-check-label fw-bold" for="usageAnalytics">
-                                        <i class="fas fa-chart-bar me-2"></i>Usage Analytics
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">Help improve the platform with anonymous usage data</small>
+                            <!-- Interface Preferences -->
+                            <div class="preferences-section mb-4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="fas fa-palette me-2"></i>Interface Preferences
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="themePreference" class="form-label">Theme</label>
+                                            <select class="form-select" id="themePreference" name="themePreference">
+                                                <option value="light">Light</option>
+                                                <option value="dark">Dark</option>
+                                                <option value="auto">Auto (System)</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="languagePreference" class="form-label">Language</label>
+                                            <select class="form-select" id="languagePreference" name="languagePreference">
+                                                <option value="en">English</option>
+                                                <option value="es">Spanish</option>
+                                                <option value="fr">French</option>
+                                                <option value="de">German</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="timezonePreference" class="form-label">Timezone</label>
+                                            <select class="form-select" id="timezonePreference" name="timezonePreference">
+                                                <option value="UTC">UTC</option>
+                                                <option value="EST">Eastern Time</option>
+                                                <option value="CST">Central Time</option>
+                                                <option value="MST">Mountain Time</option>
+                                                <option value="PST">Pacific Time</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="dateFormatPreference" class="form-label">Date Format</label>
+                                            <select class="form-select" id="dateFormatPreference" name="dateFormatPreference">
+                                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mb-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="personalization" name="personalization">
-                                    <label class="form-check-label fw-bold" for="personalization">
-                                        <i class="fas fa-user-cog me-2"></i>Personalization
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">Allow personalized content and recommendations</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-cogs me-2"></i>System Preferences
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <label for="autoRefresh" class="form-label fw-bold">
-                                    <i class="fas fa-sync-alt me-2"></i>Auto Refresh Interval
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-clock"></i>
-                                    </span>
-                                    <select class="form-control auth-form-control" id="autoRefresh" name="auto_refresh">
-                                        <option value="0">Disabled</option>
-                                        <option value="30">30 seconds</option>
-                                        <option value="60">1 minute</option>
-                                        <option value="300">5 minutes</option>
-                                        <option value="900">15 minutes</option>
-                                    </select>
-                                </div>
+                            <!-- Form Actions -->
+                            <div class="auth-form-actions d-flex gap-2">
+                                <button type="submit" class="auth-btn auth-btn-primary" id="savePreferences">
+                                    <i class="fas fa-save me-2"></i>Save Preferences
+                                </button>
+                                <button type="button" class="auth-btn auth-btn-outline-secondary" id="resetPreferences" data-action="reset-preferences">
+                                    <i class="fas fa-undo me-2"></i>Reset to Defaults
+                                </button>
                             </div>
-                            <div class="mb-4">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me">
-                                    <label class="form-check-label fw-bold" for="rememberMe">
-                                        <i class="fas fa-user-check me-2"></i>Remember Me
-                                    </label>
-                                    <small class="form-text text-muted d-block mt-1">Stay logged in for 30 days</small>
-                                </div>
-                            </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Form Actions -->
-            <div class="auth-form-actions mt-5">
-                <div class="d-grid gap-3 d-md-flex justify-content-md-end">
-                    <button type="button" class="auth-btn auth-btn-outline-primary me-md-2 px-4 py-2" id="resetPreferences">
-                        <i class="fas fa-undo me-2"></i>Reset to Default
-                    </button>
-                    <button type="submit" class="auth-btn auth-btn-primary px-4 py-2" id="savePreferences">
-                        <i class="fas fa-save me-2"></i>Save Preferences
-                    </button>
-                </div>
-            </div>
-        </form>
+        <!-- Alert Container -->
+        <div id="preferences-alert-container" class="mt-4"></div>
     </div>
 </div>
-
-<script>
-// Initialize preferences management when this section is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    const preferencesTab = document.getElementById('preferences-tab');
-    const preferencesForm = document.getElementById('preferencesForm');
-    const resetButton = document.getElementById('resetPreferences');
-    const saveButton = document.getElementById('savePreferences');
-    
-    if (preferencesTab && preferencesForm) {
-        // Handle form submission
-        preferencesForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            savePreferences();
-        });
-        
-        // Handle reset button
-        if (resetButton) {
-            resetButton.addEventListener('click', function() {
-                resetPreferences();
-            });
-        }
-    }
-});
-
-// Function to save preferences
-async function savePreferences() {
-    try {
-        const form = document.getElementById('preferencesForm');
-        const formData = new FormData(form);
-        const preferences = {};
-        
-        // Convert form data to preferences object
-        for (let [key, value] of formData.entries()) {
-            preferences[key] = value;
-        }
-        
-        // Get auth token
-        const token = window.authCore ? window.authCore.getSessionToken() : null;
-        
-        if (!token) {
-            showAlert('Please log in to save preferences', 'warning');
-            return;
-        }
-        
-        const response = await fetch('/api/auth/preferences', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ preferences })
-        });
-        
-        if (response.ok) {
-            showAlert('Preferences saved successfully!', 'success');
-        } else {
-            showAlert('Failed to save preferences', 'danger');
-        }
-    } catch (error) {
-        console.error('Error saving preferences:', error);
-        showAlert('Error saving preferences', 'danger');
-    }
-}
-
-// Function to reset preferences
-function resetPreferences() {
-    if (confirm('Are you sure you want to reset all preferences to default?')) {
-        const form = document.getElementById('preferencesForm');
-        form.reset();
-        showAlert('Preferences reset to default values', 'info');
-    }
-}
-
-// Function to show alerts
-function showAlert(message, type) {
-    const alertContainer = document.getElementById('preferences-alert-container');
-    if (alertContainer) {
-        const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'info-circle'} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-        alertContainer.innerHTML = alertHtml;
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            const alert = alertContainer.querySelector('.alert');
-            if (alert) {
-                alert.remove();
-            }
-        }, 5000);
-    }
-}
-</script> 

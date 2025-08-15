@@ -79,6 +79,22 @@ const CertificateManager = {
         try {
             console.log('🚀 Certificate Manager: Initializing...');
             
+            // Wait for central authentication system to be ready
+            await new Promise((resolve) => {
+                if (window.authSystemReady && window.authManager) {
+                    console.log('🔐 Certificate Manager: Auth system already ready');
+                    resolve();
+                } else {
+                    console.log('🔐 Certificate Manager: Waiting for auth system...');
+                    const handleReady = () => {
+                        console.log('🚀 Certificate Manager: Auth system ready');
+                        window.removeEventListener('authSystemReady', handleReady);
+                        resolve();
+                    };
+                    window.addEventListener('authSystemReady', handleReady);
+                }
+            });
+            
             // Initialize core module
             await this.initCore();
             
@@ -460,4 +476,21 @@ export async function initCertificateManager() {
     }
 }
 
-console.log('✅ Certificate Manager index.js: Module loading complete'); 
+console.log('✅ Certificate Manager index.js: Module loading complete');
+
+// Global initialization function for post-login orchestrator
+window.initializeCertificateManagerIfNeeded = async function() {
+    console.log('🔐 Certificate Manager: Checking if initialization is needed...');
+    
+    if (!window.CertificateManager || !window.CertificateManager.state) {
+        console.log('🚀 Certificate Manager: Initializing from post-login orchestrator...');
+        try {
+            await initCertificateManager();
+            console.log('✅ Certificate Manager: Initialized from post-login orchestrator');
+        } catch (error) {
+            console.error('❌ Certificate Manager: Failed to initialize from post-login orchestrator:', error);
+        }
+    } else {
+        console.log('✅ Certificate Manager: Already initialized, skipping');
+    }
+}; 

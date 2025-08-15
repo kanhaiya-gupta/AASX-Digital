@@ -14,11 +14,19 @@ export default class TwinInstanceManager {
         };
         this.isInitialized = false;
         this.instances = new Map(); // Cache instances
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     async init() {
         try {
             console.log('📦 Initializing Twin Instance Manager...');
+            
+            // Initialize authentication
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
             
             // Set up event listeners
             this.setupEventListeners();
@@ -54,9 +62,7 @@ export default class TwinInstanceManager {
 
             const response = await fetch(`${this.apiBaseUrl}${this.endpoints.create}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     twin_id: twinId,
                     instance_data: instanceData,
@@ -100,7 +106,9 @@ export default class TwinInstanceManager {
         try {
             console.log(`📦 Fetching instances for twin: ${twinId}`);
 
-            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.getByTwin.replace('{twin_id}', twinId)}`);
+            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.getByTwin.replace('{twin_id}', twinId)}`, {
+                headers: this.getAuthHeaders()
+            });
             const result = await response.json();
 
             if (result.success) {
@@ -125,7 +133,9 @@ export default class TwinInstanceManager {
         try {
             console.log(`📦 Fetching instance details: ${instanceId}`);
 
-            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.getById.replace('{instance_id}', instanceId)}`);
+            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.getById.replace('{instance_id}', instanceId)}`, {
+                headers: this.getAuthHeaders()
+            });
             const result = await response.json();
 
             if (response.ok) {
@@ -151,7 +161,9 @@ export default class TwinInstanceManager {
                 url += `?twin_id=${twinId}`;
             }
 
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders()
+            });
             const result = await response.json();
 
             if (result.success) {
@@ -330,6 +342,108 @@ export default class TwinInstanceManager {
     getInstanceHistory(twinId) {
         const instances = this.getCachedInstances(twinId);
         return instances.sort((a, b) => b.version - a.version);
+    }
+
+    /**
+     * Wait for central authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Twin Instance Manager: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Twin Instance Manager: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Twin Instance Manager: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Instance Manager: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Twin Instance Manager: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Twin Instance Manager: No auth manager available');
+        }
+    }
+
+    /**
+     * Setup authentication event listeners
+     */
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.instances.clear();
+        console.log('🧹 Twin Instance Manager: Sensitive data cleared');
     }
 
     // Cleanup method

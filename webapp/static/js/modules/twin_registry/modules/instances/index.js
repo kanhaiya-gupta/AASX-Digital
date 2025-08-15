@@ -18,9 +18,22 @@ class InstanceManager {
         try {
             console.log('🔄 Initializing Instance Manager...');
             
+            // Wait for central authentication system
+            await new Promise((resolve) => {
+                if (window.authSystemReady && window.authManager) {
+                    resolve();
+                } else {
+                    window.addEventListener('authSystemReady', resolve, { once: true });
+                }
+            });
+            
             // Initialize sub-modules
             this.operations = new InstanceOperations(this.baseUrl);
             this.ui = new InstanceUI();
+            
+            // Initialize sub-modules with auth
+            await this.operations.init();
+            await this.ui.init();
             
             // Set up event listeners
             this.setupEventListeners();

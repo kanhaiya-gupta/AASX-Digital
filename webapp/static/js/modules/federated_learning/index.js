@@ -26,6 +26,22 @@ async function initFederatedLearningModule() {
     try {
         console.log('🧠 Initializing Federated Learning Module...');
 
+        // Wait for central authentication system to be ready
+        await new Promise((resolve) => {
+            if (window.authSystemReady && window.authManager) {
+                console.log('🔐 Federated Learning: Auth system already ready');
+                resolve();
+            } else {
+                console.log('🔐 Federated Learning: Waiting for auth system...');
+                const handleReady = () => {
+                    console.log('🚀 Federated Learning: Auth system ready');
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                };
+                window.addEventListener('authSystemReady', handleReady);
+            }
+        });
+
         // Initialize all UI components
         components.federationStatus = new FederationStatusComponent();
         components.twinPerformance = new TwinPerformanceComponent();

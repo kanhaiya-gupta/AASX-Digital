@@ -13,42 +13,101 @@ let currentUser = null;
 let authToken = null;
 
 /**
- * Initialize authentication
+ * Wait for central auth system to be ready
  */
-function initAuthentication() {
-    try {
-        // Check if user is authenticated
-        if (typeof getCurrentUser === 'function') {
-            currentUser = getCurrentUser();
-            if (currentUser) {
-                isAuthenticated = true;
-                authToken = getAuthToken();
-                console.log('🔐 System Status: User authenticated:', currentUser.username);
-            } else {
-                console.log('🔐 System Status: User not authenticated');
-                isAuthenticated = false;
+async function waitForAuthSystem() {
+    console.log('🔐 System Status: Waiting for central auth system...');
+    
+    if (window.authSystemReady && window.authManager) {
+        console.log('🔐 System Status: Auth system already ready');
+        return;
+    }
+    
+    return new Promise((resolve) => {
+        const handleReady = () => {
+            console.log('🚀 System Status: Auth system ready event received');
+            window.removeEventListener('authSystemReady', handleReady);
+            resolve();
+        };
+        
+        window.addEventListener('authSystemReady', handleReady);
+        
+        // Fallback: check periodically
+        const checkInterval = setInterval(() => {
+            if (window.authSystemReady && window.authManager) {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
             }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            window.removeEventListener('authSystemReady', handleReady);
+            console.warn('⚠️ System Status: Timeout waiting for auth system');
+            resolve();
+        }, 10000);
+    });
+}
+
+/**
+ * Update authentication state from central auth manager
+ */
+function updateAuthState() {
+    if (!window.authManager) {
+        console.log('⚠️ System Status: No auth manager available');
+        return;
+    }
+    
+    try {
+        const sessionInfo = window.authManager.getSessionInfo();
+        console.log('🔐 System Status: Auth state update:', sessionInfo);
+        
+        if (sessionInfo && sessionInfo.isAuthenticated) {
+            isAuthenticated = true;
+            currentUser = sessionInfo.user;
+            authToken = window.authManager.getStoredToken();
+            console.log('🔐 System Status: User authenticated:', currentUser.username);
         } else {
-            console.warn('⚠️ System Status: getCurrentUser function not available');
             isAuthenticated = false;
+            currentUser = null;
+            authToken = null;
+            console.log('🔐 System Status: User not authenticated (demo mode)');
         }
     } catch (error) {
-        console.error('❌ System Status: Authentication initialization error:', error);
+        console.warn('⚠️ System Status: Error updating auth state:', error);
         isAuthenticated = false;
+        currentUser = null;
+        authToken = null;
     }
 }
 
 /**
- * Get authentication token
+ * Setup authentication listeners
  */
-function getAuthToken() {
-    try {
-        // Try to get token from localStorage/sessionStorage
-        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    } catch (error) {
-        console.warn('⚠️ System Status: Could not get auth token:', error);
-        return null;
-    }
+function setupAuthListeners() {
+    // Listen for auth state changes
+    window.addEventListener('authStateChanged', () => {
+        console.log('🔄 System Status: Auth state changed, updating...');
+        updateAuthState();
+    });
+    
+    // Listen for login success
+    window.addEventListener('loginSuccess', async () => {
+        console.log('🔐 System Status: Login success detected');
+        updateAuthState();
+        // Refresh data after login
+        await checkAllServices();
+    });
+    
+    // Listen for logout
+    window.addEventListener('logout', () => {
+        console.log('🔐 System Status: Logout detected');
+        updateAuthState();
+        // Clear sensitive data after logout
+        systemStatusData = {};
+    });
 }
 
 /**
@@ -59,8 +118,12 @@ function getAuthHeaders() {
         'Content-Type': 'application/json'
     };
     
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+    // ✅ CORRECT: Get token from central auth manager
+    if (window.authManager) {
+        const token = window.authManager.getStoredToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
     }
     
     return headers;
@@ -73,8 +136,14 @@ export async function initSystemStatus() {
     console.log('🔍 System Status Module: Initializing...');
     
     try {
-        // Initialize authentication
-        initAuthentication();
+        // ✅ CORRECT: Wait for central auth system first
+        await waitForAuthSystem();
+        
+        // ✅ CORRECT: Update auth state from central system
+        updateAuthState();
+        
+        // ✅ CORRECT: Listen for auth state changes
+        setupAuthListeners();
         
         // Initial status check
         await checkAllServices();
@@ -82,7 +151,7 @@ export async function initSystemStatus() {
         // Set up periodic status checks (every 30 seconds)
         statusCheckInterval = setInterval(checkAllServices, 30000);
         
-        console.log('✅ System Status Module: Initialized successfully');
+        console.log('✅ System Status Module: Initialized with central auth integration');
     } catch (error) {
         console.error('❌ System Status Module: Initialization failed:', error);
         throw error;

@@ -22,37 +22,81 @@ export default class FederationStatusComponent {
     }
     
     /**
-     * Initialize authentication
+     * Wait for central authentication system to be ready
      */
-    initAuthentication() {
-        try {
-            // Check if user is authenticated
-            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+    async waitForAuthSystem() {
+        console.log('🔐 Federation Status: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Federation Status: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Federation Status: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
             
-            if (token && userData) {
-                this.authToken = token;
-                this.currentUser = JSON.parse(userData);
-                this.isAuthenticated = true;
-                console.log('🔐 Federation Status: User authenticated as', this.currentUser.username);
-            } else {
-                this.isAuthenticated = false;
-                console.log('🔐 Federation Status: User not authenticated');
-            }
-        } catch (error) {
-            console.error('❌ Federation Status: Authentication initialization failed:', error);
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Federation Status: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Federation Status: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
             this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Federation Status: No auth manager available');
         }
     }
 
     /**
-     * Get authentication token
+     * Setup authentication event listeners
      */
-    getAuthToken() {
-        if (!this.authToken) {
-            this.initAuthentication();
-        }
-        return this.authToken;
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
     }
 
     /**
@@ -63,20 +107,35 @@ export default class FederationStatusComponent {
             'Content-Type': 'application/json'
         };
         
-        const token = this.getAuthToken();
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
         }
         
         return headers;
     }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.statusData = {
+            federationStatus: 'inactive',
+            aggregationRounds: 0,
+            activeTwins: 0,
+            avgHealthScore: 0
+        };
+        console.log('🧹 Federation Status: Sensitive data cleared');
+    }
     
     async init() {
-        console.log('🔧 Initializing Federation Status Component...');
-        
         try {
+            console.log('🔄 Initializing Federation Status Component...');
+            
             // Initialize authentication
-            this.initAuthentication();
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
             
             await this.loadFederationStatus();
             this.setupEventListeners();

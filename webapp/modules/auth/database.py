@@ -444,26 +444,41 @@ class AuthDatabase:
     def authenticate_user(self, username: str, password: str) -> Optional[SharedUser]:
         """Authenticate user with username and password"""
         try:
+            # 🔍 DEBUG: Log authentication attempt details (remove in production!)
+            logger.info(f"🔍 DEBUG - authenticate_user called for username: {username}")
+            logger.info(f"🔍 DEBUG - Password length: {len(password) if password else 0}")
+            logger.info(f"🔍 DEBUG - Password preview: {password[:3] + '...' if password and len(password) > 3 else password}")
+            
             user = self.get_user_by_username(username)
             if not user:
+                logger.info(f"🔍 DEBUG - User not found by username: {username}")
                 return None
             
             # Get user with password hash from database
             query = "SELECT * FROM users WHERE username = ?"
             results = self.db_manager.execute_query(query, (username,))
             if not results:
+                logger.info(f"🔍 DEBUG - No database results for username: {username}")
                 return None
             
             user_data = results[0]
             password_hash = user_data.get('password_hash')
             
+            logger.info(f"🔍 DEBUG - Password hash from DB: {password_hash[:20] + '...' if password_hash else 'NO HASH'}")
+            
             if not password_hash:
+                logger.info(f"🔍 DEBUG - No password hash found for user: {username}")
                 return None
             
             # Verify password
-            if self.verify_password(password, password_hash):
+            password_verified = self.verify_password(password, password_hash)
+            logger.info(f"🔍 DEBUG - Password verification result: {password_verified}")
+            
+            if password_verified:
+                logger.info(f"🔍 DEBUG - Authentication successful for user: {username}")
                 return user
             
+            logger.info(f"🔍 DEBUG - Authentication failed for user: {username}")
             return None
             
         except Exception as e:
@@ -1213,47 +1228,8 @@ class AuthDatabase:
             logger.error(f"Error updating password with history: {e}")
             return False
 
-    def check_password_expiration(self, user_id: str, max_days: int = 90) -> Dict[str, Any]:
-        """Check if password has expired"""
-        try:
-            query = """
-                SELECT last_password_change
-                FROM users 
-                WHERE user_id = ?
-            """
-            results = self.db_manager.execute_query(query, (user_id,))
-            
-            if not results or not results[0]['last_password_change']:
-                # No password change recorded, consider as expired
-                return {
-                    'expired': True,
-                    'days_remaining': 0,
-                    'last_change': None,
-                    'expires_at': None
-                }
-            
-            last_change = datetime.fromisoformat(results[0]['last_password_change'].replace('Z', '+00:00'))
-            current_time = datetime.utcnow()
-            days_since_change = (current_time - last_change).days
-            days_remaining = max_days - days_since_change
-            
-            expires_at = last_change + timedelta(days=max_days)
-            
-            return {
-                'expired': days_remaining <= 0,
-                'days_remaining': max(0, days_remaining),
-                'last_change': last_change.isoformat(),
-                'expires_at': expires_at.isoformat()
-            }
-            
-        except Exception as e:
-            logger.error(f"Error checking password expiration: {e}")
-            return {
-                'expired': False,
-                'days_remaining': max_days,
-                'last_change': None,
-                'expires_at': None
-            }
+
+
 
     def cleanup_old_password_history(self, days_to_keep: int = 365) -> bool:
         """Clean up old password history records"""

@@ -17,16 +17,16 @@ export class AASXETLPipeline {
         this.isProcessing = false;
         this.currentProgress = { overall: 0 };
         this.progressInterval = null;
+        
+        // Authentication state (will be updated by global auth manager)
         this.isAuthenticated = false;
         this.currentUser = null;
-        this.authToken = null;
     }
 
     async init() {
         console.log('🚀 AASX ETL Pipeline initializing...');
         
-        // Initialize authentication
-        this.initAuthentication();
+
         
         // Initialize UI components
         this.initializeProgressCircles();
@@ -39,43 +39,91 @@ export class AASXETLPipeline {
         console.log('✅ AASX ETL Pipeline initialized');
     }
 
+
+
+
+
     /**
-     * Initialize authentication
+     * Wait for global auth manager to be ready
      */
-    initAuthentication() {
+    async waitForAuthManager() {
+        console.log('🔐 ETL Pipeline: Waiting for global auth manager...');
+        
+        // Wait for global auth manager to be ready
+        while (!window.authManager) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.log('✅ ETL Pipeline: Global auth manager ready');
+        
+        // Initial auth state setup
+        this.updateAuthState();
+        
+        // Listen for auth changes
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 ETL Pipeline: Auth state changed, updating...');
+            this.updateAuthState();
+        });
+        
+        // 🚫 CRITICAL FIX: Remove duplicate loginSuccess listener - PostLoginOrchestrator handles this
+        // window.addEventListener('loginSuccess', async () => {
+        //     console.log('🔐 ETL Pipeline: Login success detected');
+        //     this.updateAuthState();
+        //     
+        //     // 🚀 WORLD-CLASS: Immediately refresh user data after login
+        //     console.log('🔄 ETL Pipeline: Refreshing user data after login...');
+        //     try {
+        //             await this.refreshFiles();
+        //             console.log('✅ ETL Pipeline: User data refreshed successfully after login');
+        //         } catch (summary: '❌ ETL Pipeline: Failed to refresh user data after login:', error);
+        //         }
+        // });
+        
+        window.addEventListener('logout', () => {
+            console.log('🔐 ETL Pipeline: Logout detected');
+            this.updateAuthState();
+        });
+    }
+
+    /**
+     * Update authentication state from global auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) return;
+        
         try {
-            // Check if user is authenticated
-            if (typeof getCurrentUser === 'function') {
-                this.currentUser = getCurrentUser();
-                if (this.currentUser) {
-                    this.isAuthenticated = true;
-                    this.authToken = this.getAuthToken();
-                    console.log('🔐 ETL Pipeline: User authenticated:', this.currentUser.username);
-                } else {
-                    console.log('🔐 ETL Pipeline: User not authenticated');
-                    this.isAuthenticated = false;
-                }
-            } else {
-                console.warn('⚠️ ETL Pipeline: getCurrentUser function not available');
-                this.isAuthenticated = false;
-            }
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 ETL Pipeline: Auth state update:', sessionInfo);
+            
+            // Update local state based on global auth manager
+            this.isAuthenticated = sessionInfo.isAuthenticated;
+            this.currentUser = sessionInfo.user;
+            
         } catch (error) {
-            console.error('❌ ETL Pipeline: Authentication initialization error:', error);
-            this.isAuthenticated = false;
+            console.warn('⚠️ ETL Pipeline: Error updating auth state:', error);
         }
     }
 
     /**
-     * Get authentication token
+     * Get current authentication state from global auth manager
      */
-    getAuthToken() {
-        try {
-            // Try to get token from localStorage/sessionStorage
-            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        } catch (error) {
-            console.warn('⚠️ ETL Pipeline: Could not get auth token:', error);
-            return null;
+    getCurrentAuthState() {
+        // Try multiple ways to get the auth state
+        if (window.authSystemManager && window.authSystemManager.authManager) {
+            const state = window.authSystemManager.authManager.getCurrentState();
+            console.log('🔐 ETL Pipeline: Got auth state from authSystemManager:', state);
+            return state;
         }
+        
+        // Fallback: check if we have a stored token
+        const token = this.getStoredToken();
+        if (token) {
+            console.log('🔐 ETL Pipeline: Using fallback auth state (token exists)');
+            return { isAuthenticated: true, user: { username: 'authenticated_user' } };
+        }
+        
+        console.log('🔐 ETL Pipeline: No auth state available, defaulting to unauthenticated');
+        return { isAuthenticated: false, user: null };
     }
 
     /**
@@ -86,11 +134,37 @@ export class AASXETLPipeline {
             'Content-Type': 'application/json'
         };
         
-        if (this.authToken) {
-            headers['Authorization'] = `Bearer ${this.authToken}`;
+        // Get current auth state and token
+        const currentAuthState = this.getCurrentAuthState();
+        const token = this.getStoredToken();
+        
+        if (!token) {
+            console.log(`🔐 ETL Pipeline: No auth token available - making unauthenticated request (Auth: ${currentAuthState.isAuthenticated ? 'Yes' : 'No'})`);
+        } else {
+            console.log(`🔐 ETL Pipeline: Auth token available - making authenticated request (User: ${currentAuthState.user?.username || 'Unknown'})`);
+            headers['Authorization'] = `Bearer ${token}`;
         }
         
         return headers;
+    }
+
+    /**
+     * Get stored authentication token
+     * @returns {string|null} Stored token or null
+     */
+    getStoredToken() {
+        try {
+            // Try to get token from auth manager first
+            if (window.authManager && typeof window.authManager.getStoredToken === 'function') {
+                return window.authManager.getStoredToken();
+            }
+            
+            // Fallback to localStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Could not retrieve stored token:', error);
+            return null;
+        }
     }
 
     setupModeSwitching() {
@@ -503,14 +577,11 @@ export class AASXETLPipeline {
 
     async refreshFiles() {
         console.log('🔄 Refreshing ETL files...');
+        // Get current auth state from global auth manager
+        const currentAuthState = this.getCurrentAuthState();
+        console.log(`🔐 ETL Pipeline: Auth state: ${currentAuthState.isAuthenticated ? 'Authenticated' : 'Demo mode'}`);
         
         try {
-            // Check if user is authenticated
-            if (!this.isAuthenticated) {
-                console.log('🔐 ETL Pipeline: User not authenticated, cannot refresh files');
-                return;
-            }
-            
             const projectId = $('#etlProjectSelect').val();
             if (!projectId) {
                 console.log('⚠️ No project selected, clearing file list');

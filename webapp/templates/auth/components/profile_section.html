@@ -1,496 +1,175 @@
 <!-- Profile Section -->
-<div class="auth-container" id="profileSection">
-    <div class="auth-profile-card auth-card">
-        <div class="auth-header">
-            <div class="profile-avatar">
-                <i class="fas fa-user"></i>
+<div class="auth-container-fluid container-fluid">
+        <!-- Page Header -->
+        <div class="auth-row row mb-4">
+            <div class="auth-col-12 col-12">
+                <div class="auth-page-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="auth-page-title h4 mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            Profile Management
+                        </h2>
+                        <p class="auth-page-subtitle mb-0">Manage your personal information and account settings</p>
+                    </div>
+                    <div class="auth-page-actions d-flex gap-2">
+                        <button class="auth-btn auth-btn-outline-primary" data-action="refresh-profile-data">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
             </div>
-            <h1>User Profile</h1>
-            <p>Manage your account information</p>
         </div>
-        
-        <div id="profile-alert-container"></div>
-        
+
         <!-- Profile Completion Status -->
-        <div class="profile-completion-status mb-4">
-            <div class="completion-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-tasks me-2"></i>Profile Completion
-                </h4>
-                <div class="completion-percentage">
-                    <span class="badge bg-primary fs-6" id="completionPercentage">0%</span>
+        <div class="auth-row row mb-4">
+            <div class="auth-col-12 col-12">
+                <div class="profile-completion-status">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Profile Completion
+                    </h5>
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar" id="completionProgress" role="progressbar" style="width: 0%">
+                            <span id="completionPercentage">0%</span>
+                        </div>
+                    </div>
+                    <div class="completion-steps" id="completionSteps">
+                        <!-- Completion steps will be populated by JavaScript -->
+                    </div>
                 </div>
-            </div>
-            <div class="progress mt-2" style="height: 8px;">
-                <div class="progress-bar bg-primary" role="progressbar" id="completionProgress" style="width: 0%"></div>
-            </div>
-            <div class="completion-steps mt-3" id="completionSteps">
-                <!-- Completion steps will be dynamically populated -->
             </div>
         </div>
-        
-        <!-- Current Profile Information -->
-        <div class="profile-info">
-            <h3 class="section-title">Current Information</h3>
-            <div class="info-item">
-                <span class="info-label">Username:</span>
-                <span class="info-value">{{ current_user.username if current_user else 'Not logged in' }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Full Name:</span>
-                <span class="info-value">{{ current_user.full_name or 'Not set' if current_user else 'Not logged in' }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Email:</span>
-                <span class="info-value">{{ current_user.email if current_user else 'Not logged in' }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Organization:</span>
-                <span class="info-value">
-                    {% if current_user and current_user.org_id %}
-                        {% for org in organizations %}
-                            {% if org.org_id == current_user.org_id %}
-                                {{ org.name }}
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        No Organization
-                    {% endif %}
-                </span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Role:</span>
-                <span class="badge bg-primary">{{ current_user.role.title() if current_user else 'Guest' }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Status:</span>
-                <span class="badge bg-success">{{ 'Active' if current_user and current_user.is_active else 'Inactive' }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Created:</span>
-                <span class="info-value">{{ current_user.created_at.split('T')[0] if current_user and current_user.created_at else 'Unknown' }}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Last Login:</span>
-                <span class="info-value">{{ current_user.last_login.split('T')[0] if current_user and current_user.last_login else 'Never' }}</span>
+
+        <!-- Profile Form -->
+        <div class="auth-row row">
+            <div class="auth-col-12 col-12">
+                <div class="auth-card card">
+                    <div class="auth-card-header card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-edit me-2"></i>
+                            Personal Information
+                        </h5>
+                    </div>
+                    <div class="auth-card-body card-body">
+                        <form id="profileForm" data-action="update-profile">
+                            <div class="auth-row row">
+                                <div class="auth-col-md-6 col-md-6 mb-3">
+                                    <label for="full_name" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" required>
+                                </div>
+                                <div class="auth-col-md-6 col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+                            
+                            <div class="auth-row row">
+                                <div class="auth-col-md-6 col-md-6 mb-3">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone">
+                                </div>
+                                <div class="auth-col-md-6 col-md-6 mb-3">
+                                    <label for="organization_id" class="form-label">Organization</label>
+                                    <select class="form-control" id="organization_id" name="organization_id">
+                                        <option value="">Select Organization</option>
+                                        <option value="1">AASX Framework</option>
+                                        <option value="2">Independent Research</option>
+                                        <option value="3">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="auth-row row">
+                                <div class="auth-col-md-6 col-md-6 mb-3">
+                                    <label for="job_title" class="form-label">Job Title</label>
+                                    <input type="text" class="form-control" id="job_title" name="job_title">
+                                </div>
+                                <div class="auth-col-md-6 col-md-6 mb-3">
+                                    <label for="department" class="form-label">Department</label>
+                                    <input type="text" class="form-control" id="department" name="department">
+                                </div>
+                            </div>
+                            
+                            <div class="auth-row row">
+                                <div class="auth-col-md-12 col-md-12 mb-3">
+                                    <label for="bio" class="form-label">Bio</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="3"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="auth-form-actions d-flex gap-2">
+                                <button type="submit" class="auth-btn auth-btn-primary" id="profileSubmit">
+                                    <i class="fas fa-save me-2"></i>Update Profile
+                                </button>
+                                <button type="reset" class="auth-btn auth-btn-outline-secondary">
+                                    <i class="fas fa-undo me-2"></i>Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <!-- Update Profile Form -->
-        <form id="profileForm">
-            <h3 class="section-title">Update Profile</h3>
-            
-            <div class="auth-row row">
-                <div class="auth-col-md-6 col-md-6 mb-3">
-                    <label for="full_name" class="form-label">Full Name</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-id-card"></i>
-                        </span>
-                        <input type="text" class="form-control" id="full_name" name="full_name" 
-                               value="{{ current_user.full_name or '' if current_user else '' }}" placeholder="Your full name">
+
+        <!-- Password Change Form -->
+        <div class="auth-row row mt-4">
+            <div class="auth-col-12 col-12">
+                <div class="auth-card card">
+                    <div class="auth-card-header card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-key me-2"></i>
+                            Change Password
+                        </h5>
                     </div>
-                </div>
-                
-                <div class="auth-col-md-6 col-md-6 mb-3">
-                    <label for="email" class="form-label">Email Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-envelope"></i>
-                        </span>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               value="{{ current_user.email if current_user else '' }}" placeholder="your.email@example.com">
-                    </div>
-                </div>
-                
-                <div class="auth-col-md-6 col-md-6 mb-3">
-                    <label for="organization_id" class="form-label">Organization</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-building"></i>
-                        </span>
-                        <select class="form-control" id="organization_id" name="organization_id">
-                            <option value="">No Organization</option>
-                            {% for org in organizations %}
-                            <option value="{{ org.org_id }}" {% if current_user and current_user.org_id == org.org_id %}selected{% endif %}>
-                                {{ org.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="auth-col-md-6 col-md-6 mb-3">
-                    <label for="phone" class="form-label">Phone Number</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-phone"></i>
-                        </span>
-                        <input type="tel" class="form-control" id="phone" name="phone" 
-                               value="{{ current_user.phone or '' if current_user else '' }}" placeholder="+1 (555) 123-4567">
-                    </div>
-                </div>
-                
-                <div class="auth-col-md-6 col-md-6 mb-3">
-                    <label for="job_title" class="form-label">Job Title</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-briefcase"></i>
-                        </span>
-                        <input type="text" class="form-control" id="job_title" name="job_title" 
-                               value="{{ current_user.job_title or '' if current_user else '' }}" placeholder="e.g., Software Engineer">
-                    </div>
-                </div>
-                
-                <div class="auth-col-md-6 col-md-6 mb-3">
-                    <label for="department" class="form-label">Department</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-sitemap"></i>
-                        </span>
-                        <input type="text" class="form-control" id="department" name="department" 
-                               value="{{ current_user.department or '' if current_user else '' }}" placeholder="e.g., Engineering">
-                    </div>
-                </div>
-                
-                <div class="auth-col-md-12 col-md-12 mb-3">
-                    <label for="bio" class="form-label">Bio</label>
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-user-edit"></i>
-                        </span>
-                        <textarea class="form-control" id="bio" name="bio" rows="3" 
-                                  placeholder="Tell us about yourself...">{{ current_user.bio or '' if current_user else '' }}</textarea>
+                    <div class="auth-card-body card-body">
+                        <form id="changePasswordForm" data-action="change-password">
+                            <div class="auth-row row">
+                                <div class="auth-col-md-4 col-md-4 mb-3">
+                                    <label for="currentPassword" class="form-label">Current Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleCurrentPassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="auth-col-md-4 col-md-4 mb-3">
+                                    <label for="newPassword" class="form-label">New Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div id="passwordStrength" class="mt-2"></div>
+                                </div>
+                                <div class="auth-col-md-4 col-md-4 mb-3">
+                                    <label for="confirmNewPassword" class="form-label">Confirm New Password *</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirmNewPassword" name="confirmNewPassword" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleConfirmNewPassword">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="auth-form-actions d-flex gap-2">
+                                <button type="submit" class="auth-btn auth-btn-primary" id="passwordSubmit">
+                                    <i class="fas fa-key me-2"></i>Change Password
+                                </button>
+                                <button type="button" class="auth-btn auth-btn-outline-secondary" id="cancelPassword">
+                                    <i class="fas fa-times me-2"></i>Cancel
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
-            
-            <div class="auth-form-actions">
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="submit" class="auth-btn auth-btn-primary">
-                        <i class="fas fa-save me-2"></i>Update Profile
-                    </button>
-                </div>
-            </div>
-        </form>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="profile-alert-container" class="mt-4"></div>
     </div>
 </div>
-
-<script>
-// Profile completion system
-class ProfileCompletion {
-    constructor() {
-        this.steps = [
-            {
-                id: 'full_name',
-                title: 'Full Name',
-                description: 'Add your full name',
-                required: true,
-                icon: 'fas fa-id-card'
-            },
-            {
-                id: 'email',
-                title: 'Email Address',
-                description: 'Verify your email address',
-                required: true,
-                icon: 'fas fa-envelope'
-            },
-            {
-                id: 'organization_id',
-                title: 'Organization',
-                description: 'Select your organization',
-                required: false,
-                icon: 'fas fa-building'
-            },
-            {
-                id: 'phone',
-                title: 'Phone Number',
-                description: 'Add your phone number',
-                required: false,
-                icon: 'fas fa-phone'
-            },
-            {
-                id: 'job_title',
-                title: 'Job Title',
-                description: 'Specify your job title',
-                required: false,
-                icon: 'fas fa-briefcase'
-            },
-            {
-                id: 'department',
-                title: 'Department',
-                description: 'Add your department',
-                required: false,
-                icon: 'fas fa-sitemap'
-            },
-            {
-                id: 'bio',
-                title: 'Bio',
-                description: 'Tell us about yourself',
-                required: false,
-                icon: 'fas fa-user-edit'
-            }
-        ];
-        
-        this.init();
-    }
-    
-    init() {
-        this.updateCompletionStatus();
-        this.renderCompletionSteps();
-        this.setupEventListeners();
-    }
-    
-    updateCompletionStatus() {
-        const completedSteps = this.getCompletedSteps();
-        const totalSteps = this.steps.length;
-        const completionPercentage = Math.round((completedSteps.length / totalSteps) * 100);
-        
-        // Update progress bar
-        const progressBar = document.getElementById('completionProgress');
-        const percentageElement = document.getElementById('completionPercentage');
-        
-        if (progressBar && percentageElement) {
-            progressBar.style.width = `${completionPercentage}%`;
-            percentageElement.textContent = `${completionPercentage}%`;
-            
-            // Update progress bar color based on completion
-            progressBar.className = 'progress-bar';
-            if (completionPercentage >= 80) {
-                progressBar.classList.add('bg-success');
-            } else if (completionPercentage >= 50) {
-                progressBar.classList.add('bg-warning');
-            } else {
-                progressBar.classList.add('bg-primary');
-            }
-        }
-    }
-    
-    getCompletedSteps() {
-        const completedSteps = [];
-        
-        this.steps.forEach(step => {
-            const field = document.getElementById(step.id);
-            if (field) {
-                const value = field.value.trim();
-                if (value && value !== '') {
-                    completedSteps.push(step);
-                }
-            }
-        });
-        
-        return completedSteps;
-    }
-    
-    renderCompletionSteps() {
-        const container = document.getElementById('completionSteps');
-        if (!container) return;
-        
-        const stepsHtml = this.steps.map(step => {
-            const field = document.getElementById(step.id);
-            const isCompleted = field && field.value.trim() !== '';
-            const isRequired = step.required;
-            
-            return `
-                <div class="completion-step ${isCompleted ? 'completed' : ''} ${isRequired ? 'required' : ''}">
-                    <div class="step-icon">
-                        <i class="${step.icon} ${isCompleted ? 'text-success' : 'text-muted'}"></i>
-                    </div>
-                    <div class="step-content">
-                        <div class="step-title">
-                            ${step.title}
-                            ${isRequired ? '<span class="badge bg-danger ms-2">Required</span>' : ''}
-                        </div>
-                        <div class="step-description">${step.description}</div>
-                    </div>
-                    <div class="step-status">
-                        ${isCompleted ? 
-                            '<i class="fas fa-check-circle text-success"></i>' : 
-                            '<i class="fas fa-circle text-muted"></i>'
-                        }
-                    </div>
-                </div>
-            `;
-        }).join('');
-        
-        container.innerHTML = stepsHtml;
-    }
-    
-    setupEventListeners() {
-        // Listen for form field changes
-        this.steps.forEach(step => {
-            const field = document.getElementById(step.id);
-            if (field) {
-                field.addEventListener('input', () => {
-                    this.updateCompletionStatus();
-                    this.renderCompletionSteps();
-                });
-                
-                field.addEventListener('change', () => {
-                    this.updateCompletionStatus();
-                    this.renderCompletionSteps();
-                });
-            }
-        });
-    }
-}
-
-// Initialize profile completion when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize profile completion system
-    window.profileCompletion = new ProfileCompletion();
-    
-    // Initialize existing profile management
-    const profileForm = document.getElementById('profileForm');
-    if (profileForm) {
-        profileForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            updateProfile();
-        });
-    }
-});
-
-// Function to update profile
-async function updateProfile() {
-    try {
-        const form = document.getElementById('profileForm');
-        const formData = new FormData(form);
-        const profileData = {};
-        
-        // Convert form data to object
-        for (let [key, value] of formData.entries()) {
-            profileData[key] = value;
-        }
-        
-        // Get auth token
-        const token = window.authCore ? window.authCore.getSessionToken() : null;
-        
-        if (!token) {
-            showAlert('Please log in to update your profile', 'warning');
-            return;
-        }
-        
-        const response = await fetch('/api/auth/profile', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(profileData)
-        });
-        
-        if (response.ok) {
-            showAlert('Profile updated successfully!', 'success');
-            // Update completion status
-            if (window.profileCompletion) {
-                window.profileCompletion.updateCompletionStatus();
-                window.profileCompletion.renderCompletionSteps();
-            }
-        } else {
-            showAlert('Failed to update profile', 'danger');
-        }
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        showAlert('Error updating profile', 'danger');
-    }
-}
-
-// Function to show alerts
-function showAlert(message, type) {
-    const alertContainer = document.getElementById('profile-alert-container');
-    if (alertContainer) {
-        const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'info-circle'} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-        alertContainer.innerHTML = alertHtml;
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            const alert = alertContainer.querySelector('.alert');
-            if (alert) {
-                alert.remove();
-            }
-        }, 5000);
-    }
-}
-</script>
-
-<style>
-.profile-completion-status {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 1.5rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.completion-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.completion-step {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-}
-
-.completion-step:hover {
-    background: rgba(255, 255, 255, 0.9);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.completion-step.completed {
-    background: rgba(40, 167, 69, 0.1);
-    border-color: rgba(40, 167, 69, 0.3);
-}
-
-.completion-step.required {
-    border-left: 4px solid #dc3545;
-}
-
-.step-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(30, 60, 114, 0.1);
-    border-radius: 50%;
-    margin-right: 1rem;
-}
-
-.step-content {
-    flex: 1;
-}
-
-.step-title {
-    font-weight: 600;
-    color: #1e3c72;
-    margin-bottom: 0.25rem;
-}
-
-.step-description {
-    font-size: 0.875rem;
-    color: rgba(30, 60, 114, 0.7);
-}
-
-.step-status {
-    margin-left: 1rem;
-}
-
-.step-status i {
-    font-size: 1.25rem;
-}
-</style> 

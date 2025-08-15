@@ -13,6 +13,9 @@ export default class TwinRegistryUIUpdater {
             status: '',
             owner: ''
         };
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     /**
@@ -22,6 +25,11 @@ export default class TwinRegistryUIUpdater {
         console.log('🔧 Initializing Twin Registry UI Updater...');
         
         try {
+            // Initialize authentication
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
+            
             // Setup event listeners
             this.setupEventListeners();
             
@@ -149,7 +157,9 @@ export default class TwinRegistryUIUpdater {
      */
     async loadStatistics() {
         try {
-            const response = await fetch('/api/twin-registry/twins/statistics');
+            const response = await fetch('/api/twin-registry/twins/statistics', {
+            headers: this.getAuthHeaders()
+        });
             if (response.ok) {
                 const stats = await response.json();
                 this.updateStatistics(stats);
@@ -173,7 +183,9 @@ export default class TwinRegistryUIUpdater {
                 project_id: this.currentFilters.owner
             });
 
-            const response = await fetch(`/api/twin-registry/twins?${params}`);
+            const response = await fetch(`/api/twin-registry/twins?${params}`, {
+            headers: this.getAuthHeaders()
+        });
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 Twins data received:', data);
@@ -531,7 +543,7 @@ export default class TwinRegistryUIUpdater {
         try {
             const response = await fetch('/api/twin-registry/twins/bulk/start', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ twin_ids: selectedTwins, user: 'system' })
             });
 
@@ -554,7 +566,7 @@ export default class TwinRegistryUIUpdater {
         try {
             const response = await fetch('/api/twin-registry/twins/bulk/stop', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ twin_ids: selectedTwins, user: 'system' })
             });
 
@@ -593,7 +605,8 @@ export default class TwinRegistryUIUpdater {
             // Delete twins one by one (or implement bulk delete endpoint)
             for (const twinId of selectedTwins) {
                 const response = await fetch(`/api/twin-registry/twins/${twinId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    headers: this.getAuthHeaders()
                 });
                 if (!response.ok) {
                     console.error(`Failed to delete twin ${twinId}`);
@@ -673,6 +686,111 @@ export default class TwinRegistryUIUpdater {
      */
     async getTwinsData() {
         return this.lastTwinsData || {};
+    }
+
+    /**
+     * Wait for central authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Twin Registry UI Updater: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Twin Registry UI Updater: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Twin Registry UI Updater: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Registry UI Updater: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Twin Registry UI Updater: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Twin Registry UI Updater: No auth manager available');
+        }
+    }
+
+    /**
+     * Setup authentication event listeners
+     */
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+            // Refresh data when user logs in
+            this.loadAndDisplayData();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.lastStatsData = null;
+        this.lastTwinsData = null;
+        console.log('🧹 Twin Registry UI Updater: Sensitive data cleared');
     }
 
     /**

@@ -105,72 +105,6 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- MFA Setup Section -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <h6 class="text-primary mb-3">
-                            <i class="fas fa-shield-alt me-2"></i>Multi-Factor Authentication Setup
-                        </h6>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Multi-Factor Authentication (MFA)</strong> adds an extra layer of security to your account. 
-                            You can use authenticator apps, SMS, or email verification.
-                        </div>
-                        
-                        <!-- MFA Options -->
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">
-                                            <i class="fas fa-mobile-alt me-2"></i>Authenticator App
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-muted small">Use Google Authenticator, Authy, or any TOTP app</p>
-                                        <button type="button" class="btn btn-primary btn-sm w-100" onclick="setupTOTP()">
-                                            <i class="fas fa-qrcode me-2"></i>Setup TOTP
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">
-                                            <i class="fas fa-sms me-2"></i>SMS Verification
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-muted small">Receive verification codes via SMS</p>
-                                        <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="setupSMS()">
-                                            <i class="fas fa-phone me-2"></i>Setup SMS
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="card border-0 shadow-sm h-100">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">
-                                            <i class="fas fa-envelope me-2"></i>Email Verification
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-muted small">Receive verification codes via email</p>
-                                        <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="setupEmail()">
-                                            <i class="fas fa-envelope me-2"></i>Setup Email
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="row mt-3">
                     <div class="col-12">
                         <button class="btn btn-primary" id="saveSecuritySettings">
@@ -184,7 +118,4 @@
             </div>
         </div>
     </div>
-</div>
-
-<!-- MFA Setup Modals -->
-{% include 'auth/components/mfa_setup.html' %} 
+</div> 

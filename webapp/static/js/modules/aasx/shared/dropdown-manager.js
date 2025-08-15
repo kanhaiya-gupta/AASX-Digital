@@ -13,9 +13,10 @@ export class DropdownManager {
         this.currentUseCaseId = null;
         this.currentProjectId = null;
         this.isInitialized = false;
+        
+        // Authentication state (will be updated by global auth manager)
         this.isAuthenticated = false;
         this.currentUser = null;
-        this.authToken = null;
     }
 
     async init() {
@@ -26,8 +27,7 @@ export class DropdownManager {
         
         console.log('🔄 Dropdown Manager initializing...');
         
-        // Initialize authentication
-        this.initAuthentication();
+
         
         await this.loadUseCases();
         this.setupEventListeners();
@@ -35,43 +35,92 @@ export class DropdownManager {
         console.log('✅ Dropdown Manager initialized');
     }
 
+
+
+
+
     /**
-     * Initialize authentication
+     * Wait for global auth manager to be ready
      */
-    initAuthentication() {
+    async waitForAuthManager() {
+        console.log('🔐 Dropdown Manager: Waiting for global auth manager...');
+        
+        // Wait for global auth manager to be ready
+        while (!window.authManager) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.log('✅ Dropdown Manager: Global auth manager ready');
+        
+        // Initial auth state setup
+        this.updateAuthState();
+        
+        // Listen for auth changes
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 Dropdown Manager: Auth state changed, updating...');
+            this.updateAuthState();
+        });
+        
+        // 🚫 CRITICAL FIX: Remove duplicate loginSuccess listener - PostLoginOrchestrator handles this
+        // window.addEventListener('loginSuccess', async () => {
+        //     console.log('🔐 Dropdown Manager: Login success detected');
+        //     this.updateAuthState();
+        //     
+        //     // 🚀 WORLD-CLASS: Immediately refresh user data after login
+        //     console.log('🔄 Dropdown Manager: Refreshing user data after login...');
+        //     try {
+        //             await this.loadUseCases();
+        //             console.log('✅ Dropdown Manager: User data refreshed successfully after login');
+        //         } catch (error) {
+        //             console.error('❌ Dropdown Manager: Failed to refresh user data after login:', error);
+        //     }
+        // });
+        
+        window.addEventListener('logout', () => {
+            console.log('🔐 Dropdown Manager: Logout detected');
+            this.updateAuthState();
+        });
+    }
+
+    /**
+     * Update authentication state from global auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) return;
+        
         try {
-            // Check if user is authenticated
-            if (typeof getCurrentUser === 'function') {
-                this.currentUser = getCurrentUser();
-                if (this.currentUser) {
-                    this.isAuthenticated = true;
-                    this.authToken = this.getAuthToken();
-                    console.log('🔐 Dropdown Manager: User authenticated:', this.currentUser.username);
-                } else {
-                    console.log('🔐 Dropdown Manager: User not authenticated');
-                    this.isAuthenticated = false;
-                }
-            } else {
-                console.warn('⚠️ Dropdown Manager: getCurrentUser function not available');
-                this.isAuthenticated = false;
-            }
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 Dropdown Manager: Auth state update:', sessionInfo);
+            
+            // Update local state based on global auth manager
+            this.isAuthenticated = sessionInfo.isAuthenticated;
+            this.currentUser = sessionInfo.user;
+            
         } catch (error) {
-            console.error('❌ Dropdown Manager: Authentication initialization error:', error);
-            this.isAuthenticated = false;
+            console.warn('⚠️ Dropdown Manager: Error updating auth state:', error);
         }
     }
 
     /**
-     * Get authentication token
+     * Get current authentication state from global auth manager
      */
-    getAuthToken() {
-        try {
-            // Try to get token from localStorage/sessionStorage
-            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        } catch (error) {
-            console.warn('⚠️ Dropdown Manager: Could not get auth token:', error);
-            return null;
+    getCurrentAuthState() {
+        // Try multiple ways to get the auth state
+        if (window.authSystemManager && window.authSystemManager.authManager) {
+            const state = window.authSystemManager.authManager.getCurrentState();
+            console.log('🔐 Dropdown Manager: Got auth state from authSystemManager:', state);
+            return state;
         }
+        
+        // Fallback: check if we have a stored token
+        const token = this.getStoredToken();
+        if (token) {
+            console.log('🔐 Dropdown Manager: Using fallback auth state (token exists)');
+            return { isAuthenticated: true, user: { username: 'authenticated_user' } };
+        }
+        
+        console.log('🔐 Dropdown Manager: No auth state available, defaulting to unauthenticated');
+        return { isAuthenticated: false, user: null };
     }
 
     /**
@@ -82,11 +131,37 @@ export class DropdownManager {
             'Content-Type': 'application/json'
         };
         
-        if (this.authToken) {
-            headers['Authorization'] = `Bearer ${this.authToken}`;
+        // Get current auth state and token
+        const currentAuthState = this.getCurrentAuthState();
+        const token = this.getStoredToken();
+        
+        if (token) {
+            console.log(`🔐 Dropdown Manager: Auth token available - making authenticated request (User: ${currentAuthState.user?.username || 'Unknown'})`);
+            headers['Authorization'] = `Bearer ${token}`;
+        } else {
+            console.log(`🔐 Dropdown Manager: No auth token available - making unauthenticated request (Auth: ${currentAuthState.isAuthenticated ? 'Yes' : 'No'})`);
         }
         
         return headers;
+    }
+
+    /**
+     * Get stored authentication token
+     * @returns {string|null} Stored token or null
+     */
+    getStoredToken() {
+        try {
+            // Try to get token from auth manager first
+            if (window.authManager && typeof window.authManager.getStoredToken === 'function') {
+                return window.authManager.getStoredToken();
+            }
+            
+            // Fallback to localStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Could not retrieve stored token:', error);
+            return null;
+        }
     }
 
     setupEventListeners() {
@@ -105,11 +180,9 @@ export class DropdownManager {
 
     async loadUseCases() {
         try {
-            // Check if user is authenticated
-            if (!this.isAuthenticated) {
-                console.log('🔐 Dropdown Manager: User not authenticated, cannot load use cases');
-                return;
-            }
+            // Get current auth state from global auth manager
+            const currentAuthState = this.getCurrentAuthState();
+            console.log(`🔐 Dropdown Manager: Loading use cases with auth: ${currentAuthState.isAuthenticated ? 'Yes' : 'No'}`);
             
             const response = await fetch('/api/aasx-etl/use-cases', {
                 headers: this.getAuthHeaders()
@@ -129,6 +202,10 @@ export class DropdownManager {
     async loadProjectsForUseCase(useCaseId) {
         try {
             console.log(`🔍 Dropdown Manager: Loading projects for use case ${useCaseId}`);
+            // Get current auth state from global auth manager
+            const currentAuthState = this.getCurrentAuthState();
+            console.log(`🔐 Dropdown Manager: Auth state: ${currentAuthState.isAuthenticated ? 'Authenticated' : 'Demo mode'}`);
+            
             const response = await fetch(`/api/aasx-etl/use-cases/${useCaseId}/projects`, {
                 headers: this.getAuthHeaders()
             });

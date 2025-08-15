@@ -8,11 +8,19 @@ export class ConfigurationUI {
         this.currentConfig = {};
         this.modifiedSections = new Set();
         this.isInitialized = false;
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     async init() {
         try {
             console.log('🔄 Initializing Configuration UI...');
+            
+            // Initialize authentication
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
             
             // Set up event listeners
             this.setupEventListeners();
@@ -462,6 +470,94 @@ export class ConfigurationUI {
             }
         }
         return type === 'checkbox' ? false : '';
+    }
+
+    /**
+     * Wait for central authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Configuration UI: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Configuration UI: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Configuration UI: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Configuration UI: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Configuration UI: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Configuration UI: No auth manager available');
+        }
+    }
+
+    /**
+     * Setup authentication event listeners
+     */
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.currentConfig = {};
+        this.modifiedSections.clear();
+        console.log('🧹 Configuration UI: Sensitive data cleared');
     }
 
     cleanup() {

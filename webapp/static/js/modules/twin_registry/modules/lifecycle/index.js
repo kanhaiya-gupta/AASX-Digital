@@ -21,6 +21,21 @@ export default class LifecycleManager {
     async init() {
         try {
             console.log('🔄 Initializing Lifecycle Manager...');
+            
+            // Wait for central authentication system
+            await new Promise((resolve) => {
+                if (window.authSystemReady && window.authManager) {
+                    resolve();
+                } else {
+                    window.addEventListener('authSystemReady', resolve, { once: true });
+                }
+            });
+            
+            // Initialize sub-modules with auth
+            await this.operations.init();
+            await this.status.init();
+            await this.ui.init();
+            
             this.setupEventListeners();
             this.isInitialized = true;
             console.log('✅ Lifecycle Manager initialized');

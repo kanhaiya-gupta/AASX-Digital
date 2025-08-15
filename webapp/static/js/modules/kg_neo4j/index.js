@@ -1,7 +1,7 @@
 /**
  * Knowledge Graph Module Entry Point
  * Main entry point for Knowledge Graph functionality
- * Now with modular UI components
+ * Now with modular UI components and full authentication integration
  */
 
 console.log('📦 Knowledge Graph index.js: Module loading started...');
@@ -41,6 +41,7 @@ let isInitialized = false;
 /**
  * Initialize Knowledge Graph Module
  * Sets up all Knowledge Graph components and functionality including modular UI components
+ * Now with full authentication integration
  */
 export async function initKGModule() {
     if (isInitialized) {
@@ -48,25 +49,77 @@ export async function initKGModule() {
         return;
     }
     
-    console.log('🚀 Knowledge Graph Module initializing with modular UI components...');
+    console.log('🚀 Knowledge Graph Module initializing with modular UI components and authentication...');
     
     try {
+        // 🔐 CRITICAL: Wait for authentication system to be ready
+        console.log('🔐 Knowledge Graph Module: Waiting for authentication system...');
+        await new Promise((resolve) => {
+            if (window.authSystemReady && window.authManager) {
+                console.log('🔐 Knowledge Graph Module: Auth system already ready');
+                resolve();
+                return;
+            }
+            
+            const handleReady = () => {
+                console.log('🚀 Knowledge Graph Module: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Knowledge Graph Module: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+        
+        console.log('🔐 Knowledge Graph Module: Authentication system ready, proceeding with initialization...');
+        
         // Initialize alert system first
         initAlertSystem();
         
         // Initialize Core Knowledge Graph modules
-        kgNeo4jCore = new KGNeo4jCore();
-        await kgNeo4jCore.init();
+        try {
+            kgNeo4jCore = new KGNeo4jCore();
+            await kgNeo4jCore.init();
+            console.log('✅ Knowledge Graph Core initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ Knowledge Graph Core initialization failed, continuing with other modules:', error);
+        }
         
         // Note: Using UI component visualization instead of D3-based visualization
         // kgNeo4jVisualization = new KGNeo4jVisualization();
         // await kgNeo4jVisualization.init();
         
-        kgNeo4jQueryEngine = new KGNeo4jQueryEngine();
-        await kgNeo4jQueryEngine.init();
+        try {
+            kgNeo4jQueryEngine = new KGNeo4jQueryEngine();
+            await kgNeo4jQueryEngine.init();
+            console.log('✅ Knowledge Graph Query Engine initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ Knowledge Graph Query Engine initialization failed, continuing with other modules:', error);
+        }
         
-        kgNeo4jDataProcessor = new KGNeo4jDataProcessor();
-        await kgNeo4jDataProcessor.init();
+        try {
+            kgNeo4jDataProcessor = new KGNeo4jDataProcessor();
+            await kgNeo4jDataProcessor.init();
+            console.log('✅ Knowledge Graph Data Processor initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ Knowledge Graph Data Processor initialization failed, continuing with other modules:', error);
+        }
         
         // Make core modules globally accessible for HTML callbacks
         window.kgNeo4jCore = kgNeo4jCore;
@@ -91,8 +144,20 @@ export async function initKGModule() {
         // Load initial graph data
         await loadGraphData();
         
+        // 🔐 CRITICAL FIX: Populate global window.kgModules for post-login orchestrator
+        if (window.kgModules) {
+            window.kgModules.dataManagement = window.dataManagementComponent;
+            window.kgModules.analyticsDashboard = window.analyticsDashboard;
+            window.kgModules.graphVisualization = window.graphVisualization;
+            window.kgModules.queryInterface = window.queryInterface;
+            window.kgModules.systemStatus = window.systemStatus;
+            window.kgModules.dockerManagement = window.dockerManagementComponent;
+            console.log('✅ Knowledge Graph Module: Populated window.kgModules for post-login orchestrator');
+        }
+        
+        // Mark as initialized if at least the core module is working
         isInitialized = true;
-        console.log('✅ Knowledge Graph Module initialized with all UI components');
+        console.log('✅ Knowledge Graph Module initialized with authentication (some backend services may be unavailable)');
         
         // Dispatch custom event for other modules
         window.dispatchEvent(new CustomEvent('kgModuleReady', {
@@ -109,6 +174,11 @@ export async function initKGModule() {
                     dataManagement: true,
                     dockerManagement: true,
                     analyticsDashboard: true
+                },
+                authentication: {
+                    isAuthenticated: kgNeo4jCore.isAuthenticated,
+                    currentUser: kgNeo4jCore.currentUser,
+                    organizationId: kgNeo4jCore.organizationId
                 }
             }
         }));
@@ -186,8 +256,29 @@ export async function refreshKGData() {
     }
 }
 
-// Initialize module when script loads
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('📦 Knowledge Graph index.js: DOM ready, initializing module...');
-    initKGModule();
-}); 
+// 🔐 CRITICAL FIX: Don't auto-initialize - wait for post-login orchestrator
+// This prevents the 500 errors by ensuring services are initialized after auth is ready
+console.log('📦 Knowledge Graph index.js: Module loaded, waiting for post-login orchestration...');
+
+// Export global function for post-login orchestrator
+window.initializeKGIfNeeded = async function() {
+    console.log('🚀 Knowledge Graph Module: Post-login initialization triggered...');
+    
+    if (isInitialized) {
+        console.log('⚠️ Knowledge Graph Module already initialized, skipping...');
+        return;
+    }
+    
+    try {
+        await initKGModule();
+        console.log('✅ Knowledge Graph Module: Post-login initialization completed');
+    } catch (error) {
+        console.error('❌ Knowledge Graph Module: Post-login initialization failed:', error);
+        throw error;
+    }
+};
+
+// Also export for module system
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { initializeKGIfNeeded };
+} 

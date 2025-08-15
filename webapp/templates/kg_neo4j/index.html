@@ -80,12 +80,15 @@
     console.log('🧠 Knowledge Graph Template: Loading modular KG system...');
     
     try {
-        const { initKGModule } = await import("{{ url_for('static', path='/js/modules/kg_neo4j/index.js') }}?v=2025-01-27-2");
+        // Import the module but don't initialize immediately
+        await import("{{ url_for('static', path='/js/modules/kg_neo4j/index.js') }}?v=2025-01-27-2");
         console.log('✅ Knowledge Graph Template: Modular system imported successfully');
         
-        // Initialize the modular Knowledge Graph system
-        await initKGModule();
-        console.log('✅ Knowledge Graph Template: Modular system initialized');
+        // 🔐 CRITICAL FIX: Don't initialize immediately - wait for post-login orchestrator
+        // This prevents 500 errors by ensuring services are initialized after auth is ready
+        console.log('⏳ Knowledge Graph Template: Waiting for post-login orchestration...');
+        
+        // The post-login orchestrator will call window.initializeKGIfNeeded() when ready
         
     } catch (error) {
         console.error('❌ Knowledge Graph Template: Modular system failed to load:', error);

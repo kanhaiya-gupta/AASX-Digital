@@ -59,6 +59,39 @@ fi
 
 print_status "Prerequisites check passed!"
 
+# Docker Cleanup Section
+print_header "Performing comprehensive Docker cleanup for fresh deployment..."
+
+# Stop and remove all containers
+print_status "Stopping and removing all containers..."
+docker-compose -f manifests/framework/docker-compose.aasx-digital.yml down -v --remove-orphans 2>/dev/null || true
+
+# Remove all stopped containers
+print_status "Removing all stopped containers..."
+docker container prune -f 2>/dev/null || true
+
+# Remove all unused images
+print_status "Removing all unused images..."
+docker image prune -a -f 2>/dev/null || true
+
+# Remove all unused volumes
+print_status "Removing all unused volumes..."
+docker volume prune -f 2>/dev/null || true
+
+# Remove all unused networks
+print_status "Removing all unused networks..."
+docker network prune -f 2>/dev/null || true
+
+# Clean up Docker system (build cache, etc.)
+print_status "Cleaning up Docker system..."
+docker system prune -a -f 2>/dev/null || true
+
+# Clear Docker build cache
+print_status "Clearing Docker build cache..."
+docker builder prune -a -f 2>/dev/null || true
+
+print_status "✅ Docker cleanup completed successfully!"
+
 # .NET AAS Processor Setup
 print_header "Setting up .NET AAS Processor..."
 
@@ -87,8 +120,8 @@ if command -v dotnet &> /dev/null; then
             exit 1
         fi
         
-        # Test the processor
-        if [ -f "bin/Release/net6.0/AasProcessor.exe" ]; then
+        # Test the processor - check for both .NET 6.0 and .NET 8.0
+        if [ -f "bin/Release/net6.0/AasProcessor.exe" ] || [ -f "bin/Release/net8.0/AasProcessor.dll" ]; then
             print_status "✅ .NET AAS Processor executable found"
         else
             print_error "❌ .NET AAS Processor executable not found"
@@ -181,9 +214,10 @@ else
     print_warning "production.env not found. Using default values."
 fi
 
-# Stop existing containers
-print_header "Stopping existing containers..."
-docker-compose -f manifests/framework/docker-compose.aasx-digital.yml down --remove-orphans
+# Final cleanup before deployment
+print_header "Final cleanup before deployment..."
+print_status "Ensuring all containers are stopped..."
+docker-compose -f manifests/framework/docker-compose.aasx-digital.yml down -v --remove-orphans 2>/dev/null || true
 
 # Build and start services
 print_header "Building and starting FastAPI services with .NET AAS Processor..."
@@ -279,7 +313,7 @@ echo "  • Restart services: docker-compose -f manifests/framework/docker-compo
 echo "  • Update services: ./scripts/deploy-aasx-digital.sh"
 echo "  • Backup data: docker-compose -f manifests/framework/docker-compose.aasx-digital.yml run backup"
 echo "  • Renew SSL: ./scripts/renew_ssl_docker.sh"
-echo "  • Test .NET processor: docker exec aasx-digital-webapp dotnet /app/aas-processor/bin/Release/net6.0/AasProcessor.dll --help"
+echo "  • Test .NET processor: docker exec aasx-digital-webapp dotnet /app/aas-processor/bin/Release/net8.0/AasProcessor.dll --help"
 echo ""
 echo "📝 Next Steps:"
 echo "  1. Configure your domain DNS to point to this server"

@@ -119,7 +119,7 @@ class TwinRegistryUserSpecificService:
             stats = {
                 "total_twins": len(user_twins),
                 "total_relationships": len(user_relationships),
-                "total_instances": len(user_instans),
+                "total_instances": len(user_instances),
                 "active_twins": len([t for t in user_twins if t.get('status') == 'active']),
                 "inactive_twins": len([t for t in user_twins if t.get('status') == 'inactive']),
                 "user_id": self.user_id,

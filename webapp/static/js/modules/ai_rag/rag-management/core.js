@@ -14,6 +14,11 @@ export default class AIRAGCore {
         };
         
         this.conversations = new Map();
+        
+        // Authentication state (will be updated by global auth manager)
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     /**
@@ -23,6 +28,15 @@ export default class AIRAGCore {
         console.log('🔧 Initializing AI RAG Core...');
         
         try {
+            // ✅ CORRECT: Wait for central auth system first
+            await this.waitForAuthSystem();
+            
+            // ✅ CORRECT: Update auth state from central system
+            this.updateAuthState();
+            
+            // ✅ CORRECT: Listen for auth state changes
+            this.setupAuthListeners();
+            
             // Load configuration
             await this.loadConfiguration();
             
@@ -36,6 +50,247 @@ export default class AIRAGCore {
             console.error('❌ AI RAG Core initialization failed:', error);
             throw error;
         }
+    }
+
+    /**
+     * Wait for central auth system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 AI RAG Core: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 AI RAG Core: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 AI RAG Core: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ AI RAG Core: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state from central auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) {
+            console.log('⚠️ AI RAG Core: No auth manager available');
+            return;
+        }
+        
+        try {
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 AI RAG Core: Auth state update:', sessionInfo);
+            
+            if (sessionInfo && sessionInfo.isAuthenticated) {
+                this.isAuthenticated = true;
+                this.currentUser = {
+                    user_id: sessionInfo.user_id,
+                    username: sessionInfo.username,
+                    role: sessionInfo.role,
+                    organization_id: sessionInfo.organization_id
+                };
+                this.authToken = window.authManager.getStoredToken();
+                console.log('🔐 AI RAG Core: User authenticated:', this.currentUser.username);
+            } else {
+                this.isAuthenticated = false;
+                this.currentUser = null;
+                this.authToken = null;
+                console.log('🔐 AI RAG Core: User not authenticated (demo mode)');
+            }
+        } catch (error) {
+            console.warn('⚠️ AI RAG Core: Error updating auth state:', error);
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+        }
+    }
+
+    /**
+     * Setup authentication listeners
+     */
+    setupAuthListeners() {
+        // Listen for auth state changes
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 AI RAG Core: Auth state changed, updating...');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+        
+        // Listen for login success
+        window.addEventListener('loginSuccess', async () => {
+            console.log('🔐 AI RAG Core: Login success detected');
+            this.updateAuthState();
+            await this.handleLoginSuccess();
+        });
+        
+        // Listen for logout
+        window.addEventListener('logout', () => {
+            console.log('🔐 AI RAG Core: Logout detected');
+            this.updateAuthState();
+            this.handleLogout();
+        });
+    }
+
+    /**
+     * Handle login success
+     */
+    async handleLoginSuccess() {
+        // Refresh user-specific data after login
+        try {
+            await this.loadExistingConversations();
+            console.log('✅ AI RAG Core: User data refreshed after login');
+        } catch (error) {
+            console.error('❌ AI RAG Core: Failed to refresh user data after login:', error);
+        }
+    }
+
+    /**
+     * Handle logout
+     */
+    handleLogout() {
+        // Clear user-specific data
+        this.conversations.clear();
+        this.currentUser = null;
+        this.isAuthenticated = false;
+        console.log('🔐 AI RAG Core: User data cleared after logout');
+    }
+
+    /**
+     * Handle auth state change
+     */
+    handleAuthStateChange() {
+        if (this.isAuthenticated && this.currentUser) {
+            if (this.currentUser.is_demo) {
+                // Show demo features prominently
+                this.showDemoFeatures();
+                this.showLoginPrompt();
+            } else {
+                // Show authenticated user features
+                this.showAuthenticatedFeatures();
+                this.hideLoginPrompt();
+            }
+        } else {
+            // Show demo mode
+            this.showDemoMode();
+        }
+    }
+
+    /**
+     * Show demo features
+     */
+    showDemoFeatures() {
+        // Highlight impressive demo capabilities
+        this.displayMessage(
+            '🎉 Experience the full power of AI/RAG system! ' +
+            'Create your account to save your conversations and access advanced features.'
+        );
+        
+        // Show login/signup buttons prominently
+        this.showLoginButtons();
+    }
+
+    /**
+     * Show login buttons
+     */
+    showLoginButtons() {
+        // Add login/signup buttons to the UI
+        const loginButton = document.createElement('button');
+        loginButton.textContent = 'Sign In to Save Your Work';
+        loginButton.className = 'btn btn-primary btn-lg';
+        loginButton.onclick = () => window.location.href = '/auth';
+        
+        const signupButton = document.createElement('button');
+        signupButton.textContent = 'Create Free Account';
+        signupButton.className = 'btn btn-outline-primary btn-lg';
+        signupButton.onclick = () => window.location.href = '/auth?mode=signup';
+        
+        // Add to prominent location in UI
+        this.addProminentButtons(loginButton, signupButton);
+    }
+
+    /**
+     * Show authenticated features
+     */
+    showAuthenticatedFeatures() {
+        // Hide demo prompts and show authenticated user features
+        this.hideLoginPrompt();
+        console.log('🔐 AI RAG Core: Showing authenticated user features');
+    }
+
+    /**
+     * Show demo mode
+     */
+    showDemoMode() {
+        // Show demo content and encourage signup
+        this.showDemoFeatures();
+    }
+
+    /**
+     * Hide login prompt
+     */
+    hideLoginPrompt() {
+        // Remove login/signup buttons from UI
+        const loginButtons = document.querySelectorAll('.ai-rag-login-buttons');
+        loginButtons.forEach(button => button.remove());
+    }
+
+    /**
+     * Add prominent buttons to UI
+     */
+    addProminentButtons(loginButton, signupButton) {
+        // Add a container for the buttons
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'ai-rag-login-buttons';
+        buttonContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        `;
+        
+        buttonContainer.appendChild(loginButton);
+        buttonContainer.appendChild(signupButton);
+        
+        // Add to body
+        document.body.appendChild(buttonContainer);
+    }
+
+    /**
+     * Display message to user
+     */
+    displayMessage(message) {
+        console.log('💬 AI RAG Core:', message);
+        // You can implement a more sophisticated message display system here
     }
 
     /**
@@ -277,4 +532,24 @@ export default class AIRAGCore {
         this.isInitialized = false;
         console.log('🧹 AI RAG Core destroyed');
     }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        // ✅ CORRECT: Get token from central auth manager
+        if (window.authManager) {
+            const token = window.authManager.getStoredToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+        
+        return headers;
+    }
+} 
 } 

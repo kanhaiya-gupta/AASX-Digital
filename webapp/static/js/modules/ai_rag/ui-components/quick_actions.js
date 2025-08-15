@@ -37,42 +37,102 @@ let currentUser = null;
 let authToken = null;
 
 /**
- * Initialize authentication
+ * Wait for central auth system to be ready
  */
-function initAuthentication() {
-    try {
-        // Check if user is authenticated
-        if (typeof getCurrentUser === 'function') {
-            currentUser = getCurrentUser();
-            if (currentUser) {
-                isAuthenticated = true;
-                authToken = getAuthToken();
-                console.log('🔐 Quick Actions: User authenticated:', currentUser.username);
-            } else {
-                console.log('🔐 Quick Actions: User not authenticated');
-                isAuthenticated = false;
+async function waitForAuthSystem() {
+    console.log('🔐 Quick Actions: Waiting for central auth system...');
+    
+    if (window.authSystemReady && window.authManager) {
+        console.log('🔐 Quick Actions: Auth system already ready');
+        return;
+    }
+    
+    return new Promise((resolve) => {
+        const handleReady = () => {
+            console.log('🚀 Quick Actions: Auth system ready event received');
+            window.removeEventListener('authSystemReady', handleReady);
+            resolve();
+        };
+        
+        window.addEventListener('authSystemReady', handleReady);
+        
+        // Fallback: check periodically
+        const checkInterval = setInterval(() => {
+            if (window.authSystemReady && window.authManager) {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
             }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            window.removeEventListener('authSystemReady', handleReady);
+            console.warn('⚠️ Quick Actions: Timeout waiting for auth system');
+            resolve();
+        }, 10000);
+    });
+}
+
+/**
+ * Update authentication state from central auth manager
+ */
+function updateAuthState() {
+    if (!window.authManager) {
+        console.log('⚠️ Quick Actions: No auth manager available');
+        return;
+    }
+    
+    try {
+        const sessionInfo = window.authManager.getSessionInfo();
+        console.log('🔐 Quick Actions: Auth state update:', sessionInfo);
+        
+        if (sessionInfo && sessionInfo.isAuthenticated) {
+            isAuthenticated = true;
+            currentUser = sessionInfo.user;
+            authToken = window.authManager.getStoredToken();
+            console.log('🔐 Quick Actions: User authenticated:', currentUser.username);
         } else {
-            console.warn('⚠️ Quick Actions: getCurrentUser function not available');
             isAuthenticated = false;
+            currentUser = null;
+            authToken = null;
+            console.log('🔐 Quick Actions: User not authenticated (demo mode)');
         }
     } catch (error) {
-        console.error('❌ Quick Actions: Authentication initialization error:', error);
+        console.warn('⚠️ Quick Actions: Error updating auth state:', error);
         isAuthenticated = false;
+        currentUser = null;
+        authToken = null;
     }
 }
 
 /**
- * Get authentication token
+ * Setup authentication listeners
  */
-function getAuthToken() {
-    try {
-        // Try to get token from localStorage/sessionStorage
-        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    } catch (error) {
-        console.warn('⚠️ Quick Actions: Could not get auth token:', error);
-        return null;
-    }
+function setupAuthListeners() {
+    // Listen for auth state changes
+    window.addEventListener('authStateChanged', () => {
+        console.log('🔄 Quick Actions: Auth state changed, updating...');
+        updateAuthState();
+    });
+    
+    // Listen for login success
+    window.addEventListener('loginSuccess', async () => {
+        console.log('🔐 Quick Actions: Login success detected');
+        updateAuthState();
+        // Refresh data after login
+        setupDemoQueryListeners();
+        setupActionButtonListeners();
+    });
+    
+    // Listen for logout
+    window.addEventListener('logout', () => {
+        console.log('🔐 Quick Actions: Logout detected');
+        updateAuthState();
+        // Clear sensitive data after logout
+        // No sensitive data to clear in quick actions
+    });
 }
 
 /**
@@ -83,8 +143,12 @@ function getAuthHeaders() {
         'Content-Type': 'application/json'
     };
     
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+    // ✅ CORRECT: Get token from central auth manager
+    if (window.authManager) {
+        const token = window.authManager.getStoredToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
     }
     
     return headers;
@@ -97,8 +161,14 @@ export async function initQuickActions() {
     console.log('🔍 Quick Actions Module: Initializing...');
     
     try {
-        // Initialize authentication
-        initAuthentication();
+        // ✅ CORRECT: Wait for central auth system first
+        await waitForAuthSystem();
+        
+        // ✅ CORRECT: Update auth state from central system
+        updateAuthState();
+        
+        // ✅ CORRECT: Listen for auth state changes
+        setupAuthListeners();
         
         // Set up demo query event listeners
         setupDemoQueryListeners();
@@ -106,7 +176,7 @@ export async function initQuickActions() {
         // Set up action button listeners
         setupActionButtonListeners();
         
-        console.log('✅ Quick Actions Module: Initialized successfully');
+        console.log('✅ Quick Actions Module: Initialized with central auth integration');
     } catch (error) {
         console.error('❌ Quick Actions Module: Initialization failed:', error);
         throw error;

@@ -45,14 +45,6 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "AasCore.Aas3.Package": {
-              "target": "Package",
-              "version": "[1.0.2, )"
-            },
-            "AasCore.Aas3_0": {
-              "target": "Package",
-              "version": "[1.0.4, )"
-            },
             "Microsoft.CodeAnalysis.NetAnalyzers": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
@@ -65,9 +57,13 @@
               "target": "Package",
               "version": "[1.2.0-beta.507, )"
             },
+            "System.IO.Packaging": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
             "System.Text.Json": {
               "target": "Package",
-              "version": "[8.0.4, )"
+              "version": "[8.0.5, )"
             },
             "YamlDotNet": {
               "target": "Package",

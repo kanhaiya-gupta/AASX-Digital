@@ -10,19 +10,23 @@ class ProjectCreator {
         this.currentCreationType = null; // 'existing' or 'new'
         this.useCases = [];
         this.isInitialized = false;
+        
+        // Authentication state (will be updated by global auth manager)
         this.isAuthenticated = false;
         this.currentUser = null;
-        this.authToken = null;
-        this.init();
+        
+        // Initialize asynchronously
+        this.init().catch(error => {
+            console.error('❌ Project Creator initialization failed:', error);
+        });
     }
 
-    init() {
+    async init() {
         if (this.isInitialized) return;
         
         console.log('🚀 Project Creator initializing...');
         
-        // Initialize authentication
-        this.initAuthentication();
+
         
         // Check if modal elements exist
         if ($('#projectCreationModal').length === 0) {
@@ -48,43 +52,92 @@ class ProjectCreator {
         console.log('✅ Project Creator initialized successfully');
     }
 
+
+
+
+
     /**
-     * Initialize authentication
+     * Wait for global auth manager to be ready
      */
-    initAuthentication() {
+    async waitForAuthManager() {
+        console.log('🔐 Project Creator: Waiting for global auth manager...');
+        
+        // Wait for global auth manager to be ready
+        while (!window.authManager) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.log('✅ Project Creator: Global auth manager ready');
+        
+        // Initial auth state setup
+        this.updateAuthState();
+        
+        // Listen for auth changes
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 Project Creator: Auth state changed, updating...');
+            this.updateAuthState();
+        });
+        
+        // 🚫 CRITICAL FIX: Remove duplicate loginSuccess listener - PostLoginOrchestrator handles this
+        // window.addEventListener('loginSuccess', async () => {
+        //     console.log('🔐 Project Creator: Login success detected');
+        //     this.updateAuthState();
+        //     
+        //     // 🚀 WORLD-CLASS: Immediately refresh user data after login
+        //     console.log('🔄 Project Creator: Refreshing user data after login...');
+        //     try {
+        //             await this.loadUseCase();
+        //             console.log('✅ Project Creator: User data refreshed successfully after login');
+        //         } catch (error) {
+        //             console.error('❌ Project Creator: Failed to refresh user data after login:', error);
+        //         }
+        // });
+        
+        window.addEventListener('logout', () => {
+            console.log('🔐 Project Creator: Logout detected');
+            this.updateAuthState();
+        });
+    }
+
+    /**
+     * Update authentication state from global auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) return;
+        
         try {
-            // Check if user is authenticated
-            if (typeof getCurrentUser === 'function') {
-                this.currentUser = getCurrentUser();
-                if (this.currentUser) {
-                    this.isAuthenticated = true;
-                    this.authToken = this.getAuthToken();
-                    console.log('🔐 Project Creator: User authenticated:', this.currentUser.username);
-                } else {
-                    console.log('🔐 Project Creator: User not authenticated');
-                    this.isAuthenticated = false;
-                }
-            } else {
-                console.warn('⚠️ Project Creator: getCurrentUser function not available');
-                this.isAuthenticated = false;
-            }
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 Project Creator: Auth state update:', sessionInfo);
+            
+            // Update local state based on global auth manager
+            this.isAuthenticated = sessionInfo.isAuthenticated;
+            this.currentUser = sessionInfo.user;
+            
         } catch (error) {
-            console.error('❌ Project Creator: Authentication initialization error:', error);
-            this.isAuthenticated = false;
+            console.warn('⚠️ Project Creator: Error updating auth state:', error);
         }
     }
 
     /**
-     * Get authentication token
+     * Get current authentication state from global auth manager
      */
-    getAuthToken() {
-        try {
-            // Try to get token from localStorage/sessionStorage
-            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        } catch (error) {
-            console.warn('⚠️ Project Creator: Could not get auth token:', error);
-            return null;
+    getCurrentAuthState() {
+        // Try multiple ways to get the auth state
+        if (window.authSystemManager && window.authSystemManager.authManager) {
+            const state = window.authSystemManager.authManager.getCurrentState();
+            console.log('🔐 Project Creator: Got auth state from authSystemManager:', state);
+            return state;
         }
+        
+        // Fallback: check if we have a stored token
+        const token = this.getStoredToken();
+        if (token) {
+            console.log('🔐 Project Creator: Using fallback auth state (token exists)');
+            return { isAuthenticated: true, user: { username: 'authenticated_user' } };
+        }
+        
+        console.log('🔐 Project Creator: No auth state available, defaulting to unauthenticated');
+        return { isAuthenticated: false, user: null };
     }
 
     /**
@@ -95,11 +148,37 @@ class ProjectCreator {
             'Content-Type': 'application/json'
         };
         
-        if (this.authToken) {
-            headers['Authorization'] = `Bearer ${this.authToken}`;
+        // Get current auth state and token
+        const currentAuthState = this.getCurrentAuthState();
+        const token = this.getStoredToken();
+        
+        if (!token) {
+            console.log(`🔐 Project Creator: No auth token available - making unauthenticated request (Auth: ${currentAuthState.isAuthenticated ? 'Yes' : 'No'})`);
+        } else {
+            console.log(`🔐 Project Creator: Auth token available - making authenticated request (User: ${currentAuthState.user?.username || 'Unknown'})`);
+            headers['Authorization'] = `Bearer ${token}`;
         }
         
         return headers;
+    }
+
+    /**
+     * Get stored authentication token
+     * @returns {string|null} Stored token or null
+     */
+    getStoredToken() {
+        try {
+            // Try to get token from auth manager first
+            if (window.authManager && typeof window.authManager.getStoredToken === 'function') {
+                return window.authManager.getStoredToken();
+            }
+            
+            // Fallback to localStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Could not retrieve stored token:', error);
+            return null;
+        }
     }
 
     setupEventListeners() {
@@ -164,12 +243,9 @@ class ProjectCreator {
     async loadUseCases() {
         try {
             console.log('📋 Loading use cases for project creation...');
-            
-            // Check if user is authenticated
-            if (!this.isAuthenticated) {
-                console.log('🔐 Project Creator: User not authenticated, cannot load use cases');
-                return;
-            }
+            // Get current auth state from global auth manager
+            const currentAuthState = this.getCurrentAuthState();
+            console.log(`🔐 Project Creator: Auth state: ${currentAuthState.isAuthenticated ? 'Authenticated' : 'Demo mode'}`);
             
             const response = await fetch('/api/aasx-etl/use-cases', {
                 headers: this.getAuthHeaders()

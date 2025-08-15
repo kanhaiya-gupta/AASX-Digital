@@ -16,9 +16,8 @@ import os
 from pathlib import Path
 
 # Import authentication dependencies
-from src.core.auth.decorators import require_auth
-from src.core.auth.user_context import UserContext
-from src.core.auth.dependencies import get_current_user
+from webapp.core.decorators.auth_decorators import require_auth, get_current_user
+from webapp.core.context.user_context import UserContext
 
 # Import our modular services
 from .federation_service import FederationService

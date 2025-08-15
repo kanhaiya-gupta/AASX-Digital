@@ -75,14 +75,25 @@ export async function initAASXModule() {
         // Make data manager globally accessible for modal callbacks
         window.dataManager = dataManager;
         
+        // 🚫 CRITICAL FIX: Create window.aasxModules object for PostLoginOrchestrator
+        window.aasxModules = {
+            dataManager: dataManager,
+            etlPipeline: aasxETLPipeline,
+            dropdownManager: dropdownManager,
+            projectCreator: projectCreator,
+            fileUploadManager: fileUploadManager
+        };
+        
         isInitialized = true;
         console.log('✅ AASX Digital Twin Analytics Framework initialized');
+        console.log('📦 AASX index.js: window.aasxModules created:', window.aasxModules);
         
         // Dispatch custom event for other modules
         window.dispatchEvent(new CustomEvent('aasxModuleReady', {
             detail: {
                 dataManager,
-                aasxETLPipeline
+                aasxETLPipeline,
+                aasxModules: window.aasxModules
             }
         }));
         
@@ -196,11 +207,13 @@ export async function refreshAASXData() {
 let autoInitCalled = false;
 
 function initializeWhenReady() {
-    // Check if we're on an AASX page and not already initialized
-    if (window.location.pathname.includes('/aasx') && !autoInitCalled) {
+    // 🚫 CRITICAL FIX: Initialize on any page, not just /aasx pages
+    // This ensures PostLoginOrchestrator can access AASX modules from auth pages
+    if (!autoInitCalled) {
         autoInitCalled = true;
+        console.log('🚀 AASX index.js: Auto-initializing AASX module...');
         initAASXModule().catch(error => {
-            console.error('Failed to initialize AASX module:', error);
+            console.error('❌ AASX index.js: Failed to initialize AASX module:', error);
             autoInitCalled = false; // Reset flag on error
         });
     }
@@ -228,6 +241,15 @@ window.AASXModule = {
     refresh: refreshAASXData,
     getDataManager,
     getAASXETLPipeline
+};
+
+// 🚫 CRITICAL FIX: Make AASX modules globally accessible for PostLoginOrchestrator
+window.initializeAASXIfNeeded = async () => {
+    if (!isInitialized) {
+        console.log('🚀 AASX index.js: Manual initialization requested...');
+        await initAASXModule();
+    }
+    return window.aasxModules;
 };
 
 // Export default

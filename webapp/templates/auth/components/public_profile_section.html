@@ -1,432 +1,193 @@
 <!-- Public Profile Section -->
 <div class="auth-container" id="publicProfileSection">
-    <div class="auth-card">
-        <div class="auth-header">
-            <h1><i class="fas fa-globe"></i> Public Profile</h1>
-            <p>Manage your public profile information and visibility</p>
+    <div class="auth-card card">
+        <div class="auth-card-header card-header">
+            <h1 class="auth-card-title mb-0"><i class="fas fa-globe me-2"></i> Public Profile</h1>
+            <p class="auth-card-subtitle mb-0">Manage your public profile information and visibility</p>
         </div>
         
-        <div id="public-profile-alert-container"></div>
-        
-        <!-- Public Profile Status -->
-        <div class="public-profile-status mb-4">
-            <div class="status-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-eye me-2"></i>Profile Visibility
-                </h4>
-                <div class="visibility-toggle">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="isPublicToggle" style="width: 3rem; height: 1.5rem;">
-                        <label class="form-check-label fw-bold" for="isPublicToggle">
-                            <span id="visibilityStatus">Private</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-            <div class="status-description mt-2">
-                <p class="text-muted mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <span id="visibilityDescription">Your profile is currently private and only visible to you.</span>
-                </p>
-            </div>
-        </div>
-        
-        <!-- Public Profile Form -->
-        <form id="publicProfileForm" class="needs-validation" novalidate>
-            <div class="row g-4">
-                <!-- Basic Information -->
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-user me-2"></i>Basic Information
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <label for="location" class="form-label fw-bold">
-                                    <i class="fas fa-map-marker-alt me-2"></i>Location
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                    </span>
-                                    <input type="text" class="form-control auth-form-control" id="location" name="location" 
-                                           placeholder="e.g., San Francisco, CA">
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="website" class="form-label fw-bold">
-                                    <i class="fas fa-globe me-2"></i>Website
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-link"></i>
-                                    </span>
-                                    <input type="url" class="form-control auth-form-control" id="website" name="website" 
-                                           placeholder="https://your-website.com">
-                                </div>
-                            </div>
+        <div class="auth-card-body card-body">
+            <div id="public-profile-alert-container"></div>
+            
+            <!-- Public Profile Status -->
+            <div class="public-profile-status mb-4">
+                <div class="status-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>Profile Visibility
+                    </h4>
+                    <div class="visibility-toggle">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="isPublicToggle" name="isPublicToggle" 
+                                   style="width: 3rem; height: 1.5rem;" title="Toggle profile visibility">
+                            <label class="form-check-label fw-bold" for="isPublicToggle">
+                                <span id="visibilityStatus">Private</span>
+                            </label>
                         </div>
                     </div>
                 </div>
-
-                <!-- Social Links -->
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-share-alt me-2"></i>Social Links
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <label for="linkedin" class="form-label fw-bold">
-                                    <i class="fab fa-linkedin me-2"></i>LinkedIn
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fab fa-linkedin"></i>
-                                    </span>
-                                    <input type="url" class="form-control auth-form-control" id="linkedin" name="linkedin" 
-                                           placeholder="https://linkedin.com/in/yourprofile">
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="github" class="form-label fw-bold">
-                                    <i class="fab fa-github me-2"></i>GitHub
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fab fa-github"></i>
-                                    </span>
-                                    <input type="url" class="form-control auth-form-control" id="github" name="github" 
-                                           placeholder="https://github.com/yourusername">
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="twitter" class="form-label fw-bold">
-                                    <i class="fab fa-twitter me-2"></i>Twitter
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fab fa-twitter"></i>
-                                    </span>
-                                    <input type="url" class="form-control auth-form-control" id="twitter" name="twitter" 
-                                           placeholder="https://twitter.com/yourusername">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Skills -->
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-tools me-2"></i>Skills
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <label for="skills" class="form-label fw-bold">
-                                    <i class="fas fa-tags me-2"></i>Skills (comma-separated)
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-tags"></i>
-                                    </span>
-                                    <input type="text" class="form-control auth-form-control" id="skills" name="skills" 
-                                           placeholder="e.g., Python, FastAPI, React, Docker">
-                                </div>
-                                <small class="form-text text-muted">Enter skills separated by commas</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Interests -->
-                <div class="col-lg-6 col-md-12">
-                    <div class="auth-card auth-profile-card h-100">
-                        <div class="auth-card-header">
-                            <h5 class="auth-card-title">
-                                <i class="fas fa-heart me-2"></i>Interests
-                            </h5>
-                        </div>
-                        <div class="auth-card-body p-4">
-                            <div class="mb-4">
-                                <label for="interests" class="form-label fw-bold">
-                                    <i class="fas fa-star me-2"></i>Interests (comma-separated)
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-star"></i>
-                                    </span>
-                                    <input type="text" class="form-control auth-form-control" id="interests" name="interests" 
-                                           placeholder="e.g., AI/ML, Web Development, Open Source">
-                                </div>
-                                <small class="form-text text-muted">Enter interests separated by commas</small>
-                            </div>
-                        </div>
-                    </div>
+                <div class="status-description mt-2">
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span id="visibilityDescription">Your profile is currently private and only visible to you.</span>
+                    </p>
                 </div>
             </div>
             
-            <div class="auth-form-actions mt-4">
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="button" class="auth-btn auth-btn-secondary" id="resetPublicProfile">
-                        <i class="fas fa-undo me-2"></i>Reset
-                    </button>
-                    <button type="submit" class="auth-btn auth-btn-primary">
-                        <i class="fas fa-save me-2"></i>Save Public Profile
-                    </button>
+            <!-- Public Profile Form -->
+            <form id="publicProfileForm" class="needs-validation" novalidate>
+                <div class="row g-4">
+                    <!-- Basic Information -->
+                    <div class="col-lg-6 col-md-12">
+                        <div class="auth-card card auth-profile-card h-100">
+                            <div class="auth-card-header card-header">
+                                <h5 class="auth-card-title">
+                                    <i class="fas fa-user me-2"></i>Basic Information
+                                </h5>
+                            </div>
+                            <div class="auth-card-body card-body p-4">
+                                <div class="mb-4">
+                                    <label for="location" class="form-label fw-bold">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Location
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </span>
+                                        <input type="text" class="form-control auth-form-control" id="location" name="location" 
+                                               placeholder="e.g., San Francisco, CA" title="Enter your city and country">
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="website" class="form-label fw-bold">
+                                        <i class="fas fa-globe me-2"></i>Website
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-link"></i>
+                                        </span>
+                                        <input type="url" class="form-control auth-form-control" id="website" name="website" 
+                                               placeholder="https://your-website.com" title="Enter your website URL">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="col-lg-6 col-md-12">
+                        <div class="auth-card card auth-profile-card h-100">
+                            <div class="auth-card-header card-header">
+                                <h5 class="auth-card-title">
+                                    <i class="fas fa-share-alt me-2"></i>Social Links
+                                </h5>
+                            </div>
+                            <div class="auth-card-body card-body p-4">
+                                <div class="mb-4">
+                                    <label for="linkedin" class="form-label fw-bold">
+                                        <i class="fab fa-linkedin me-2"></i>LinkedIn
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fab fa-linkedin"></i>
+                                        </span>
+                                        <input type="url" class="form-control auth-form-control" id="linkedin" name="linkedin" 
+                                               placeholder="https://linkedin.com/in/yourprofile" title="Enter your LinkedIn profile URL">
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="github" class="form-label fw-bold">
+                                        <i class="fab fa-github me-2"></i>GitHub
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fab fa-github"></i>
+                                        </span>
+                                        <input type="url" class="form-control auth-form-control" id="github" name="github" 
+                                               placeholder="https://github.com/yourusername" title="Enter your GitHub profile URL">
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="twitter" class="form-label fw-bold">
+                                        <i class="fab fa-twitter me-2"></i>Twitter
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fab fa-twitter"></i>
+                                        </span>
+                                        <input type="url" class="form-control auth-form-control" id="twitter" name="twitter" 
+                                               placeholder="https://twitter.com/yourusername" title="Enter your Twitter profile URL">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="col-lg-6 col-md-12">
+                        <div class="auth-card card auth-profile-card h-100">
+                            <div class="auth-card-header card-header">
+                                <h5 class="auth-card-title">
+                                    <i class="fas fa-tools me-2"></i>Skills
+                                </h5>
+                            </div>
+                            <div class="auth-card-body card-body p-4">
+                                <div class="mb-4">
+                                    <label for="skills" class="form-label fw-bold">
+                                        <i class="fas fa-tags me-2"></i>Skills (comma-separated)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-tags"></i>
+                                        </span>
+                                        <input type="text" class="form-control auth-form-control" id="skills" name="skills" 
+                                               placeholder="e.g., Python, FastAPI, React, Docker" title="Enter your skills separated by commas">
+                                    </div>
+                                    <small class="form-text text-muted">Enter skills separated by commas</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interests -->
+                    <div class="col-lg-6 col-md-12">
+                        <div class="auth-card card auth-profile-card h-100">
+                            <div class="auth-card-header card-header">
+                                <h5 class="auth-card-title">
+                                    <i class="fas fa-heart me-2"></i>Interests
+                                </h5>
+                            </div>
+                            <div class="auth-card-body card-body p-4">
+                                <div class="mb-4">
+                                    <label for="interests" class="form-label fw-bold">
+                                        <i class="fas fa-star me-2"></i>Interests (comma-separated)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-star"></i>
+                                        </span>
+                                        <input type="text" class="form-control auth-form-control" id="interests" name="interests" 
+                                               placeholder="e.g., AI/ML, Web Development, Open Source" title="Enter your interests separated by commas">
+                                    </div>
+                                    <small class="form-text text-muted">Enter interests separated by commas</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </form>
+                
+                <div class="auth-form-actions mt-4">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="auth-btn auth-btn-secondary" id="resetPublicProfile" 
+                                title="Reset form to default values">
+                            <i class="fas fa-undo me-2"></i>Reset
+                        </button>
+                        <button type="submit" class="auth-btn auth-btn-primary" 
+                                title="Save your public profile information">
+                            <i class="fas fa-save me-2"></i>Save Public Profile
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
-<script>
-// Public Profile Management
-class PublicProfileManager {
-    constructor() {
-        this.init();
-    }
-    
-    init() {
-        this.setupEventListeners();
-        this.loadPublicProfile();
-    }
-    
-    setupEventListeners() {
-        const form = document.getElementById('publicProfileForm');
-        const toggle = document.getElementById('isPublicToggle');
-        const resetBtn = document.getElementById('resetPublicProfile');
-        
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.savePublicProfile();
-            });
-        }
-        
-        if (toggle) {
-            toggle.addEventListener('change', () => {
-                this.updateVisibilityStatus();
-            });
-        }
-        
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                this.resetPublicProfile();
-            });
-        }
-    }
-    
-    async loadPublicProfile() {
-        try {
-            const token = window.authCore ? window.authCore.getSessionToken() : null;
-            
-            if (!token) {
-                showAlert('Please log in to load your public profile', 'warning');
-                return;
-            }
-            
-            const response = await fetch('/api/auth/public-profile', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.public_profile) {
-                    this.populateForm(data.public_profile);
-                }
-            } else if (response.status === 404) {
-                // Profile doesn't exist yet, that's okay
-                console.log('No public profile found, will create new one');
-            } else {
-                showAlert('Failed to load public profile', 'danger');
-            }
-        } catch (error) {
-            console.error('Error loading public profile:', error);
-            showAlert('Error loading public profile', 'danger');
-        }
-    }
-    
-    populateForm(profile) {
-        // Populate form fields
-        const fields = ['location', 'website', 'linkedin', 'github', 'twitter'];
-        fields.forEach(field => {
-            const element = document.getElementById(field);
-            if (element && profile[field]) {
-                element.value = profile[field];
-            }
-        });
-        
-        // Handle skills and interests (arrays)
-        if (profile.skills && Array.isArray(profile.skills)) {
-            document.getElementById('skills').value = profile.skills.join(', ');
-        }
-        
-        if (profile.interests && Array.isArray(profile.interests)) {
-            document.getElementById('interests').value = profile.interests.join(', ');
-        }
-        
-        // Handle social links
-        if (profile.social_links) {
-            if (profile.social_links.linkedin) {
-                document.getElementById('linkedin').value = profile.social_links.linkedin;
-            }
-            if (profile.social_links.github) {
-                document.getElementById('github').value = profile.social_links.github;
-            }
-            if (profile.social_links.twitter) {
-                document.getElementById('twitter').value = profile.social_links.twitter;
-            }
-        }
-        
-        // Handle visibility toggle
-        const toggle = document.getElementById('isPublicToggle');
-        if (toggle) {
-            toggle.checked = profile.is_public || false;
-            this.updateVisibilityStatus();
-        }
-    }
-    
-    updateVisibilityStatus() {
-        const toggle = document.getElementById('isPublicToggle');
-        const status = document.getElementById('visibilityStatus');
-        const description = document.getElementById('visibilityDescription');
-        
-        if (toggle && status && description) {
-            if (toggle.checked) {
-                status.textContent = 'Public';
-                status.className = 'text-success fw-bold';
-                description.textContent = 'Your profile is public and visible to everyone.';
-            } else {
-                status.textContent = 'Private';
-                status.className = 'text-muted fw-bold';
-                description.textContent = 'Your profile is currently private and only visible to you.';
-            }
-        }
-    }
-    
-    async savePublicProfile() {
-        try {
-            const form = document.getElementById('publicProfileForm');
-            const formData = new FormData(form);
-            const profileData = {};
-            
-            // Convert form data to object
-            for (let [key, value] of formData.entries()) {
-                if (value.trim()) {
-                    profileData[key] = value.trim();
-                }
-            }
-            
-            // Handle skills and interests (convert to arrays)
-            if (profileData.skills) {
-                profileData.skills = profileData.skills.split(',').map(s => s.trim()).filter(s => s);
-            }
-            
-            if (profileData.interests) {
-                profileData.interests = profileData.interests.split(',').map(s => s.trim()).filter(s => s);
-            }
-            
-            // Handle social links
-            const socialLinks = {};
-            if (profileData.linkedin) socialLinks.linkedin = profileData.linkedin;
-            if (profileData.github) socialLinks.github = profileData.github;
-            if (profileData.twitter) socialLinks.twitter = profileData.twitter;
-            
-            if (Object.keys(socialLinks).length > 0) {
-                profileData.social_links = socialLinks;
-            }
-            
-            // Remove individual social link fields
-            delete profileData.linkedin;
-            delete profileData.github;
-            delete profileData.twitter;
-            
-            // Handle visibility
-            const toggle = document.getElementById('isPublicToggle');
-            if (toggle) {
-                profileData.is_public = toggle.checked;
-            }
-            
-            // Get auth token
-            const token = window.authCore ? window.authCore.getSessionToken() : null;
-            
-            if (!token) {
-                showAlert('Please log in to save your public profile', 'warning');
-                return;
-            }
-            
-            const response = await fetch('/api/auth/public-profile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(profileData)
-            });
-            
-            if (response.ok) {
-                showAlert('Public profile saved successfully!', 'success');
-            } else {
-                showAlert('Failed to save public profile', 'danger');
-            }
-        } catch (error) {
-            console.error('Error saving public profile:', error);
-            showAlert('Error saving public profile', 'danger');
-        }
-    }
-    
-    resetPublicProfile() {
-        if (confirm('Are you sure you want to reset your public profile to default values?')) {
-            const form = document.getElementById('publicProfileForm');
-            form.reset();
-            
-            const toggle = document.getElementById('isPublicToggle');
-            if (toggle) {
-                toggle.checked = false;
-                this.updateVisibilityStatus();
-            }
-            
-            showAlert('Public profile reset to default values', 'info');
-        }
-    }
-}
-
-// Initialize public profile management when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    window.publicProfileManager = new PublicProfileManager();
-});
-
-// Function to show alerts
-function showAlert(message, type) {
-    const alertContainer = document.getElementById('public-profile-alert-container');
-    if (alertContainer) {
-        const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'info-circle'} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-        alertContainer.innerHTML = alertHtml;
-        
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-            const alert = alertContainer.querySelector('.alert');
-            if (alert) {
-                alert.remove();
-            }
-        }, 5000);
-    }
-}
-</script> 

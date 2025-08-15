@@ -9,18 +9,12 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- Test script to verify static file serving -->
-<script>
-    console.log('🔍 Test script loaded successfully');
-    console.log('🔍 Testing static file path resolution...');
-</script>
 
-        <!-- Load the authentication module -->
-                 <script type="module" src="{{ url_for('static', path='js/modules/auth/index-auth.js') }}?v=2025-08-10-21:22"></script>
-<script>
-    // Pass current user data to JavaScript
-    window.currentUser = {% if current_user %}{{ current_user | tojson | safe }}{% else %}null{% endif %};
-</script>
+
+<!-- Load the authentication module -->
+<script type="module" src="{{ url_for('static', path='js/modules/auth/index.js') }}?v=2025-08-10-21:22"></script>
+
+
 {% endblock %}
 
 {% block content %}
@@ -29,10 +23,10 @@
     <div class="alert alert-success" role="alert">
         <i class="fas fa-check-circle me-2"></i>
         Welcome back, <span id="authUserDisplayName">User</span>!
-        <button class="btn btn-sm btn-outline-success ms-2" onclick="window.location.href='/'">
+        <button class="btn btn-sm btn-outline-success ms-2" data-action="go-to-dashboard">
             <i class="fas fa-home me-1"></i>Go to Dashboard
         </button>
-        <button class="btn btn-sm btn-outline-danger ms-2" onclick="logoutUser()">
+        <button class="btn btn-sm btn-outline-danger ms-2" data-action="logout">
             <i class="fas fa-sign-out-alt me-1"></i>Logout
         </button>
     </div>
@@ -115,7 +109,7 @@
                             <p class="auth-page-subtitle mb-0">Secure access control and user administration</p>
                         </div>
                         <div class="auth-page-actions d-flex gap-2">
-                            <button class="auth-btn auth-btn-outline-primary" onclick="refreshAuthData()">
+                            <button class="auth-btn auth-btn-outline-primary" data-action="refresh-auth-data">
                                 <i class="fas fa-sync-alt me-1"></i>
                                 Refresh
                             </button>

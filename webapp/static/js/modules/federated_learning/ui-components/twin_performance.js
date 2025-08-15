@@ -60,36 +60,90 @@ export default class TwinPerformanceComponent {
     }
     
     /**
-     * Initialize authentication
+     * Wait for central authentication system to be ready
      */
-    initAuthentication() {
-        try {
-            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+    async waitForAuthSystem() {
+        console.log('🔐 Twin Performance: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Twin Performance: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Twin Performance: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
             
-            if (token && userData) {
-                this.authToken = token;
-                this.currentUser = JSON.parse(userData);
-                this.isAuthenticated = true;
-                console.log('🔐 Twin Performance: User authenticated as', this.currentUser.username);
-            } else {
-                this.isAuthenticated = false;
-                console.log('🔐 Twin Performance: User not authenticated');
-            }
-        } catch (error) {
-            console.error('❌ Twin Performance: Authentication initialization failed:', error);
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Performance: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Twin Performance: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
             this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Twin Performance: No auth manager available');
         }
     }
 
     /**
-     * Get authentication token
+     * Setup authentication event listeners
      */
-    getAuthToken() {
-        if (!this.authToken) {
-            this.initAuthentication();
-        }
-        return this.authToken;
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.twinData = {};
+        console.log('🧹 Twin Performance: Sensitive data cleared');
     }
 
     /**
@@ -99,10 +153,11 @@ export default class TwinPerformanceComponent {
         const headers = {
             'Content-Type': 'application/json'
         };
-        const token = this.getAuthToken();
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
         }
+        
         return headers;
     }
     
@@ -111,7 +166,9 @@ export default class TwinPerformanceComponent {
         
         try {
             // Initialize authentication
-            this.initAuthentication();
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
             await this.loadTwinPerformance();
             this.setupEventListeners();
             this.startAutoRefresh();

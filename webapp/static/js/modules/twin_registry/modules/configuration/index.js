@@ -20,9 +20,22 @@ class ConfigurationManager {
         try {
             console.log('🔄 Initializing Configuration Manager...');
             
+            // Wait for central authentication system
+            await new Promise((resolve) => {
+                if (window.authSystemReady && window.authManager) {
+                    resolve();
+                } else {
+                    window.addEventListener('authSystemReady', resolve, { once: true });
+                }
+            });
+            
             // Initialize sub-modules
             this.operations = new ConfigurationOperations(this.baseUrl);
             this.ui = new ConfigurationUI();
+            
+            // Initialize sub-modules with auth
+            await this.operations.init();
+            await this.ui.init();
             
             // Set up event listeners
             this.setupEventListeners();

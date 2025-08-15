@@ -14,11 +14,19 @@ export default class TwinRelationshipManager {
         };
         this.isInitialized = false;
         this.relationships = new Map(); // Cache relationships
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     async init() {
         try {
             console.log('🔗 Initializing Twin Relationship Manager...');
+            
+            // Initialize authentication
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
             
             // Set up event listeners
             this.setupEventListeners();
@@ -54,9 +62,7 @@ export default class TwinRelationshipManager {
 
             const response = await fetch(`${this.apiBaseUrl}${this.endpoints.create}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     source_twin_id: sourceTwinId,
                     target_twin_id: targetTwinId,
@@ -105,7 +111,9 @@ export default class TwinRelationshipManager {
         try {
             console.log(`🔗 Fetching relationships for twin: ${twinId}`);
 
-            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.getByTwin.replace('{twin_id}', twinId)}`);
+            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.getByTwin.replace('{twin_id}', twinId)}`, {
+                headers: this.getAuthHeaders()
+            });
             const result = await response.json();
 
             if (result.success) {
@@ -138,7 +146,9 @@ export default class TwinRelationshipManager {
                 url += `?${params.toString()}`;
             }
 
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                headers: this.getAuthHeaders()
+            });
             const result = await response.json();
 
             if (result.success) {
@@ -160,7 +170,8 @@ export default class TwinRelationshipManager {
             console.log(`🔗 Deleting relationship: ${relationshipId}`);
 
             const response = await fetch(`${this.apiBaseUrl}${this.endpoints.delete.replace('{relationship_id}', relationshipId)}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
             });
 
             const result = await response.json();
@@ -311,6 +322,108 @@ export default class TwinRelationshipManager {
             'association': 'dark'
         };
         return colors[relationshipType] || 'light';
+    }
+
+    /**
+     * Wait for central authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Twin Relationship Manager: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Twin Relationship Manager: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Twin Relationship Manager: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Relationship Manager: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Twin Relationship Manager: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Twin Relationship Manager: No auth manager available');
+        }
+    }
+
+    /**
+     * Setup authentication event listeners
+     */
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.relationships.clear();
+        console.log('🧹 Twin Relationship Manager: Sensitive data cleared');
     }
 
     // Cleanup method

@@ -50,6 +50,43 @@ export async function initAIRAGModule() {
     console.log('🚀 AI RAG Module initializing with modular UI components...');
     
     try {
+        // ✅ CORRECT: Wait for central auth system (like Twin Registry and Knowledge Graph)
+        console.log('🔐 AI RAG Module: Waiting for authentication system...');
+        await new Promise((resolve) => {
+            if (window.authSystemReady && window.authManager) {
+                console.log('🔐 AI RAG Module: Auth system already ready');
+                resolve();
+                return;
+            }
+            
+            const handleReady = () => {
+                console.log('🚀 AI RAG Module: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ AI RAG Module: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+        
+        console.log('🔐 AI RAG Module: Authentication system ready, proceeding with initialization...');
+        
         // Initialize alert system first
         initAlertSystem();
         
@@ -83,7 +120,16 @@ export async function initAIRAGModule() {
         await initIntegration();
         
         isInitialized = true;
-        console.log('✅ AI RAG Module initialized with all UI components');
+        console.log('✅ AI RAG Module initialized with central auth integration');
+        
+        // Make initialization function available globally for post-login orchestrator
+        window.initializeAIRAGModuleIfNeeded = async () => {
+            if (!isInitialized) {
+                console.log('🔄 Post-Login Orchestrator: Initializing AI RAG modules...');
+                await initAIRAGModule();
+                console.log('✅ Post-Login Orchestrator: AI RAG modules initialized successfully');
+            }
+        };
         
         // Dispatch custom event for other modules
         window.dispatchEvent(new CustomEvent('aiRAGModuleReady', {

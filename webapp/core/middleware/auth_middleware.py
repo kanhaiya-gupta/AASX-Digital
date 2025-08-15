@@ -34,16 +34,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/api/physics-modeling",  # Physics Modeling page
             "/api/aasx-etl",  # AASX page
             "/api/flowchart",  # Flowchart page
-            "/twin-registry",  # Twin Registry page (legacy)
-            "/ai-rag",  # AI/RAG page (legacy)
-            "/kg-neo4j",  # Knowledge Graph page (legacy)
-            "/certificate-manager",  # Certificate Manager page (legacy)
-            "/federated-learning",  # Federated Learning page (legacy)
-            "/physics-modeling",  # Physics Modeling page (legacy)
-            "/aasx-etl",  # AASX page (legacy)
-            "/auth",  # Authentication page (legacy)
             "/api/auth/",  # Authentication page (correct path with trailing slash)
-            "/flowchart",  # Flowchart page (legacy)
             "/api/auth/login",
             "/api/auth/signup", 
             "/api/auth/forgot-password",
@@ -76,6 +67,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
         
         # Debug logging
         logger.info(f"Auth middleware processing path: {request.url.path}")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Full URL: {request.url}")
         
         # Skip authentication for public paths
         if self._is_public_path(request.url.path):
@@ -90,21 +83,41 @@ class AuthMiddleware(BaseHTTPMiddleware):
             user_data = self._get_user_data(request)
             
             if not user_data:
-                # User not authenticated - redirect to login or return 401
-                if request.url.path.startswith("/api/"):
-                    logger.info(f"API path {request.url.path} - returning 401")
-                    from fastapi.responses import JSONResponse
-                    return JSONResponse(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        content={"detail": "Authentication required", "status_code": 401}
-                    )
-                else:
-                    # Redirect to login page for web requests
-                    logger.info(f"Web path {request.url.path} - redirecting to login")
-                    from fastapi.responses import RedirectResponse
-                    return RedirectResponse(url="/api/auth/", status_code=302)
+                # No authentication - create demo user for ANY unauthenticated request
+                logger.info(f"Creating demo user context for unauthenticated request to {request.url.path}")
+                demo_user_data = {
+                    'user_id': '6bc1814c-5705-5b6e-af99-104b91962282',
+                    'username': 'demo',
+                    'email': 'demo@aasx-digital.de',
+                    'role': 'guest',
+                    'organization_id': '0451d3fa-dcca-d693-2636-7ff967e66219',
+                    'permissions': ['read', 'write'],  # Demo users can read AND write
+                    'is_active': True
+                }
+                user_context = UserContext(demo_user_data)
+                request.state.user_context = user_context
+                
+                # Add demo user headers
+                request.state.user_headers = {
+                    "x-user-id": str(user_context.user_id),
+                    "x-username": user_context.username,
+                    "x-user-role": user_context.role,
+                    "x-organization-id": str(user_context.organization_id or ""),
+                    "x-user-type": user_context.get_user_type()
+                }
+                
+                # Process the request with demo user context
+                response = await call_next(request)
+                
+                # Add demo user context headers to response
+                response.headers["X-User-ID"] = str(user_context.user_id)
+                response.headers["X-User-Role"] = user_context.role
+                response.headers["X-User-Type"] = user_context.get_user_type()
+                response.headers["X-Demo-User"] = "true"
+                
+                return response
             
-            # Create user context
+            # Create user context for authenticated users
             user_context = UserContext(user_data)
             
             # Check if user can access the requested path
@@ -166,8 +179,18 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 continue  # Root path is handled by exact match above
             
             if path.startswith(public_path):
-                # Additional check: make sure it's not just a partial match
-                # e.g., "/api" shouldn't match "/api/auth" if "/api" is not in public_paths
+                # Special handling for module root paths - only exact matches are public
+                # e.g., "/api/aasx-etl" is public, but "/api/aasx-etl/projects" is not
+                if public_path in ["/api/aasx-etl", "/api/twin-registry", "/api/ai-rag", "/api/kg-neo4j", "/api/certificate-manager", "/api/federated-learning", "/api/physics-modeling"]:
+                    # Only exact matches for module roots are public
+                    if path == public_path:
+                        logger.info(f"Path '{path}' is exact match for module root '{public_path}'")
+                        return True
+                    else:
+                        logger.info(f"Path '{path}' starts with module root '{public_path}' but is not exact match - requires authentication")
+                        continue
+                
+                # For other public paths, allow startswith
                 if public_path in self.public_paths:
                     logger.info(f"Path '{path}' starts with public path '{public_path}'")
                     return True
@@ -180,13 +203,28 @@ class AuthMiddleware(BaseHTTPMiddleware):
     def _get_user_data(self, request: Request) -> Optional[Dict[str, Any]]:
         """Get user data from request (token or session)"""
         try:
+            # Debug: Check Authorization header
+            auth_header = request.headers.get("Authorization")
+            logger.info(f"🔍 Authorization header: {auth_header}")
+            
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+                logger.info(f"🔑 Token extracted: {token[:20]}...")
+            else:
+                logger.info("❌ No valid Authorization header found")
+                token = None
+            
             # Try to get user from request using existing auth utils
             user_data = get_user_from_request(request)
+            logger.info(f"👤 User data from request: {user_data is not None}")
+            
             if user_data:
                 # Add permissions to user data
                 user_data["permissions"] = get_user_permissions(user_data["role"])
+                logger.info(f"✅ User authenticated: {user_data['username']} (role: {user_data['role']})")
                 return user_data
             
+            logger.warning("⚠️ No user data returned from request - will create demo user")
             return None
         except Exception as e:
             logger.error(f"Error getting user data: {e}")

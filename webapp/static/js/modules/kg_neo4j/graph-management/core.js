@@ -1,11 +1,16 @@
 /**
  * Knowledge Graph Neo4j Core Module
  * Handles core graph operations, node/relationship management, and graph functionality
+ * Now with full authentication integration
  */
 
 export default class KGNeo4jCore {
     constructor() {
         this.isInitialized = false;
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.organizationId = null;
+        
         this.config = {
             apiBaseUrl: '/api/kg-neo4j',
             maxNodes: 10000,
@@ -43,13 +48,26 @@ export default class KGNeo4jCore {
         console.log('🔧 Initializing Knowledge Graph Neo4j Core...');
 
         try {
+            // 🔐 CRITICAL: Wait for authentication system to be ready
+            await this.waitForAuthSystem();
+            
+            // Update authentication state
+            this.updateAuthState();
+            
+            // Setup authentication event listeners
+            this.setupAuthEventListeners();
+
             // Load configuration
             await this.loadConfiguration();
 
-            // Initialize graph storage
-            await this.initializeGraphStorage();
+            // Initialize graph storage (optional - backend may not be available)
+            try {
+                await this.initializeGraphStorage();
+            } catch (error) {
+                console.warn('⚠️ Knowledge Graph Core: Backend services not available, continuing in frontend mode');
+            }
 
-            // Load existing graph data
+            // Load existing graph data (will use demo data if backend unavailable)
             await this.loadExistingGraphData();
 
             // Initialize cache
@@ -61,12 +79,212 @@ export default class KGNeo4jCore {
             this.startOperationQueue();
 
             this.isInitialized = true;
-            console.log('✅ Knowledge Graph Neo4j Core initialized');
+            console.log('✅ Knowledge Graph Neo4j Core initialized with authentication');
 
         } catch (error) {
             console.error('❌ Knowledge Graph Neo4j Core initialization failed:', error);
             throw error;
         }
+    }
+
+    /**
+     * 🔐 Wait for authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Knowledge Graph Core: Waiting for authentication system...');
+        
+        return new Promise((resolve) => {
+            if (window.authSystemReady && window.authManager) {
+                console.log('🔐 Knowledge Graph Core: Auth system already ready');
+                resolve();
+                return;
+            }
+            
+            const handleReady = () => {
+                console.log('🚀 Knowledge Graph Core: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Knowledge Graph Core: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * 🔐 Update authentication state from global auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) {
+            console.log('⚠️ Knowledge Graph Core: No auth manager available');
+            return;
+        }
+        
+        try {
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 Knowledge Graph Core: Auth state update:', sessionInfo);
+            
+            this.isAuthenticated = sessionInfo.isAuthenticated;
+            this.currentUser = sessionInfo.user;
+            this.organizationId = sessionInfo.user?.organization_id;
+            
+            console.log(`🔐 Knowledge Graph Core: User ${this.currentUser?.username || 'unauthenticated'} (org: ${this.organizationId || 'none'})`);
+            
+        } catch (error) {
+            console.warn('⚠️ Knowledge Graph Core: Error updating auth state:', error);
+        }
+    }
+
+    /**
+     * 🔐 Setup authentication event listeners
+     */
+    setupAuthEventListeners() {
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 Knowledge Graph Core: Auth state changed, updating...');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+        
+        window.addEventListener('logout', () => {
+            console.log('🔐 Knowledge Graph Core: Logout detected');
+            this.updateAuthState();
+            this.handleAuthStateChange();
+        });
+    }
+
+    /**
+     * 🔐 Handle authentication state changes
+     */
+    handleAuthStateChange() {
+        if (this.isAuthenticated && this.organizationId) {
+            console.log(`🔐 Knowledge Graph Core: User authenticated, loading organization data for ${this.currentUser.username}`);
+            // Reload data for the authenticated user
+            this.loadExistingGraphData();
+        } else {
+            console.log('🔐 Knowledge Graph Core: User not authenticated, clearing sensitive data');
+            // Clear sensitive data and load demo data
+            this.clearUserData();
+            this.loadDemoData();
+        }
+    }
+
+    /**
+     * 🔐 Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        const token = window.authManager?.getStoredToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log(`🔐 Knowledge Graph Core: Making authenticated API call for user ${this.currentUser?.username || 'unknown'}`);
+        } else {
+            console.log('🔐 Knowledge Graph Core: Making unauthenticated API call');
+        }
+        
+        return headers;
+    }
+
+    /**
+     * 🔐 Load user-specific graph data based on organization
+     */
+    async loadExistingGraphData() {
+        if (!this.isAuthenticated || !this.organizationId) {
+            console.log('🔐 Knowledge Graph Core: User not authenticated, loading demo data');
+            await this.loadDemoData();
+            return;
+        }
+
+        console.log(`🔐 Knowledge Graph Core: Loading graph data for organization ${this.organizationId}`);
+        
+        try {
+            const headers = this.getAuthHeaders();
+            
+            // Load nodes for the user's organization
+            const nodesResponse = await fetch(`${this.config.apiBaseUrl}/nodes?org_id=${this.organizationId}`, {
+                headers
+            });
+            
+            if (nodesResponse.ok) {
+                const nodes = await nodesResponse.json();
+                this.nodes.clear();
+                nodes.forEach(node => this.nodes.set(node.id, node));
+                console.log(`🔐 Knowledge Graph Core: Loaded ${nodes.length} nodes for organization ${this.organizationId}`);
+            }
+            
+            // Load relationships for the user's organization
+            const relationshipsResponse = await fetch(`${this.config.apiBaseUrl}/relationships?org_id=${this.organizationId}`, {
+                headers
+            });
+            
+            if (relationshipsResponse.ok) {
+                const relationships = await relationshipsResponse.json();
+                this.relationships.clear();
+                relationships.forEach(rel => this.relationships.set(rel.id, rel));
+                console.log(`🔐 Knowledge Graph Core: Loaded ${relationships.length} relationships for organization ${this.organizationId}`);
+            }
+            
+            this.updateStatistics();
+            
+        } catch (error) {
+            console.error('❌ Knowledge Graph Core: Failed to load organization data:', error);
+            // Fallback to demo data
+            await this.loadDemoData();
+        }
+    }
+
+    /**
+     * 🔐 Load demo data for unauthenticated users
+     */
+    async loadDemoData() {
+        console.log('🔐 Knowledge Graph Core: Loading demo graph data');
+        
+        try {
+            const response = await fetch(`${this.config.apiBaseUrl}/demo-data`);
+            if (response.ok) {
+                const demoData = await response.json();
+                
+                this.nodes.clear();
+                demoData.nodes.forEach(node => this.nodes.set(node.id, node));
+                
+                this.relationships.clear();
+                demoData.relationships.forEach(rel => this.relationships.set(rel.id, rel));
+                
+                this.updateStatistics();
+                console.log('🔐 Knowledge Graph Core: Demo data loaded successfully');
+            }
+        } catch (error) {
+            console.warn('⚠️ Knowledge Graph Core: Failed to load demo data:', error);
+        }
+    }
+
+    /**
+     * 🔐 Clear user-specific data
+     */
+    clearUserData() {
+        console.log('🔐 Knowledge Graph Core: Clearing user-specific data');
+        this.nodes.clear();
+        this.relationships.clear();
+        this.cache.clear();
+        this.updateStatistics();
     }
 
     /**
@@ -78,9 +296,12 @@ export default class KGNeo4jCore {
             if (response.ok) {
                 const config = await response.json();
                 this.config = { ...this.config, ...config };
+                console.log('✅ Knowledge Graph Core: Configuration loaded from server');
+            } else {
+                console.warn('⚠️ Knowledge Graph Core: Server config endpoint not available, using defaults');
             }
         } catch (error) {
-            console.warn('Could not load configuration from server, using defaults:', error);
+            console.warn('⚠️ Knowledge Graph Core: Could not load configuration from server, using defaults:', error);
         }
     }
 
@@ -93,49 +314,22 @@ export default class KGNeo4jCore {
                 method: 'POST'
             });
             
-            if (!response.ok) {
+            if (response.ok) {
+                console.log('✅ Knowledge Graph Core: Graph storage initialized');
+            } else if (response.status === 404) {
+                console.warn('⚠️ Knowledge Graph Core: Backend graph storage not available, running in frontend-only mode');
+                // Continue without backend - this is acceptable for testing
+            } else {
                 throw new Error(`Failed to initialize graph storage: ${response.statusText}`);
             }
-            
-            console.log('Graph storage initialized');
         } catch (error) {
-            console.error('Graph storage initialization failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Load existing graph data
-     */
-    async loadExistingGraphData() {
-        try {
-            const response = await fetch(`${this.config.apiBaseUrl}/graph-data`);
-            if (response.ok) {
-                const data = await response.json();
-                
-                // Load nodes
-                if (data.nodes) {
-                    data.nodes.forEach(node => {
-                        this.nodes.set(node.id, node);
-                        if (node.labels) {
-                            node.labels.forEach(label => this.labels.add(label));
-                        }
-                    });
-                }
-
-                // Load relationships
-                if (data.relationships) {
-                    data.relationships.forEach(rel => {
-                        this.relationships.set(rel.id, rel);
-                        this.relationshipTypes.add(rel.type);
-                    });
-                }
-
-                // Update statistics
-                this.updateStatistics();
+            if (error.message.includes('Failed to fetch')) {
+                console.warn('⚠️ Knowledge Graph Core: Backend not available, running in frontend-only mode');
+                // Continue without backend - this is acceptable for testing
+            } else {
+                console.error('❌ Knowledge Graph Core: Graph storage initialization failed:', error);
+                throw error;
             }
-        } catch (error) {
-            console.error('Failed to load existing graph data:', error);
         }
     }
 
@@ -162,18 +356,21 @@ export default class KGNeo4jCore {
      * Create a new node
      */
     async createNode(labels, properties = {}) {
+        // 🔐 Add organization ID to node properties for user-specific data
         const nodeData = {
             labels: Array.isArray(labels) ? labels : [labels],
-            properties: properties,
+            properties: {
+                ...properties,
+                org_id: this.organizationId || 'demo',
+                created_by: this.currentUser?.username || 'anonymous'
+            },
             created: new Date().toISOString()
         };
 
         try {
             const response = await fetch(`${this.config.apiBaseUrl}/nodes`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(nodeData)
             });
 
@@ -214,10 +411,14 @@ export default class KGNeo4jCore {
         try {
             const response = await fetch(`${this.config.apiBaseUrl}/nodes/${nodeId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ properties })
+                headers: this.getAuthHeaders(),
+                body: JSON.stringify({ 
+                    properties: {
+                        ...properties,
+                        updated_by: this.currentUser?.username || 'anonymous',
+                        updated_at: new Date().toISOString()
+                    }
+                })
             });
 
             if (response.ok) {
@@ -251,7 +452,8 @@ export default class KGNeo4jCore {
     async deleteNode(nodeId) {
         try {
             const response = await fetch(`${this.config.apiBaseUrl}/nodes/${nodeId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {
@@ -287,20 +489,23 @@ export default class KGNeo4jCore {
      * Create a relationship between nodes
      */
     async createRelationship(startNodeId, endNodeId, type, properties = {}) {
+        // 🔐 Add organization ID to relationship properties for user-specific data
         const relationshipData = {
             startNode: startNodeId,
             endNode: endNodeId,
             type: type,
-            properties: properties,
+            properties: {
+                ...properties,
+                org_id: this.organizationId || 'demo',
+                created_by: this.currentUser?.username || 'anonymous'
+            },
             created: new Date().toISOString()
         };
 
         try {
             const response = await fetch(`${this.config.apiBaseUrl}/relationships`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(relationshipData)
             });
 
@@ -339,10 +544,14 @@ export default class KGNeo4jCore {
         try {
             const response = await fetch(`${this.config.apiBaseUrl}/relationships/${relationshipId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ properties })
+                headers: this.getAuthHeaders(),
+                body: JSON.stringify({ 
+                    properties: {
+                        ...properties,
+                        updated_by: this.currentUser?.username || 'anonymous',
+                        updated_at: new Date().toISOString()
+                    }
+                })
             });
 
             if (response.ok) {
@@ -376,7 +585,8 @@ export default class KGNeo4jCore {
     async deleteRelationship(relationshipId) {
         try {
             const response = await fetch(`${this.config.apiBaseUrl}/relationships/${relationshipId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {

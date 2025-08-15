@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.aax-digital.com; style-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com 'unsafe-inline' 'unsafe-eval'; img-src 'self' https://www.aax-digital.com data: https:; font-src 'self' https://www.aax-digital.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://www.aasx-digital.de; style-src 'self' https://www.aasx-digital.de https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' https://www.aasx-digital.de https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com 'unsafe-inline' 'unsafe-eval'; img-src 'self' https://www.aasx-digital.de data: https:; font-src 'self' https://www.aasx-digital.de https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.gstatic.com;">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='/favicon.ico') }}">
     <title>{% block title %}AASX Digital Twin Analytics Framework{% endblock %}</title>
     
@@ -24,6 +24,8 @@
     
     <!-- Base CSS -->
     <link href="{{ url_for('static', path='/css/base.css') }}" rel="stylesheet">
+    
+
     
     <!-- Additional CSS blocks -->
     {% block extra_css %}{% endblock %}
@@ -103,20 +105,20 @@
                                         <!-- Core Processing -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Core Processing</h6>
-                                            <a class="dropdown-item" href="/aasx-etl" data-module="aasx-etl">
+                                            <a class="dropdown-item" href="/api/aasx-etl/" data-module="aasx-etl">
                                                 <i class="fas fa-cogs text-primary"></i> ETL Pipeline
                                             </a>
-                                            <a class="dropdown-item" href="/twin-registry" data-module="twin-registry">
+                                            <a class="dropdown-item" href="/api/twin-registry/" data-module="twin-registry">
                                                 <i class="fas fa-sync text-success"></i> Twin Registry
                                             </a>
                                         </div>
                                         <!-- Intelligence -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Intelligence</h6>
-                                            <a class="dropdown-item" href="/ai-rag" data-module="ai-rag">
+                                            <a class="dropdown-item" href="/api/ai-rag/" data-module="ai-rag">
                                                 <i class="fas fa-robot text-info"></i> AI/RAG System
                                             </a>
-                                            <a class="dropdown-item" href="/kg-neo4j" data-module="kg-neo4j">
+                                            <a class="dropdown-item" href="/api/kg-neo4j/" data-module="kg-neo4j">
                                                 <i class="fas fa-project-diagram text-warning"></i> Knowledge Graph
                                             </a>
                                         </div>
@@ -125,19 +127,18 @@
                                         <!-- Advanced Features -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Advanced Features</h6>
-                                            <a class="dropdown-item" href="/federated-learning" data-module="federated-learning">
+                                            <a class="dropdown-item" href="/api/federated-learning/" data-module="federated-learning">
                                                 <i class="fas fa-network-wired text-secondary"></i> Federated Learning
                                             </a>
-                                            <a class="dropdown-item" href="/physics-modeling" data-module="physics-modeling">
+                                            <a class="dropdown-item" href="/api/physics-modeling/" data-module="physics-modeling">
                                                 <i class="fas fa-atom text-dark"></i> Physics Modeling
                                             </a>
                                         </div>
                                         <!-- Management -->
                                         <div class="col-md-6">
                                             <h6 class="dropdown-header">Management</h6>
-                                            <a class="dropdown-item" href="/certificate-manager" data-module="certificate-manager">
-                                                <i class="fas fa-certificate text-danger"></i> Certificate Manager
-                                            </a>
+                                            <a class="dropdown-item" href="/api/certificate-manager/" data-module="certificate-manager">
+                                            <i class="fas fa-certificate text-danger"></i> Certificate Manager </a>
                                             <a class="dropdown-item" href="/api/auth/" data-module="auth">
                                                 <i class="fas fa-users-cog text-muted"></i> User Management
                                             </a>
@@ -172,17 +173,17 @@
                             <i class="fas fa-bolt"></i> Quick Actions
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/aasx-etl" data-quick-action="aasx-etl">
+                            <li><a class="dropdown-item" href="/api/aasx-etl/" data-quick-action="aasx-etl">
                                 <i class="fas fa-upload text-primary"></i> Upload AASX
                             </a></li>
-                            <li><a class="dropdown-item" href="/twin-registry" data-quick-action="twin-registry">
+                            <li><a class="dropdown-item" href="/api/twin-registry/" data-quick-action="twin-registry">
                                 <i class="fas fa-plus text-success"></i> Create Twin
                             </a></li>
-                            <li><a class="dropdown-item" href="/ai-rag" data-quick-action="ai-rag">
+                            <li><a class="dropdown-item" href="/api/ai-rag/" data-quick-action="ai-rag">
                                 <i class="fas fa-search text-info"></i> Analyze File
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/certificate-manager" data-quick-action="certificate-manager">
+                            <li><a class="dropdown-item" href="/api/certificate-manager/" data-quick-action="certificate-manager">
                                 <i class="fas fa-certificate text-warning"></i> Generate Certificate
                             </a></li>
                         </ul>
@@ -241,6 +242,13 @@
                         </ul>
                     </li>
                     
+                    <!-- Login Button (for unauthenticated users) -->
+                    <li class="nav-item" id="loginButtonContainer" data-auth="guest-content" data-auth-optional>
+                        <a class="nav-link btn btn-outline-light btn-sm" href="/api/auth/" data-auth="login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    
                     <!-- User Menu -->
                     <li class="nav-item dropdown" id="userTab">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -248,27 +256,27 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <!-- Unauthenticated State -->
-                            <div id="unauthenticatedMenu" data-auth-optional>
+                            <div id="unauthenticatedMenu" data-auth="guest-content" data-auth-optional>
                                 <li><h6 class="dropdown-header">Account</h6></li>
-                                <li><a class="dropdown-item" href="/api/auth/">
+                                <li><a class="dropdown-item" href="/api/auth/" data-auth="login">
                                     <i class="fas fa-sign-in-alt me-2"></i>Login
                                 </a></li>
-                                <li><a class="dropdown-item" href="/api/auth/">
+                                <li><a class="dropdown-item" href="/api/auth/" data-auth="signup">
                                     <i class="fas fa-user-plus"></i> Sign Up
                                 </a></li>
                             </div>
                             
                             <!-- Authenticated State -->
-                            <div id="authenticatedMenu" style="display: none;" data-auth-required>
-                                <li><h6 class="dropdown-header">Welcome back, <span id="userDisplayName">User</span>!</h6></li>
-                                <li><a class="dropdown-item" href="/api/auth/">
+                            <div id="authenticatedMenu" style="display: none;" data-auth="authenticated-content" data-auth-required>
+                                <li><h6 class="dropdown-header">Welcome back, <span id="userDisplayName" data-auth="user-info">User</span>!</h6></li>
+                                <li><a class="dropdown-item" href="/api/auth/" data-auth="profile">
                                     <i class="fas fa-user"></i> Profile
                                 </a></li>
-                                <li><a class="dropdown-item" href="#" id="adminUsersLink" style="display: none;">
+                                <li><a class="dropdown-item" href="#" id="adminUsersLink" data-auth="user-management" style="display: none;">
                                     <i class="fas fa-users-cog"></i> User Management
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="logoutButton">
+                                <li><a class="dropdown-item" href="#" id="logoutButton" data-auth="logout" onclick="handleLogout()">
                                     <i class="fas fa-sign-out-alt"></i> Logout
                                 </a></li>
                             </div>
@@ -424,6 +432,37 @@
     
     <!-- Core Module (replaces main.js and api.js) -->
     <script type="module" src="{{ url_for('static', path='/js/core/index.js') }}"></script>
+    
+    <!-- Authentication Module - Loaded on all pages to maintain authentication state -->
+    <script type="module" src="{{ url_for('static', path='/js/modules/auth/index.js') }}"></script>
+
+    <!-- Logout Function -->
+    <script>
+        function handleLogout() {
+            try {
+                console.log('🔐 Manual logout triggered...');
+                
+                // Clear stored tokens
+                localStorage.removeItem('auth_token');
+                sessionStorage.removeItem('auth_token');
+                
+                // Update UI to show unauthenticated state
+                if (window.authUI && typeof window.authUI.showUnauthenticatedState === 'function') {
+                    window.authUI.showUnauthenticatedState();
+                }
+                
+                // Redirect to auth page
+                setTimeout(() => {
+                    window.location.href = '/api/auth/';
+                }, 500);
+                
+            } catch (error) {
+                console.error('❌ Logout failed:', error);
+                // Fallback: redirect anyway
+                window.location.href = '/api/auth/';
+            }
+        }
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

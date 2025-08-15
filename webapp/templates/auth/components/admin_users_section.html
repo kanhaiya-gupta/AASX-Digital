@@ -1,185 +1,132 @@
 <!-- Admin Users Section -->
-<div class="auth-container" id="adminUsersSection">
-    <div class="auth-card" style="max-width: 1200px;">
-        <div class="auth-header">
-            <h1><i class="fas fa-users-cog"></i> User Management</h1>
-            <p>Manage system users and permissions</p>
-        </div>
-        
-        <!-- Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-number">{{ users|length if users else 0 }}</div>
-                    <div class="stats-label">Total Users</div>
+<div class="auth-container-fluid container-fluid">
+    <div class="auth-row row">
+        <div class="auth-col-12 col-12">
+            <div class="auth-card card">
+                <div class="auth-card-header card-header">
+                    <h1 class="auth-card-title mb-0"><i class="fas fa-users-cog me-2"></i>User Management</h1>
+                    <p class="auth-card-subtitle mb-0">Manage system users, roles, and permissions</p>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" data-action="refresh-users-list">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Refresh
+                        </button>
+                        <button class="btn btn-primary" data-action="show-create-user-modal">
+                            <i class="fas fa-user-plus me-1"></i>
+                            Add User
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-number">{{ users|selectattr('role', 'equalto', 'admin')|list|length if users else 0 }}</div>
-                    <div class="stats-label">Administrators</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-number">{{ users|selectattr('role', 'equalto', 'user')|list|length if users else 0 }}</div>
-                    <div class="stats-label">Regular Users</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stats-card text-center">
-                    <div class="stats-number">{{ users|selectattr('is_active', 'equalto', True)|list|length if users else 0 }}</div>
-                    <div class="stats-label">Active Users</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Users Table -->
-        <div class="table-responsive">
-            {% if users and users|length > 0 %}
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Last Login</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="user-avatar me-3">
-                                    {{ user.username[0].upper() if user.username else 'U' }}
-                                </div>
-                                <div>
-                                    <div class="fw-bold">{{ user.username or 'Unknown' }}</div>
-                                    <div class="text-muted small">{{ user.full_name or 'No name set' }}</div>
+                
+                <div class="auth-card-body card-body">
+                    <!-- Users Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="auth-card card text-center">
+                                <div class="auth-card-body card-body">
+                                    <h3 class="text-primary" id="totalUsers">0</h3>
+                                    <p class="mb-0">Total Users</p>
                                 </div>
                             </div>
-                        </td>
-                        <td>{{ user.email or 'No email' }}</td>
-                        <td>
-                            {% if user.role == 'admin' %}
-                                <span class="badge badge-danger">Admin</span>
-                            {% elif user.role == 'manager' %}
-                                <span class="badge badge-warning">Manager</span>
-                            {% else %}
-                                <span class="badge badge-primary">User</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if user.is_active %}
-                                <span class="badge badge-success">Active</span>
-                            {% else %}
-                                <span class="badge badge-warning">Inactive</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <small class="text-muted">
-                                {{ user.created_at.split('T')[0] if user.created_at else 'Unknown' }}
-                            </small>
-                        </td>
-                        <td>
-                            <small class="text-muted">
-                                {{ user.last_login.split('T')[0] if user.last_login else 'Never' }}
-                            </small>
-                        </td>
-                        <td>
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-primary" 
-                                        onclick="viewUser('{{ user.user_id }}')" title="View Details">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                {% if current_user and user.user_id != current_user.user_id %}
-                                <button type="button" class="btn btn-sm btn-outline-warning" 
-                                        onclick="editUser('{{ user.user_id }}')" title="Edit User">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                        onclick="deleteUser('{{ user.user_id }}')" title="Delete User">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <div class="auth-card card text-center">
+                                <div class="auth-card-body card-body">
+                                    <h3 class="text-success" id="activeUsers">0</h3>
+                                    <p class="mb-0">Active Users</p>
+                                </div>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="text-center py-5">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>No users found.</strong> 
-                    {% if current_user and current_user.role == 'admin' %}
-                    <a href="#" onclick="showCreateUserModal()" class="alert-link">Create your first user</a> to get started.
-                    {% else %}
-                    Contact your administrator to add users to the system.
-                    {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <div class="auth-card card text-center">
+                                <div class="auth-card-body card-body">
+                                    <h3 class="text-warning" id="pendingUsers">0</h3>
+                                    <p class="mb-0">Pending Users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="auth-card card text-center">
+                                <div class="auth-card-body card-body">
+                                    <h3 class="text-danger" id="suspendedUsers">0</h3>
+                                    <p class="mb-0">Suspended Users</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div class="auth-card card">
+                        <div class="auth-card-header card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                Users List
+                            </h5>
+                        </div>
+                        <div class="auth-card-body card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="usersTable">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Role</th>
+                                            <th>Status</th>
+                                            <th>Last Login</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody">
+                                        <!-- Users will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Empty State -->
+                            <div id="emptyUsersState" class="text-center py-5" style="display: none;">
+                                <div class="empty-state">
+                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No Users Found</h5>
+                                    <p class="text-muted">There are no users in the system yet.</p>
+                                    <a href="#" data-action="show-create-user-modal" class="alert-link">Create your first user</a> to get started.
+                                </div>
+                            </div>
+                            
+                            <!-- Loading State -->
+                            <div id="usersLoadingState" class="text-center py-5">
+                                <div class="loading-state">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-3 text-muted">Loading users...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Details Modal -->
+                    <div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="userDetailsModalLabel">User Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body" id="userDetailsContent">
+                                    <!-- User details will be populated by JavaScript -->
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-primary" data-action="edit-user">
+                                        <i class="fas fa-edit me-2"></i>Edit User
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="admin-users-alert-container" class="mt-4"></div>
                 </div>
-            </div>
-            {% endif %}
-        </div>
-        
-        <!-- Action Buttons -->
-        <div class="d-flex justify-content-between align-items-center mt-4">
-            <div>
-                {% if current_user and current_user.role == 'admin' %}
-                <button type="button" class="btn auth-btn auth-btn-primary" onclick="showCreateUserModal()">
-                    <i class="fas fa-user-plus me-2"></i>Add New User
-                </button>
-                {% endif %}
-            </div>
-            <div>
-                <button type="button" class="btn auth-btn auth-btn-outline-primary" onclick="refreshUsersList()">
-                    <i class="fas fa-sync-alt me-2"></i>Refresh
-                </button>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    // View user details
-    function viewUser(userId) {
-        // TODO: Implement user details modal
-        console.log('View user details for:', userId);
-        alert('View user details for: ' + userId);
-    }
-    
-    // Edit user
-    function editUser(userId) {
-        // TODO: Implement user edit modal
-        console.log('Edit user:', userId);
-        alert('Edit user: ' + userId);
-    }
-    
-    // Delete user
-    function deleteUser(userId) {
-        if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-            // TODO: Implement user deletion
-            console.log('Delete user:', userId);
-            alert('Delete user: ' + userId);
-        }
-    }
-    
-    // Show create user modal
-    function showCreateUserModal() {
-        // TODO: Implement create user modal
-        console.log('Show create user modal');
-        alert('Show create user modal');
-    }
-    
-    // Refresh users list
-    function refreshUsersList() {
-        // TODO: Implement refresh functionality
-        console.log('Refresh users list');
-        location.reload();
-    }
-</script> 

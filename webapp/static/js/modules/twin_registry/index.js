@@ -34,6 +34,9 @@ let relationshipManager = null;
 let instanceManager = null;
 let configurationManager = null;
 
+// Module initialization state
+let isInitialized = false;
+
 /**
  * Initialize Twin Registry Module
  * Sets up all Twin Registry components and functionality
@@ -42,10 +45,47 @@ export async function initTwinRegistryModule() {
     console.log('🚀 Twin Registry Module initializing...');
     
     try {
+        // ✅ CORRECT: Wait for central auth system (like Knowledge Graph)
+        console.log('🔐 Twin Registry Module: Waiting for authentication system...');
+        await new Promise((resolve) => {
+            if (window.authSystemReady && window.authManager) {
+                console.log('🔐 Twin Registry Module: Auth system already ready');
+                resolve();
+                return;
+            }
+            
+            const handleReady = () => {
+                console.log('🚀 Twin Registry Module: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Registry Module: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+        
+        console.log('🔐 Twin Registry Module: Authentication system ready, proceeding with initialization...');
+        
         // Initialize alert system first
         initAlertSystem();
         
-        // Initialize Core Registry
+        // Initialize Core Registry with auth integration
         twinRegistryCore = new TwinRegistryCore();
         await twinRegistryCore.init();
         
@@ -88,7 +128,7 @@ export async function initTwinRegistryModule() {
         configurationManager = new ConfigurationManager('/api/twin-registry');
         await configurationManager.init();
         
-        console.log('✅ Twin Registry Module initialized with modular architecture');
+        console.log('✅ Twin Registry Module initialized with central auth integration');
         
         // Make instances available globally
         window.twinRegistryCore = twinRegistryCore;
@@ -98,11 +138,22 @@ export async function initTwinRegistryModule() {
         window.twinRegistryUIUpdater = twinRegistryUIUpdater;
         window.twinRegistryChartUpdater = twinRegistryChartUpdater;
         
-        // Make new modular instances available globally
+        // Make modular managers available globally
         window.lifecycleManager = lifecycleManager;
         window.relationshipManager = relationshipManager;
         window.instanceManager = instanceManager;
         window.configurationManager = configurationManager;
+        
+        // Make initialization function available globally for post-login orchestrator
+        window.initializeTwinRegistryIfNeeded = async () => {
+            if (!isInitialized) {
+                console.log('🔄 Post-Login Orchestrator: Initializing Twin Registry modules...');
+                await initTwinRegistryModule();
+                console.log('✅ Post-Login Orchestrator: Twin Registry modules initialized successfully');
+            }
+        };
+        
+        isInitialized = true;
         
         // Set up global functions for HTML onclick handlers
         window.startTwin = (twinId, user = 'system') => lifecycleManager.startTwin(twinId, user);

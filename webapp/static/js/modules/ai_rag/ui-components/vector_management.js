@@ -16,23 +16,18 @@ let authToken = null;
 /**
  * Initialize authentication
  */
-function initAuthentication() {
+async function initAuthentication() {
     try {
-        // Check if user is authenticated
-        if (typeof getCurrentUser === 'function') {
-            currentUser = getCurrentUser();
-            if (currentUser) {
-                isAuthenticated = true;
-                authToken = getAuthToken();
-                console.log('🔐 Vector Management: User authenticated:', currentUser.username);
-            } else {
-                console.log('🔐 Vector Management: User not authenticated');
-                isAuthenticated = false;
-            }
-        } else {
-            console.warn('⚠️ Vector Management: getCurrentUser function not available');
-            isAuthenticated = false;
-        }
+        // ✅ CORRECT: Wait for central auth system
+        await waitForAuthSystem();
+        
+        // ✅ CORRECT: Update auth state from central system
+        updateAuthState();
+        
+        // ✅ CORRECT: Listen for auth state changes
+        setupAuthListeners();
+        
+        console.log('🔐 Vector Management: Authentication initialized with central auth system');
     } catch (error) {
         console.error('❌ Vector Management: Authentication initialization error:', error);
         isAuthenticated = false;
@@ -40,16 +35,101 @@ function initAuthentication() {
 }
 
 /**
- * Get authentication token
+ * Wait for central auth system to be ready
  */
-function getAuthToken() {
-    try {
-        // Try to get token from localStorage/sessionStorage
-        return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    } catch (error) {
-        console.warn('⚠️ Vector Management: Could not get auth token:', error);
-        return null;
+async function waitForAuthSystem() {
+    console.log('🔐 Vector Management: Waiting for central auth system...');
+    
+    if (window.authSystemReady && window.authManager) {
+        console.log('🔐 Vector Management: Auth system already ready');
+        return;
     }
+    
+    return new Promise((resolve) => {
+        const handleReady = () => {
+            console.log('🚀 Vector Management: Auth system ready event received');
+            window.removeEventListener('authSystemReady', handleReady);
+            resolve();
+        };
+        
+        window.addEventListener('authSystemReady', handleReady);
+        
+        // Fallback: check periodically
+        const checkInterval = setInterval(() => {
+            if (window.authSystemReady && window.authManager) {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            }
+        }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            window.removeEventListener('authSystemReady', handleReady);
+            console.warn('⚠️ Vector Management: Timeout waiting for auth system');
+            resolve();
+        }, 10000);
+    });
+}
+
+/**
+ * Update authentication state from central auth manager
+ */
+function updateAuthState() {
+    if (!window.authManager) {
+        console.log('⚠️ Vector Management: No auth manager available');
+        return;
+    }
+    
+    try {
+        const sessionInfo = window.authManager.getSessionInfo();
+        console.log('🔐 Vector Management: Auth state update:', sessionInfo);
+        
+        if (sessionInfo && sessionInfo.isAuthenticated) {
+            isAuthenticated = true;
+            currentUser = sessionInfo.user;
+            authToken = window.authManager.getStoredToken();
+            console.log('🔐 Vector Management: User authenticated:', currentUser.username);
+        } else {
+            isAuthenticated = false;
+            currentUser = null;
+            authToken = null;
+            console.log('🔐 Vector Management: User not authenticated (demo mode)');
+        }
+    } catch (error) {
+        console.warn('⚠️ Vector Management: Error updating auth state:', error);
+        isAuthenticated = false;
+        currentUser = null;
+        authToken = null;
+    }
+}
+
+/**
+ * Setup authentication listeners
+ */
+function setupAuthListeners() {
+    // Listen for auth state changes
+    window.addEventListener('authStateChanged', () => {
+        console.log('🔄 Vector Management: Auth state changed, updating...');
+        updateAuthState();
+    });
+    
+    // Listen for login success
+    window.addEventListener('loginSuccess', async () => {
+        console.log('🔐 Vector Management: Login success detected');
+        updateAuthState();
+        // Refresh data after login
+        await refreshVectorDbInfo();
+    });
+    
+    // Listen for logout
+    window.addEventListener('logout', () => {
+        console.log('🔐 Vector Management: Logout detected');
+        updateAuthState();
+        // Clear sensitive data after logout
+        clearVectorDataStats();
+    });
 }
 
 /**
@@ -60,8 +140,12 @@ function getAuthHeaders() {
         'Content-Type': 'application/json'
     };
     
-    if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+    // ✅ CORRECT: Get token from central auth manager
+    if (window.authManager) {
+        const token = window.authManager.getStoredToken();
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
     }
     
     return headers;

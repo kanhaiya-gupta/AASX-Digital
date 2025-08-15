@@ -25,36 +25,81 @@ export default class RealTimeMetricsComponent {
     }
     
     /**
-     * Initialize authentication
+     * Wait for central authentication system to be ready
      */
-    initAuthentication() {
-        try {
-            const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-            const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+    async waitForAuthSystem() {
+        console.log('🔐 Real-time Metrics: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Real-time Metrics: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Real-time Metrics: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
             
-            if (token && userData) {
-                this.authToken = token;
-                this.currentUser = JSON.parse(userData);
-                this.isAuthenticated = true;
-                console.log('🔐 Real-time Metrics: User authenticated as', this.currentUser.username);
-            } else {
-                this.isAuthenticated = false;
-                console.log('🔐 Real-time Metrics: User not authenticated');
-            }
-        } catch (error) {
-            console.error('❌ Real-time Metrics: Authentication initialization failed:', error);
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Real-time Metrics: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Real-time Metrics: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
             this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Real-time Metrics: No auth manager available');
         }
     }
 
     /**
-     * Get authentication token
+     * Setup authentication event listeners
      */
-    getAuthToken() {
-        if (!this.authToken) {
-            this.initAuthentication();
-        }
-        return this.authToken;
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
     }
 
     /**
@@ -64,19 +109,37 @@ export default class RealTimeMetricsComponent {
         const headers = {
             'Content-Type': 'application/json'
         };
-        const token = this.getAuthToken();
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
         }
+        
         return headers;
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.realTimeData = {
+            twins: [],
+            total_twins: 0,
+            active_twins: 0,
+            avg_health_score: 0
+        };
+        console.log('🧹 Real-time Metrics: Sensitive data cleared');
     }
     
     async init() {
-        console.log('🔧 Initializing Real-time Metrics Component...');
-        
         try {
+            console.log('🔄 Initializing Real-time Metrics Component...');
+            
             // Initialize authentication
-            this.initAuthentication();
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
+            
             await this.loadRealTimeMetrics();
             this.initializeChart();
             this.setupEventListeners();

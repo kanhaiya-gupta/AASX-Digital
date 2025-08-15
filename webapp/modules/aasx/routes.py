@@ -2,13 +2,15 @@
 AASX ETL API: Thin FastAPI router using modular service architecture.
 Enforces Use Case → Projects → Files hierarchy.
 """
-from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, Depends
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form, Depends, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
 from pathlib import Path
+import logging
+from datetime import datetime
 
 # Import authentication decorators and user context
 from webapp.core.decorators.auth_decorators import (
@@ -17,11 +19,20 @@ from webapp.core.decorators.auth_decorators import (
 )
 from webapp.core.context.user_context import UserContext
 
+# Configure logger
+logger = logging.getLogger(__name__)
+
 # Import our service modules
-from .use_cases import use_case_service
-from .projects import project_service
-from .files import file_service
-from .processor import aasx_processor
+from .use_cases import UseCaseService
+from .projects import ProjectService
+from .files import FileService
+from .processor import AASXProcessor
+
+# Create service instances
+use_case_service = UseCaseService()
+project_service = ProjectService()
+file_service = FileService()
+aasx_processor = AASXProcessor()
 
 # Import new user-specific and organization services
 from .services.user_specific_service import UserSpecificService
@@ -82,18 +93,32 @@ class UseCaseCreate(BaseModel):
 
 # Dashboard
 @router.get("/", response_class=HTMLResponse)
-@require_auth("read", allow_independent=True)
+@require_auth()  # ✅ PHASE 2: Require authentication (middleware handles demo users)
 async def aasx_dashboard(request: Request, user_context: UserContext = Depends(get_current_user)):
-    """AASX ETL Dashboard - requires read permission, allows independent users"""
-    # Initialize user-specific service
-    user_service = UserSpecificService(user_context)
-    organization_service = OrganizationService(user_context)
+    """AASX ETL Dashboard - requires authentication, middleware handles demo users"""
     
-    # Get user-specific data
-    user_projects = user_service.get_user_projects()
-    user_files = user_service.get_user_files()
-    user_stats = user_service.get_user_statistics()
-    organization_stats = organization_service.get_organization_statistics()
+    # ✅ IMPLEMENTATION: Use user-specific services instead of generic services
+    # This implements the Netflix Principle: demo users see demo data, authenticated users see their data
+    user_specific_service = UserSpecificService(user_context)
+    
+    # Get user-specific data based on role and permissions
+    user_projects = user_specific_service.get_user_projects()
+    user_files = user_specific_service.get_user_files()
+    
+    # Check if this is a demo user
+    is_demo = user_context.username == 'demo'
+    
+    # Get user-specific statistics
+    user_stats = user_specific_service.get_user_statistics()
+    # For demo users, use the same stats for organization (they only see demo org data)
+    try:
+        if is_demo:
+            organization_stats = user_stats
+        else:
+            organization_stats = user_specific_service.get_organization_statistics()
+    except Exception as e:
+        logger.warning(f"Could not get organization statistics: {e}, using user stats as fallback")
+        organization_stats = user_stats
     
     return templates.TemplateResponse(
         "aasx/index.html",
@@ -101,31 +126,47 @@ async def aasx_dashboard(request: Request, user_context: UserContext = Depends(g
             "request": request, 
             "title": "AASX ETL Pipeline - AASX Digital Twin Analytics Framework",
             "user": user_context,
-            "can_upload": getattr(user_context, 'has_permission', lambda x: False)("write"),
-            "can_process": getattr(user_context, 'has_permission', lambda x: False)("write"),
-            "can_delete": getattr(user_context, 'has_permission', lambda x: False)("manage"),
-            "is_independent": getattr(user_context, 'is_independent', False),
-            "user_type": getattr(user_context, 'get_user_type', lambda: 'independent')(),
+            "can_upload": user_context.has_permission("write"),  # Demo users can upload to experience full capabilities
+            "can_process": user_context.has_permission("write"),  # Demo users can run pipeline to experience full capabilities
+            "can_delete": user_context.has_permission("manage") and not is_demo,  # But demo users can't delete (safety)
+            "user_type": "organization",  # All users are organization users
+            "user_type": user_context.get_user_type(),
             "user_projects": user_projects,
             "user_files": user_files,
             "user_stats": user_stats,
-            "organization_stats": organization_stats
+            "organization_stats": organization_stats,
+            "is_demo": is_demo
         }
     )
 
 # Use Case Endpoints
 @router.get("/use-cases")
-@require_auth("read", allow_independent=True)
-async def list_use_cases(user_context: UserContext = Depends(get_current_user)):
-    """List all use cases - requires read permission, allows independent users"""
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def list_use_cases(request: Request, user_context: UserContext = Depends(get_current_user)):
+    """List all use cases - requires read permission, middleware handles demo users"""
     try:
-        use_cases = use_case_service.list_use_cases()
-        return {"use_cases": use_cases, "total": len(use_cases)}
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
+        
+        logger.info(f"list_use_cases called with user_context: {user_context}")
+        logger.info(f"User role: {getattr(user_context, 'role', 'unknown')}")
+        logger.info(f"User organization_id: {getattr(user_context, 'organization_id', 'unknown')}")
+        
+        # ✅ IMPLEMENTATION: Use user-specific service for use cases
+        user_specific_service = UserSpecificService(user_context)
+        use_cases = user_specific_service.get_user_use_cases()
+        
+        logger.info(f"Retrieved use_cases: {len(use_cases) if use_cases else 0}")
+        
+        # Frontend expects use_cases array directly, not wrapped in object
+        return use_cases
     except Exception as e:
+        logger.error(f"Error in list_use_cases: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/use-cases/{use_case_id}")
-@require_auth("read", allow_independent=True)
+@require_auth("read", allow_independent=True)  # ✅ PHASE 2: Require read permission, allow independent users
 async def get_use_case(use_case_id: str, user_context: UserContext = Depends(get_current_user)):
     """Get specific use case - requires read permission, allows independent users"""
     try:
@@ -133,6 +174,24 @@ async def get_use_case(use_case_id: str, user_context: UserContext = Depends(get
         if not use_case:
             raise HTTPException(status_code=404, detail="Use case not found")
         return use_case
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/use-cases/{use_case_id}/projects")
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def get_projects_by_use_case(use_case_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
+    """Get projects for a specific use case - requires read permission, middleware handles demo users"""
+    try:
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
+        
+        # ✅ IMPLEMENTATION: Use user-specific service for projects
+        user_specific_service = UserSpecificService(user_context)
+        projects = user_specific_service.get_projects_by_use_case(use_case_id)
+        
+        # Frontend expects projects array directly, not wrapped in object
+        return projects
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -148,43 +207,56 @@ async def create_use_case(use_case_data: UseCaseCreate, user_context: UserContex
 
 # Project Endpoints with User-Specific Data
 @router.get("/projects")
-@require_auth("read", allow_independent=True)
-async def list_projects(use_case_id: str = None, user_context: UserContext = Depends(get_current_user)):
-    """List projects for current user - requires read permission, allows independent users"""
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def list_projects(use_case_id: str = None, request: Request = None, user_context: UserContext = Depends(get_current_user)):
+    """List projects for current user - requires read permission, middleware handles demo users"""
     try:
-        # Initialize user-specific service
-        user_service = UserSpecificService(user_context)
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
+        
+        logger.info(f"list_projects called with user_context: {user_context}")
+        logger.info(f"User role: {getattr(user_context, 'role', 'unknown')}")
+        logger.info(f"User organization_id: {getattr(user_context, 'organization_id', 'unknown')}")
+        logger.info(f"User username: {getattr(user_context, 'username', 'unknown')}")
+        logger.info(f"User user_id: {getattr(user_context, 'user_id', 'unknown')}")
+        
+        # ✅ IMPLEMENTATION: Use user-specific service for projects
+        user_specific_service = UserSpecificService(user_context)
         
         if use_case_id:
             # Filter by use case if specified
-            all_projects = user_service.get_user_projects()
-            projects = [p for p in all_projects if p.get("use_case_id") == use_case_id]
+            projects = user_specific_service.get_projects_by_use_case(use_case_id)
         else:
-            # Get all user projects
-            projects = user_service.get_user_projects()
+            # Get all user-accessible projects
+            projects = user_specific_service.get_user_projects()
         
-        return {"projects": projects, "total": len(projects)}
+        logger.info(f"Retrieved projects: {len(projects) if projects else 0}")
+        
+        # Frontend expects projects array directly, not wrapped in object
+        return projects
     except Exception as e:
+        logger.error(f"Error in list_projects: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects/{project_id}")
-@require_auth("read", allow_independent=True)
-async def get_project(project_id: str, user_context: UserContext = Depends(get_current_user)):
-    """Get specific project - requires read permission, allows independent users"""
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def get_project(project_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
+    """Get specific project - requires read permission, middleware handles demo users"""
     try:
-        # Initialize user-specific service
-        user_service = UserSpecificService(user_context)
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
         
-        # Check if user can access this project
-        if not user_service.can_access_project(project_id):
-            raise HTTPException(status_code=403, detail="Access denied to this project")
+        # ✅ IMPLEMENTATION: Use user-specific service for project access
+        user_specific_service = UserSpecificService(user_context)
+        project = user_specific_service.get_user_project(project_id)
         
-        project = project_service.get_project(project_id)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         
-        # Add file count
-        project["file_count"] = user_service.get_project_file_count(project_id)
+        # Add file count using user-specific service
+        project["file_count"] = user_specific_service.get_project_file_count(project_id)
         
         return project
     except Exception as e:
@@ -207,44 +279,111 @@ async def create_project(project_data: ProjectCreate, user_context: UserContext 
 
 # File Endpoints with User-Specific Data
 @router.get("/files")
-@require_auth("read", allow_independent=True)
-async def list_all_files(user_context: UserContext = Depends(get_current_user)):
-    """List all files for current user - requires read permission, allows independent users"""
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def list_files(request: Request, user_context: UserContext = Depends(get_current_user)):
+    """List files for current user - requires read permission, middleware handles demo users"""
     try:
-        # Initialize user-specific service
-        user_service = UserSpecificService(user_context)
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
         
-        files = user_service.get_user_files()
-        return {"files": files, "total": len(files)}
+        # ✅ IMPLEMENTATION: Use user-specific service for files
+        user_specific_service = UserSpecificService(user_context)
+        files = user_specific_service.get_user_files()
+        
+        # Frontend expects files array directly, not wrapped in object
+        return files
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/files/upload")
+@require_auth("write", allow_independent=True)  # ✅ PHASE 2: Allow demo users to upload
+async def upload_file(
+    project_id: str, 
+    file: UploadFile = File(...), 
+    description: str = Form(None),
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Upload a file to a project - requires write permission, allows demo users"""
+    try:
+        # Initialize file service
+        file_service_instance = FileService()
+        
+        # Upload the file
+        result = file_service_instance.upload_file(project_id, file, description)
+        
+        return {
+            "success": True,
+            "message": "File uploaded successfully",
+            "file_id": result.get("file_id"),
+            "filename": result.get("filename"),
+            "project_id": project_id
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/files/{file_id}")
-@require_auth("read", allow_independent=True)
-async def get_file(file_id: str, user_context: UserContext = Depends(get_current_user)):
-    """Get specific file - requires read permission, allows independent users"""
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def get_file(file_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
+    """Get specific file - requires read permission, middleware handles demo users"""
     try:
-        # Initialize user-specific service
-        user_service = UserSpecificService(user_context)
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
         
-        # Check if user can access this file
-        if not user_service.can_access_file(file_id):
-            raise HTTPException(status_code=403, detail="Access denied to this file")
+        # ✅ IMPLEMENTATION: Use user-specific service for file access control and data retrieval
+        user_specific_service = UserSpecificService(user_context)
         
-        file_data = file_service.get_file_by_id(file_id)
+        # Get file details with project and use case context (includes access control)
+        file_data = user_specific_service.get_user_file_details(file_id)
         if not file_data:
-            raise HTTPException(status_code=404, detail="File not found")
+            raise HTTPException(status_code=404, detail="File not found or access denied")
         
         return file_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/projects/{project_id}/files")
+@require_auth("read", allow_independent=True)
+async def get_project_files(request: Request, project_id: str, user_context: UserContext = Depends(get_current_user)):
+    """Get files for a specific project - requires read permission, allows demo users"""
+    try:
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
+        
+        if not user_context:
+            raise HTTPException(status_code=401, detail="User context not found")
+        
+        # Initialize user-specific service
+        user_specific_service = UserSpecificService(user_context)
+        
+        # Get all files for the current user
+        all_files = user_specific_service.get_user_files()
+        
+        # Filter files by project_id
+        project_files = [file for file in all_files if file.get('project_id') == project_id]
+        
+        return {
+            "files": project_files,
+            "count": len(project_files),
+            "project_id": project_id,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting project files: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # User-Specific Statistics
 @router.get("/user/stats")
-@require_auth("read", allow_independent=True)
-async def get_user_stats(user_context: UserContext = Depends(get_current_user)):
-    """Get user-specific statistics - requires read permission, allows independent users"""
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def get_user_stats(request: Request, user_context: UserContext = Depends(get_current_user)):
+    """Get user-specific statistics - requires read permission, middleware handles demo users"""
     try:
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
+        
         # Initialize user-specific service
         user_service = UserSpecificService(user_context)
         organization_service = OrganizationService(user_context)
@@ -409,19 +548,15 @@ async def list_files_for_etl(user_context: UserContext = Depends(get_current_use
     try:
         files = file_service.list_all_files()
         
-        # Check access permissions for all files
-        is_independent = getattr(user_context, 'is_independent', False)
+        # Check access permissions for all files - organization-based access control
         user_id = getattr(user_context, 'user_id', None)
         organization_id = getattr(user_context, 'organization_id', None)
         
         for file_info in files:
-            if is_independent:
-                if file_info.get('created_by') != user_id:
-                    raise HTTPException(status_code=403, detail="Access denied")
-            else:
-                if (file_info.get('organization_id') != organization_id and 
-                    file_info.get('created_by') != user_id):
-                    raise HTTPException(status_code=403, detail="Access denied")
+            # Users can access files from their organization or files they created
+            if (file_info.get('organization_id') != organization_id and 
+                file_info.get('created_by') != user_id):
+                raise HTTPException(status_code=403, detail="Access denied")
 
         return files
     except Exception as e:
@@ -436,18 +571,14 @@ async def get_file_by_path(use_case_name: str, project_name: str, filename: str,
         if not file_info:
             raise HTTPException(status_code=404, detail="File not found")
         
-        # Check access permissions
-        is_independent = getattr(user_context, 'is_independent', False)
+        # Check access permissions - organization-based access control
         user_id = getattr(user_context, 'user_id', None)
         organization_id = getattr(user_context, 'organization_id', None)
         
-        if is_independent:
-            if file_info.get('created_by') != user_id:
-                raise HTTPException(status_code=403, detail="Access denied")
-        else:
-            if (file_info.get('organization_id') != organization_id and 
-                file_info.get('created_by') != user_id):
-                raise HTTPException(status_code=403, detail="Access denied")
+        # Users can access files from their organization or files they created
+        if (file_info.get('organization_id') != organization_id and 
+            file_info.get('created_by') != user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
 
         return file_info
     except Exception as e:
@@ -462,18 +593,14 @@ async def get_file_path_info(file_id: str, user_context: UserContext = Depends(g
         if not path_info:
             raise HTTPException(status_code=404, detail="File not found")
         
-        # Check access permissions
-        is_independent = getattr(user_context, 'is_independent', False)
+        # Check access permissions - organization-based access control
         user_id = getattr(user_context, 'user_id', None)
         organization_id = getattr(user_context, 'organization_id', None)
         
-        if is_independent:
-            if path_info.get('created_by') != user_id:
-                raise HTTPException(status_code=403, detail="Access denied")
-        else:
-            if (path_info.get('organization_id') != organization_id and 
-                path_info.get('created_by') != user_id):
-                raise HTTPException(status_code=403, detail="Access denied")
+        # Users can access files from their organization or files they created
+        if (path_info.get('organization_id') != organization_id and 
+            path_info.get('created_by') != user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
 
         return path_info
     except Exception as e:
@@ -488,18 +615,14 @@ async def get_file_path(file_id: str, user_context: UserContext = Depends(get_cu
         if not path_info:
             raise HTTPException(status_code=404, detail="File not found")
         
-        # Check access permissions
-        is_independent = getattr(user_context, 'is_independent', False)
+        # Check access permissions - organization-based access control
         user_id = getattr(user_context, 'user_id', None)
         organization_id = getattr(user_context, 'organization_id', None)
         
-        if is_independent:
-            if path_info.get('created_by') != user_id:
-                raise HTTPException(status_code=403, detail="Access denied")
-        else:
-            if (path_info.get('organization_id') != organization_id and 
-                path_info.get('created_by') != user_id):
-                raise HTTPException(status_code=403, detail="Access denied")
+        # Users can access files from their organization or files they created
+        if (path_info.get('organization_id') != organization_id and 
+            path_info.get('created_by') != user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
 
         return path_info
     except Exception as e:
@@ -514,18 +637,14 @@ async def get_file_id_by_path(use_case_name: str, project_name: str, filename: s
         if not file_id:
             raise HTTPException(status_code=404, detail="File not found")
         
-        # Check access permissions
-        is_independent = getattr(user_context, 'is_independent', False)
+        # Check access permissions - organization-based access control
         user_id = getattr(user_context, 'user_id', None)
         organization_id = getattr(user_context, 'organization_id', None)
         
-        if is_independent:
-            if file_id.get('created_by') != user_id:
-                raise HTTPException(status_code=403, detail="Access denied")
-        else:
-            if (file_id.get('organization_id') != organization_id and 
-                file_id.get('created_by') != user_id):
-                raise HTTPException(status_code=403, detail="Access denied")
+        # Users can access files from their organization or files they created
+        if (file_id.get('organization_id') != organization_id and 
+            file_id.get('created_by') != user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
 
         return {"file_id": file_id, "logical_path": f"{use_case_name}/{project_name}/{filename}"}
     except Exception as e:
@@ -542,10 +661,14 @@ async def sync_projects(user_context: UserContext = Depends(get_current_user)):
 
 # Statistics and Utility Endpoints
 @router.get("/stats")
-@require_auth("read", allow_independent=True)
-async def get_aasx_stats(user_context: UserContext = Depends(get_current_user)):
-    """Get AASX processing statistics"""
+@require_auth("read")  # ✅ PHASE 2: Require read permission (middleware handles demo users)
+async def get_aasx_stats(request: Request, user_context: UserContext = Depends(get_current_user)):
+    """Get AASX processing statistics - requires read permission, middleware handles demo users"""
     try:
+        # Get user context from middleware (already set by middleware)
+        if not user_context:
+            user_context = getattr(request.state, 'user_context', None)
+        
         return aasx_processor.get_aasx_statistics()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

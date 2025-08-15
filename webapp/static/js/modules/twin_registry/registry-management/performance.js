@@ -32,6 +32,9 @@ export default class TwinRegistryPerformance {
             errors: 0,
             startTime: Date.now()
         };
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.authToken = null;
     }
 
     /**
@@ -41,6 +44,11 @@ export default class TwinRegistryPerformance {
         console.log('⚡ Initializing Twin Registry Performance Monitoring...');
 
         try {
+            // Initialize authentication
+            await this.waitForAuthSystem();
+            this.updateAuthState();
+            this.setupAuthListeners();
+            
             // Setup metrics collection
             this.setupMetricsCollection();
 
@@ -171,7 +179,9 @@ export default class TwinRegistryPerformance {
     async collectResponseTimeMetrics() {
         try {
             const startTime = Date.now();
-            const response = await fetch('/api/twin-registry/performance/response-time');
+            const response = await fetch('/api/twin-registry/performance/response-time', {
+            headers: this.getAuthHeaders()
+        });
             const responseTime = Date.now() - startTime;
 
             if (response.ok) {
@@ -202,7 +212,9 @@ export default class TwinRegistryPerformance {
      */
     async collectThroughputMetrics() {
         try {
-            const response = await fetch('/api/twin-registry/performance/throughput');
+            const response = await fetch('/api/twin-registry/performance/throughput', {
+            headers: this.getAuthHeaders()
+        });
             if (response.ok) {
                 const data = await response.json();
                 const throughput = data.requestsPerSecond || 0;
@@ -233,7 +245,9 @@ export default class TwinRegistryPerformance {
      */
     async collectErrorRateMetrics() {
         try {
-            const response = await fetch('/api/twin-registry/performance/error-rate');
+            const response = await fetch('/api/twin-registry/performance/error-rate', {
+            headers: this.getAuthHeaders()
+        });
             if (response.ok) {
                 const data = await response.json();
                 const errorRate = data.errorRate || 0;
@@ -264,7 +278,9 @@ export default class TwinRegistryPerformance {
      */
     async collectSystemMetrics() {
         try {
-            const response = await fetch('/api/twin-registry/performance/system');
+            const response = await fetch('/api/twin-registry/performance/system', {
+            headers: this.getAuthHeaders()
+        });
             if (response.ok) {
                 const data = await response.json();
                 
@@ -302,7 +318,9 @@ export default class TwinRegistryPerformance {
      */
     async collectRegistryMetrics() {
         try {
-                                const response = await fetch('/api/twin-registry/twins/statistics');
+                                const response = await fetch('/api/twin-registry/twins/statistics', {
+            headers: this.getAuthHeaders()
+        });
             if (response.ok) {
                 const data = await response.json();
                 
@@ -546,6 +564,109 @@ export default class TwinRegistryPerformance {
      */
     async refreshPerformanceData() {
         await this.collectPerformanceMetrics();
+    }
+
+    /**
+     * Wait for central authentication system to be ready
+     */
+    async waitForAuthSystem() {
+        console.log('🔐 Twin Registry Performance: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Twin Registry Performance: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 Twin Registry Performance: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
+                }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ Twin Registry Performance: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state
+     */
+    updateAuthState() {
+        if (window.authManager) {
+            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.currentUser = null; // User info not needed currently
+            this.authToken = window.authManager.getStoredToken();
+            console.log('🔐 Twin Registry Performance: Auth state updated', {
+                isAuthenticated: this.isAuthenticated,
+                user: this.currentUser?.username || 'anonymous'
+            });
+        } else {
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
+            console.log('🔐 Twin Registry Performance: No auth manager available');
+        }
+    }
+
+    /**
+     * Setup authentication event listeners
+     */
+    setupAuthListeners() {
+        window.addEventListener('authStateChanged', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('loginSuccess', () => {
+            this.updateAuthState();
+        });
+
+        window.addEventListener('logout', () => {
+            this.updateAuthState();
+            // Clear sensitive data when user logs out
+            this.clearSensitiveData();
+        });
+    }
+
+    /**
+     * Get authentication headers for API calls
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (this.authToken) {
+            headers['Authorization'] = `Bearer ${this.authToken}`;
+        }
+        
+        return headers;
+    }
+
+    /**
+     * Clear sensitive data on logout
+     */
+    clearSensitiveData() {
+        // Clear any cached data that might be user-specific
+        this.performanceData.history = [];
+        this.performanceData.alerts = [];
+        console.log('🧹 Twin Registry Performance: Sensitive data cleared');
     }
 
     /**

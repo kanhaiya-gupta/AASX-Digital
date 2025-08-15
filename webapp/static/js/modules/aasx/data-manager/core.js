@@ -16,151 +16,257 @@ export class DataManager {
         this.currentUseCase = null;
         this.currentFile = null;
         this.fileList = [];
+        
+        // Authentication state (will be updated by global auth manager)
         this.isAuthenticated = false;
         this.currentUser = null;
-        this.authToken = null;
-        
-        // Initialize authentication
-        this.initAuthentication();
         
         // Initialize other components
         this.initComponents();
     }
 
     /**
-     * Initialize authentication
+     * Initialize components
      */
-    initAuthentication() {
-        try {
-            // Check if user is authenticated
-            if (typeof getCurrentUser === 'function') {
-                this.currentUser = getCurrentUser();
-                if (this.currentUser) {
-                    this.isAuthenticated = true;
-                    this.authToken = this.getAuthToken();
-                    console.log('🔐 User authenticated:', this.currentUser.username);
-                    this.showUserInfo();
-                } else {
-                    console.log('🔐 User not authenticated');
-                    this.isAuthenticated = false;
-                }
-            } else {
-                console.warn('⚠️ getCurrentUser function not available');
-                this.isAuthenticated = false;
-            }
-        } catch (error) {
-            console.error('❌ Authentication initialization error:', error);
-            this.isAuthenticated = false;
-        }
+    initComponents() {
+        // Initialize any additional components here
+        console.log('🔧 Data Manager: Components initialized');
     }
 
-    /**
-     * Get authentication token
-     */
-    getAuthToken() {
-        try {
-            // Try to get token from localStorage/sessionStorage
-            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        } catch (error) {
-            console.warn('⚠️ Could not get auth token:', error);
-            return null;
-        }
-    }
+    
 
-    /**
-     * Show user information
-     */
-    showUserInfo() {
-        if (this.currentUser && this.currentUser.username) {
-            console.log('👤 Current user:', this.currentUser.username);
-            
-            // Update the user display name in the navigation
-            const userDisplayName = document.getElementById('userDisplayName');
-            if (userDisplayName) {
-                userDisplayName.textContent = this.currentUser.username;
-                console.log('✅ Updated user display name in navigation');
-            }
-            
-            // Show authenticated menu and hide unauthenticated menu
-            const authenticatedMenu = document.getElementById('authenticatedMenu');
-            const unauthenticatedMenu = document.getElementById('unauthenticatedMenu');
-            
-            if (authenticatedMenu) {
-                authenticatedMenu.style.display = 'block';
-                console.log('✅ Showed authenticated menu');
-            }
-            
-            if (unauthenticatedMenu) {
-                unauthenticatedMenu.style.display = 'none';
-                console.log('✅ Hid unauthenticated menu');
-            }
-            
-            // Show admin users link if user is super admin
-            if (this.currentUser.role === 'super_admin') {
-                const adminUsersLink = document.getElementById('adminUsersLink');
-                if (adminUsersLink) {
-                    adminUsersLink.style.display = 'block';
-                    console.log('✅ Showed admin users link for super admin');
-                }
-            }
-            
-            // Try to display username in other UI elements
-            const userInfoElement = document.getElementById('user-info') || 
-                                  document.querySelector('.user-info') ||
-                                  document.querySelector('[data-user-info]');
-            
-            if (userInfoElement) {
-                userInfoElement.textContent = `Welcome, ${this.currentUser.username}`;
-                userInfoElement.style.display = 'block';
-            }
-        } else {
-            // User not authenticated - show unauthenticated menu and hide authenticated menu
-            const authenticatedMenu = document.getElementById('authenticatedMenu');
-            const unauthenticatedMenu = document.getElementById('unauthenticatedMenu');
-            
-            if (authenticatedMenu) {
-                authenticatedMenu.style.display = 'none';
-                console.log('✅ Hid authenticated menu');
-            }
-            
-            if (unauthenticatedMenu) {
-                unauthenticatedMenu.style.display = 'block';
-                console.log('✅ Showed unauthenticated menu');
-            }
-            
-            // Hide admin users link
-            const adminUsersLink = document.getElementById('adminUsersLink');
-            if (adminUsersLink) {
-                adminUsersLink.style.display = 'none';
-                console.log('✅ Hid admin users link');
-            }
-        }
-    }
+
+
+
 
     /**
      * Get authentication headers for API calls
      */
     getAuthHeaders() {
-        const headers = {
-            'Content-Type': 'application/json'
-        };
+        // Get token from global auth manager
+        const token = this.getStoredToken();
         
-        if (this.authToken) {
-            headers['Authorization'] = `Bearer ${this.authToken}`;
+        if (!token) {
+            console.log('🔐 No auth token available - making unauthenticated request');
+            return {};
         }
         
-        return headers;
+        console.log('🔐 Auth token available - making authenticated request');
+        return {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        };
+    }
+
+    /**
+     * Wait for global auth manager to be ready
+     */
+    async waitForAuthManager() {
+        console.log('🔐 Data Manager: Waiting for global auth manager...');
+        
+        // CRITICAL FIX: Wait for auth system to be completely ready
+        // This ensures we get the most up-to-date auth manager instance
+        if (!window.authManager || !window.authSystemReady) {
+            console.log('⏳ Data Manager: Waiting for auth system to be completely ready...');
+            await new Promise(resolve => {
+                const handleAuthSystemReady = (event) => {
+                    console.log('🚀 Data Manager: Auth system ready event received');
+                    window.removeEventListener('authSystemReady', handleAuthSystemReady);
+                    resolve();
+                };
+                
+                // Listen for auth system ready event
+                window.addEventListener('authSystemReady', handleAuthSystemReady);
+                
+                // Fallback: also check for both conditions periodically
+                const checkInterval = setInterval(() => {
+                    if (window.authManager && window.authSystemReady) {
+                        clearInterval(checkInterval);
+                        window.removeEventListener('authSystemReady', handleAuthSystemReady);
+                        resolve();
+                    }
+                }, 100);
+                
+                // Timeout after 10 seconds
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleAuthSystemReady);
+                    console.warn('⚠️ Data Manager: Timeout waiting for auth system');
+                    resolve();
+                }, 10000);
+            });
+        }
+        
+        // Final check: ensure auth manager is available
+        while (!window.authManager) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        console.log('✅ Data Manager: Global auth manager ready');
+        
+        // Initial auth state setup
+        this.updateAuthState();
+        
+        // Listen for auth changes
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 Data Manager: Auth state changed, updating...');
+            this.updateAuthState();
+        });
+        
+        // 🚫 CRITICAL FIX: Remove duplicate loginSuccess listener - PostLoginOrchestrator handles this
+        // window.addEventListener('loginSuccess', async () => {
+        //     console.log('🔐 Data Manager: Login success detected');
+        //     this.updateAuthState();
+        //     
+        //     // 🚀 WORLD-CLASS: Immediately refresh user data after login
+        //     console.log('🔄 Data Manager: Refreshing user data after login...');
+        //         try {
+        //             await this.loadProjects();
+        //             console.log('✅ Data Manager: User data refreshed successfully after login');
+        //             await this.loadUseCases();
+        //             console.log('✅ Data Manager: Use cases refreshed successfully after login');
+        //         } catch (error) {
+        //             console.error('❌ Data Manager: Failed to refresh user data after login:', error);
+        //         }
+        // });
+        
+        window.addEventListener('logout', () => {
+            console.log('🔐 Data Manager: Logout detected');
+            this.updateAuthState();
+        });
+    }
+
+    /**
+     * Update authentication state from global auth manager
+     */
+    updateAuthState() {
+        // CRITICAL FIX: Check if new auth system is ready and take precedence
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 Data Manager: Using new auth system');
+        } else if (window.authManager) {
+            console.log('🔐 Data Manager: Using fallback auth manager');
+        } else {
+            console.log('⚠️ Data Manager: No auth manager available');
+            return;
+        }
+        
+        try {
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 Data Manager: Auth state update:', sessionInfo);
+            
+            // Store previous user for comparison
+            const previousUser = this.currentUser?.username;
+            
+            // Update local state based on global auth manager
+            this.isAuthenticated = sessionInfo.isAuthenticated;
+            this.currentUser = sessionInfo.user;
+            
+            // Update UI based on auth state
+            this.updateUIForAuthState();
+            
+            // 🚫 CRITICAL FIX: Reload user data when auth state changes
+            // This ensures demo data is replaced with real user data
+            if (this.isAuthenticated && this.currentUser && 
+                previousUser !== this.currentUser.username) {
+                console.log('🔄 Data Manager: User changed, reloading data...');
+                this.reloadUserData();
+            }
+            
+        } catch (error) {
+            console.warn('⚠️ Data Manager: Error updating auth state:', error);
+        }
+    }
+
+    /**
+     * Update UI based on current authentication state
+     */
+    updateUIForAuthState() {
+        if (this.isAuthenticated && this.currentUser) {
+            console.log('🔐 Data Manager: User authenticated:', this.currentUser.username);
+            // User is authenticated - UI will show their data
+        } else {
+            console.log('🔐 Data Manager: User not authenticated (demo mode)');
+            // User is not authenticated - UI will show demo data
+        }
+    }
+
+    /**
+     * Reload user data when authentication state changes
+     * This ensures demo data is replaced with real user data
+     */
+    async reloadUserData() {
+        try {
+            console.log('🔄 Data Manager: Reloading user data after auth change...');
+            
+            // Clear existing data first
+            this.projects = [];
+            this.useCases = [];
+            
+            // 🚫 CRITICAL FIX: Clear cache to force fresh data loading
+            this._groupedUseCasesCache = null;
+            
+            // 🚫 CRITICAL FIX: loadProjects() actually loads both projects AND use cases
+            // The method name is misleading - it loads both via Promise.all
+            await this.loadProjects();
+            
+            console.log('✅ Data Manager: User data reloaded successfully');
+            
+        } catch (error) {
+            console.error('❌ Data Manager: Failed to reload user data:', error);
+        }
+    }
+
+    /**
+     * Show authentication required message for authenticated users
+     */
+    showAuthenticationRequired() {
+        console.log('🔐 Showing authentication required message for authenticated user');
+        
+        if (typeof showWarning === 'function') {
+            showWarning('Your session has expired. Please log in again to access your data.');
+        } else {
+            console.warn('⚠️ Authentication required - please log in again');
+        }
+    }
+
+    /**
+     * Get stored authentication token
+     * @returns {string|null} Stored token or null
+     */
+    getStoredToken() {
+        try {
+            // Try to get token from auth manager first
+            if (window.authManager && typeof window.authManager.getStoredToken === 'function') {
+                return window.authManager.getStoredToken();
+            }
+            
+            // Fallback to localStorage
+            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+        } catch (error) {
+            console.warn('⚠️ Could not retrieve stored token:', error);
+            return null;
+        }
     }
 
     async init() {
+        // 🚫 CRITICAL FIX: Prevent duplicate initialization
+        if (this.isInitialized) {
+            console.log('⚠️ Data Manager already initialized, skipping...');
+            return;
+        }
+        
         console.log('🚀 Data Manager initializing...');
         
         try {
+            // Wait for global auth manager to be ready
+            await this.waitForAuthManager();
+            
             this.setupEventListeners();
             this.initFlowChart();
             await this.loadProjects();
             this.startAutoRefresh();
             
+            this.isInitialized = true;
             console.log('✅ Data Manager initialized successfully');
         } catch (error) {
             console.error('❌ Data Manager initialization failed:', error);
@@ -323,13 +429,7 @@ export class DataManager {
 
     async loadProjects() {
         console.log('🔄 Loading projects and use cases...');
-        
-        // Check if user is authenticated
-        if (!this.isAuthenticated) {
-            console.log('🔐 User not authenticated, redirecting to login');
-            this.showAuthenticationRequired();
-            return;
-        }
+        console.log(`🔐 Current auth state: ${this.isAuthenticated ? 'Authenticated' : 'Demo mode'}`);
         
         try {
             // Load both projects and use cases with authentication
@@ -373,9 +473,13 @@ export class DataManager {
                 
                 // Handle different error types appropriately
                 if (projectsResponse.status === 401 || useCasesResponse.status === 401) {
-                    // User is not authenticated - show login prompt instead of database error
-                    console.log('🔐 Authentication required - user needs to login');
-                    this.showAuthenticationRequired();
+                    // Authentication required - this should not happen for demo users
+                    console.log('🔐 Authentication required - user needs to login for full access');
+                    if (!this.isAuthenticated) {
+                        console.log('✅ Demo mode - showing limited data access');
+                    } else {
+                        this.showAuthenticationRequired();
+                    }
                 } else if (projectsResponse.status >= 500 || useCasesResponse.status >= 500) {
                     // Server/database error
                     this.showDatabaseError('Failed to load data from database. Please ensure the database is properly initialized.');
@@ -390,6 +494,8 @@ export class DataManager {
             this.showDatabaseError('Database error while loading data');
         }
     }
+
+
 
     startAutoRefresh() {
         // Auto-refresh every 30 seconds
@@ -418,6 +524,8 @@ export class DataManager {
             
             if (response.ok) {
                 showSuccess('Projects synchronized successfully!');
+                // 🚫 CRITICAL FIX: Clear cache to force fresh data loading
+                this._groupedUseCasesCache = null;
                 await this.loadProjects();
             } else {
                 showError('Failed to synchronize projects');
@@ -468,24 +576,7 @@ export class DataManager {
         }
     }
     
-    // Authentication required handler
-    showAuthenticationRequired() {
-        console.log('🔐 Showing authentication required message');
-        
-        // Show a user-friendly message about authentication
-        if (typeof showWarning === 'function') {
-            showWarning('Please log in to access this data. You will be redirected to the login page.');
-        } else {
-            console.warn('⚠️ Authentication required - please log in');
-        }
-        
-        // Optionally redirect to login page after a short delay
-        setTimeout(() => {
-            if (window.location.pathname !== '/auth') {
-                window.location.href = '/api/auth/';
-            }
-        }, 2000);
-    }
+
 
     // Update stats with fallback values
     async updateStatsWithFallback() {
@@ -511,8 +602,10 @@ export class DataManager {
     // Update stats from API
     async updateStats() {
         try {
+            // Always use auth headers - the backend will handle authentication
+            const headers = this.getAuthHeaders();
             const response = await fetch('/api/aasx-etl/stats', {
-                headers: this.getAuthHeaders()
+                headers: headers
             });
             if (response.ok) {
                 const stats = await response.json();
@@ -529,8 +622,12 @@ export class DataManager {
                 
                 // Handle different error types appropriately
                 if (response.status === 401) {
-                    // User is not authenticated - don't show database error
-                    console.log('🔐 Stats API requires authentication');
+                    // Authentication required
+                    if (!this.isAuthenticated) {
+                        console.log('🔐 Stats API requires authentication - demo mode, using fallback');
+                    } else {
+                        console.log('🔐 Stats API requires authentication - user needs to re-authenticate');
+                    }
                     return this.updateStatsWithFallback();
                 } else if (response.status >= 500) {
                     // Server/database error
@@ -567,14 +664,26 @@ export class DataManager {
 
     // Group projects by use case
     async groupProjectsByUseCase() {
+        // 🚫 CRITICAL FIX: Prevent duplicate API calls by caching grouped data
+        if (this._groupedUseCasesCache && this._groupedUseCasesCache.timestamp > Date.now() - 30000) {
+            console.log('📋 Data Manager: Using cached grouped use cases data (cache age: < 30s)');
+            return this._groupedUseCasesCache.data;
+        }
+        
+        console.log('🔄 Data Manager: Loading projects for use cases (API call)...');
         const useCasesWithProjects = [];
         
         for (const useCase of this.useCases) {
             try {
                 // Load projects for each use case using the same API as dropdown manager
                 console.log(`🔍 Data Manager: Loading projects for use case ${useCase.id} (${useCase.name})`);
+                
+                // Always use auth headers - the backend will handle authentication
+                const headers = this.getAuthHeaders();
+                console.log(`🔐 Loading projects for use case ${useCase.name} with auth: ${this.isAuthenticated ? 'Yes' : 'No'}`);
+                
                 const response = await fetch(`/api/aasx-etl/use-cases/${useCase.id}/projects`, {
-                    headers: this.getAuthHeaders()
+                    headers: headers
                 });
                 if (response.ok) {
                     const projects = await response.json();
@@ -612,6 +721,12 @@ export class DataManager {
                 });
             }
         }
+        
+        // Cache the grouped data for 30 seconds to prevent duplicate API calls
+        this._groupedUseCasesCache = {
+            data: useCasesWithProjects,
+            timestamp: Date.now()
+        };
         
         this.useCases = useCasesWithProjects;
         return this.useCases;

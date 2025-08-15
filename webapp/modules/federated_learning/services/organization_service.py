@@ -7,7 +7,7 @@ for the Federated Learning module.
 """
 
 from typing import List, Dict, Any, Optional
-from src.core.auth.user_context import UserContext
+from webapp.core.context.user_context import UserContext
 import logging
 
 logger = logging.getLogger(__name__)

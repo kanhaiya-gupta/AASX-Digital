@@ -13,11 +13,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .database import AuthDatabase
 from .models import TokenData, UserResponse
+from .shared_instance import shared_auth_db
 
 logger = logging.getLogger(__name__)
 
-# Initialize auth database
-auth_db = AuthDatabase()
+# Use shared auth database instance
+auth_db = shared_auth_db
 
 # Security scheme
 security = HTTPBearer()
@@ -89,7 +90,7 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
         logger.error(f"Error authenticating user: {e}")
         return None
 
-def get_user_from_request(request: Request) -> Optional[Dict[str, Any]]:
+def get_user_from_request(request: Request) -> Optional[Any]:
     """Get user from request (from token or session)"""
     try:
         # Try to get token from cookies first
@@ -101,48 +102,57 @@ def get_user_from_request(request: Request) -> Optional[Dict[str, Any]]:
                 token = auth_header.split(" ")[1]
         
         if not token:
+            logger.warning("❌ No token found in request")
             return None
         
+        logger.info(f"🔑 Token found: {token[:20]}...")
         username = get_current_user_from_token(token)
         if not username:
+            logger.warning("❌ Token verification failed - no username returned")
             return None
         
+        logger.info(f"✅ Token verified for username: {username}")
         user = auth_db.get_user_by_username(username)
         if not user or not user.is_active:
+            logger.warning(f"❌ User not found or inactive: {username}")
             return None
         
-        return {
+        # Convert SharedUser to dict format that middleware expects
+        user_dict = {
             "user_id": user.user_id,
             "username": user.username,
             "email": user.email,
             "full_name": user.full_name,
             "role": user.role,
-            "organization_id": user.organization_id,
+            "organization_id": user.org_id,  # SharedUser has org_id, not organization_id
             "is_active": user.is_active,
             "last_login": user.last_login
         }
+        
+        logger.info(f"✅ User authenticated successfully: {username} (role: {user.role}, org: {user.org_id})")
+        return user_dict
     except Exception as e:
         logger.error(f"Error getting user from request: {e}")
         return None
 
-def require_auth(request: Request) -> Dict[str, Any]:
+def require_auth(request: Request) -> Any:
     """Require authentication - raise exception if not authenticated"""
     user = get_user_from_request(request)
     if not user:
         raise HTTPException(status_code=401, detail="Authentication required")
     return user
 
-def require_admin(request: Request) -> Dict[str, Any]:
+def require_admin(request: Request) -> Any:
     """Require admin role"""
     user = require_auth(request)
-    if user["role"] != "admin":
+    if user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
-def require_manager_or_admin(request: Request) -> Dict[str, Any]:
+def require_manager_or_admin(request: Request) -> Any:
     """Require manager or admin role"""
     user = require_auth(request)
-    if user["role"] not in ["admin", "manager"]:
+    if user.role not in ["admin", "manager"]:
         raise HTTPException(status_code=403, detail="Manager or admin access required")
     return user
 
@@ -233,6 +243,10 @@ def get_user_permissions(user_role: str) -> list:
         "viewer": {
             "permissions": ["read"],
             "inherits": []
+        },
+        "guest": {
+            "permissions": ["read"],
+            "inherits": []
         }
     }
     
@@ -303,6 +317,13 @@ def get_role_hierarchy() -> dict:
             "permissions": ["read"],
             "inherits": [],
             "level": 1
+        },
+        "guest": {
+            "name": "Guest",
+            "description": "Public read-only access for demo users",
+            "permissions": ["read"],
+            "inherits": [],
+            "level": 0
         }
     }
 

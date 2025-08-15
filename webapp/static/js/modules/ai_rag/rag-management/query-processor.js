@@ -22,48 +22,110 @@ export default class AIRAGQueryProcessor {
         this.isAuthenticated = false;
         this.currentUser = null;
         this.authToken = null;
-        
-        // Initialize authentication
-        this.initAuthentication();
     }
 
     /**
-     * Initialize authentication
+     * Wait for central auth system to be ready
      */
-    initAuthentication() {
-        try {
-            // Check if user is authenticated
-            if (typeof getCurrentUser === 'function') {
-                this.currentUser = getCurrentUser();
-                if (this.currentUser) {
-                    this.isAuthenticated = true;
-                    this.authToken = this.getAuthToken();
-                    console.log('🔐 AI RAG Query Processor: User authenticated:', this.currentUser.username);
-                } else {
-                    console.log('🔐 AI RAG Query Processor: User not authenticated');
-                    this.isAuthenticated = false;
+    async waitForAuthSystem() {
+        console.log('🔐 AI RAG Query Processor: Waiting for central auth system...');
+        
+        if (window.authSystemReady && window.authManager) {
+            console.log('🔐 AI RAG Query Processor: Auth system already ready');
+            return;
+        }
+        
+        return new Promise((resolve) => {
+            const handleReady = () => {
+                console.log('🚀 AI RAG Query Processor: Auth system ready event received');
+                window.removeEventListener('authSystemReady', handleReady);
+                resolve();
+            };
+            
+            window.addEventListener('authSystemReady', handleReady);
+            
+            // Fallback: check periodically
+            const checkInterval = setInterval(() => {
+                if (window.authSystemReady && window.authManager) {
+                    clearInterval(checkInterval);
+                    window.removeEventListener('authSystemReady', handleReady);
+                    resolve();
                 }
+            }, 100);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                window.removeEventListener('authSystemReady', handleReady);
+                console.warn('⚠️ AI RAG Query Processor: Timeout waiting for auth system');
+                resolve();
+            }, 10000);
+        });
+    }
+
+    /**
+     * Update authentication state from central auth manager
+     */
+    updateAuthState() {
+        if (!window.authManager) {
+            console.log('⚠️ AI RAG Query Processor: No auth manager available');
+            return;
+        }
+        
+        try {
+            const sessionInfo = window.authManager.getSessionInfo();
+            console.log('🔐 AI RAG Query Processor: Auth state update:', sessionInfo);
+            
+            if (sessionInfo && sessionInfo.isAuthenticated) {
+                this.isAuthenticated = true;
+                this.currentUser = {
+                    user_id: sessionInfo.user_id,
+                    username: sessionInfo.username,
+                    role: sessionInfo.role,
+                    organization_id: sessionInfo.organization_id
+                };
+                this.authToken = window.authManager.getStoredToken();
+                console.log('🔐 AI RAG Query Processor: User authenticated:', this.currentUser.username);
             } else {
-                console.warn('⚠️ AI RAG Query Processor: getCurrentUser function not available');
                 this.isAuthenticated = false;
+                this.currentUser = null;
+                this.authToken = null;
+                console.log('🔐 AI RAG Query Processor: User not authenticated (demo mode)');
             }
         } catch (error) {
-            console.error('❌ AI RAG Query Processor: Authentication initialization error:', error);
+            console.warn('⚠️ AI RAG Query Processor: Error updating auth state:', error);
             this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
         }
     }
 
     /**
-     * Get authentication token
+     * Setup authentication listeners
      */
-    getAuthToken() {
-        try {
-            // Try to get token from localStorage/sessionStorage
-            return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-        } catch (error) {
-            console.warn('⚠️ AI RAG Query Processor: Could not get auth token:', error);
-            return null;
-        }
+    setupAuthListeners() {
+        // Listen for auth state changes
+        window.addEventListener('authStateChanged', () => {
+            console.log('🔄 AI RAG Query Processor: Auth state changed, updating...');
+            this.updateAuthState();
+        });
+        
+        // Listen for login success
+        window.addEventListener('loginSuccess', async () => {
+            console.log('🔐 AI RAG Query Processor: Login success detected');
+            this.updateAuthState();
+            // Refresh data after login
+            this.loadQueryHistory();
+        });
+        
+        // Listen for logout
+        window.addEventListener('logout', () => {
+            console.log('🔐 AI RAG Query Processor: Logout detected');
+            this.updateAuthState();
+            // Clear sensitive data after logout
+            this.queryHistory = [];
+            this.searchCache.clear();
+        });
     }
 
     /**
@@ -74,8 +136,12 @@ export default class AIRAGQueryProcessor {
             'Content-Type': 'application/json'
         };
         
-        if (this.authToken) {
-            headers['Authorization'] = `Bearer ${this.authToken}`;
+        // ✅ CORRECT: Get token from central auth manager
+        if (window.authManager) {
+            const token = window.authManager.getStoredToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
         }
         
         return headers;
@@ -88,6 +154,15 @@ export default class AIRAGQueryProcessor {
         console.log('🔧 Initializing AI RAG Query Processor...');
         
         try {
+            // ✅ CORRECT: Wait for central auth system first
+            await this.waitForAuthSystem();
+            
+            // ✅ CORRECT: Update auth state from central system
+            this.updateAuthState();
+            
+            // ✅ CORRECT: Listen for auth state changes
+            this.setupAuthListeners();
+            
             // Load configuration
             await this.loadConfiguration();
             
@@ -98,7 +173,7 @@ export default class AIRAGQueryProcessor {
             this.loadQueryHistory();
             
             this.isInitialized = true;
-            console.log('✅ AI RAG Query Processor initialized');
+            console.log('✅ AI RAG Query Processor initialized with central auth integration');
             
         } catch (error) {
             console.error('❌ AI RAG Query Processor initialization failed:', error);

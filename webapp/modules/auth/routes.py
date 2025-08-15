@@ -35,11 +35,12 @@ from .services.session_service import SessionService
 from .services.social_login_service import SocialLoginService
 from .services.rate_limiting_service import RateLimitingService
 from .services.audit_service import AuditService
+from .shared_instance import shared_auth_db
 
 logger = logging.getLogger(__name__)
 
-# Initialize auth database and services
-auth_db = AuthDatabase()
+# Use shared auth database instance
+auth_db = shared_auth_db
 mfa_service = MFAService(auth_db)
 session_service = SessionService(auth_db)
 social_login_service = SocialLoginService(auth_db)
@@ -212,6 +213,12 @@ async def login(login_data: UserLogin, request: Request):
         username = sanitize_user_input(login_data.username)
         password = login_data.password
         
+        # 🔍 DEBUG: Log login attempt details (remove in production!)
+        logger.info(f"🔍 DEBUG - Login attempt for username: {username}")
+        logger.info(f"🔍 DEBUG - Password length: {len(password) if password else 0}")
+        logger.info(f"🔍 DEBUG - Password preview: {password[:3] + '...' if password and len(password) > 3 else password}")
+        logger.info(f"🔍 DEBUG - Client IP: {client_ip}")
+        
         # Check rate limiting before authentication
         allowed, error_message = rate_limiting_service.check_login_rate_limit(username, client_ip)
         if not allowed:
@@ -269,16 +276,20 @@ async def login(login_data: UserLogin, request: Request):
             role=user.role,
             organization_id=user.org_id
         )
-        access_token = auth_db.create_access_token(token_data)
+        # Convert TokenData to dict for JWT creation
+        token_dict = {
+            "user_id": token_data.user_id,
+            "username": token_data.username,
+            "role": token_data.role,
+            "organization_id": token_data.organization_id
+        }
+        access_token = auth_db.create_access_token(token_dict)
         
         # Update last login
         auth_db.update_last_login(user.user_id)
         
-        # Check password expiration
-        expiration_info = auth_db.check_password_expiration(user.user_id)
-        
         # Log activity
-        await log_user_activity(request, user.user_id, "login", "User logged in successfully")
+        log_user_activity(request, user.user_id, "login", "User logged in successfully")
         
         # Log security event
         auth_db.log_security_event(
@@ -301,8 +312,7 @@ async def login(login_data: UserLogin, request: Request):
             "message": "Login successful",
             "access_token": access_token,
             "token_type": "bearer",
-            "user": UserResponse.from_shared_user(user),
-            "password_expiration": expiration_info
+            "user": UserResponse.from_shared_user(user)
         }
         
     except HTTPException:
@@ -391,7 +401,7 @@ async def logout(request: Request):
 async def get_profile(request: Request):
     """Get user profile API endpoint"""
     try:
-        user = await get_user_from_request(request)
+        user = get_user_from_request(request)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -814,13 +824,9 @@ async def change_password(password_data: PasswordChange, request: Request):
             details={"password_strength": password_strength["score"]}
         )
         
-        # Check if password was expired
-        expiration_info = auth_db.check_password_expiration(user["user_id"])
-        
         return {
             "success": True,
-            "message": "Password changed successfully",
-            "password_expiration": expiration_info
+            "message": "Password changed successfully"
         }
         
     except HTTPException:
@@ -832,34 +838,7 @@ async def change_password(password_data: PasswordChange, request: Request):
             detail="Internal server error"
         )
 
-@router.get("/password-expiration")
-async def check_password_expiration(request: Request):
-    """Check password expiration status"""
-    try:
-        # Get current user
-        user = await get_user_from_request(request)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authenticated"
-            )
-        
-        # Check password expiration
-        expiration_info = auth_db.check_password_expiration(user["user_id"])
-        
-        return {
-            "success": True,
-            "password_expiration": expiration_info
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Check password expiration error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
-        )
+
 
 @router.get("/check-auth")
 async def check_auth(request: Request):
@@ -2865,3 +2844,47 @@ async def update_organization_billing(
     except Exception as e:
         logger.error(f"Error updating organization billing: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+
+# ============================================================================
+# PERMISSIONS ENDPOINTS
+# ============================================================================
+
+@router.get("/permissions")
+async def get_user_permissions_endpoint(request: Request):
+    """Get current user's permissions and roles"""
+    try:
+        logger.info("🔍 Permissions endpoint called")
+        
+        user = get_user_from_request(request)
+        if not user:
+            logger.error("❌ No user found in request")
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        
+        logger.info(f"👤 User found: {user}")
+        logger.info(f"🔑 User role: {getattr(user, 'role', 'NO_ROLE')}")
+        
+        # Get user permissions based on role
+        user_role = getattr(user, "role", "guest")
+        logger.info(f"🎯 Getting permissions for role: {user_role}")
+        
+        user_permissions = get_user_permissions(user_role)
+        logger.info(f"✅ Permissions retrieved: {user_permissions}")
+        
+        # Get user roles (for now, just the current role)
+        user_roles = [user_role] if user_role else []
+        
+        result = {
+            "success": True,
+            "permissions": user_permissions,
+            "roles": user_roles,
+            "user_role": user_role
+        }
+        
+        logger.info(f"🎉 Permissions endpoint result: {result}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting user permissions: {e}")
+        logger.error(f"❌ Error type: {type(e)}")
+        logger.error(f"❌ Error details: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

@@ -57,6 +57,27 @@ def create_app() -> FastAPI:
         """Root route - redirect to main dashboard page"""
         return RedirectResponse(url="/api/dashboard")
     
+    @app.get("/mobile-app")
+    async def mobile_app_info():
+        """Mobile app information endpoint"""
+        return {
+            "name": "AASX Digital Twin Analytics",
+            "version": "1.0.0",
+            "type": "PWA",
+            "features": [
+                "Offline Support",
+                "Push Notifications", 
+                "Touch Optimized",
+                "Central Authentication"
+            ],
+            "endpoints": {
+                "manifest": "/static/mobile_app/manifest.json",
+                "service_worker": "/static/mobile_app/sw.js",
+                "app_script": "/static/mobile_app/mobile-app.js",
+                "api_client": "/static/mobile_app/mobile-api-client.js"
+            }
+        }
+    
     # Add global exception handlers
     from fastapi import HTTPException, Request
     from fastapi.responses import JSONResponse
@@ -141,10 +162,10 @@ def include_routers(app: FastAPI) -> None:
 def initialize_auth_system() -> None:
     """Initialize the authentication system"""
     try:
-        from webapp.modules.auth.database import AuthDatabase
+        from webapp.modules.auth.shared_instance import shared_auth_db
         
-        # Initialize the auth database
-        auth_db = AuthDatabase()
+        # Use the shared auth database instance
+        auth_db = shared_auth_db
         logger.info("✅ Authentication system initialized successfully")
         
         # Create default super admin user if no users exist
