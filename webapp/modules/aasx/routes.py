@@ -558,10 +558,14 @@ async def get_organization_members(request: Request, user_context: UserContext =
 # ETL Processing Endpoints
 @router.post("/etl/run")
 @require_auth("write", allow_independent=True)
-async def run_etl_pipeline(config: ETLConfigRequest, request: Request, user_context: UserContext = Depends(get_current_user)):
+async def run_etl_pipeline(request: Request, config: ETLConfigRequest, user_context: UserContext = Depends(get_current_user)):
     """Run ETL pipeline for AASX files with federated learning integration"""
     try:
         print("🔍 ETL Route: Received request")
+        print(f"🔍 ETL Route: Request URL: {request.url}")
+        print(f"🔍 ETL Route: Request method: {request.method}")
+        print(f"🔍 ETL Route: Request headers: {dict(request.headers)}")
+        print(f"👤 ETL Route: User context: {user_context}")
         print(f"📋 ETL Route: Config data: {config.dict()}")
         
         # Validate federated learning setting
@@ -634,6 +638,8 @@ async def run_etl_pipeline(config: ETLConfigRequest, request: Request, user_cont
 async def get_etl_progress(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get ETL processing progress"""
     try:
+        print(f"🔍 ETL Progress: Request from {request.client.host if request.client else 'unknown'}")
+        print(f"👤 ETL Progress: User: {user_context.user_id if user_context else 'unknown'}")
         return aasx_processor.get_etl_progress()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -643,6 +649,8 @@ async def get_etl_progress(request: Request, user_context: UserContext = Depends
 async def get_etl_status(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get ETL processing status"""
     try:
+        print(f"🔍 ETL Status: Request from {request.client.host if request.client else 'unknown'}")
+        print(f"👤 ETL Status: User: {user_context.user_id if user_context else 'unknown'}")
         return aasx_processor.get_etl_status()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -653,6 +661,8 @@ async def get_etl_status(request: Request, user_context: UserContext = Depends(g
 async def list_files_for_etl(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get all files for ETL pipeline (alias for compatibility)"""
     try:
+        print(f"🔍 ETL Files: Request from {request.client.host if request.client else 'unknown'}")
+        print(f"👤 ETL Files: User: {user_context.user_id if user_context else 'unknown'}")
         files = file_service.list_all_files()
         
         # Check access permissions for all files - organization-based access control

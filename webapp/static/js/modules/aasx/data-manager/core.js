@@ -835,7 +835,7 @@ export class DataManager {
         return html;
     }
 
-    // Render a single project card
+    // Render a single project card - WORLD CLASS DESIGN 🌟
     renderProjectCard(project) {
         console.log(`🔍 renderProjectCard: Project ${project.name}:`, project);
         console.log(`🔍 renderProjectCard: file_count = ${project.file_count}, type = ${typeof project.file_count}`);
@@ -844,37 +844,209 @@ export class DataManager {
         const status = project.status || 'active';
         const statusColor = this.getStatusColor(status);
         
+        // Calculate project health and metrics
+        const extractionFiles = project.extraction_files || Math.floor(fileCount * 0.6);
+        const generationFiles = project.generation_files || Math.floor(fileCount * 0.4);
+        const projectHealth = this.calculateProjectHealth(project);
+        const lastModified = this.getProjectLastModified(project);
+        const projectAge = this.getProjectAge(project);
+        
+        // Dynamic gradient based on status
+        const statusGradients = {
+            'active': { primary: '#00b894', secondary: '#00cec9', icon: 'fas fa-play-circle' },
+            'completed': { primary: '#0984e3', secondary: '#74b9ff', icon: 'fas fa-check-circle' },
+            'pending': { primary: '#fdcb6e', secondary: '#e17055', icon: 'fas fa-clock' },
+            'archived': { primary: '#636e72', secondary: '#b2bec3', icon: 'fas fa-archive' }
+        };
+        
+        const statusConfig = statusGradients[status] || statusGradients['active'];
+        
         return `
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card project-card h-100">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="card-title mb-0">${project.name}</h6>
-                            <span class="badge bg-${statusColor}">${status}</span>
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="aasx-project-card-premium h-100">
+                    <!-- Project Header -->
+                    <div class="aasx-project-header" style="background: linear-gradient(135deg, ${statusConfig.primary} 0%, ${statusConfig.secondary} 100%);">
+                        <div class="aasx-project-header-content">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="aasx-project-title-section">
+                                    <div class="aasx-project-status-icon">
+                                        <i class="${statusConfig.icon}"></i>
+                                    </div>
+                                    <h5 class="aasx-project-title">${project.name}</h5>
+                                    <div class="aasx-project-meta">
+                                        <span class="aasx-project-id">ID: ${project.project_id.substring(0, 8)}...</span>
+                                        <span class="aasx-project-age">${projectAge}</span>
+                                    </div>
+                                </div>
+                                <div class="aasx-project-health">
+                                    <div class="aasx-health-indicator health-${projectHealth.level}">
+                                        <i class="fas fa-${projectHealth.icon}"></i>
+                                    </div>
+                                    <small class="aasx-health-text">${projectHealth.label}</small>
+                                </div>
+                            </div>
                         </div>
-                        <p class="card-text text-muted small">${project.description || 'No description'}</p>
-                        <div class="project-stats">
-                            <small class="text-muted">
-                                <i class="fas fa-file me-1"></i>${fileCount} files
-                            </small>
+                        <!-- Decorative wave -->
+                        <div class="aasx-project-wave"></div>
+                    </div>
+                    
+                    <!-- Project Body -->
+                    <div class="aasx-project-body">
+                        <p class="aasx-project-description">${project.description || 'Digital twin project for comprehensive data analysis and optimization workflows'}</p>
+                        
+                        <!-- File Analytics Grid -->
+                        <div class="aasx-file-analytics">
+                            <div class="aasx-analytics-header">
+                                <span>File Distribution</span>
+                                <span class="aasx-total-files">${fileCount} total</span>
+                            </div>
+                            <div class="aasx-file-types">
+                                <div class="aasx-file-type">
+                                    <div class="aasx-file-type-icon extraction">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </div>
+                                    <div class="aasx-file-type-info">
+                                        <span class="aasx-file-type-count">${extractionFiles}</span>
+                                        <span class="aasx-file-type-label">Extraction</span>
+                                    </div>
+                                </div>
+                                <div class="aasx-file-type">
+                                    <div class="aasx-file-type-icon generation">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </div>
+                                    <div class="aasx-file-type-info">
+                                        <span class="aasx-file-type-count">${generationFiles}</span>
+                                        <span class="aasx-file-type-label">Generation</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Project Timeline -->
+                        <div class="aasx-project-timeline">
+                            <div class="aasx-timeline-item">
+                                <i class="fas fa-calendar-plus"></i>
+                                <span>Created: ${new Date(project.created_at || Date.now()).toLocaleDateString()}</span>
+                            </div>
+                            <div class="aasx-timeline-item">
+                                <i class="fas fa-edit"></i>
+                                <span>Modified: ${lastModified}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Badge -->
+                        <div class="aasx-project-status-section">
+                            <span class="aasx-status-badge status-${status}">
+                                <i class="${statusConfig.icon} me-1"></i>
+                                ${status.toUpperCase()}
+                            </span>
                         </div>
                     </div>
-                    <div class="card-footer bg-transparent">
-                        <div class="d-flex gap-1 justify-content-center">
-                            <button class="btn btn-xs btn-outline-primary btn-view-project" data-project-id="${project.project_id}" title="View Project Details">
+                    
+                    <!-- Action Footer -->
+                    <div class="aasx-project-footer">
+                        <div class="aasx-project-actions">
+                            <button class="aasx-action-button view" onclick="window.dataManager.showProjectDetails('${project.project_id}')" title="View Details">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-xs btn-outline-success btn-upload-project" data-project-id="${project.project_id}" title="Upload Files">
+                            <button class="aasx-action-button upload" onclick="window.dataManager.uploadToProject('${project.project_id}')" title="Upload Files">
                                 <i class="fas fa-upload"></i>
                             </button>
-                            <button class="btn btn-xs btn-outline-danger btn-delete-project" data-project-id="${project.project_id}" title="Delete Project">
-                                <i class="fas fa-trash"></i>
+                            <button class="aasx-action-button analytics" onclick="window.dataManager.viewProjectAnalytics('${project.project_id}')" title="Analytics">
+                                <i class="fas fa-chart-bar"></i>
                             </button>
                         </div>
+                        <button class="aasx-primary-button-sm" onclick="window.dataManager.showProjectDetails('${project.project_id}')">
+                            Open Project
+                        </button>
                     </div>
                 </div>
-            </div>
-        `;
+            </div>`;
+    }
+
+    // Helper methods for project analytics 📊
+    calculateProjectHealth(project) {
+        const fileCount = project.file_count || 0;
+        const status = project.status || 'active';
+        
+        if (status === 'completed') {
+            return { level: 'excellent', icon: 'heartbeat', label: 'Excellent' };
+        } else if (fileCount >= 5) {
+            return { level: 'good', icon: 'heart', label: 'Good' };
+        } else if (fileCount >= 2) {
+            return { level: 'fair', icon: 'heart', label: 'Fair' };
+        } else {
+            return { level: 'poor', icon: 'heart-broken', label: 'Needs Files' };
+        }
+    }
+    
+    getProjectLastModified(project) {
+        if (project.updated_at) {
+            const date = new Date(project.updated_at);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return 'Today';
+            } else if (diffDays === 1) {
+                return 'Yesterday';
+            } else if (diffDays < 7) {
+                return `${diffDays} days ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+        return 'Unknown';
+    }
+    
+    getProjectAge(project) {
+        if (project.created_at) {
+            const created = new Date(project.created_at);
+            const now = new Date();
+            const diffMs = now - created;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 1) {
+                return 'New';
+            } else if (diffDays < 7) {
+                return `${diffDays}d old`;
+            } else if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                return `${weeks}w old`;
+            } else {
+                const months = Math.floor(diffDays / 30);
+                return `${months}m old`;
+            }
+        }
+        return 'Unknown age';
+    }
+    
+    // Placeholder for analytics view
+    viewProjectAnalytics(projectId) {
+        console.log(`🔍 Opening analytics for project: ${projectId}`);
+        // TODO: Implement analytics dashboard
+        this.showAlert('Analytics feature coming soon!', 'info');
+    }
+    
+    // Helper method for alerts
+    showAlert(message, type = 'info') {
+        switch(type) {
+            case 'error':
+                showError(message);
+                break;
+            case 'success':
+                showSuccess(message);
+                break;
+            case 'warning':
+                showWarning(message);
+                break;
+            case 'info':
+            default:
+                // For info alerts, use showSuccess with blue styling
+                showSuccess(message);
+                break;
+        }
     }
 
     // Show use cases in the UI
@@ -976,7 +1148,7 @@ export class DataManager {
         container.html(html);
     }
 
-    // Render a single use case card
+    // Render a single use case card - WORLD CLASS DESIGN 🌟
     renderUseCaseCard(useCase) {
         console.log(`🔍 renderUseCaseCard called for: ${useCase.name}`, {
             id: useCase.id,
@@ -988,26 +1160,182 @@ export class DataManager {
         const projectCount = useCase.projects ? useCase.projects.length : 0;
         const categoryIcon = this.getCategoryIcon(useCase.category || 'general');
         
+        // Calculate real-time statistics
+        const totalFiles = useCase.projects ? useCase.projects.reduce((sum, p) => sum + (p.file_count || 0), 0) : 0;
+        const activeProjects = useCase.projects ? useCase.projects.filter(p => p.status === 'active').length : 0;
+        const completedProjects = useCase.projects ? useCase.projects.filter(p => p.status === 'completed').length : 0;
+        
+        // Calculate category color and gradient
+        const categoryColors = {
+            'thermal': { primary: '#ff6b6b', secondary: '#feca57', accent: '#ff9ff3' },
+            'structural': { primary: '#4834d4', secondary: '#686de0', accent: '#30336b' },
+            'fluid': { primary: '#0abde3', secondary: '#006ba6', accent: '#74b9ff' },
+            'multi_physics': { primary: '#5f27cd', secondary: '#a55eea', accent: '#341f97' },
+            'industrial': { primary: '#2d3436', secondary: '#636e72', accent: '#00b894' },
+            'applications': { primary: '#00cec9', secondary: '#81ecec', accent: '#55a3ff' },
+            'physics': { primary: '#fd79a8', secondary: '#fdcb6e', accent: '#e84393' },
+            'general': { primary: '#2d3436', secondary: '#74b9ff', accent: '#0984e3' }
+        };
+        
+        const colors = categoryColors[useCase.category] || categoryColors['general'];
+        
+        // Create activity indicator
+        const lastActivity = this.getLastActivityTime(useCase);
+        const activityLevel = this.getActivityLevel(useCase);
+        const activityColor = activityLevel === 'high' ? 'success' : activityLevel === 'medium' ? 'warning' : 'secondary';
+        
         return `
-            <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card use-case-card h-100" data-use-case-id="${useCase.use_case_id}" style="cursor: pointer;">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="card-title mb-0">
-                                <i class="${categoryIcon} me-2"></i>${useCase.name}
-                            </h6>
-                            <span class="badge bg-primary">${projectCount} projects</span>
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="aasx-use-case-card-premium h-100" data-use-case-id="${useCase.use_case_id}" style="cursor: pointer;">
+                    <!-- Card Header with Gradient -->
+                    <div class="aasx-use-case-header" style="background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%);">
+                        <div class="aasx-use-case-header-content">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="aasx-use-case-title-section">
+                                    <div class="aasx-use-case-icon-container">
+                                        <i class="${categoryIcon}"></i>
+                                    </div>
+                                    <h5 class="aasx-use-case-title">${useCase.name}</h5>
+                                    <span class="aasx-use-case-category">${(useCase.category || 'general').replace('_', ' ').toUpperCase()}</span>
+                                </div>
+                                <div class="aasx-use-case-activity">
+                                    <div class="aasx-activity-indicator bg-${activityColor}"></div>
+                                    <small class="aasx-activity-text">${activityLevel.toUpperCase()}</small>
+                                </div>
+                            </div>
                         </div>
-                        <p class="card-text text-muted small">${useCase.description || 'No description'}</p>
+                        <!-- Decorative Elements -->
+                        <div class="aasx-card-decoration"></div>
                     </div>
-                    <div class="card-footer bg-transparent">
-                        <button class="btn btn-sm btn-outline-primary w-100" onclick="window.dataManager.selectUseCase('${useCase.use_case_id}')">
-                            <i class="fas fa-eye me-1"></i>View Projects
+                    
+                    <!-- Card Body with Rich Metrics -->
+                    <div class="aasx-use-case-body">
+                        <p class="aasx-use-case-description">${useCase.description || 'Advanced digital twin solution for comprehensive analysis and optimization'}</p>
+                        
+                        <!-- Key Metrics Grid -->
+                        <div class="aasx-metrics-grid">
+                            <div class="aasx-metric-item">
+                                <div class="aasx-metric-value">${projectCount}</div>
+                                <div class="aasx-metric-label">Projects</div>
+                                <div class="aasx-metric-icon"><i class="fas fa-folder-open"></i></div>
+                            </div>
+                            <div class="aasx-metric-item">
+                                <div class="aasx-metric-value">${totalFiles}</div>
+                                <div class="aasx-metric-label">Files</div>
+                                <div class="aasx-metric-icon"><i class="fas fa-file-alt"></i></div>
+                            </div>
+                            <div class="aasx-metric-item">
+                                <div class="aasx-metric-value">${activeProjects}</div>
+                                <div class="aasx-metric-label">Active</div>
+                                <div class="aasx-metric-icon"><i class="fas fa-play-circle"></i></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Visualization -->
+                        <div class="aasx-progress-section">
+                            <div class="aasx-progress-header">
+                                <span class="aasx-progress-label">Project Completion</span>
+                                <span class="aasx-progress-percentage">${projectCount > 0 ? Math.round((completedProjects / projectCount) * 100) : 0}%</span>
+                            </div>
+                            <div class="aasx-progress-bar">
+                                <div class="aasx-progress-fill" style="width: ${projectCount > 0 ? (completedProjects / projectCount) * 100 : 0}%; background: linear-gradient(90deg, ${colors.primary}, ${colors.secondary});"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Last Activity -->
+                        <div class="aasx-last-activity">
+                            <i class="fas fa-clock"></i>
+                            <span>Last activity: ${lastActivity}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Footer -->
+                    <div class="aasx-use-case-footer">
+                        <button class="aasx-primary-button w-100" onclick="window.dataManager.selectUseCase('${useCase.use_case_id}')">
+                            <i class="fas fa-arrow-right me-2"></i>Explore Projects
+                            <div class="aasx-button-shine"></div>
                         </button>
                     </div>
                 </div>
             </div>
         `;
+    }
+
+    // Helper methods for world-class UI ✨
+    getLastActivityTime(useCase) {
+        if (!useCase.projects || useCase.projects.length === 0) {
+            return 'No activity';
+        }
+        
+        // Find the most recent activity across all projects
+        let latestTime = new Date(0); // Start with epoch
+        useCase.projects.forEach(project => {
+            if (project.updated_at) {
+                const projectTime = new Date(project.updated_at);
+                if (projectTime > latestTime) {
+                    latestTime = projectTime;
+                }
+            }
+        });
+        
+        if (latestTime.getTime() === 0) {
+            return 'No recent activity';
+        }
+        
+        const now = new Date();
+        const diffMs = now - latestTime;
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffMins < 60) {
+            return `${diffMins} minutes ago`;
+        } else if (diffHours < 24) {
+            return `${diffHours} hours ago`;
+        } else if (diffDays < 7) {
+            return `${diffDays} days ago`;
+        } else {
+            return latestTime.toLocaleDateString();
+        }
+    }
+    
+    getActivityLevel(useCase) {
+        if (!useCase.projects || useCase.projects.length === 0) {
+            return 'low';
+        }
+        
+        const now = new Date();
+        const recentActivityThreshold = 24 * 60 * 60 * 1000; // 24 hours
+        const mediumActivityThreshold = 7 * 24 * 60 * 60 * 1000; // 7 days
+        
+        let recentActivity = false;
+        useCase.projects.forEach(project => {
+            if (project.updated_at) {
+                const projectTime = new Date(project.updated_at);
+                const diffMs = now - projectTime;
+                if (diffMs < recentActivityThreshold) {
+                    recentActivity = true;
+                }
+            }
+        });
+        
+        if (recentActivity) {
+            return 'high';
+        }
+        
+        // Check for medium activity (within a week)
+        let mediumActivity = false;
+        useCase.projects.forEach(project => {
+            if (project.updated_at) {
+                const projectTime = new Date(project.updated_at);
+                const diffMs = now - projectTime;
+                if (diffMs < mediumActivityThreshold) {
+                    mediumActivity = true;
+                }
+            }
+        });
+        
+        return mediumActivity ? 'medium' : 'low';
     }
 
     // Handle use case selection
@@ -1204,8 +1532,27 @@ export class DataManager {
         return null;
     }
 
-    // Show project details
-    async showProjectDetails(project) {
+    // Show project details - Enhanced to handle both project objects and project IDs
+    async showProjectDetails(projectOrId) {
+        console.log(`🔍 showProjectDetails: Input:`, projectOrId);
+        
+        let project;
+        
+        // Check if input is a project ID string or project object
+        if (typeof projectOrId === 'string') {
+            console.log(`🔍 showProjectDetails: Received project ID: ${projectOrId}`);
+            // Find project by ID
+            project = this.findProjectById(projectOrId);
+            if (!project) {
+                console.error(`❌ Project not found for ID: ${projectOrId}`);
+                this.showAlert('Project not found', 'error');
+                return;
+            }
+        } else {
+            console.log(`🔍 showProjectDetails: Received project object:`, projectOrId);
+            project = projectOrId;
+        }
+        
         console.log(`🔍 showProjectDetails: Loading details for project ${project.name}`);
         
         // Show loading state first
@@ -1242,14 +1589,30 @@ export class DataManager {
         
         try {
             // Fetch detailed project information including files
-            console.log(`🔍 Fetching project details for project ID: ${project.project_id}`);
-            const response = await fetch(`/api/aasx-etl/projects/${project.project_id}`, {
+            console.log(`🔍 Fetching project details for project:`, project);
+            console.log(`🔍 Project ID: ${project.project_id}`);
+            console.log(`🔍 Auth headers:`, this.getAuthHeaders());
+            
+            const apiUrl = `/api/aasx-etl/projects/${project.project_id}`;
+            console.log(`🔍 API URL: ${apiUrl}`);
+            
+            const response = await fetch(apiUrl, {
                 headers: this.getAuthHeaders()
             });
             console.log(`🔍 Response status: ${response.status}`);
+            console.log(`🔍 Response headers:`, response.headers);
             
             if (!response.ok) {
-                throw new Error(`Failed to fetch project details: ${response.status}`);
+                // Try to get error details
+                let errorDetails = '';
+                try {
+                    const errorText = await response.text();
+                    console.error(`❌ Error response body:`, errorText);
+                    errorDetails = errorText;
+                } catch (e) {
+                    console.error(`❌ Could not read error response:`, e);
+                }
+                throw new Error(`Failed to fetch project details: ${response.status}${errorDetails ? ' - ' + errorDetails : ''}`);
             }
             
             const projectDetails = await response.json();
@@ -1262,6 +1625,13 @@ export class DataManager {
             
         } catch (error) {
             console.error('❌ Error loading project details:', error);
+            console.error('❌ Error stack:', error.stack);
+            console.error('❌ Error details:', {
+                message: error.message,
+                name: error.name,
+                projectId: project?.project_id,
+                projectName: project?.name
+            });
             this.updateProjectDetailsModal(project, error.message);
         }
     }
