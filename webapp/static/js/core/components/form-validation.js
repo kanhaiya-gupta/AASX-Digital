@@ -37,17 +37,25 @@ export class FormValidator {
      * Setup form validation
      */
     setupFormValidation() {
-        const forms = document.querySelectorAll('.needs-validation');
+        // Only target forms that explicitly need validation and haven't been handled yet
+        const forms = document.querySelectorAll('.needs-validation:not([data-validation-initialized])');
         
         forms.forEach(form => {
             if (!this.validatedForms.has(form)) {
+                // Mark this form as initialized to prevent double handling
+                form.setAttribute('data-validation-initialized', 'true');
+                
                 form.addEventListener('submit', (event) => {
+                    console.log('🔍 Core Form Validator: Handling form validation');
                     this.handleFormSubmit(event);
                 });
                 
                 this.validatedForms.add(form);
+                console.log(`✅ Core Form Validator: Added validation to form: ${form.id || form.className}`);
             }
         });
+        
+        console.log(`🔍 Core Form Validator: Setup validation for ${forms.length} forms`);
     }
 
     /**

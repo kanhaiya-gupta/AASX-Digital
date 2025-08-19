@@ -32,6 +32,7 @@ from .processor import AASXProcessor
 from .analytics.analytics_service import AnalyticsService
 from .analytics.dashboard_service import DashboardService
 from .analytics.chart_data_service import ChartDataService
+from .analytics.database_adapter import DatabaseAdapter
 
 # Import system monitoring services
 from .system.system_monitor import SystemMonitor
@@ -63,8 +64,9 @@ from .services.user_specific_service import UserSpecificService
 from .services.organization_service import OrganizationService
 
 # Import existing services from src/shared
-from src.shared.services.digital_twin_service import DigitalTwinService
-from src.federated_learning.core.federated_learning_service import FederatedLearningService
+# TODO: Migrate to new twin registry system
+# from src.shared.services.digital_twin_service import DigitalTwinService
+# from src.federated_learning.core.federated_learning_service import FederatedLearningService
 from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
@@ -85,28 +87,28 @@ db_manager = BaseDatabaseManager(connection_manager)
 # Create service instances
 file_repo = FileRepository(db_manager)
 project_repo = ProjectRepository(db_manager)
-digital_twin_service = DigitalTwinService(db_manager, file_repo, project_repo)
-federated_learning_service = FederatedLearningService(digital_twin_service)
+# TODO: Migrate to new twin registry system
+# digital_twin_service = DigitalTwinService(db_manager, file_repo, project_repo)
+# federated_learning_service = FederatedLearningService(digital_twin_service)
 
 # Initialize analytics services with database connection
-analytics_service = AnalyticsService(db_manager)
-dashboard_service = DashboardService(db_manager)
-chart_data_service = ChartDataService(db_manager)
+db_adapter = DatabaseAdapter(db_manager)
+analytics_service = AnalyticsService(db_adapter)
+dashboard_service = DashboardService(db_adapter)
+chart_data_service = ChartDataService(db_adapter)
 
 # Models
 class ETLConfigRequest(BaseModel):
-    files: Optional[List[Any]] = None  # Can be List[str] (filenames) or List[dict] (file objects with hierarchy)
+    files: Optional[List[Any]] = None  # Legacy support for old format
+    file_ids: Optional[List[str]] = None  # New: Direct file IDs
     project_id: Optional[str] = None
-    project_name: Optional[str] = None
-    use_case_name: Optional[str] = None  # For hierarchy-based file lookup
+    use_case_id: Optional[str] = None  # New: Direct use case ID
+    project_name: Optional[str] = None  # Legacy
+    use_case_name: Optional[str] = None  # Legacy - For hierarchy-based file lookup
     output_dir: Optional[str] = None
     formats: Optional[List[str]] = ["json", "graph", "rdf", "yaml"]
-    federated_learning: Optional[str] = "not_allowed"  # "allowed", "not_allowed", "conditional"
-    user_consent: Optional[bool] = False  # User must explicitly consent to federated learning
-    user_id: Optional[str] = None  # User ID for tracking consent
-    consent_timestamp: Optional[str] = None  # When consent was given
-    data_privacy_level: Optional[str] = "private"  # "private", "restricted", "shared"
-    consent_terms: Optional[str] = None  # Specific terms user agreed to
+    # Removed federated learning fields - AASX should focus on ETL operations
+    # Federated learning is handled by the dedicated federated-learning module
 
 class ProjectCreate(BaseModel):
     name: str
@@ -375,12 +377,55 @@ async def upload_file(
             source_type='manual_upload'
         )
         
+        # 🔗 TWIN REGISTRY INTEGRATION: Trigger Phase 1 population after successful upload
+        try:
+            from .file_upload_twin_registry_integration import get_file_upload_integration
+            
+            # Get the integration instance
+            integration = get_file_upload_integration()
+            
+            # Prepare upload data for twin registry population
+            upload_data = {
+                'upload_id': result.get("file_id"),
+                'file_path': result.get("filepath", ''),
+                'file_name': result.get("filename", ''),
+                'file_size': result.get("size", 0),
+                'file_type': result.get("file_type", 'unknown'),
+                'upload_timestamp': result.get("upload_date"),
+                'user_id': user_context.user_id,
+                'org_id': user_context.organization_id,
+                'project_id': project_id,
+                'use_case_id': result.get("use_case", {}).get("use_case_id"),
+                'upload_status': 'completed',
+                'file_hash': result.get("file_hash", ''),
+                'mime_type': file.content_type,
+                'upload_source': 'manual_upload',
+                'job_type': job_type,
+                'description': description
+            }
+            
+            # Trigger Phase 1: Basic twin registry population
+            population_result = await integration.manually_trigger_upload_population(result.get("file_id"))
+            
+            if population_result.get('status') == 'success':
+                logger.info(f"✅ Phase 1: Basic twin registry populated successfully for upload {result.get('file_id')}")
+                result['twin_registry_status'] = 'populated'
+            else:
+                logger.warning(f"⚠️ Phase 1: Basic twin registry population failed for upload {result.get('file_id')}: {population_result.get('error')}")
+                result['twin_registry_status'] = 'failed'
+                
+        except Exception as twin_reg_error:
+            logger.error(f"⚠️ Twin Registry population failed for upload: {twin_reg_error}")
+            result['twin_registry_status'] = 'error'
+            # Don't fail the main upload if twin registry fails
+        
         return {
             "success": True,
             "message": "File uploaded successfully",
             "file_id": result.get("file_id"),
             "filename": result.get("filename"),
-            "project_id": project_id
+            "project_id": project_id,
+            "twin_registry_status": result.get("twin_registry_status", "unknown")
         }
     except Exception as e:
         import traceback
@@ -413,13 +458,57 @@ async def upload_file_from_url(
             org_id=user_context.organization_id
         )
         
+        # 🔗 TWIN REGISTRY INTEGRATION: Trigger Phase 1 population after successful URL upload
+        try:
+            from .file_upload_twin_registry_integration import get_file_upload_integration
+            
+            # Get the integration instance
+            integration = get_file_upload_integration()
+            
+            # Prepare upload data for twin registry population
+            upload_data = {
+                'upload_id': result.get("file_id"),
+                'file_path': result.get("filepath", ''),
+                'file_name': result.get("filename", ''),
+                'file_size': result.get("size", 0),
+                'file_type': result.get("file_type", 'unknown'),
+                'upload_timestamp': result.get("upload_date"),
+                'user_id': user_context.user_id,
+                'org_id': user_context.organization_id,
+                'project_id': project_id,
+                'use_case_id': result.get("use_case", {}).get("use_case_id"),
+                'upload_status': 'completed',
+                'file_hash': result.get("file_hash", ''),
+                'mime_type': result.get("mime_type", ''),
+                'upload_source': 'url_upload',
+                'job_type': job_type,
+                'description': description,
+                'source_url': url
+            }
+            
+            # Trigger Phase 1: Basic twin registry population
+            population_result = await integration.manually_trigger_upload_population(result.get("file_id"))
+            
+            if population_result.get('status') == 'success':
+                logger.info(f"✅ Phase 1: Basic twin registry populated successfully for URL upload {result.get('file_id')}")
+                result['twin_registry_status'] = 'populated'
+            else:
+                logger.warning(f"⚠️ Phase 1: Basic twin registry population failed for URL upload {result.get('file_id')}: {population_result.get('error')}")
+                result['twin_registry_status'] = 'failed'
+                
+        except Exception as twin_reg_error:
+            logger.error(f"⚠️ Twin Registry population failed for URL upload: {twin_reg_error}")
+            result['twin_registry_status'] = 'error'
+            # Don't fail the main upload if twin registry fails
+        
         return {
             "success": True,
             "message": "File uploaded from URL successfully",
             "file_id": result.get("file_id"),
             "filename": result.get("filename"),
             "project_id": project_id,
-            "source_url": url
+            "source_url": url,
+            "twin_registry_status": result.get("twin_registry_status", "unknown")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -443,6 +532,98 @@ async def get_file(file_id: str, request: Request, user_context: UserContext = D
         
         return file_data
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/files/{file_id}/populate-twin-registry")
+@require_auth("write")  # Require write permission to trigger population
+async def populate_twin_registry_for_file(
+    file_id: str,
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Manually trigger twin registry population for a specific file"""
+    try:
+        from .file_upload_twin_registry_integration import get_file_upload_integration
+        
+        # Get the integration instance
+        integration = get_file_upload_integration()
+        
+        # Trigger Phase 1: Basic twin registry population
+        population_result = await integration.manually_trigger_upload_population(file_id)
+        
+        if population_result.get('status') == 'success':
+            return {
+                "success": True,
+                "message": "Twin registry populated successfully",
+                "file_id": file_id,
+                "population_result": population_result
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Twin registry population failed",
+                "file_id": file_id,
+                "error": population_result.get('error', 'Unknown error')
+            }
+            
+    except Exception as e:
+        logger.error(f"Twin registry population error for file {file_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/files/populate-all-twin-registries")
+@require_auth("admin")  # Require admin permission for bulk operation
+async def populate_all_twin_registries(
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Process all existing file uploads for twin registry population"""
+    try:
+        from .file_upload_twin_registry_integration import get_file_upload_integration
+        
+        # Get the integration instance
+        integration = get_file_upload_integration()
+        
+        # Process all existing uploads
+        result = await integration.process_existing_uploads()
+        
+        return {
+            "success": True,
+            "message": "Bulk twin registry population completed",
+            "result": result
+        }
+        
+    except Exception as e:
+        logger.error(f"Bulk twin registry population error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/twin-registry/integration-status")
+@require_auth("read")  # Require read permission to check status
+async def get_twin_registry_integration_status(
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get the current status of the twin registry integration"""
+    try:
+        from .file_upload_twin_registry_integration import get_file_upload_integration
+        from .etl_twin_registry_integration import get_etl_integration
+        
+        # Get both integration instances
+        file_upload_integration = get_file_upload_integration()
+        etl_integration = get_etl_integration()
+        
+        # Get status from both integrations
+        file_upload_status = file_upload_integration.get_integration_status()
+        etl_status = etl_integration.get_integration_status()
+        
+        return {
+            "success": True,
+            "file_upload_integration": file_upload_status,
+            "etl_integration": etl_status,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Twin registry integration status error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/projects/{project_id}/files")
@@ -556,10 +737,108 @@ async def get_organization_members(request: Request, user_context: UserContext =
 # Continue with existing endpoints...
 
 # ETL Processing Endpoints
+@router.post("/etl/extract-aasx")
+@require_auth("write", allow_independent=True)
+async def extract_aasx_to_structured(request: Request, config: ETLConfigRequest, user_context: UserContext = Depends(get_current_user)):
+    """Extract structured data from AASX files"""
+    try:
+        print("🔍 ETL Extract Route: Received request")
+        print(f"🔍 ETL Extract Route: Request URL: {request.url}")
+        print(f"🔍 ETL Extract Route: Request method: {request.method}")
+        print(f"🔍 ETL Extract Route: Request headers: {dict(request.headers)}")
+        print(f"👤 ETL Extract Route: User context: {user_context}")
+        print(f"📋 ETL Extract Route: Config data: {config.dict()}")
+        
+        # Federated learning validation removed - handled by dedicated module
+        
+        # Use IDs directly - super fast, no reverse engineering needed!
+        config_dict = config.dict()
+        config_dict['conversion_mode'] = 'aasx-to-structured'  # Set extraction mode
+        
+        # Validate required IDs
+        if not config.use_case_id or not config.project_id:
+            print(f"❌ ETL Extract Route: Missing required IDs - use_case_id: {config.use_case_id}, project_id: {config.project_id}")
+            raise HTTPException(status_code=400, detail="Missing use_case_id or project_id")
+        
+        if not config.file_ids or len(config.file_ids) == 0:
+            print(f"❌ ETL Extract Route: No files selected")
+            raise HTTPException(status_code=400, detail="No files selected for processing")
+        
+        print(f"✅ ETL Extract Route: Using direct IDs - use_case_id: {config.use_case_id}, project_id: {config.project_id}, file_ids: {config.file_ids}")
+        
+        # Set the IDs directly in config
+        config_dict['use_case_id'] = config.use_case_id
+        config_dict['project_id'] = config.project_id
+        config_dict['file_id'] = config.file_ids[0]  # For now, process first file (processor expects file_id singular)
+        # Add user context to config
+        config_dict['user_id'] = user_context.user_id
+        config_dict['org_id'] = user_context.organization_id
+        
+        print(f"📤 ETL Extract Route: Sending to processor: {config_dict}")
+        print(f"👤 User: {user_context.user_id}, Org: {user_context.organization_id}")
+        
+        # Run ETL pipeline for extraction - all business logic is in processor
+        result = aasx_processor.run_etl_pipeline(config_dict)
+        
+        print(f"📥 ETL Extract Route: Processor result: {result}")
+        return result
+    except Exception as e:
+        print(f"💥 ETL Extract Route: Exception: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/etl/generate-aasx")
+@require_auth("write", allow_independent=True)
+async def generate_aasx_from_structured(request: Request, config: ETLConfigRequest, user_context: UserContext = Depends(get_current_user)):
+    """Generate AASX files from structured data"""
+    try:
+        print("🔍 ETL Generate Route: Received request")
+        print(f"🔍 ETL Generate Route: Request URL: {request.url}")
+        print(f"🔍 ETL Generate Route: Request method: {request.method}")
+        print(f"🔍 ETL Generate Route: Request headers: {dict(request.headers)}")
+        print(f"👤 ETL Generate Route: User context: {user_context}")
+        print(f"📋 ETL Generate Route: Config data: {config.dict()}")
+        
+        # Federated learning validation removed - handled by dedicated module
+        
+        # Use IDs directly - super fast, no reverse engineering needed!
+        config_dict = config.dict()
+        config_dict['conversion_mode'] = 'structured-to-aasx'  # Set generation mode
+        
+        # Validate required IDs
+        if not config.use_case_id or not config.project_id:
+            print(f"❌ ETL Generate Route: Missing required IDs - use_case_id: {config.use_case_id}, project_id: {config.project_id}")
+            raise HTTPException(status_code=400, detail="Missing use_case_id or project_id")
+        
+        if not config.file_ids or len(config.file_ids) == 0:
+            print(f"❌ ETL Generate Route: No files selected")
+            raise HTTPException(status_code=400, detail="No files selected for processing")
+        
+        print(f"✅ ETL Generate Route: Using direct IDs - use_case_id: {config.use_case_id}, project_id: {config.project_id}, file_ids: {config.file_ids}")
+        
+        # Set the IDs directly in config
+        config_dict['use_case_id'] = config.use_case_id
+        config_dict['project_id'] = config.project_id
+        config_dict['file_id'] = config.file_ids[0]  # For now, process first file (processor expects file_id singular)
+        # Add user context to config
+        config_dict['user_id'] = user_context.user_id
+        config_dict['org_id'] = user_context.organization_id
+        
+        print(f"📤 ETL Generate Route: Sending to processor: {config_dict}")
+        print(f"👤 User: {user_context.user_id}, Org: {user_context.organization_id}")
+        
+        # Run ETL pipeline for generation - all business logic is in processor
+        result = aasx_processor.run_etl_pipeline(config_dict)
+        
+        print(f"📥 ETL Generate Route: Processor result: {result}")
+        return result
+    except Exception as e:
+        print(f"💥 ETL Generate Route: Exception: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/etl/run")
 @require_auth("write", allow_independent=True)
 async def run_etl_pipeline(request: Request, config: ETLConfigRequest, user_context: UserContext = Depends(get_current_user)):
-    """Run ETL pipeline for AASX files with federated learning integration"""
+    """Run ETL pipeline for AASX files with federated learning integration (legacy endpoint)"""
     try:
         print("🔍 ETL Route: Received request")
         print(f"🔍 ETL Route: Request URL: {request.url}")
@@ -823,179 +1102,6 @@ async def reset_file_statuses_endpoint(request: Request, user_context: UserConte
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Digital Twin Federated Learning Endpoints
-@router.get("/digital-twins/federated-learning/stats")
-@require_auth("read", allow_independent=True)
-async def get_digital_twin_federated_stats(request: Request, user_context: UserContext = Depends(get_current_user)):
-    """Get federated learning statistics for digital twins"""
-    try:
-        stats = digital_twin_service.get_repository().get_federated_learning_stats()
-        return {"success": True, "data": stats}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/user-consent/federated-learning")
-@require_auth("write", allow_independent=True)
-async def record_user_consent_for_federated_learning(
-    user_id: str,
-    consent_given: bool,
-    data_privacy_level: str = "private",
-    consent_terms: str = None,
-    project_id: str = None,
-    file_id: str = None,
-    request: Request = None,
-    user_context: UserContext = Depends(get_current_user)
-):
-    """Record user consent for federated learning participation"""
-    try:
-        # For now, return a simple response
-        # In the future, this would integrate with a proper consent management system
-        return {
-            "success": True,
-            "message": f"User consent {'recorded' if consent_given else 'declined'}",
-            "user_id": user_id,
-            "consent_given": consent_given,
-            "data_privacy_level": data_privacy_level
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/user-consent/{user_id}/federated-learning")
-@require_auth("read", allow_independent=True)
-async def get_user_consent_status(user_id: str, request: Request, user_context: UserContext = Depends(get_current_user)):
-    """Get user's federated learning consent status"""
-    try:
-        # For now, return a placeholder
-        # In the future, this would query the consent database
-        return {
-            "success": True,
-            "user_id": user_id,
-            "has_consent": False,  # Default to no consent
-            "consent_timestamp": None,
-            "data_privacy_level": "private"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/federated-learning/consent-terms")
-@require_auth("read", allow_independent=True)
-async def get_federated_learning_consent_terms(request: Request, user_context: UserContext = Depends(get_current_user)):
-    """Get the current federated learning consent terms"""
-    try:
-        terms = {
-            "version": "1.0",
-            "title": "Federated Learning Participation Consent",
-            "terms": [
-                "I understand that my data may be used in federated learning processes",
-                "I consent to the sharing of anonymized data for collaborative model training",
-                "I understand that my data will be processed securely with privacy-preserving techniques",
-                "I can withdraw my consent at any time",
-                "I understand that participation is voluntary and I can opt out"
-            ],
-            "data_usage": [
-                "Anonymized data sharing for model training",
-                "Secure aggregation of model updates",
-                "Privacy-preserving computation",
-                "No direct access to raw data by other participants"
-            ],
-            "privacy_levels": {
-                "private": "No data sharing, local processing only",
-                "restricted": "Limited data sharing with strict controls",
-                "shared": "Full participation in federated learning"
-            }
-        }
-        return {"success": True, "terms": terms}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/digital-twins/federated-learning/{participation_status}")
-@require_auth("read", allow_independent=True)
-async def get_digital_twins_by_federated_status(participation_status: str, request: Request, user_context: UserContext = Depends(get_current_user)):
-    """Get digital twins by federated participation status"""
-    try:
-        twins = digital_twin_service.get_repository().get_federated_twins(participation_status)
-        twin_data = [twin.to_dict() for twin in twins]
-        return {"success": True, "data": twin_data}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.put("/digital-twins/{twin_id}/federated-learning")
-@require_auth("write", allow_independent=True)
-async def update_digital_twin_federated_learning(twin_id: str, federated_data: Dict[str, Any], request: Request, user_context: UserContext = Depends(get_current_user)):
-    """Update federated learning settings for a digital twin"""
-    try:
-        success = digital_twin_service.get_repository().update_federated_metadata(twin_id, federated_data)
-        if success:
-            return {"success": True, "message": "Digital twin federated learning settings updated"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to update federated learning settings")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.put("/processing/{job_id}/federated-learning-consent")
-@require_auth("write", allow_independent=True)
-async def update_federated_learning_consent(
-    job_id: str, 
-    consent_data: Dict[str, Any], 
-    request: Request,
-    user_context: UserContext = Depends(get_current_user)
-):
-    """Update federated learning consent for a processing job"""
-    try:
-        # Validate that the user owns this job or has permission to update it
-        job = aasx_processing_service.get_job_by_id(job_id)
-        if not job:
-            raise HTTPException(status_code=404, detail="Processing job not found")
-        
-        # Check if user has permission to update this job
-        if job.get('processed_by') != user_context.user_id:
-            # TODO: Add role-based permission check here
-            pass
-        
-        # Update the consent
-        success = aasx_processing_service.update_federated_learning_consent(job_id, consent_data)
-        
-        if success:
-            return {
-                "success": True, 
-                "message": "Federated learning consent updated successfully",
-                "job_id": job_id,
-                "consent_data": consent_data
-            }
-        else:
-            raise HTTPException(status_code=500, detail="Failed to update federated learning consent")
-            
-    except Exception as e:
-        logger.error(f"Failed to update federated learning consent: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/processing/federated-learning/stats")
-@require_auth("read", allow_independent=True)
-async def get_federated_learning_stats(
-    user_id: Optional[str] = None,
-    project_id: Optional[str] = None,
-    request: Request = None,
-    user_context: UserContext = Depends(get_current_user)
-):
-    """Get federated learning consent statistics"""
-    try:
-        # If no user_id specified, use the authenticated user's ID
-        if not user_id:
-            user_id = user_context.user_id
-        
-        stats = aasx_processing_service.get_federated_learning_stats(user_id, project_id)
-        
-        return {
-            "success": True,
-            "stats": stats,
-            "user_id": user_id,
-            "project_id": project_id
-        }
-        
-    except Exception as e:
-        logger.error(f"Failed to get federated learning stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 # ============================================================================
 # ANALYTICS ENDPOINTS - Phase 5: Frontend Integration & Real-Time Analytics
 # ============================================================================
@@ -1063,6 +1169,7 @@ async def get_dashboard_summary_cards(request: Request, user_context: UserContex
 @router.get("/analytics/dashboard/recent-jobs")
 @require_auth("read", allow_independent=True)
 async def get_recent_processing_jobs(
+    request: Request,
     limit: int = 5,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1096,6 +1203,7 @@ async def get_recent_processing_jobs(
 @router.get("/analytics/charts/processing-trends")
 @require_auth("read", allow_independent=True)
 async def get_processing_trends_chart(
+    request: Request,
     days: int = 30,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1128,6 +1236,7 @@ async def get_processing_trends_chart(
 @router.get("/analytics/charts/quality-metrics")
 @require_auth("read", allow_independent=True)
 async def get_quality_metrics_chart(
+    request: Request,
     days: int = 30,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1159,6 +1268,7 @@ async def get_quality_metrics_chart(
 @router.get("/analytics/charts/performance-metrics")
 @require_auth("read", allow_independent=True)
 async def get_performance_metrics_chart(
+    request: Request,
     days: int = 30,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1191,6 +1301,7 @@ async def get_performance_metrics_chart(
 @router.get("/analytics/charts/user-behavior")
 @require_auth("read", allow_independent=True)
 async def get_user_behavior_chart(
+    request: Request,
     days: int = 30,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1223,7 +1334,7 @@ async def get_user_behavior_chart(
 # Analytics Data Endpoints
 @router.get("/analytics/metrics/dashboard")
 @require_auth("read", allow_independent=True)
-async def get_dashboard_metrics(user_context: UserContext = Depends(get_current_user)):
+async def get_dashboard_metrics(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get comprehensive dashboard metrics for the authenticated user."""
     try:
         logger.info(f"Getting dashboard metrics for user: {user_context.user_id}")
@@ -1253,6 +1364,7 @@ async def get_dashboard_metrics(user_context: UserContext = Depends(get_current_
 @router.get("/analytics/metrics/performance")
 @require_auth("read", allow_independent=True)
 async def get_performance_metrics(
+    request: Request,
     days: int = 30,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1284,7 +1396,7 @@ async def get_performance_metrics(
 
 @router.get("/analytics/health")
 @require_auth("read", allow_independent=True)
-async def analytics_health_check(user_context: UserContext = Depends(get_current_user)):
+async def analytics_health_check(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Health check endpoint for analytics services."""
     try:
         return {
@@ -1314,7 +1426,7 @@ async def analytics_health_check(user_context: UserContext = Depends(get_current
 
 @router.get("/system/health")
 @require_auth("read", allow_independent=True)
-async def get_system_health(user_context: UserContext = Depends(get_current_user)):
+async def get_system_health(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get current system health status for the authenticated user."""
     try:
         logger.info(f"Getting system health for user: {user_context.user_id}")
@@ -1337,7 +1449,7 @@ async def get_system_health(user_context: UserContext = Depends(get_current_user
 
 @router.get("/system/resources")
 @require_auth("read", allow_independent=True)
-async def get_resource_metrics(user_context: UserContext = Depends(get_current_user)):
+async def get_resource_metrics(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get current resource usage metrics for the authenticated user."""
     try:
         logger.info(f"Getting resource metrics for user: {user_context.user_id}")
@@ -1363,7 +1475,7 @@ async def get_resource_metrics(user_context: UserContext = Depends(get_current_u
 
 @router.get("/system/services")
 @require_auth("read", allow_independent=True)
-async def get_service_status(user_context: UserContext = Depends(get_current_user)):
+async def get_service_status(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get current service health status for the authenticated user."""
     try:
         logger.info(f"Getting service status for user: {user_context.user_id}")
@@ -1390,6 +1502,7 @@ async def get_service_status(user_context: UserContext = Depends(get_current_use
 @router.get("/system/logs")
 @require_auth("read", allow_independent=True)
 async def get_system_logs(
+    request: Request,
     level: Optional[str] = None,
     service: Optional[str] = None,
     hours: int = 24,
@@ -1427,6 +1540,7 @@ async def get_system_logs(
 @router.get("/system/logs/summary")
 @require_auth("read", allow_independent=True)
 async def get_log_summary(
+    request: Request,
     hours: int = 24,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1457,6 +1571,7 @@ async def get_log_summary(
 @router.get("/system/logs/trends")
 @require_auth("read", allow_independent=True)
 async def get_log_trends(
+    request: Request,
     hours: int = 24,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1486,7 +1601,7 @@ async def get_log_trends(
 
 @router.get("/system/alerts/active")
 @require_auth("read", allow_independent=True)
-async def get_active_alerts(user_context: UserContext = Depends(get_current_user)):
+async def get_active_alerts(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Get active alerts for the authenticated user."""
     try:
         logger.info(f"Getting active alerts for user: {user_context.user_id}")
@@ -1513,6 +1628,7 @@ async def get_active_alerts(user_context: UserContext = Depends(get_current_user
 @router.post("/system/alerts/{alert_id}/acknowledge")
 @require_auth("write", allow_independent=True)
 async def acknowledge_alert(
+    request: Request,
     alert_id: str,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1548,6 +1664,7 @@ async def acknowledge_alert(
 @router.post("/system/alerts/{alert_id}/resolve")
 @require_auth("write", allow_independent=True)
 async def resolve_alert(
+    request: Request,
     alert_id: str,
     user_context: UserContext = Depends(get_current_user)
 ):
@@ -1582,7 +1699,7 @@ async def resolve_alert(
 
 @router.get("/system/health-check")
 @require_auth("read", allow_independent=True)
-async def system_health_check(user_context: UserContext = Depends(get_current_user)):
+async def system_health_check(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Health check endpoint for system monitoring services."""
     try:
         return {

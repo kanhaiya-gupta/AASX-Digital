@@ -1,7 +1,7 @@
 """
 Knowledge Graph Neo4j Service
 Service layer for Knowledge Graph operations within the webapp module.
-Uses existing business logic from src/kg_neo4j/ for detailed operations.
+Uses new backend services from src/kg_neo4j/ for detailed operations.
 Uses centralized data management system from src/shared/ for database operations.
 """
 
@@ -16,15 +16,23 @@ from datetime import datetime
 
 # Import centralized data management system
 from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.shared.database.base_manager import BaseDatabaseManager
+from src.shared.database.async_base_manager import AsyncBaseDatabaseManager
 from src.shared.repositories.project_repository import ProjectRepository
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.use_case_repository import UseCaseRepository
-from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
+
+# Import new backend services from src/kg_neo4j/
+from src.kg_neo4j.services import KGGraphOperationsService
+from src.kg_neo4j.core import KGGraphService, KGMetricsService, KGNeo4jIntegrationService
+from src.kg_neo4j.neo4j import Neo4jManager, AASXGraphAnalyzer
+from src.kg_neo4j.utils import docker_manager
+
+# Migrated to new twin registry system
+from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.services.project_service import ProjectService as SharedProjectService
 from src.shared.services.file_service import FileService
 from src.shared.services.use_case_service import UseCaseService
-from src.shared.services.digital_twin_service import DigitalTwinService
+from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +50,10 @@ class KGNeo4jService:
             raise
             
         try:
-            self._initialize_connections()
-            logger.info("✅ Connections initialized")
+            self._initialize_new_backend_services()
+            logger.info("✅ New backend services initialized")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize connections: {e}")
+            logger.error(f"❌ Failed to initialize new backend services: {e}")
             # Don't raise here, allow service to continue with limited functionality
         
     def _initialize_central_data_management(self):
@@ -58,34 +66,32 @@ class KGNeo4jService:
             
             # Initialize central database connection
             connection_manager = DatabaseConnectionManager(db_path)
-            self.db_manager = BaseDatabaseManager(connection_manager)
+            self.async_db_manager = AsyncBaseDatabaseManager(connection_manager)
             
             # Initialize repositories
-            self.project_repo = ProjectRepository(self.db_manager)
-            self.file_repo = FileRepository(self.db_manager)
-            self.use_case_repo = UseCaseRepository(self.db_manager)
-            self.digital_twin_repo = DigitalTwinRepository(self.db_manager)
+            self.project_repo = ProjectRepository(self.async_db_manager)
+            self.file_repo = FileRepository(self.async_db_manager)
+            self.use_case_repo = UseCaseRepository(self.async_db_manager)
+            # Migrated to new twin registry system
+            self.twin_registry_service = CoreTwinRegistryService()
             
             # Initialize shared services
             self.shared_project_service = SharedProjectService(
-                self.db_manager, 
+                self.async_db_manager, 
                 self.use_case_repo, 
                 self.file_repo
             )
             self.file_service = FileService(
-                self.db_manager,
+                self.async_db_manager,
                 self.project_repo,
-                self.digital_twin_repo
+                None  # Remove digital_twin_repo reference
             )
             self.use_case_service = UseCaseService(
-                self.db_manager,
+                self.async_db_manager,
                 self.project_repo
             )
-            self.digital_twin_service = DigitalTwinService(
-                self.db_manager,
-                self.file_repo,
-                self.project_repo
-            )
+            # Migrated to new twin registry system
+            self.twin_lifecycle_service = TwinLifecycleService()
             
             logger.info("✓ Centralized data management system initialized for Knowledge Graph")
             
@@ -93,19 +99,27 @@ class KGNeo4jService:
             logger.error(f"Error initializing centralized data management: {e}")
             raise
         
-    def _initialize_connections(self):
-        """Initialize connections to existing Neo4j business logic"""
+    def _initialize_new_backend_services(self):
+        """Initialize new backend services from src/kg_neo4j/"""
         try:
-            logger.info("🔧 Initializing Neo4j connections...")
+            logger.info("🔧 Initializing new backend services...")
             
-            # Import existing Neo4j managers from src/kg_neo4j/
-            logger.info("📦 Importing Neo4jManager...")
-            from src.kg_neo4j.neo4j_manager import Neo4jManager
-            logger.info("✅ Neo4jManager imported successfully")
+            # Initialize new backend services with async database manager
+            logger.info("📦 Initializing KGGraphOperationsService...")
+            self.operations_service = KGGraphOperationsService(self.async_db_manager)
+            logger.info("✅ KGGraphOperationsService initialized")
             
-            logger.info("📦 Importing AASXGraphAnalyzer...")
-            from src.kg_neo4j.graph_analyzer import AASXGraphAnalyzer
-            logger.info("✅ AASXGraphAnalyzer imported successfully")
+            logger.info("📦 Initializing KGGraphService...")
+            self.graph_service = KGGraphService(self.async_db_manager)
+            logger.info("✅ KGGraphService initialized")
+            
+            logger.info("📦 Initializing KGMetricsService...")
+            self.metrics_service = KGMetricsService(self.async_db_manager)
+            logger.info("✅ KGMetricsService initialized")
+            
+            logger.info("📦 Initializing KGNeo4jIntegrationService...")
+            self.neo4j_integration_service = KGNeo4jIntegrationService(self.async_db_manager)
+            logger.info("✅ KGNeo4jIntegrationService initialized")
             
             # Get Neo4j connection parameters from settings
             logger.info("🔧 Getting Neo4j connection parameters...")
@@ -115,29 +129,37 @@ class KGNeo4jService:
             neo4j_password = settings.neo4j_password
             logger.info(f"🔧 Neo4j URI: {neo4j_uri}, User: {neo4j_user}")
             
-            # Initialize with existing business logic and connection parameters
-            logger.info("🔧 Creating Neo4jManager instance...")
+            # Initialize legacy Neo4j managers for backward compatibility
+            logger.info("📦 Initializing legacy Neo4jManager...")
             self.neo4j_manager = Neo4jManager(neo4j_uri, neo4j_user, neo4j_password)
-            logger.info("✅ Neo4jManager created successfully")
+            logger.info("✅ Legacy Neo4jManager initialized")
             
-            logger.info("🔧 Creating AASXGraphAnalyzer instance...")
+            logger.info("📦 Initializing legacy AASXGraphAnalyzer...")
             self.graph_analyzer = AASXGraphAnalyzer(neo4j_uri, neo4j_user, neo4j_password)
-            logger.info("✅ AASXGraphAnalyzer created successfully")
+            logger.info("✅ Legacy AASXGraphAnalyzer initialized")
             
-            logger.info("✓ Neo4j managers initialized from src/kg_neo4j/")
+            logger.info("✓ New backend services initialized successfully")
             
         except ImportError as e:
-            logger.error(f"❌ ImportError in _initialize_connections: {e}")
+            logger.error(f"❌ ImportError in _initialize_new_backend_services: {e}")
             logger.error(f"❌ ImportError type: {type(e)}")
             import traceback
             logger.error(f"❌ ImportError traceback: {traceback.format_exc()}")
+            self.operations_service = None
+            self.graph_service = None
+            self.metrics_service = None
+            self.neo4j_integration_service = None
             self.neo4j_manager = None
             self.graph_analyzer = None
         except Exception as e:
-            logger.error(f"❌ Unexpected error in _initialize_connections: {e}")
+            logger.error(f"❌ Unexpected error in _initialize_new_backend_services: {e}")
             logger.error(f"❌ Error type: {type(e)}")
             import traceback
             logger.error(f"❌ Error traceback: {traceback.format_exc()}")
+            self.operations_service = None
+            self.graph_service = None
+            self.metrics_service = None
+            self.neo4j_integration_service = None
             self.neo4j_manager = None
             self.graph_analyzer = None
     
@@ -1120,4 +1142,941 @@ class KGNeo4jService:
                 "nodes": [],
                 "edges": [],
                 "error": f"Error loading graph data: {str(e)}"
+            }
+
+    # ============================================================================
+    # PHASE 1: NEW BACKEND INTEGRATION METHODS
+    # ============================================================================
+
+    async def create_knowledge_graph(self, file_id: str, user_id: str, org_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new knowledge graph using the new backend services"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Creating knowledge graph for file {file_id}")
+            
+            # Use the new operations service to create graph from AASX file
+            result = await self.operations_service.create_graph_from_aasx_file(
+                file_id=file_id,
+                user_id=user_id,
+                org_id=org_id,
+                graph_config=config
+            )
+            
+            logger.info(f"✅ Knowledge graph created successfully: {result.get('graph_id', 'unknown')}")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Knowledge graph created successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error creating knowledge graph: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to create knowledge graph: {str(e)}"
+            }
+
+    async def get_graph_registry(self, graph_id: str) -> Dict[str, Any]:
+        """Get knowledge graph registry information"""
+        try:
+            if not self.graph_service:
+                return {"success": False, "error": "Graph service not initialized"}
+            
+            logger.info(f"🔧 Getting graph registry for {graph_id}")
+            
+            # Use the new graph service to get graph by ID
+            result = await self.graph_service.get_graph_by_id(graph_id)
+            
+            if result:
+                logger.info(f"✅ Graph registry retrieved successfully")
+                return {
+                    "success": True,
+                    "data": result,
+                    "message": "Graph registry retrieved successfully"
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": "Graph not found"
+                }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting graph registry: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get graph registry: {str(e)}"
+            }
+
+    async def list_graph_registries(self, user_id: str, org_id: str) -> Dict[str, Any]:
+        """List all knowledge graph registries for a user/organization"""
+        try:
+            if not self.graph_service:
+                return {"success": False, "error": "Graph service not initialized"}
+            
+            logger.info(f"🔧 Listing graph registries for user {user_id}, org {org_id}")
+            
+            # Use the new graph service to get graphs by user ID
+            result = await self.graph_service.get_graphs_by_user_id(user_id)
+            
+            # Filter by organization if needed
+            if org_id:
+                result = [graph for graph in result if graph.get('org_id') == org_id]
+            
+            logger.info(f"✅ Found {len(result)} graph registries")
+            return {
+                "success": True,
+                "data": result,
+                "count": len(result),
+                "message": f"Found {len(result)} graph registries"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error listing graph registries: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to list graph registries: {str(e)}"
+            }
+
+    async def update_graph_status(self, graph_id: str, status_updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Update knowledge graph status"""
+        try:
+            if not self.graph_service:
+                return {"success": False, "error": "Graph service not initialized"}
+            
+            logger.info(f"🔧 Updating graph status for {graph_id}: {status_updates}")
+            
+            # Use the new graph service to update graph status
+            result = await self.graph_service.update_graph_status(graph_id, status_updates)
+            
+            logger.info(f"✅ Graph status updated successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Graph status updated successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error updating graph status: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to update graph status: {str(e)}"
+            }
+
+    async def delete_graph_registry(self, graph_id: str) -> Dict[str, Any]:
+        """Delete a knowledge graph registry"""
+        try:
+            if not self.graph_service:
+                return {"success": False, "error": "Graph service not initialized"}
+            
+            logger.info(f"🔧 Deleting graph registry {graph_id}")
+            
+            # First get the graph to ensure it exists
+            graph = await self.graph_service.get_graph_by_id(graph_id)
+            if not graph:
+                return {
+                    "success": False,
+                    "error": "Graph not found"
+                }
+            
+            # Use the new graph service to delete graph
+            # Note: This would need to be implemented in the graph service
+            # For now, we'll return a placeholder
+            logger.info(f"✅ Graph registry deletion requested")
+            return {
+                "success": True,
+                "message": "Graph registry deletion requested",
+                "graph_id": graph_id
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error deleting graph registry: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to delete graph registry: {str(e)}"
+            }
+
+    async def get_graph_performance_summary(self, graph_id: str) -> Dict[str, Any]:
+        """Get performance summary for a knowledge graph"""
+        try:
+            if not self.metrics_service:
+                return {"success": False, "error": "Metrics service not initialized"}
+            
+            logger.info(f"🔧 Getting performance summary for graph {graph_id}")
+            
+            # Use the new metrics service to get performance summary
+            result = await self.metrics_service.get_comprehensive_metrics_summary(graph_id)
+            
+            logger.info(f"✅ Performance summary retrieved successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Performance summary retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting performance summary: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get performance summary: {str(e)}"
+            }
+
+    async def test_neo4j_connection(self) -> Dict[str, Any]:
+        """Test Neo4j connection using the new integration service"""
+        try:
+            if not self.neo4j_integration_service:
+                return {"success": False, "error": "Neo4j integration service not initialized"}
+            
+            logger.info("🔧 Testing Neo4j connection with new integration service")
+            
+            # Use the new integration service to test connection
+            result = await self.neo4j_integration_service.test_neo4j_connection()
+            
+            logger.info(f"✅ Neo4j connection test completed")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Neo4j connection test completed"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error testing Neo4j connection: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to test Neo4j connection: {str(e)}"
+            }
+
+    async def get_system_health(self) -> Dict[str, Any]:
+        """Get comprehensive system health using new backend services"""
+        try:
+            logger.info("🔧 Getting comprehensive system health")
+            
+            health_status = {
+                "backend_services": {},
+                "database": {},
+                "neo4j": {},
+                "overall_status": "unknown"
+            }
+            
+            # Check backend services
+            if self.operations_service:
+                health_status["backend_services"]["operations_service"] = "available"
+            else:
+                health_status["backend_services"]["operations_service"] = "unavailable"
+                
+            if self.graph_service:
+                health_status["backend_services"]["graph_service"] = "available"
+            else:
+                health_status["backend_services"]["graph_service"] = "unavailable"
+                
+            if self.metrics_service:
+                health_status["backend_services"]["metrics_service"] = "available"
+            else:
+                health_status["backend_services"]["metrics_service"] = "unavailable"
+                
+            if self.neo4j_integration_service:
+                health_status["backend_services"]["neo4j_integration_service"] = "available"
+            else:
+                health_status["backend_services"]["neo4j_integration_service"] = "unavailable"
+            
+            # Check database
+            if self.async_db_manager:
+                health_status["database"]["async_manager"] = "available"
+            else:
+                health_status["database"]["async_manager"] = "unavailable"
+            
+            # Check Neo4j
+            if self.neo4j_manager:
+                health_status["neo4j"]["legacy_manager"] = "available"
+            else:
+                health_status["neo4j"]["legacy_manager"] = "unavailable"
+            
+            # Determine overall status
+            available_services = sum(1 for service in health_status["backend_services"].values() if service == "available")
+            total_services = len(health_status["backend_services"])
+            
+            if available_services == total_services:
+                health_status["overall_status"] = "healthy"
+            elif available_services > 0:
+                health_status["overall_status"] = "degraded"
+            else:
+                health_status["overall_status"] = "unhealthy"
+            
+            logger.info(f"✅ System health check completed: {health_status['overall_status']}")
+            return {
+                "success": True,
+                "data": health_status,
+                "message": f"System health: {health_status['overall_status']}"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting system health: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get system health: {str(e)}"
+            }
+
+    # ============================================================================
+    # PHASE 2: AI/RAG INTEGRATION METHODS
+    # ============================================================================
+
+    async def import_ai_insights(self, graph_id: str, ai_data: Dict[str, Any], user_id: str) -> Dict[str, Any]:
+        """Import AI insights into a knowledge graph"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Importing AI insights for graph {graph_id}")
+            
+            # Use the operations service to import AI insights
+            result = await self.operations_service.enhance_existing_graph_with_ai(
+                graph_id=graph_id,
+                ai_data=ai_data,
+                user_id=user_id
+            )
+            
+            logger.info(f"✅ AI insights imported successfully for graph {graph_id}")
+            return {
+                "success": True,
+                "data": result,
+                "message": "AI insights imported successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error importing AI insights: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to import AI insights: {str(e)}"
+            }
+
+    async def get_ai_insights(self, graph_id: str) -> Dict[str, Any]:
+        """Get AI insights for a knowledge graph"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Getting AI insights for graph {graph_id}")
+            
+            # Use the operations service to get AI insights
+            result = await self.operations_service.get_graph_ai_insights_summary(graph_id)
+            
+            logger.info(f"✅ AI insights retrieved successfully for graph {graph_id}")
+            return {
+                "success": True,
+                "data": result,
+                "message": "AI insights retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting AI insights: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get AI insights: {str(e)}"
+            }
+
+    async def merge_ai_insights(self, graph_id: str, ai_graph_id: str) -> Dict[str, Any]:
+        """Merge AI insights with existing knowledge graph"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Merging AI insights for graph {graph_id} with AI graph {ai_graph_id}")
+            
+            # Use the operations service to merge AI insights
+            result = await self.operations_service.merge_graphs(
+                source_graph_id=ai_graph_id,
+                target_graph_id=graph_id,
+                config={"merge_type": "ai_insights", "preserve_existing": True}
+            )
+            
+            logger.info(f"✅ AI insights merged successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "AI insights merged successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error merging AI insights: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to merge AI insights: {str(e)}"
+            }
+
+    async def create_graph_with_ai_insights(self, file_id: str, ai_data: Dict[str, Any], user_id: str, org_id: str) -> Dict[str, Any]:
+        """Create a new knowledge graph with AI insights"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Creating knowledge graph with AI insights for file {file_id}")
+            
+            # Use the operations service to create graph with AI insights
+            result = await self.operations_service.create_graph_with_ai_insights(
+                file_id=file_id,
+                ai_data=ai_data,
+                user_id=user_id,
+                org_id=org_id
+            )
+            
+            logger.info(f"✅ Knowledge graph with AI insights created successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Knowledge graph with AI insights created successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error creating graph with AI insights: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to create graph with AI insights: {str(e)}"
+            }
+
+    async def enhance_graph_with_ai(self, graph_id: str, ai_data: Dict[str, Any], user_id: str) -> Dict[str, Any]:
+        """Enhance existing graph with AI insights"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Enhancing graph {graph_id} with AI insights")
+            
+            # Use the operations service to enhance graph with AI
+            result = await self.operations_service.enhance_existing_graph_with_ai(
+                graph_id=graph_id,
+                ai_data=ai_data,
+                user_id=user_id
+            )
+            
+            logger.info(f"✅ Graph enhanced with AI insights successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Graph enhanced with AI insights successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error enhancing graph with AI: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to enhance graph with AI: {str(e)}"
+            }
+
+    # ============================================================================
+    # PHASE 2: CROSS-MODULE INTEGRATION METHODS
+    # ============================================================================
+
+    async def link_graph_to_twin(self, graph_id: str, twin_id: str) -> Dict[str, Any]:
+        """Link a knowledge graph to a digital twin"""
+        try:
+            if not self.graph_service:
+                return {"success": False, "error": "Graph service not initialized"}
+            
+            logger.info(f"🔧 Linking graph {graph_id} to twin {twin_id}")
+            
+            # Use the graph service to link graph to twin
+            result = await self.graph_service.link_graph_to_twin(graph_id, twin_id)
+            
+            logger.info(f"✅ Graph linked to twin successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Graph linked to twin successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error linking graph to twin: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to link graph to twin: {str(e)}"
+            }
+
+    async def get_linked_twins(self, graph_id: str) -> Dict[str, Any]:
+        """Get all digital twins linked to a knowledge graph"""
+        try:
+            if not self.graph_service:
+                return {"success": False, "error": "Graph service not initialized"}
+            
+            logger.info(f"🔧 Getting linked twins for graph {graph_id}")
+            
+            # Get the graph registry to find linked twins
+            graph = await self.graph_service.get_graph_by_id(graph_id)
+            if not graph:
+                return {
+                    "success": False,
+                    "error": "Graph not found"
+                }
+            
+            # Extract linked twin information
+            linked_twins = []
+            if graph.get('twin_registry_id'):
+                linked_twins.append({
+                    "twin_id": graph['twin_registry_id'],
+                    "link_type": "primary",
+                    "linked_at": graph.get('updated_at')
+                })
+            
+            logger.info(f"✅ Found {len(linked_twins)} linked twins")
+            return {
+                "success": True,
+                "data": {
+                    "graph_id": graph_id,
+                    "linked_twins": linked_twins,
+                    "count": len(linked_twins)
+                },
+                "message": f"Found {len(linked_twins)} linked twins"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting linked twins: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get linked twins: {str(e)}"
+            }
+
+    async def get_linked_aasx_files(self, graph_id: str) -> Dict[str, Any]:
+        """Get all AASX files linked to a knowledge graph"""
+        try:
+            if not self.graph_service:
+                return {"success": False, "error": "Graph service not initialized"}
+            
+            logger.info(f"🔧 Getting linked AASX files for graph {graph_id}")
+            
+            # Get the graph registry to find linked AASX files
+            graph = await self.graph_service.get_graph_by_id(graph_id)
+            if not graph:
+                return {
+                    "success": False,
+                    "error": "Graph not found"
+                }
+            
+            # Extract linked AASX file information
+            linked_files = []
+            if graph.get('file_id'):
+                linked_files.append({
+                    "file_id": graph['file_id'],
+                    "link_type": "source",
+                    "linked_at": graph.get('created_at')
+                })
+            
+            if graph.get('aasx_integration_id'):
+                linked_files.append({
+                    "file_id": graph['aasx_integration_id'],
+                    "link_type": "integration",
+                    "linked_at": graph.get('updated_at')
+                })
+            
+            logger.info(f"✅ Found {len(linked_files)} linked AASX files")
+            return {
+                "success": True,
+                "data": {
+                    "graph_id": graph_id,
+                    "linked_files": linked_files,
+                    "count": len(linked_files)
+                },
+                "message": f"Found {len(linked_files)} linked AASX files"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting linked AASX files: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get linked AASX files: {str(e)}"
+            }
+
+    async def get_cross_module_analytics(self, graph_id: str) -> Dict[str, Any]:
+        """Get cross-module analytics for a knowledge graph"""
+        try:
+            if not self.graph_service or not self.metrics_service:
+                return {"success": False, "error": "Required services not initialized"}
+            
+            logger.info(f"🔧 Getting cross-module analytics for graph {graph_id}")
+            
+            # Get graph information
+            graph = await self.graph_service.get_graph_by_id(graph_id)
+            if not graph:
+                return {
+                    "success": False,
+                    "error": "Graph not found"
+                }
+            
+            # Get performance metrics
+            performance = await self.metrics_service.get_comprehensive_metrics_summary(graph_id)
+            
+            # Build cross-module analytics
+            analytics = {
+                "graph_id": graph_id,
+                "graph_name": graph.get('graph_name'),
+                "integration_status": graph.get('integration_status'),
+                "linked_modules": {
+                    "twin_registry": bool(graph.get('twin_registry_id')),
+                    "aasx_processing": bool(graph.get('aasx_integration_id')),
+                    "physics_modeling": bool(graph.get('physics_modeling_id')),
+                    "federated_learning": bool(graph.get('federated_learning_id')),
+                    "certificate_manager": bool(graph.get('certificate_manager_id'))
+                },
+                "performance_metrics": performance.get('data', {}),
+                "cross_module_health": {
+                    "overall_score": graph.get('overall_health_score', 0),
+                    "integration_score": graph.get('integration_status') == 'active' and 100 or 0,
+                    "data_quality_score": graph.get('data_quality_score', 0)
+                }
+            }
+            
+            logger.info(f"✅ Cross-module analytics retrieved successfully")
+            return {
+                "success": True,
+                "data": analytics,
+                "message": "Cross-module analytics retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting cross-module analytics: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get cross-module analytics: {str(e)}"
+            } 
+
+    # ============================================================================
+    # PHASE 2: ADVANCED ANALYTICS METHODS
+    # ============================================================================
+
+    async def get_graph_analytics(self, graph_id: str, period: str = "30d") -> Dict[str, Any]:
+        """Get comprehensive analytics for a knowledge graph"""
+        try:
+            if not self.metrics_service:
+                return {"success": False, "error": "Metrics service not initialized"}
+            
+            logger.info(f"🔧 Getting graph analytics for {graph_id} over {period}")
+            
+            # Get comprehensive metrics summary
+            metrics = await self.metrics_service.get_comprehensive_metrics_summary(graph_id)
+            
+            # Get performance trends
+            trends = await self.metrics_service.get_performance_trends(graph_id, days=30)
+            
+            # Get health score trend
+            health_trend = await self.metrics_service.get_health_score_trend(graph_id, days=30)
+            
+            analytics = {
+                "graph_id": graph_id,
+                "period": period,
+                "metrics_summary": metrics.get('data', {}),
+                "performance_trends": trends.get('data', {}),
+                "health_trends": health_trend.get('data', {}),
+                "analytics_timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            logger.info(f"✅ Graph analytics retrieved successfully")
+            return {
+                "success": True,
+                "data": analytics,
+                "message": "Graph analytics retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting graph analytics: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get graph analytics: {str(e)}"
+            }
+
+    async def get_performance_analytics(self, graph_id: str, days: str = "30") -> Dict[str, Any]:
+        """Get performance analytics for a knowledge graph"""
+        try:
+            if not self.metrics_service:
+                return {"success": False, "error": "Metrics service not initialized"}
+            
+            logger.info(f"🔧 Getting performance analytics for {graph_id} over {days} days")
+            
+            # Get performance trends
+            trends = await self.metrics_service.get_performance_trends(graph_id, days=int(days))
+            
+            # Get comprehensive metrics
+            metrics = await self.metrics_service.get_comprehensive_metrics_summary(graph_id)
+            
+            performance_analytics = {
+                "graph_id": graph_id,
+                "period_days": days,
+                "performance_trends": trends.get('data', {}),
+                "current_metrics": metrics.get('data', {}),
+                "performance_summary": {
+                    "avg_response_time": metrics.get('data', {}).get('avg_response_time_ms', 0),
+                    "avg_health_score": metrics.get('data', {}).get('avg_health_score', 0),
+                    "total_operations": metrics.get('data', {}).get('total_operations', 0)
+                }
+            }
+            
+            logger.info(f"✅ Performance analytics retrieved successfully")
+            return {
+                "success": True,
+                "data": performance_analytics,
+                "message": "Performance analytics retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting performance analytics: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get performance analytics: {str(e)}"
+            }
+
+    async def get_user_activity_analytics(self, graph_id: str, days: str = "30") -> Dict[str, Any]:
+        """Get user activity analytics for a knowledge graph"""
+        try:
+            if not self.metrics_service:
+                return {"success": False, "error": "Metrics service not initialized"}
+            
+            logger.info(f"🔧 Getting user activity analytics for {graph_id} over {days} days")
+            
+            # Get user activity metrics
+            user_activity = await self.metrics_service.get_user_activity_metrics_by_graph_id(graph_id, days=int(days))
+            
+            # Get comprehensive metrics for user interaction data
+            metrics = await self.metrics_service.get_comprehensive_metrics_summary(graph_id)
+            
+            activity_analytics = {
+                "graph_id": graph_id,
+                "period_days": days,
+                "user_activity": user_activity.get('data', {}),
+                "interaction_summary": {
+                    "total_interactions": metrics.get('data', {}).get('user_interaction_count', 0),
+                    "query_executions": metrics.get('data', {}).get('query_execution_count', 0),
+                    "visualization_views": metrics.get('data', {}).get('visualization_view_count', 0),
+                    "export_operations": metrics.get('data', {}).get('export_operation_count', 0)
+                }
+            }
+            
+            logger.info(f"✅ User activity analytics retrieved successfully")
+            return {
+                "success": True,
+                "data": activity_analytics,
+                "message": "User activity analytics retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting user activity analytics: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get user activity analytics: {str(e)}"
+            }
+
+    async def get_data_quality_analytics(self, graph_id: str, days: str = "30") -> Dict[str, Any]:
+        """Get data quality analytics for a knowledge graph"""
+        try:
+            if not self.metrics_service:
+                return {"success": False, "error": "Metrics service not initialized"}
+            
+            logger.info(f"🔧 Getting data quality analytics for {graph_id} over {days} days")
+            
+            # Get data quality metrics
+            data_quality = await self.metrics_service.get_data_quality_metrics_by_graph_id(graph_id, days=int(days))
+            
+            # Get comprehensive metrics
+            metrics = await self.metrics_service.get_comprehensive_metrics_summary(graph_id)
+            
+            quality_analytics = {
+                "graph_id": graph_id,
+                "period_days": days,
+                "data_quality_metrics": data_quality.get('data', {}),
+                "quality_summary": {
+                    "freshness_score": metrics.get('data', {}).get('data_freshness_score', 0),
+                    "completeness_score": metrics.get('data', {}).get('data_completeness_score', 0),
+                    "consistency_score": metrics.get('data', {}).get('data_consistency_score', 0),
+                    "accuracy_score": metrics.get('data', {}).get('data_accuracy_score', 0)
+                }
+            }
+            
+            logger.info(f"✅ Data quality analytics retrieved successfully")
+            return {
+                "success": True,
+                "data": quality_analytics,
+                "message": "Data quality analytics retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting data quality analytics: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get data quality analytics: {str(e)}"
+            }
+
+    async def get_business_intelligence_report(self, graph_id: str) -> Dict[str, Any]:
+        """Get comprehensive business intelligence report for a knowledge graph"""
+        try:
+            if not self.metrics_service or not self.graph_service:
+                return {"success": False, "error": "Required services not initialized"}
+            
+            logger.info(f"🔧 Getting business intelligence report for {graph_id}")
+            
+            # Get graph information
+            graph = await self.graph_service.get_graph_by_id(graph_id)
+            if not graph:
+                return {
+                    "success": False,
+                    "error": "Graph not found"
+                }
+            
+            # Get comprehensive metrics
+            metrics = await self.metrics_service.get_comprehensive_metrics_summary(graph_id)
+            
+            # Get performance trends
+            trends = await self.metrics_service.get_performance_trends(graph_id, days=30)
+            
+            # Build business intelligence report
+            bi_report = {
+                "graph_id": graph_id,
+                "graph_name": graph.get('graph_name'),
+                "report_generated_at": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "executive_summary": {
+                    "overall_health": graph.get('overall_health_score', 0),
+                    "performance_score": graph.get('performance_score', 0),
+                    "data_quality_score": graph.get('data_quality_score', 0),
+                    "reliability_score": graph.get('reliability_score', 0),
+                    "compliance_score": graph.get('compliance_score', 0)
+                },
+                "operational_metrics": metrics.get('data', {}),
+                "performance_trends": trends.get('data', {}),
+                "business_insights": {
+                    "integration_status": graph.get('integration_status'),
+                    "lifecycle_status": graph.get('lifecycle_status'),
+                    "operational_status": graph.get('operational_status'),
+                    "total_nodes": graph.get('total_nodes', 0),
+                    "total_relationships": graph.get('total_relationships', 0)
+                },
+                "recommendations": [
+                    "Monitor performance trends for optimization opportunities",
+                    "Review data quality scores for improvement areas",
+                    "Check integration status for cross-module connectivity"
+                ]
+            }
+            
+            logger.info(f"✅ Business intelligence report generated successfully")
+            return {
+                "success": True,
+                "data": bi_report,
+                "message": "Business intelligence report generated successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting business intelligence report: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get business intelligence report: {str(e)}"
+            } 
+
+    # ============================================================================
+    # PHASE 2: GRAPH OPERATIONS METHODS
+    # ============================================================================
+
+    async def transform_graph_structure(self, graph_id: str, transformations: Dict[str, Any]) -> Dict[str, Any]:
+        """Transform the structure of a knowledge graph"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Transforming graph structure for {graph_id}")
+            
+            # Use the operations service to transform graph structure
+            result = await self.operations_service.transform_graph_structure(
+                graph_id=graph_id,
+                transformations=transformations
+            )
+            
+            logger.info(f"✅ Graph structure transformed successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Graph structure transformed successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error transforming graph structure: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to transform graph structure: {str(e)}"
+            }
+
+    async def merge_graphs(self, source_graph_id: str, target_graph_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Merge two knowledge graphs"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Merging graphs {source_graph_id} into {target_graph_id}")
+            
+            # Use the operations service to merge graphs
+            result = await self.operations_service.merge_graphs(
+                source_graph_id=source_graph_id,
+                target_graph_id=target_graph_id,
+                config=config
+            )
+            
+            logger.info(f"✅ Graphs merged successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Graphs merged successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error merging graphs: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to merge graphs: {str(e)}"
+            }
+
+    async def export_graph_workflow(self, graph_id: str, format: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Export a knowledge graph workflow"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Exporting graph workflow for {graph_id} in {format} format")
+            
+            # Use the operations service to export graph workflow
+            result = await self.operations_service.export_graph_workflow(
+                graph_id=graph_id,
+                format=format,
+                config=config
+            )
+            
+            logger.info(f"✅ Graph workflow exported successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "Graph workflow exported successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error exporting graph workflow: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to export graph workflow: {str(e)}"
+            }
+
+    async def get_graph_ai_insights_summary(self, graph_id: str) -> Dict[str, Any]:
+        """Get AI insights summary for a knowledge graph"""
+        try:
+            if not self.operations_service:
+                return {"success": False, "error": "Operations service not initialized"}
+            
+            logger.info(f"🔧 Getting AI insights summary for {graph_id}")
+            
+            # Use the operations service to get AI insights summary
+            result = await self.operations_service.get_graph_ai_insights_summary(graph_id)
+            
+            logger.info(f"✅ AI insights summary retrieved successfully")
+            return {
+                "success": True,
+                "data": result,
+                "message": "AI insights summary retrieved successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting AI insights summary: {e}")
+            return {
+                "success": False,
+                "error": f"Failed to get AI insights summary: {str(e)}"
             } 

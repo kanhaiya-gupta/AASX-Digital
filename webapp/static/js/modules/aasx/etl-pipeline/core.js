@@ -520,8 +520,8 @@ export class AASXETLPipeline {
 
         try {
             const endpoint = this.conversionMode === 'aasx-to-structured' 
-                ? '/api/aasx-etl/etl/extract' 
-                : '/api/aasx-etl/etl/generate';
+                ? '/api/aasx-etl/etl/extract-aasx' 
+                : '/api/aasx-etl/etl/generate-aasx';
             
             console.log(`📡 Making API call to ${endpoint}`);
             console.log('📤 Request payload:', {
@@ -530,10 +530,15 @@ export class AASXETLPipeline {
                 mode: this.conversionMode
             });
             
-            // Combine files and config into a single request body
+            // Create request body with IDs (no reverse engineering needed!)
+            const useCaseId = $('#useCaseSelect').val();
+            const projectId = $('#etlProjectSelect').val();
+            
             const requestBody = {
                 ...config,
-                files: selectedFiles,
+                use_case_id: useCaseId,
+                project_id: projectId,
+                file_ids: selectedFiles,  // These are now file IDs, not filenames
                 conversionMode: this.conversionMode
             };
             
@@ -790,7 +795,7 @@ export class AASXETLPipeline {
             // Select all files based on current mode
             this.files.forEach(file => {
                 if (this.isFileCompatibleWithMode(file)) {
-                    this.selectedFiles.add(file.filename || file.name);
+                    this.selectedFiles.add(file.file_id);
                 }
             });
         } else {
@@ -815,11 +820,10 @@ export class AASXETLPipeline {
         
         this.files.forEach(file => {
             if (this.isFileCompatibleWithMode(file)) {
-                const fileName = file.filename || file.name;
-                if (this.selectedFiles.has(fileName)) {
-                    this.selectedFiles.delete(fileName);
+                if (this.selectedFiles.has(file.file_id)) {
+                    this.selectedFiles.delete(file.file_id);
                 } else {
-                    this.selectedFiles.add(fileName);
+                    this.selectedFiles.add(file.file_id);
                 }
             }
         });
@@ -1004,9 +1008,9 @@ export class AASXETLPipeline {
                             <div class="form-check me-3 mt-1">
                                 <input class="form-check-input" type="checkbox" 
                                        id="file_${file.file_id || file.filename}" 
-                                       ${this.selectedFiles.has(file.filename || file.name) ? 'checked' : ''}
+                                       ${this.selectedFiles.has(file.file_id) ? 'checked' : ''}
                                        ${!isSelectable ? 'disabled' : ''}
-                                       onchange="window.aasxETLPipeline.toggleFileSelection('${file.filename || file.name}', this.checked)">
+                                       onchange="window.aasxETLPipeline.toggleFileSelection('${file.file_id}', this.checked)">
                             </div>
                             <div class="file-icon-large me-3">
                                 <div class="icon-container p-3 rounded-3 bg-light border">
@@ -1150,11 +1154,11 @@ export class AASXETLPipeline {
         return 'file';
     }
 
-    toggleFileSelection(filename, checked) {
+    toggleFileSelection(fileId, checked) {
         if (checked) {
-            this.selectedFiles.add(filename);
+            this.selectedFiles.add(fileId);
         } else {
-            this.selectedFiles.delete(filename);
+            this.selectedFiles.delete(fileId);
         }
         this.updateSelectedCount();
     }
@@ -1303,6 +1307,31 @@ export class AASXETLPipeline {
                         projectSelect.innerHTML = '<option value="">Choose a project...</option>';
                     }
                     // Clear files
+                    this.files = [];
+                    this.selectedFiles.clear();
+                    this.renderFileList();
+                }
+            });
+        }
+        
+        // Add project change handler
+        this.setupProjectChangeHandler();
+    }
+    
+    /**
+     * Set up project change handler to load files
+     */
+    setupProjectChangeHandler() {
+        const projectSelect = document.getElementById('etlProjectSelect');
+        if (projectSelect) {
+            projectSelect.addEventListener('change', async (e) => {
+                const projectId = e.target.value;
+                console.log(`🔄 ETL Pipeline: Project changed to ${projectId}`);
+                
+                if (projectId) {
+                    await this.refreshFiles();
+                } else {
+                    // Clear files when no project selected
                     this.files = [];
                     this.selectedFiles.clear();
                     this.renderFileList();

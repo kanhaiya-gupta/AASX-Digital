@@ -1,0 +1,544 @@
+/* ========================================
+ * SYSTEM TAB COMPONENTS
+ * ======================================== */
+
+/* ===== SYSTEM SECTION ===== */
+
+.aasx-system-section {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* ===== SYSTEM STATS ===== */
+
+.aasx-system-stat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.aasx-system-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.aasx-system-healthy {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.aasx-system-active {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.aasx-system-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.aasx-system-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.aasx-system-content {
+    flex: 1;
+}
+
+.aasx-system-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e3c72;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-system-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ===== SYSTEM CONTENT ===== */
+
+.aasx-system-content {
+    margin-top: 2rem;
+}
+
+/* ===== SYSTEM TABS ===== */
+
+.aasx-system-tabs {
+    border-bottom: 2px solid rgba(30, 60, 114, 0.1);
+    margin-bottom: 2rem;
+}
+
+.aasx-system-tabs .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    margin-right: 0.5rem;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+}
+
+.aasx-system-tabs .nav-link:hover {
+    color: #1e3c72;
+    background: rgba(30, 60, 114, 0.05);
+}
+
+.aasx-system-tabs .nav-link.active {
+    color: #1e3c72;
+    background: rgba(30, 60, 114, 0.1);
+    border-bottom: 3px solid #1e3c72;
+}
+
+.aasx-system-tabs .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* ===== SYSTEM CHARTS ===== */
+
+.aasx-system-chart {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    height: 100%;
+}
+
+.aasx-system-chart h4 {
+    color: #1e3c72;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* ===== SYSTEM ALERTS ===== */
+
+.aasx-system-alerts {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    height: 100%;
+}
+
+.aasx-system-alerts h4 {
+    color: #1e3c72;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.aasx-alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.aasx-alert-item:last-child {
+    margin-bottom: 0;
+}
+
+.aasx-alert-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.aasx-alert-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid #ffc107;
+}
+
+.aasx-alert-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-left: 4px solid #17a2b8;
+}
+
+.aasx-alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.aasx-alert-warning .aasx-alert-icon {
+    background: #ffc107;
+}
+
+.aasx-alert-info .aasx-alert-icon {
+    background: #17a2b8;
+}
+
+.aasx-alert-content {
+    flex: 1;
+}
+
+.aasx-alert-content h5 {
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.aasx-alert-content p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.aasx-alert-time {
+    font-size: 0.8rem;
+    color: #adb5bd;
+}
+
+/* ===== SYSTEM SERVICES ===== */
+
+.aasx-services-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.aasx-service-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.aasx-service-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.aasx-service-status {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.aasx-service-running {
+    background: #28a745;
+}
+
+.aasx-service-stopped {
+    background: #dc3545;
+}
+
+.aasx-service-info {
+    flex: 1;
+}
+
+.aasx-service-info h4 {
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 0.25rem;
+    font-size: 1.1rem;
+}
+
+.aasx-service-info p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.aasx-service-version {
+    font-size: 0.8rem;
+    color: #adb5bd;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.aasx-service-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.aasx-service-actions .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
+
+/* ===== SYSTEM LOGS ===== */
+
+.aasx-logs-container {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.aasx-logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background: #f8f9fa;
+}
+
+.aasx-logs-filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.aasx-logs-filters .aasx-form-select {
+    min-width: 150px;
+}
+
+.aasx-logs-content {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.aasx-log-entry {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.aasx-log-entry:last-child {
+    margin-bottom: 0;
+}
+
+.aasx-log-error {
+    background: rgba(220, 53, 69, 0.1);
+    border-left: 3px solid #dc3545;
+}
+
+.aasx-log-warning {
+    background: rgba(255, 193, 7, 0.1);
+    border-left: 3px solid #ffc107;
+}
+
+.aasx-log-info {
+    background: rgba(23, 162, 184, 0.1);
+    border-left: 3px solid #17a2b8;
+}
+
+.aasx-log-time {
+    color: #6c757d;
+    min-width: 150px;
+}
+
+.aasx-log-level {
+    font-weight: 600;
+    min-width: 80px;
+}
+
+.aasx-log-service {
+    color: #1e3c72;
+    min-width: 120px;
+}
+
+.aasx-log-message {
+    flex: 1;
+    color: #495057;
+}
+
+.aasx-log-error .aasx-log-level {
+    color: #dc3545;
+}
+
+.aasx-log-warning .aasx-log-level {
+    color: #ffc107;
+}
+
+.aasx-log-info .aasx-log-level {
+    color: #17a2b8;
+}
+
+/* ===== SYSTEM SETTINGS ===== */
+
+.aasx-settings-container {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.aasx-settings-section {
+    margin-bottom: 2rem;
+}
+
+.aasx-settings-section h4 {
+    color: #1e3c72;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid rgba(30, 60, 114, 0.1);
+}
+
+.aasx-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.aasx-setting-item:last-child {
+    border-bottom: none;
+}
+
+.aasx-setting-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.aasx-setting-control {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    min-width: 200px;
+}
+
+.aasx-setting-control input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #1e3c72;
+}
+
+.aasx-setting-control .aasx-form-select {
+    min-width: 150px;
+}
+
+.aasx-setting-description {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-align: right;
+    line-height: 1.4;
+}
+
+.aasx-settings-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+@media (max-width: 991.98px) {
+    .aasx-system-stat {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .aasx-system-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .aasx-logs-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .aasx-logs-filters {
+        justify-content: center;
+    }
+    
+    .aasx-settings-actions {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .aasx-system-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .aasx-system-number {
+        font-size: 1.25rem;
+    }
+    
+    .aasx-service-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .aasx-service-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .aasx-log-entry {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .aasx-log-time,
+    .aasx-log-level,
+    .aasx-log-service {
+        min-width: auto;
+    }
+    
+    .aasx-setting-item {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .aasx-setting-control {
+        align-items: flex-start;
+        min-width: auto;
+    }
+    
+    .aasx-setting-description {
+        text-align: left;
+    }
+    
+    .aasx-settings-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

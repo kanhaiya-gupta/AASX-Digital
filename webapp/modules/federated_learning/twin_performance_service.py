@@ -12,7 +12,8 @@ import json
 
 # Import shared services and database managers (following twin_registry pattern)
 from src.federated_learning.core.federated_learning_service import FederatedLearningService
-from src.shared.services.digital_twin_service import DigitalTwinService
+# Migrated to new twin registry system
+from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager
 
@@ -21,10 +22,11 @@ logger = logging.getLogger(__name__)
 class TwinPerformanceService:
     """Service for managing twin performance analysis and metrics"""
     
-    def __init__(self, db_manager: BaseDatabaseManager, digital_twin_service: DigitalTwinService, federated_learning_service: FederatedLearningService):
+    def __init__(self, db_manager: BaseDatabaseManager, twin_registry_service: CoreTwinRegistryService, federated_learning_service: FederatedLearningService):
         """Initialize the twin performance service"""
         self.db_manager = db_manager
-        self.digital_twin_service = digital_twin_service
+        # Migrated to new twin registry system
+        self.twin_registry_service = twin_registry_service
         self.federated_learning_service = federated_learning_service
         logger.info("✅ Twin Performance Service initialized successfully")
     

@@ -16,9 +16,6 @@ export default class TwinRegistryCore {
             apiBaseUrl: '/api/twin-registry',
             endpoints: {
                 twins: '/api/twin-registry/twins',
-                register: '/api/twin-registry/twins',
-                update: '/api/twin-registry/twins',
-                delete: '/api/twin-registry/twins',
                 search: '/api/twin-registry/twins/search',
                 status: '/api/twin-registry/status',
                 health: '/api/twin-registry/health',
@@ -27,6 +24,19 @@ export default class TwinRegistryCore {
             refreshInterval: 30000, // 30 seconds
             maxRetries: 3,
             retryDelay: 1000
+        };
+        
+        // Twin Registry specific element IDs
+        this.elementIds = {
+            tabs: 'twin_registry_tabs',
+            tabContent: 'twin_registry_tab_content',
+            management: 'twin_registry_management',
+            monitoring: 'twin_registry_monitoring',
+            performance: 'twin_registry_performance',
+            analytics: 'twin_registry_analytics',
+            lifecycle: 'twin_registry_lifecycle',
+            instances: 'twin_registry_instances',
+            configuration: 'twin_registry_configuration'
         };
         this.refreshInterval = null;
         this.isProcessing = false;
@@ -114,24 +124,53 @@ export default class TwinRegistryCore {
         }
         
         try {
-            const sessionInfo = window.authManager.getSessionInfo();
-            console.log('🔐 Twin Registry: Auth state update:', sessionInfo);
-            
-            if (sessionInfo && sessionInfo.isAuthenticated) {
-                this.isAuthenticated = true;
-                this.currentUser = {
-                    user_id: sessionInfo.user_id,
-                    username: sessionInfo.username,
-                    role: sessionInfo.role,
-                    organization_id: sessionInfo.organization_id
-                };
-                this.authToken = window.authManager.getStoredToken();
-                console.log('🔐 Twin Registry: User authenticated:', this.currentUser.username);
+            // Check if new auth system is available
+            if (typeof window.authManager.getSessionInfo === 'function') {
+                const sessionInfo = window.authManager.getSessionInfo();
+                console.log('🔐 Twin Registry: Auth state update (new system):', sessionInfo);
+                
+                if (sessionInfo && sessionInfo.isAuthenticated) {
+                    this.isAuthenticated = true;
+                    this.currentUser = {
+                        user_id: sessionInfo.user_id,
+                        username: sessionInfo.username,
+                        role: sessionInfo.role,
+                        organization_id: sessionInfo.organization_id
+                    };
+                    this.authToken = window.authManager.getStoredToken();
+                    console.log('🔐 Twin Registry: User authenticated:', this.currentUser.username);
+                } else {
+                    this.isAuthenticated = false;
+                    this.currentUser = null;
+                    this.authToken = null;
+                    console.log('🔐 Twin Registry: User not authenticated (demo mode)');
+                }
+            } else if (typeof window.authManager.isAuthenticated === 'function') {
+                // Fallback to old auth system
+                const isAuthenticated = window.authManager.isAuthenticated();
+                console.log('🔐 Twin Registry: Auth state update (old system):', isAuthenticated);
+                
+                if (isAuthenticated) {
+                    this.isAuthenticated = true;
+                    this.currentUser = {
+                        user_id: 'unknown',
+                        username: 'authenticated_user',
+                        role: 'user',
+                        organization_id: 'unknown'
+                    };
+                    this.authToken = window.authManager.getStoredToken();
+                    console.log('🔐 Twin Registry: User authenticated (legacy)');
+                } else {
+                    this.isAuthenticated = false;
+                    this.currentUser = null;
+                    this.authToken = null;
+                    console.log('🔐 Twin Registry: User not authenticated (legacy)');
+                }
             } else {
+                console.log('⚠️ Twin Registry: Unknown auth manager API');
                 this.isAuthenticated = false;
                 this.currentUser = null;
                 this.authToken = null;
-                console.log('🔐 Twin Registry: User not authenticated (demo mode)');
             }
         } catch (error) {
             console.warn('⚠️ Twin Registry: Error updating auth state:', error);
@@ -482,118 +521,11 @@ export default class TwinRegistryCore {
         }, this.config.refreshInterval);
     }
 
-    /**
-     * Register a new twin
-     * @param {Object} twinData - Twin data to register
-     * @returns {Object} Registration result
-     */
-    async registerTwin(twinData) {
-        try {
-            console.log('📝 Registering new twin:', twinData.id);
 
-            const response = await fetch(this.config.endpoints.register, {
-                method: 'POST',
-                headers: this.getAuthHeaders(),
-                body: JSON.stringify(twinData)
-            });
 
-            const result = await response.json();
 
-            if (response.ok) {
-                // Add to local cache
-                this.twinCache.set(result.twin.id, result.twin);
-                this.registryData.push(result.twin);
 
-                console.log('✅ Twin registered successfully:', result.twin.id);
-                return { success: true, twin: result.twin };
-            } else {
-                console.error('❌ Twin registration failed:', result.error);
-                return { success: false, error: result.error };
-            }
 
-        } catch (error) {
-            console.error('❌ Twin registration error:', error);
-            return { success: false, error: 'Network error occurred' };
-        }
-    }
-
-    /**
-     * Update an existing twin
-     * @param {string} twinId - Twin ID to update
-     * @param {Object} updateData - Data to update
-     * @returns {Object} Update result
-     */
-    async updateTwin(twinId, updateData) {
-        try {
-            console.log('🔄 Updating twin:', twinId);
-
-            const response = await fetch(`${this.config.endpoints.update}/${twinId}`, {
-                method: 'PUT',
-                headers: this.getAuthHeaders(),
-                body: JSON.stringify(updateData)
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                // Update local cache
-                const updatedTwin = { ...this.twinCache.get(twinId), ...result.twin };
-                this.twinCache.set(twinId, updatedTwin);
-
-                // Update registry data
-                const index = this.registryData.findIndex(t => t.id === twinId);
-                if (index !== -1) {
-                    this.registryData[index] = updatedTwin;
-                }
-
-                console.log('✅ Twin updated successfully:', twinId);
-                return { success: true, twin: updatedTwin };
-            } else {
-                console.error('❌ Twin update failed:', result.error);
-                return { success: false, error: result.error };
-            }
-
-        } catch (error) {
-            console.error('❌ Twin update error:', error);
-            return { success: false, error: 'Network error occurred' };
-        }
-    }
-
-    /**
-     * Delete a twin
-     * @param {string} twinId - Twin ID to delete
-     * @returns {Object} Deletion result
-     */
-    async deleteTwin(twinId) {
-        try {
-            console.log('🗑️ Deleting twin:', twinId);
-
-            const response = await fetch(`${this.config.endpoints.delete}/${twinId}`, {
-                method: 'DELETE',
-                headers: this.getAuthHeaders()
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                // Remove from local cache
-                this.twinCache.delete(twinId);
-
-                // Remove from registry data
-                this.registryData = this.registryData.filter(t => t.id !== twinId);
-
-                console.log('✅ Twin deleted successfully:', twinId);
-                return { success: true };
-            } else {
-                console.error('❌ Twin deletion failed:', result.error);
-                return { success: false, error: result.error };
-            }
-
-        } catch (error) {
-            console.error('❌ Twin deletion error:', error);
-            return { success: false, error: 'Network error occurred' };
-        }
-    }
 
     /**
      * Search twins
@@ -712,17 +644,12 @@ export default class TwinRegistryCore {
 
             for (const item of queue) {
                 try {
-                    const result = await this.registerTwin(item.data);
-                    if (!result.success && item.retries < this.config.maxRetries) {
-                        item.retries++;
-                        this.registrationQueue.push(item);
-                    }
+                    // Twin creation is now handled by AASX-ETL module
+                    console.log('ℹ️ Skipping twin registration - handled by AASX-ETL module');
+                    // Remove from queue since we can't process it here
                 } catch (error) {
                     console.error('❌ Failed to process queued registration:', error);
-                    if (item.retries < this.config.maxRetries) {
-                        item.retries++;
-                        this.registrationQueue.push(item);
-                    }
+                    // Don't retry since this endpoint is deprecated
                 }
 
                 // Add delay between retries

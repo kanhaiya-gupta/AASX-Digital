@@ -146,15 +146,40 @@ class AasxFileUploadManager {
     async onUseCaseChange(useCaseId, projectSelectId) {
         console.log(`🔄 File Upload Manager: Use case changed to ${useCaseId}, updating project dropdown ${projectSelectId}`);
         
+        const projectSelect = document.getElementById(projectSelectId);
+        if (!projectSelect) {
+            console.error(`❌ File Upload Manager: Project select element not found: ${projectSelectId}`);
+            return;
+        }
+        
         if (useCaseId && window.dropdownManager) {
-            // Use the dropdown manager to handle the use case change
-            await window.dropdownManager.handleUseCaseChange(useCaseId, projectSelectId);
+            try {
+                // Load projects for the selected use case
+                const projects = await window.dropdownManager.loadProjectsForUseCase(useCaseId);
+                
+                // Clear existing options
+                projectSelect.innerHTML = '<option value="">Choose a project...</option>';
+                
+                // Add projects to dropdown
+                if (projects && projects.length > 0) {
+                    projects.forEach(project => {
+                        const option = document.createElement('option');
+                        option.value = project.project_id;
+                        option.textContent = project.name;
+                        projectSelect.appendChild(option);
+                    });
+                    console.log(`✅ File Upload Manager: Populated ${projectSelectId} with ${projects.length} projects`);
+                } else {
+                    projectSelect.innerHTML = '<option value="">Choose a project...</option><option value="" disabled>No projects available for this use case</option>';
+                    console.log(`⚠️ File Upload Manager: No projects found for use case ${useCaseId}`);
+                }
+            } catch (error) {
+                console.error(`❌ File Upload Manager: Failed to load projects for use case ${useCaseId}:`, error);
+                projectSelect.innerHTML = '<option value="">Choose a project...</option><option value="" disabled>Error loading projects</option>';
+            }
         } else {
             // Clear project dropdown
-            const projectSelect = document.getElementById(projectSelectId);
-            if (projectSelect) {
-                projectSelect.innerHTML = '<option value="">Choose a project...</option><option value="" disabled>Select a use case first</option>';
-            }
+            projectSelect.innerHTML = '<option value="">Choose a project...</option><option value="" disabled>Select a use case first</option>';
         }
     }
 

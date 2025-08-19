@@ -37,22 +37,22 @@ export default class TwinTableRowGenerator {
                 <!-- Lifecycle Actions -->
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-sm btn-outline-success" 
-                            onclick="startTwin('{{ twin_id }}', 'user')" 
+                            onclick="twinRegistryStartTwin('{{ twin_id }}', 'user')" 
                             title="Start Twin">
                         <i class="fas fa-play"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-warning" 
-                            onclick="stopTwin('{{ twin_id }}', 'user')" 
+                            onclick="twinRegistryStopTwin('{{ twin_id }}', 'user')" 
                             title="Stop Twin">
                         <i class="fas fa-stop"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-info" 
-                            onclick="syncTwin('{{ twin_id }}', {}, 'user')" 
+                            onclick="twinRegistrySyncTwin('{{ twin_id }}', {}, 'user')" 
                             title="Sync Twin">
                         <i class="fas fa-sync"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" 
-                            onclick="restartTwin('{{ twin_id }}', 'user')" 
+                            onclick="twinRegistryRestartTwin('{{ twin_id }}', 'user')" 
                             title="Restart Twin">
                         <i class="fas fa-redo"></i>
                     </button>
@@ -61,12 +61,12 @@ export default class TwinTableRowGenerator {
                 <!-- Relationship Actions -->
                 <div class="btn-group ms-1" role="group">
                     <button type="button" class="btn btn-sm btn-outline-primary" 
-                            onclick="showRelationshipModal('{{ twin_id }}')" 
+                            onclick="twinRegistryShowRelationshipModal('{{ twin_id }}')" 
                             title="Manage Relationships">
                         <i class="fas fa-link"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-info" 
-                            onclick="showRelationships('{{ twin_id }}')" 
+                            onclick="twinRegistryShowRelationships('{{ twin_id }}')" 
                             title="View Relationships">
                         <i class="fas fa-sitemap"></i>
                     </button>
@@ -75,12 +75,12 @@ export default class TwinTableRowGenerator {
                 <!-- Details Actions -->
                 <div class="btn-group ms-1" role="group">
                     <button type="button" class="btn btn-sm btn-outline-dark" 
-                            onclick="viewTwinDetails('{{ twin_id }}')" 
+                            onclick="twinRegistryViewTwinDetails('{{ twin_id }}')" 
                             title="View Details">
                         <i class="fas fa-eye"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-secondary" 
-                            onclick="editTwin('{{ twin_id }}')" 
+                            onclick="twinRegistryEditTwin('{{ twin_id }}')" 
                             title="Edit Twin">
                         <i class="fas fa-edit"></i>
                     </button>

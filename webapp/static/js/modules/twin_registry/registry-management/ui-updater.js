@@ -16,6 +16,19 @@ export default class TwinRegistryUIUpdater {
         this.isAuthenticated = false;
         this.currentUser = null;
         this.authToken = null;
+        
+        // Twin Registry specific element IDs
+        this.elementIds = {
+            tabs: 'twin_registry_tabs',
+            tabContent: 'twin_registry_tab_content',
+            management: 'twin_registry_management',
+            monitoring: 'twin_registry_monitoring',
+            performance: 'twin_registry_performance',
+            analytics: 'twin_registry_analytics',
+            lifecycle: 'twin_registry_lifecycle',
+            instances: 'twin_registry_instances',
+            configuration: 'twin_registry_configuration'
+        };
     }
 
     /**
@@ -50,22 +63,22 @@ export default class TwinRegistryUIUpdater {
      */
     setupEventListeners() {
         // Refresh button
-        const refreshBtn = document.getElementById('refreshAllBtn');
+        const refreshBtn = document.getElementById('twin_registry_refreshAllBtn');
         if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.loadAndDisplayData());
+            refreshBtn.addEventListener('click', () => this.refreshAllData());
         }
 
         // Search functionality
-        const searchInput = document.getElementById('twinSearch');
+        const searchInput = document.getElementById('twin_registry_twinSearch');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => this.handleSearch(e.target.value));
         }
 
         // Filter functionality
-        const typeFilter = document.getElementById('typeFilter');
-        const statusFilter = document.getElementById('statusFilter');
-        const ownerFilter = document.getElementById('ownerFilter');
-        const clearFiltersBtn = document.getElementById('clearFilters');
+        const typeFilter = document.getElementById('twin_registry_typeFilter');
+        const statusFilter = document.getElementById('twin_registry_statusFilter');
+        const ownerFilter = document.getElementById('twin_registry_ownerFilter');
+        const clearFiltersBtn = document.getElementById('twin_registry_clearFilters');
 
         if (typeFilter) {
             typeFilter.addEventListener('change', (e) => this.handleFilterChange('type', e.target.value));
@@ -81,8 +94,8 @@ export default class TwinRegistryUIUpdater {
         }
 
         // Pagination
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
+        const prevPageBtn = document.getElementById('twin_registry_prevPage');
+        const nextPageBtn = document.getElementById('twin_registry_nextPage');
 
         if (prevPageBtn) {
             prevPageBtn.addEventListener('click', () => this.previousPage());
@@ -91,37 +104,12 @@ export default class TwinRegistryUIUpdater {
             nextPageBtn.addEventListener('click', () => this.nextPage());
         }
 
-        // Select all functionality
-        const selectAllCheckbox = document.getElementById('selectAll');
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', (e) => this.toggleSelectAll(e.target.checked));
-        }
+
 
         // Individual twin selection
-        document.addEventListener('change', (e) => {
-            if (e.target.classList.contains('twin-select')) {
-                this.updateBulkActionButtons();
-            }
-        });
 
-        // Bulk action buttons
-        const bulkStartBtn = document.getElementById('bulkStartBtn');
-        const bulkStopBtn = document.getElementById('bulkStopBtn');
-        const bulkSyncBtn = document.getElementById('bulkSyncBtn');
-        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
 
-        if (bulkStartBtn) {
-            bulkStartBtn.addEventListener('click', () => this.bulkStartTwins());
-        }
-        if (bulkStopBtn) {
-            bulkStopBtn.addEventListener('click', () => this.bulkStopTwins());
-        }
-        if (bulkSyncBtn) {
-            bulkSyncBtn.addEventListener('click', () => this.bulkSyncTwins());
-        }
-        if (bulkDeleteBtn) {
-            bulkDeleteBtn.addEventListener('click', () => this.bulkDeleteTwins());
-        }
+
     }
 
     /**
@@ -134,6 +122,9 @@ export default class TwinRegistryUIUpdater {
             
             // Load twins data (which includes statistics)
             await this.loadTwinsData();
+            
+            // Load data for all tabs to ensure they have data when switched to
+            await this.loadAllTabData();
             
             // Update charts with the loaded data
             if (window.twinRegistryChartUpdater) {
@@ -149,6 +140,81 @@ export default class TwinRegistryUIUpdater {
             console.error('❌ Failed to load and display data:', error);
             this.hideLoading();
             this.showError('Failed to load data. Please try again.');
+        }
+    }
+    
+    /**
+     * Load data for all tabs
+     */
+    async loadAllTabData() {
+        try {
+            console.log('🔄 Loading data for all tabs...');
+            
+            // Load health monitoring data
+            if (window.twinRegistryHealth) {
+                await window.twinRegistryHealth.loadHealthData();
+            }
+            
+            // Load performance data
+            if (window.twinRegistryPerformance) {
+                await window.twinRegistryPerformance.loadPerformanceData();
+            }
+            
+            // Load analytics data
+            if (window.twinRegistryAnalytics) {
+                await window.twinRegistryAnalytics.loadAnalyticsData();
+            }
+            
+            // Load lifecycle data
+            if (window.twinRegistryLifecycle) {
+                await window.twinRegistryLifecycle.loadLifecycleData();
+            }
+            
+            // Load instances data
+            if (window.twinRegistryInstances) {
+                await window.twinRegistryInstances.loadInstancesData();
+            }
+            
+            // Load configuration data
+            if (window.twinRegistryConfiguration) {
+                await window.twinRegistryConfiguration.loadConfigurationData();
+            }
+            
+            console.log('✅ All tab data loaded');
+            
+        } catch (error) {
+            console.error('❌ Failed to load all tab data:', error);
+        }
+    }
+    
+    /**
+     * Refresh all data including all tabs
+     */
+    async refreshAllData() {
+        try {
+            console.log('🔄 Refreshing all data...');
+            this.showLoading();
+            
+            // Refresh twins data
+            await this.loadTwinsData();
+            
+            // Refresh all tab data
+            await this.loadAllTabData();
+            
+            // Update charts
+            if (window.twinRegistryChartUpdater) {
+                const statsData = await this.getStatsData();
+                const twinsData = await this.getTwinsData();
+                window.twinRegistryChartUpdater.updateChartsWithData(twinsData, statsData);
+            }
+            
+            this.hideLoading();
+            console.log('✅ All data refreshed successfully');
+            
+        } catch (error) {
+            console.error('❌ Failed to refresh all data:', error);
+            this.hideLoading();
+            this.showError('Failed to refresh data. Please try again.');
         }
     }
 
@@ -196,6 +262,14 @@ export default class TwinRegistryUIUpdater {
                 // Update statistics with the statistics object
                 if (data.statistics) {
                     this.updateStatistics(data.statistics);
+                } else {
+                    // Create statistics from the twins data if not provided
+                    const stats = {
+                        total_twins: data.pagination?.total_count || data.twins?.length || 0,
+                        active_twins: data.twins?.filter(t => t.operational_status === 'running').length || 0,
+                        error_twins: data.twins?.filter(t => t.health_status === 'critical').length || 0
+                    };
+                    this.updateStatistics(stats);
                 }
                 
                 this.lastTwinsData = data; // Store for chart updates
@@ -212,10 +286,10 @@ export default class TwinRegistryUIUpdater {
         console.log('🔄 Updating statistics with data:', stats);
         
         // Update main statistics
-        const totalTwinsElement = document.getElementById('totalTwins');
-        const activeTwinsElement = document.getElementById('activeTwins');
-        const totalDataPointsElement = document.getElementById('totalDataPoints');
-        const activeAlertsElement = document.getElementById('activeAlerts');
+        const totalTwinsElement = document.getElementById('twin_registry_totalTwins');
+        const activeTwinsElement = document.getElementById('twin_registry_activeTwins');
+        const totalDataPointsElement = document.getElementById('twin_registry_totalDataPoints');
+        const activeAlertsElement = document.getElementById('twin_registry_activeAlerts');
 
         if (totalTwinsElement) {
             totalTwinsElement.textContent = stats.total_twins || 0;
@@ -233,10 +307,10 @@ export default class TwinRegistryUIUpdater {
         }
 
         // Update analytics section data
-        const analyticsTotalTwins = document.getElementById('analyticsTotalTwins');
-        const analyticsHealthyTwins = document.getElementById('analyticsHealthyTwins');
-        const analyticsWarningTwins = document.getElementById('analyticsWarningTwins');
-        const analyticsCriticalTwins = document.getElementById('analyticsCriticalTwins');
+        const analyticsTotalTwins = document.getElementById('twin_registry_analyticsTotalTwins');
+        const analyticsHealthyTwins = document.getElementById('twin_registry_analyticsHealthyTwins');
+        const analyticsWarningTwins = document.getElementById('twin_registry_analyticsWarningTwins');
+        const analyticsCriticalTwins = document.getElementById('twin_registry_analyticsCriticalTwins');
 
         if (analyticsTotalTwins) {
             analyticsTotalTwins.textContent = stats.total_twins || 0;
@@ -252,9 +326,9 @@ export default class TwinRegistryUIUpdater {
         }
 
         // Update pagination info
-        const showingStartElement = document.getElementById('showingStart');
-        const showingEndElement = document.getElementById('showingEnd');
-        const totalRecordsElement = document.getElementById('totalRecords');
+        const showingStartElement = document.getElementById('twin_registry_showingStart');
+        const showingEndElement = document.getElementById('twin_registry_showingEnd');
+        const totalRecordsElement = document.getElementById('twin_registry_totalRecords');
 
         if (showingStartElement && showingEndElement && totalRecordsElement) {
             const start = (this.currentPage - 1) * this.pageSize + 1;
@@ -275,9 +349,9 @@ export default class TwinRegistryUIUpdater {
     updateTwinsTable(data) {
         console.log('🔄 Updating twins table with data:', data);
         
-        const tableBody = document.getElementById('twinTableBody');
-        const emptyState = document.getElementById('emptyTwins');
-        const loadingState = document.getElementById('loadingTwins');
+        const tableBody = document.getElementById('twin_registry_twinTableBody');
+        const emptyState = document.getElementById('twin_registry_emptyTwins');
+        const loadingState = document.getElementById('twin_registry_loadingTwins');
 
         if (!tableBody) {
             console.error('❌ Table body element not found');
@@ -315,17 +389,14 @@ export default class TwinRegistryUIUpdater {
         // Extract twin type from name or metadata
         const twinType = this.extractTwinType(twin);
         
-        // Get health status
+        // Get health status and score from the correct API fields
         const healthStatus = twin.health_status || 'unknown';
-        const healthScore = twin.health_score || 0;
+        const healthScore = twin.overall_health_score || 0;
         
         // Get last sync time
         const lastSync = twin.updated_at ? new Date(twin.updated_at).toLocaleString() : 'Never';
         
         row.innerHTML = `
-            <td>
-                <input type="checkbox" class="form-check-input twin-select" value="${twin.twin_id}">
-            </td>
             <td>
                 <code class="text-primary">${twin.twin_id.substring(0, 8)}...</code>
                 <button class="btn btn-sm btn-link p-0 ms-1" onclick="copyToClipboard('${twin.twin_id}')" title="Copy ID">
@@ -334,13 +405,19 @@ export default class TwinRegistryUIUpdater {
             </td>
             <td>
                 <div class="fw-bold">${twin.twin_name || 'Unnamed Twin'}</div>
-                <small class="text-muted">${twin.file_id ? 'File: ' + twin.file_id.substring(0, 8) + '...' : 'No file'}</small>
+                <small class="text-muted">${twin.workflow_source === 'aasx_file' ? 'AASX File' : 'Structured Data'}</small>
             </td>
             <td>
-                <span class="badge bg-secondary">${twinType}</span>
+                <span class="badge bg-secondary">${twin.twin_category || 'Unknown'}</span>
             </td>
             <td>
-                <span class="badge bg-${this.getStatusBadgeColor(twin.status)}">${twin.status}</span>
+                <span class="badge bg-secondary">${twin.twin_type || 'Unknown'}</span>
+            </td>
+            <td>
+                <span class="badge bg-${this.getStatusBadgeColor(twin.twin_priority)}">${twin.twin_priority || 'Unknown'}</span>
+            </td>
+            <td>
+                <span class="badge bg-${this.getStatusBadgeColor(twin.integration_status)}">${twin.integration_status || 'Unknown'}</span>
             </td>
             <td>
                 <div class="d-flex align-items-center">
@@ -352,24 +429,26 @@ export default class TwinRegistryUIUpdater {
                 </div>
             </td>
             <td>
-                <span class="badge bg-info">System</span>
+                <span class="badge bg-info">${twin.lifecycle_phase || 'Unknown'}</span>
+            </td>
+            <td>
+                <span class="badge bg-${this.getStatusBadgeColor(twin.operational_status)}">${twin.operational_status || 'Unknown'}</span>
+            </td>
+            <td>
+                <span class="badge bg-secondary">${twin.security_level || 'Unknown'}</span>
             </td>
             <td>
                 <small class="text-muted">${lastSync}</small>
             </td>
             <td>
                 <div class="btn-group btn-group-sm" role="group">
-                    <button class="btn btn-outline-primary" onclick="viewTwin('${twin.twin_id}')" title="View">
+                    <button class="btn btn-outline-primary" onclick="viewTwin('${twin.twin_id}')" title="View Twin Details">
                         <i class="fas fa-eye"></i>
+                        View
                     </button>
-                    <button class="btn btn-outline-success" onclick="startTwin('${twin.twin_id}')" title="Start">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button class="btn btn-outline-warning" onclick="stopTwin('${twin.twin_id}')" title="Stop">
-                        <i class="fas fa-stop"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" onclick="deleteTwin('${twin.twin_id}')" title="Delete">
-                        <i class="fas fa-trash"></i>
+                    <button class="btn btn-outline-info" onclick="window.open('/aasx-etl', '_blank')" title="Manage via AASX-ETL">
+                        <i class="fas fa-external-link-alt"></i>
+                        AASX-ETL
                     </button>
                 </div>
             </td>
@@ -382,22 +461,20 @@ export default class TwinRegistryUIUpdater {
      * Extract twin type from twin data
      */
     extractTwinType(twin) {
-        // Try to extract from name first
+        // Use the twin_category field from the API response
+        if (twin.twin_category) {
+            return twin.twin_category.charAt(0).toUpperCase() + twin.twin_category.slice(1);
+        }
+        
+        // Fallback: try to extract from name
         const name = twin.twin_name || '';
         if (name.includes('Robotic')) return 'Robotic System';
         if (name.includes('Manufacturing')) return 'Manufacturing';
         if (name.includes('Servo')) return 'Servo Motor';
         if (name.includes('Process')) return 'Process';
-        
-        // Try to extract from metadata
-        if (twin.metadata && twin.metadata.etl_results) {
-            const etlResults = twin.metadata.etl_results;
-            if (etlResults.results && etlResults.results.json) {
-                const output = etlResults.results.json.output || '';
-                if (output.includes('ServoDCMotor')) return 'Servo Motor';
-                if (output.includes('Manufacturing')) return 'Manufacturing';
-            }
-        }
+        if (name.includes('Facility')) return 'Facility';
+        if (name.includes('Component')) return 'Component';
+        if (name.includes('Energy')) return 'Energy';
         
         return 'Unknown';
     }
@@ -406,12 +483,39 @@ export default class TwinRegistryUIUpdater {
      * Get status badge color
      */
     getStatusBadgeColor(status) {
-        switch (status?.toLowerCase()) {
-            case 'active': return 'success';
-            case 'inactive': return 'secondary';
-            case 'error': return 'danger';
-            case 'maintenance': return 'warning';
-            default: return 'secondary';
+        if (!status) return 'secondary';
+        
+        switch (status.toLowerCase()) {
+            case 'active':
+            case 'running':
+            case 'online':
+            case 'completed':
+            case 'real_time':
+                return 'success';
+            case 'inactive':
+            case 'stopped':
+            case 'offline':
+                return 'secondary';
+            case 'error':
+            case 'critical':
+                return 'danger';
+            case 'maintenance':
+            case 'warning':
+            case 'degraded':
+            case 'paused':
+            case 'scheduled':
+                return 'warning';
+            case 'high':
+            case 'normal':
+            case 'low':
+            case 'standard':
+            case 'internal':
+            case 'confidential':
+            case 'secret':
+            case 'top_secret':
+                return 'info';
+            default:
+                return 'secondary';
         }
     }
 
@@ -438,8 +542,8 @@ export default class TwinRegistryUIUpdater {
      * Update pagination buttons
      */
     updatePaginationButtons(totalRecords) {
-        const prevBtn = document.getElementById('prevPage');
-        const nextBtn = document.getElementById('nextPage');
+        const prevBtn = document.getElementById('twin_registry_prevPage');
+        const nextBtn = document.getElementById('twin_registry_nextPage');
         
         if (prevBtn) {
             prevBtn.disabled = this.currentPage <= 1;
@@ -508,115 +612,105 @@ export default class TwinRegistryUIUpdater {
     }
 
     /**
-     * Toggle select all
+     * Export twins data
      */
-    toggleSelectAll(checked) {
-        const checkboxes = document.querySelectorAll('.twin-select');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = checked;
-        });
-        this.updateBulkActionButtons();
-    }
-
-    /**
-     * Update bulk action buttons
-     */
-    updateBulkActionButtons() {
-        const selectedCount = document.querySelectorAll('.twin-select:checked').length;
-        const bulkButtons = ['bulkStartBtn', 'bulkStopBtn', 'bulkSyncBtn', 'bulkDeleteBtn'];
-        
-        bulkButtons.forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.disabled = selectedCount === 0;
-            }
-        });
-    }
-
-    /**
-     * Bulk start twins
-     */
-    async bulkStartTwins() {
-        const selectedTwins = this.getSelectedTwinIds();
-        if (selectedTwins.length === 0) return;
-
+    async exportTwins(format = "json", twinType = null, status = null) {
         try {
-            const response = await fetch('/api/twin-registry/twins/bulk/start', {
-                method: 'POST',
-                headers: this.getAuthHeaders(),
-                body: JSON.stringify({ twin_ids: selectedTwins, user: 'system' })
+            const params = new URLSearchParams();
+            if (format) params.append('format', format);
+            if (twinType) params.append('twin_type', twinType);
+            if (status) params.append('status', status);
+
+            const response = await fetch(`/api/twin-registry/export/twins?${params}`, {
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {
-                console.log('Bulk start successful');
-                await this.loadAndDisplayData();
+                const result = await response.json();
+                return result;
+            } else {
+                throw new Error(`Export failed: ${response.status}`);
             }
         } catch (error) {
-            console.error('Bulk start failed:', error);
+            console.error('Error exporting twins:', error);
+            return { success: false, message: error.message };
         }
     }
 
     /**
-     * Bulk stop twins
+     * Export metrics data
      */
-    async bulkStopTwins() {
-        const selectedTwins = this.getSelectedTwinIds();
-        if (selectedTwins.length === 0) return;
-
+    async exportMetrics(format = "json", registryId = null, timeRange = "30d") {
         try {
-            const response = await fetch('/api/twin-registry/twins/bulk/stop', {
-                method: 'POST',
-                headers: this.getAuthHeaders(),
-                body: JSON.stringify({ twin_ids: selectedTwins, user: 'system' })
+            const params = new URLSearchParams();
+            if (format) params.append('format', format);
+            if (registryId) params.append('registry_id', registryId);
+            if (timeRange) params.append('time_range', timeRange);
+
+            const response = await fetch(`/api/twin-registry/export/metrics?${params}`, {
+                headers: this.getAuthHeaders()
             });
 
             if (response.ok) {
-                console.log('Bulk stop successful');
-                await this.loadAndDisplayData();
+                const result = await response.json();
+                return result;
+            } else {
+                throw new Error(`Export failed: ${response.status}`);
             }
         } catch (error) {
-            console.error('Bulk stop failed:', error);
+            console.error('Error exporting metrics:', error);
+            return { success: false, message: error.message };
         }
     }
 
     /**
-     * Bulk sync twins
+     * Export relationships data
      */
-    async bulkSyncTwins() {
-        const selectedTwins = this.getSelectedTwinIds();
-        if (selectedTwins.length === 0) return;
-
-        console.log('Bulk sync twins:', selectedTwins);
-        // Implement bulk sync functionality
-    }
-
-    /**
-     * Bulk delete twins
-     */
-    async bulkDeleteTwins() {
-        const selectedTwins = this.getSelectedTwinIds();
-        if (selectedTwins.length === 0) return;
-
-        if (!confirm(`Are you sure you want to delete ${selectedTwins.length} twins?`)) {
-            return;
-        }
-
+    async exportRelationships(format = "json", sourceTwinId = null, targetTwinId = null) {
         try {
-            // Delete twins one by one (or implement bulk delete endpoint)
-            for (const twinId of selectedTwins) {
-                const response = await fetch(`/api/twin-registry/twins/${twinId}`, {
-                    method: 'DELETE',
-                    headers: this.getAuthHeaders()
-                });
-                if (!response.ok) {
-                    console.error(`Failed to delete twin ${twinId}`);
-                }
+            const params = new URLSearchParams();
+            if (format) params.append('format', format);
+            if (sourceTwinId) params.append('source_twin_id', sourceTwinId);
+            if (targetTwinId) params.append('target_twin_id', targetTwinId);
+
+            const response = await fetch(`/api/twin-registry/export/relationships?${params}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                return result;
+            } else {
+                throw new Error(`Export failed: ${response.status}`);
             }
-            
-            console.log('Bulk delete completed');
-            await this.loadAndDisplayData();
         } catch (error) {
-            console.error('Bulk delete failed:', error);
+            console.error('Error exporting relationships:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Export instances data
+     */
+    async exportInstances(format = "json", twinId = null) {
+        try {
+            const params = new URLSearchParams();
+            if (format) params.append('format', format);
+            if (twinId) params.append('twin_id', twinId);
+
+            const response = await fetch(`/api/twin-registry/export/instances?${params}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                return result;
+            } else {
+                throw new Error(`Export failed: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error exporting instances:', error);
+            return { success: false, message: error.message };
         }
     }
 
@@ -632,8 +726,8 @@ export default class TwinRegistryUIUpdater {
      * Show loading state
      */
     showLoading() {
-        const loadingState = document.getElementById('loadingTwins');
-        const emptyState = document.getElementById('emptyTwins');
+        const loadingState = document.getElementById('twin_registry_loadingTwins');
+        const emptyState = document.getElementById('twin_registry_emptyTwins');
         
         if (loadingState) loadingState.style.display = 'block';
         if (emptyState) emptyState.style.display = 'none';
@@ -643,7 +737,7 @@ export default class TwinRegistryUIUpdater {
      * Hide loading state
      */
     hideLoading() {
-        const loadingState = document.getElementById('loadingTwins');
+        const loadingState = document.getElementById('twin_registry_loadingTwins');
         if (loadingState) loadingState.style.display = 'none';
     }
 
@@ -651,8 +745,8 @@ export default class TwinRegistryUIUpdater {
      * Show empty state
      */
     showEmptyState() {
-        const emptyState = document.getElementById('emptyTwins');
-        const loadingState = document.getElementById('loadingTwins');
+        const emptyState = document.getElementById('twin_registry_emptyTwins');
+        const loadingState = document.getElementById('twin_registry_loadingTwins');
         
         if (emptyState) emptyState.style.display = 'block';
         if (loadingState) loadingState.style.display = 'none';
@@ -686,6 +780,34 @@ export default class TwinRegistryUIUpdater {
      */
     async getTwinsData() {
         return this.lastTwinsData || {};
+    }
+
+    /**
+     * Search twins by various criteria
+     */
+    async searchTwins(query = "", twinType = "", status = "", projectId = null, limit = 50) {
+        try {
+            const params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (twinType) params.append('twin_type', twinType);
+            if (status) params.append('status', status);
+            if (projectId) params.append('project_id', projectId);
+            if (limit) params.append('limit', limit.toString());
+
+            const response = await fetch(`/api/twin-registry/twins/search?${params}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                return result;
+            } else {
+                throw new Error(`Search failed: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error searching twins:', error);
+            return { success: false, data: [], total_count: 0 };
+        }
     }
 
     /**
@@ -732,7 +854,15 @@ export default class TwinRegistryUIUpdater {
      */
     updateAuthState() {
         if (window.authManager) {
+            // Check if new auth system is available
+        if (typeof window.authManager.getSessionInfo === 'function') {
+            const sessionInfo = window.authManager.getSessionInfo();
+            this.isAuthenticated = sessionInfo && sessionInfo.isAuthenticated;
+        } else if (typeof window.authManager.isAuthenticated === 'function') {
             this.isAuthenticated = window.authManager.isAuthenticated();
+        } else {
+            this.isAuthenticated = false;
+        }
             this.currentUser = null; // User info not needed currently
             this.authToken = window.authManager.getStoredToken();
             console.log('🔐 Twin Registry UI Updater: Auth state updated', {
@@ -758,7 +888,7 @@ export default class TwinRegistryUIUpdater {
         window.addEventListener('loginSuccess', () => {
             this.updateAuthState();
             // Refresh data when user logs in
-            this.loadAndDisplayData();
+            this.refreshAllData();
         });
 
         window.addEventListener('logout', () => {
@@ -802,31 +932,26 @@ export default class TwinRegistryUIUpdater {
     }
 }
 
-// Global utility functions
-window.copyToClipboard = function(text) {
+// Global utility functions for Twin Registry
+window.twinRegistryCopyToClipboard = function(text) {
     navigator.clipboard.writeText(text).then(() => {
         console.log('Copied to clipboard:', text);
     });
 };
 
-window.viewTwin = function(twinId) {
+window.twinRegistryViewTwin = function(twinId) {
     console.log('View twin:', twinId);
     // Implement twin viewing functionality
 };
 
-window.startTwin = function(twinId) {
+window.twinRegistryStartTwin = function(twinId) {
     console.log('Start twin:', twinId);
     // Implement twin start functionality
 };
 
-window.stopTwin = function(twinId) {
+window.twinRegistryStopTwin = function(twinId) {
     console.log('Stop twin:', twinId);
     // Implement twin stop functionality
 };
 
-window.deleteTwin = function(twinId) {
-    if (confirm('Are you sure you want to delete this twin?')) {
-        console.log('Delete twin:', twinId);
-        // Implement twin deletion functionality
-    }
-}; 
+ 

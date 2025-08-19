@@ -6,7 +6,7 @@ Manages lifecycle events and status of digital twins.
 
 from src.shared.models.base_model import BaseModel
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from enum import Enum
 
@@ -24,7 +24,7 @@ class LifecycleEventType(str, Enum):
     ERROR = "error"
 
 
-class LifecycleStatus(str, Enum):
+class LifecycleStatusEnum(str, Enum):
     """Twin lifecycle status"""
     CREATED = "created"
     RUNNING = "running"
@@ -62,7 +62,7 @@ class TwinLifecycleEvent(BaseModel):
         triggered_by: Optional[str] = None
     ) -> "TwinLifecycleEvent":
         """Create a new lifecycle event"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return cls(
             event_id=str(uuid.uuid4()),
             twin_id=twin_id,
@@ -92,7 +92,7 @@ class TwinLifecycleStatus(BaseModel):
     """Model for current twin lifecycle status"""
     
     twin_id: str
-    current_status: LifecycleStatus
+    current_status: LifecycleStatusEnum
     last_event: Optional[TwinLifecycleEvent] = None
     last_updated: datetime
     lifecycle_metadata: Optional[Dict[str, Any]] = None
@@ -106,10 +106,10 @@ class TwinLifecycleStatus(BaseModel):
     def create_status(
         cls,
         twin_id: str,
-        initial_status: LifecycleStatus = LifecycleStatus.CREATED
+        initial_status: LifecycleStatusEnum = LifecycleStatusEnum.CREATED
     ) -> "TwinLifecycleStatus":
         """Create a new lifecycle status"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return cls(
             twin_id=twin_id,
             current_status=initial_status,
@@ -117,12 +117,12 @@ class TwinLifecycleStatus(BaseModel):
             lifecycle_metadata={}
         )
     
-    def update_status(self, new_status: LifecycleStatus, event: Optional[TwinLifecycleEvent] = None) -> None:
+    def update_status(self, new_status: LifecycleStatusEnum, event: Optional[TwinLifecycleEvent] = None) -> None:
         """Update the lifecycle status"""
         self.current_status = new_status
         if event:
             self.last_event = event
-        self.last_updated = datetime.utcnow()
+        self.last_updated = datetime.now(timezone.utc)
     
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
         """Update lifecycle metadata"""

@@ -5,15 +5,14 @@ Handles AASX file processing, extraction, and ETL operations.
 
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from datetime import datetime, timezone
+import asyncio
 from src.aasx.aasx_processor import extract_aasx, batch_extract
 from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.project_repository import ProjectRepository
 from src.shared.repositories.file_repository import FileRepository
-from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
-from src.shared.services.digital_twin_service import DigitalTwinService
 from src.aasx.services.aasx_processing_service import AASXProcessingService
 from src.aasx.services.processing_metrics_service import ProcessingMetricsService
-from src.federated_learning.core.federated_learning_service import FederatedLearningService
 
 class AASXProcessor:
     def __init__(self):
@@ -29,18 +28,17 @@ class AASXProcessor:
         self.db_manager = BaseDatabaseManager(connection_manager)
         self.project_repo = ProjectRepository(self.db_manager)
         self.file_repo = FileRepository(self.db_manager)
-        self.twin_repo = DigitalTwinRepository(self.db_manager)
-        
-        # Initialize services following src/shared/ patterns
-        self.digital_twin_service = DigitalTwinService(self.db_manager, self.file_repo, self.project_repo)
-        self.federated_learning_service = FederatedLearningService(self.digital_twin_service)
         
         # Initialize AASX processing service for job tracking
         self.processing_service = AASXProcessingService(self.db_manager)
         
         # Phase 4: Initialize comprehensive metrics service
         self.metrics_service = ProcessingMetricsService(self.db_manager.connection_manager.get_connection())
-    
+        
+        # Initialize repositories for name lookup
+        from src.shared.repositories.use_case_repository import UseCaseRepository
+        self.use_case_repo = UseCaseRepository(self.db_manager)
+
     def run_etl_pipeline(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Run the complete ETL pipeline with all steps."""
         import time
@@ -159,16 +157,54 @@ class AASXProcessor:
                 print("🔄 Generation job detected - skipping complex ETL ecosystem steps")
                 print("ℹ️  Generation jobs convert structured data + documents to AASX (preserving all data)")
                 
+                # DEBUG: Check if we reach here
+                print("📝 DEBUG: Starting generation completion logic...")
+                
                 # Simple completion for generation jobs
                 processing_time = (time.time() - start_time) * 1000
+                print(f"📝 DEBUG: Calculated processing time: {processing_time:.2f}ms")
                 completion_data = {
                     'processing_time': processing_time,
                     'output_directory': str(output_dir)
                 }
                 
                 # Update job with completion data
-                self.processing_service.update_status(job_id, 'completed', completion_data)
-                print(f"✅ Generation job {job_id} completed successfully in {processing_time:.2f}ms")
+                print("📝 DEBUG: About to update job status to completed...")
+                try:
+                    self.processing_service.update_status(job_id, 'completed', completion_data)
+                    print(f"✅ DEBUG: Job status updated successfully")
+                    print(f"✅ Generation job {job_id} completed successfully in {processing_time:.2f}ms")
+                except Exception as job_update_error:
+                    print(f"❌ DEBUG: Failed to update job status: {job_update_error}")
+                    # Continue anyway to try file status update
+                
+                # Update file status to 'processed' for generation jobs
+                print("📝 DEBUG: About to update file status for generation job...")
+                print(f"📝 DEBUG: file_id={file_id}, filename={getattr(file_info, 'filename', 'unknown')}")
+                try:
+                    file_status_result = self.update_file_status_step(file_id, file_info.filename)
+                    print(f"✅ DEBUG: File status updated successfully: {file_status_result}")
+                except Exception as status_error:
+                    print(f"❌ DEBUG: Failed to update file status: {status_error}")
+                    import traceback
+                    traceback.print_exc()
+                
+                # 🔗 TWIN REGISTRY INTEGRATION: Trigger population for generation jobs
+                try:
+                    print("🔗 Step 8: Triggering Twin Registry Population for generation job...")
+                    self._trigger_twin_registry_population(
+                        job_id=job_id,
+                        job_type=job_type,
+                        file_info=file_info,
+                        etl_result=etl_result,
+                        output_dir=output_dir,
+                        config=config,
+                        processing_time=processing_time
+                    )
+                    print("✅ Twin Registry Population triggered successfully for generation job")
+                except Exception as twin_reg_error:
+                    print(f"⚠️ Twin Registry Population failed for generation job: {twin_reg_error}")
+                    # Don't fail the main job if twin registry fails
                 
                 # Return simple results for generation
                 return {
@@ -201,21 +237,10 @@ class AASXProcessor:
             
             # Step 3: Create digital twin with complete data
             print("🤖 Step 3: Creating digital twin...")
-            twin_data = {
-                'user_consent': user_consent,
-                'federated_learning': federated_learning,
-                'data_privacy_level': data_privacy_level
-            }
-            twin_result = self.create_digital_twin_step(
-                project_id, file_id, file_info.__dict__, etl_result, output_dir, config=config
-            )
-            
-            if twin_result.get('status') != 'success':
-                return {'status': 'error', 'message': 'Digital twin creation failed', 'details': twin_result}
-            
-            # Step 4: Update federated learning status
-            print("🔗 Step 4: Updating federated learning status...")
-            fl_result = self.update_federated_learning_step(twin_result, config)
+            # Step 4: Twin registry population is now handled automatically by the new system
+            print("🔗 Step 4: Twin registry population handled by new system...")
+            twin_result = {'status': 'success', 'message': 'Twin registry population handled by new system'}
+            fl_result = {'status': 'success', 'message': 'Federated learning handled by new twin registry'}
             
             # Step 5: Process AI/RAG
             print("🧠 Step 5: Processing AI/RAG...")
@@ -252,9 +277,9 @@ class AASXProcessor:
                 print(f"❌ Qdrant storage failed: {e}")
                 qdrant_result = {'status': 'failed', 'error': str(e)}
             
-            # Step 7: Mark simulation ready
+            # Step 7: Mark simulation ready (placeholder for new twin registry)
             print("⚡ Step 7: Marking simulation ready...")
-            simulation_ready = self.mark_simulation_ready(twin_result.get('twin_id'))
+            simulation_ready = self.mark_simulation_ready(file_id)  # Use file_id as placeholder
             
             print(f"✅ ETL pipeline (extraction) completed successfully!")
             
@@ -277,13 +302,14 @@ class AASXProcessor:
                 'output_directory': str(output_dir),  # Where all output files are stored
                 'output_files_summary': {
                     'formats_processed': etl_result.get('formats', []),
+                    'formats_processed': etl_result.get('formats', []),
                     'failed_formats': etl_result.get('failed_formats', []),
                     'total_output_files': len(etl_result.get('formats', [])),
                     'documents_extracted': etl_result.get('results', {}).get('documents', {}).get('file_count', 0),
                     'original_file_preserved': etl_result.get('results', {}).get('original', {}).get('status') == 'completed'
                 },
                 'file_status': file_status_result,
-                'digital_twin': twin_result,
+                'twin_registry': twin_result,
                 'federated_learning': fl_result,
                 'ai_rag': ai_rag_result,
                 'qdrant': qdrant_result,
@@ -327,6 +353,28 @@ class AASXProcessor:
                 print(f"⚠️  Warning: Failed to create metrics record: {metrics_error}")
                 # Don't fail the main job if metrics fail
             
+            # 🔗 TWIN REGISTRY INTEGRATION: Trigger population for extraction jobs
+            try:
+                print("🔗 Step 8: Triggering Twin Registry Population for extraction job...")
+                self._trigger_twin_registry_population(
+                    job_id=job_id,
+                    job_type=job_type,
+                    file_info=file_info,
+                    etl_result=etl_result,
+                    output_dir=output_dir,
+                    config=config,
+                    processing_time=processing_time,
+                    twin_result=twin_result,
+                    fl_result=fl_result,
+                    ai_rag_result=ai_rag_result,
+                    qdrant_result=qdrant_result,
+                    simulation_ready=simulation_ready
+                )
+                print("✅ Twin Registry Population triggered successfully for extraction job")
+            except Exception as twin_reg_error:
+                print(f"⚠️ Twin Registry Population failed for extraction job: {twin_reg_error}")
+                # Don't fail the main job if twin registry fails
+            
             self.processing_service.complete_job(job_id, results_summary, 'completed')
             
             return {
@@ -353,6 +401,17 @@ class AASXProcessor:
                 
                 # Complete the job with error
                 self.processing_service.complete_job(job_id, None, 'failed', str(e))
+                
+                # 🔗 TWIN REGISTRY INTEGRATION: Update failure status
+                try:
+                    self._trigger_twin_registry_failure_update(
+                        job_id=job_id,
+                        job_type=job_type if 'job_type' in locals() else 'unknown',
+                        error_message=str(e),
+                        config=config
+                    )
+                except Exception as twin_reg_error:
+                    print(f"⚠️ Failed to update Twin Registry failure status: {twin_reg_error}")
             
             return {'status': 'error', 'message': str(e)}
     
@@ -367,9 +426,28 @@ class AASXProcessor:
         Job type determines both input source and output destination for better organization.
         """
         try:
-            # Get use case and project names from config
-            use_case_name = config.get('use_case_name', 'Unknown_Use_Case')
-            project_name = config.get('project_name', 'Unknown_Project')
+            # Get use case and project IDs from config and look up names
+            use_case_id = config.get('use_case_id')
+            project_id = config.get('project_id')
+            
+            if not use_case_id or not project_id:
+                print(f"❌ Missing use_case_id or project_id in config")
+                raise ValueError("use_case_id and project_id are required")
+            
+            # Look up names from database using IDs
+            use_case = self.use_case_repo.get_by_id(use_case_id)
+            project = self.project_repo.get_by_id(project_id)
+            
+            if not use_case:
+                raise ValueError(f"Use case not found for ID: {use_case_id}")
+            if not project:
+                raise ValueError(f"Project not found for ID: {project_id}")
+            
+            # Extract names and make them filesystem-safe
+            use_case_name = use_case.name.replace(" ", "_").replace("/", "_").replace("&", "and").replace(":", "_")
+            project_name = project.name.replace(" ", "_").replace("/", "_").replace("&", "and").replace(":", "_")
+            
+            print(f"🔍 Creating output path with: {use_case_name} / {project_name}")
             
             # Get filename without extension
             filename = file_info.filename
@@ -593,28 +671,11 @@ class AASXProcessor:
                 print(f"⚠️ Failed to prepare enhanced twin data: {e}")
                 enhanced_twin_data = {}
             
-            # Update digital twin with enhanced data
-            twin_update_success = False
-            if file_id:
-                try:
-                    success = self.digital_twin_service.update_twin_metadata(
-                        file_id, 
-                        enhanced_twin_data
-                    )
-                    if success:
-                        print(f"✅ Enhanced twin {file_id} with AI/RAG insights")
-                        twin_update_success = True
-                    else:
-                        print(f"⚠️ Failed to update twin {file_id} with AI/RAG insights")
-                except Exception as e:
-                    print(f"⚠️ Error updating twin metadata: {e}")
-            
-            print(f"✅ Qdrant storage and twin enhancement completed for {file_info.get('filename', 'unknown file')}")
+            print(f"✅ Qdrant storage completed for {file_info.get('filename', 'unknown file')}")
             return {
                 'status': 'success', 
                 'enhanced_twin_data': enhanced_twin_data,
-                'file_id': file_id,
-                'twin_update_success': twin_update_success
+                'file_id': file_id
             }
             
         except ImportError as e:
@@ -636,122 +697,15 @@ class AASXProcessor:
             if not twin_id:
                 return False
             
-            # TODO: Implement simulation readiness marking
-            # Use the service method following src/shared/ conventions
-            success = self.digital_twin_service.update_simulation_status(twin_id, 'ready')
-            if success:
-                print(f"✅ Marked twin {twin_id} as simulation ready (placeholder)")
-            return success
+            # TODO: Implement simulation readiness marking using new twin registry
+            print(f"✅ Marked twin {twin_id} as simulation ready (placeholder - use new twin registry)")
+            return True
         except Exception as e:
             print(f"❌ Failed to mark simulation ready: {e}")
             return False
     
-    # New modular functions for digital twin and federated learning
-    
-    def create_digital_twin_step(self, project_id: str, file_id: str, file_info: Dict[str, Any], 
-                                etl_result: Dict[str, Any], output_dir: Path, config: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Modular function: Create digital twin for processed file with complete data"""
-        try:
-            # Use config data for user consent and privacy settings
-            if config is None:
-                config = {}
-            
-            user_consent = config.get('user_consent', False)
-            federated_learning = config.get('federated_learning', 'not_allowed')
-            data_privacy_level = config.get('data_privacy_level', 'private')
-            
-            # Prepare complete twin data with all required fields
-            twin_data = {
-                'twin_type': 'aasx',
-                'metadata': {
-                    'etl_results': etl_result,
-                    'processing_timestamp': str(Path().cwd()),
-                    'output_directory': str(output_dir),
-                    'data_points': len(etl_result.get('completed', [])),
-                    'extracted_data': etl_result.get('extracted_data', {}),
-                    'status': etl_result.get('status', 'unknown')
-                },
-                'output_directory': str(output_dir),
-                'etl_results': etl_result,
-                # User consent and privacy settings from config
-                'user_consent': user_consent,
-                'federated_learning': federated_learning,
-                'data_privacy_level': data_privacy_level
-            }
-            
-            # Use the service method following src/shared/ conventions
-            # This will automatically perform comprehensive health check
-            twin = self.digital_twin_service.register_digital_twin(file_id, twin_data)
-            
-            if twin and hasattr(twin, 'twin_id'):
-                print(f"✅ Created digital twin for {file_info['filename']} with comprehensive health check")
-                
-                # Get the latest health information from the service
-                health_info = self.digital_twin_service.perform_health_check(twin.twin_id)
-                
-                return {
-                    'status': 'success',
-                    'twin_id': twin.twin_id,
-                    'twin_name': twin.twin_name,
-                    'health_score': health_info.get('health_score', 0),
-                    'health_status': health_info.get('health_status', 'unknown'),
-                    'health_checks': health_info.get('checks', {}),
-                    'federated_participation_status': getattr(twin, 'federated_participation_status', 'inactive'),
-                    'data_privacy_level': getattr(twin, 'data_privacy_level', 'private'),
-                    'twin_data': twin.to_dict() if hasattr(twin, 'to_dict') else twin.__dict__
-                }
-            else:
-                print(f"⚠️ Failed to create digital twin for {file_info['filename']}")
-                return {
-                    'status': 'failed',
-                    'error': 'Twin creation returned no twin_id'
-                }
-                
-        except Exception as e:
-            print(f"❌ Failed to create digital twin for {file_info['filename']}: {e}")
-            return {
-                'status': 'failed',
-                'error': str(e)
-            }
-    
-    def update_federated_learning_step(self, twin_result: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
-        """Modular function: Update federated learning status based on user consent"""
-        try:
-            if twin_result.get('status') != 'success':
-                return {
-                    'status': 'skipped',
-                    'reason': 'Twin creation failed'
-                }
-            
-            twin_id = twin_result.get('twin_id')
-            user_consent = config.get('user_consent', False)
-            federated_setting = config.get('federated_learning', 'not_allowed')
-            
-            if user_consent and federated_setting in ['allowed', 'conditional']:
-                self.federated_learning_service.update_federated_participation(twin_id, 'active')
-                print(f"✅ Updated federated learning status to 'active' for twin {twin_id}")
-                return {
-                    'status': 'success',
-                    'federated_participation': 'active',
-                    'user_consent': user_consent,
-                    'federated_setting': federated_setting
-                }
-            else:
-                self.federated_learning_service.update_federated_participation(twin_id, 'inactive')
-                print(f"✅ Updated federated learning status to 'inactive' for twin {twin_id}")
-                return {
-                    'status': 'success',
-                    'federated_participation': 'inactive',
-                    'user_consent': user_consent,
-                    'federated_setting': federated_setting
-                }
-                
-        except Exception as e:
-            print(f"❌ Failed to update federated learning status: {e}")
-            return {
-                'status': 'failed',
-                'error': str(e)
-            }
+    # TODO: These methods will be replaced by the new twin registry population system
+    # The new system automatically handles twin creation and federated learning updates
     
     def update_file_status_step(self, file_id: str, filename: str) -> Dict[str, Any]:
         """Modular function: Update file status to processed"""
@@ -1028,14 +982,43 @@ class AASXProcessor:
                 with zipfile.ZipFile(file_path, 'r') as zip_ref:
                     zip_ref.extractall(temp_path)
                 
+                # Debug: List all files in the extracted directory
+                print(f"🔍 Debug: Contents of extracted ZIP:")
+                all_files = list(temp_path.iterdir())
+                for item in all_files:
+                    if item.is_file():
+                        print(f"   📄 File: {item.name}")
+                    else:
+                        print(f"   📁 Directory: {item.name}")
+                
                 # Look for structured data files at ROOT level (JSON, YAML)
                 json_files = list(temp_path.glob("*.json"))
                 yaml_files = list(temp_path.glob("*.yaml")) + list(temp_path.glob("*.yml"))
                 
+                print(f"🔍 Debug: Found JSON files at root: {[f.name for f in json_files]}")
+                print(f"🔍 Debug: Found YAML files at root: {[f.name for f in yaml_files]}")
+                
+                # If no files at root, check if there's a single subdirectory with files
+                if not json_files and not yaml_files:
+                    subdirs = [item for item in temp_path.iterdir() if item.is_dir()]
+                    if len(subdirs) == 1:
+                        subdir = subdirs[0]
+                        print(f"🔍 Debug: Checking subdirectory: {subdir.name}")
+                        json_files = list(subdir.glob("*.json"))
+                        yaml_files = list(subdir.glob("*.yaml")) + list(subdir.glob("*.yml"))
+                        
+                        print(f"🔍 Debug: Found JSON files in subdir: {[f.name for f in json_files]}")
+                        print(f"🔍 Debug: Found YAML files in subdir: {[f.name for f in yaml_files]}")
+                        
+                        if json_files or yaml_files:
+                            print(f"✅ Found structured data in subdirectory: {subdir.name}")
+                            # Update temp_path to point to the subdirectory
+                            temp_path = subdir
+                
                 if not json_files and not yaml_files:
                     return {
                         'status': 'failed',
-                        'error': 'No structured data files (JSON/YAML) found at ZIP root level'
+                        'error': 'No structured data files (JSON/YAML) found at ZIP root level or in single subdirectory'
                     }
                 
                 # Use JSON if available, otherwise YAML
@@ -1066,30 +1049,53 @@ class AASXProcessor:
                     file_size = doc_file.stat().st_size
                     print(f"   📄 {rel_path} ({file_size} bytes)")
                 
-                # Generate AASX file - use the structured data filename, not the ZIP filename
-                structured_data_name = structured_file.stem  # e.g., "Structure_Data" from "Structure_Data.json"
+                # Generate AASX file - use the structured data filename, not the ZIP filename  
+                # Pass exact input and output paths to .NET processor - it should create file at exact output path
+                structured_data_name = structured_file.stem  # e.g., "test_multi_format" from "test_multi_format.json"
                 output_filename = f"{structured_data_name}_generated.aasx"
                 output_aasx = output_dir / output_filename
                 
                 print(f"🔧 Converting structured data + {len(document_files)} documents to AASX: {output_aasx}")
                 print(f"ℹ️  This will preserve all documents including raw sensor data, images, etc.")
                 
+                # Copy extracted ZIP contents directly to output directory for cross-verification
+                print(f"📁 Copying extracted ZIP contents to output directory...")
+                import shutil
+                
+                # Copy all contents from temp_path directly to output_dir
+                for item in temp_path.iterdir():
+                    dest_path = output_dir / item.name
+                    if item.is_file():
+                        shutil.copy2(item, dest_path)
+                        print(f"   📄 Copied: {item.name}")
+                    elif item.is_dir():
+                        if dest_path.exists():
+                            shutil.rmtree(dest_path)
+                        shutil.copytree(item, dest_path)
+                        print(f"   📁 Copied directory: {item.name}")
+                
+                print(f"✅ ZIP contents copied directly to output directory")
+                
                 # Use the more comprehensive generation function that handles documents
                 from src.aasx.aasx_processor import generate_aasx
                 generation_result = generate_aasx(output_aasx, structured_file)
                 
                 if generation_result.get('status') == 'completed':
-                    print(f"✅ AASX generation completed: {output_aasx}")
+                    print(f"✅ AASX generation completed")
                     
-                    # Check if AASX file was created
-                    if output_aasx.exists():
-                        file_size = output_aasx.stat().st_size
+                    # Check if any AASX file was created in the output directory
+                    aasx_files = list(output_dir.glob("*.aasx"))
+                    if aasx_files:
+                        # Use the first (or only) AASX file found
+                        actual_aasx_file = aasx_files[0]
+                        file_size = actual_aasx_file.stat().st_size
+                        print(f"📊 Found generated AASX file: {actual_aasx_file.name}")
                         print(f"📊 Generated AASX file size: {file_size} bytes")
                         
                         return {
                             'status': 'success',
                             'message': 'AASX generation completed successfully (structured data + documents)',
-                            'output_file': str(output_aasx),
+                            'output_file': str(actual_aasx_file),
                             'file_size': file_size,
                             'input_file': str(file_path),
                             'structured_data_file': str(structured_file),
@@ -1376,6 +1382,133 @@ class AASXProcessor:
             
         except Exception:
             return 50.0  # Default efficiency score
+    
+    def _trigger_twin_registry_population(self, job_id: str, job_type: str, file_info, etl_result: Dict[str, Any], 
+                                        output_dir: Path, config: Dict[str, Any], processing_time: float, 
+                                        twin_result: Optional[Dict[str, Any]] = None, 
+                                        fl_result: Optional[Dict[str, Any]] = None,
+                                        ai_rag_result: Optional[Dict[str, Any]] = None,
+                                        qdrant_result: Optional[Dict[str, Any]] = None,
+                                        simulation_ready: Optional[bool] = None):
+        """Trigger twin registry population after ETL completion"""
+        try:
+            # Import the twin registry integration
+            from .etl_twin_registry_integration import get_etl_integration
+            
+            # Get the integration instance
+            integration = get_etl_integration()
+            
+            # Prepare ETL data for twin registry population
+            etl_data = {
+                'job_id': job_id,
+                'status': 'completed',
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'input_files': [str(file_info.filepath)] if hasattr(file_info, 'filepath') else [],
+                'output_files': self._get_output_files_from_etl_result(etl_result, output_dir),
+                'processing_time': processing_time,
+                'job_type': job_type,
+                'user_id': config.get('user_id', 'system'),
+                'org_id': config.get('org_id'),
+                'project_id': config.get('project_id'),
+                'use_case_id': config.get('use_case_id'),
+                'output_directory': str(output_dir),
+                'formats_processed': etl_result.get('formats', []),
+                'failed_formats': etl_result.get('failed_formats', []),
+                'documents_extracted': etl_result.get('results', {}).get('documents', {}).get('file_count', 0),
+                'quality_score': self._calculate_quality_score(etl_result),
+                'twin_result': twin_result,
+                'federated_learning': fl_result,
+                'ai_rag': ai_rag_result,
+                'qdrant': qdrant_result,
+                'simulation_ready': simulation_ready
+            }
+            
+            # Trigger population asynchronously
+            asyncio.create_task(integration.populator.populate_from_etl(etl_data))
+            
+        except Exception as e:
+            print(f"❌ Failed to trigger twin registry population: {e}")
+            # Don't fail the main ETL pipeline if twin registry fails
+    
+    def _trigger_twin_registry_failure_update(self, job_id: str, job_type: str, error_message: str, config: Dict[str, Any]):
+        """Update twin registry with ETL failure status"""
+        try:
+            # Import the twin registry integration
+            from .etl_twin_registry_integration import get_etl_integration
+            
+            # Get the integration instance
+            integration = get_etl_integration()
+            
+            # Prepare failure data
+            failure_data = {
+                'job_id': job_id,
+                'status': 'failed',
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'error_message': error_message,
+                'job_type': job_type,
+                'user_id': config.get('user_id', 'system'),
+                'org_id': config.get('org_id'),
+                'project_id': config.get('project_id'),
+                'use_case_id': config.get('use_case_id')
+            }
+            
+            # Update failure status asynchronously
+            asyncio.create_task(integration.populator.update_etl_status(job_id, 'failed', failure_data))
+            
+        except Exception as e:
+            print(f"❌ Failed to update twin registry failure status: {e}")
+    
+    def _get_output_files_from_etl_result(self, etl_result: Dict[str, Any], output_dir: Path) -> List[str]:
+        """Extract output file paths from ETL result"""
+        output_files = []
+        
+        try:
+            # Get files from different formats
+            if 'results' in etl_result:
+                results = etl_result['results']
+                
+                # Add JSON file if processed
+                if 'json' in results and results['json'].get('status') == 'completed':
+                    json_file = output_dir / f"{output_dir.name}.json"
+                    if json_file.exists():
+                        output_files.append(str(json_file))
+                
+                # Add YAML file if processed
+                if 'yaml' in results and results['yaml'].get('status') == 'completed':
+                    yaml_file = output_dir / f"{output_dir.name}.yaml"
+                    if yaml_file.exists():
+                        output_files.append(str(yaml_file))
+                
+                # Add graph file if processed
+                if 'graph' in results and results['graph'].get('status') == 'completed':
+                    graph_file = output_dir / f"{output_dir.name}_graph.json"
+                    if graph_file.exists():
+                        output_files.append(str(graph_file))
+                
+                # Add RDF file if processed
+                if 'rdf' in results and results['rdf'].get('status') == 'completed':
+                    rdf_file = output_dir / f"{output_dir.name}.ttl"
+                    if rdf_file.exists():
+                        output_files.append(str(rdf_file))
+                
+                # Add documents if extracted
+                if 'documents' in results and results['documents'].get('status') == 'completed':
+                    documents_dir = output_dir / f"{output_dir.name}_documents"
+                    if documents_dir.exists():
+                        for doc_file in documents_dir.rglob("*"):
+                            if doc_file.is_file():
+                                output_files.append(str(doc_file))
+            
+            # Add original file copy if preserved
+            if 'original' in etl_result.get('results', {}) and etl_result['results']['original'].get('status') == 'completed':
+                original_copy = output_dir / f"{output_dir.name}_original.aasx"
+                if original_copy.exists():
+                    output_files.append(str(original_copy))
+            
+        except Exception as e:
+            print(f"⚠️ Warning: Failed to extract output files: {e}")
+        
+        return output_files
 
 # Global instance
 aasx_processor = AASXProcessor() 

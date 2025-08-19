@@ -760,15 +760,19 @@ class AASXMobileApp {
     }
 
     setupMobileForms() {
-        const forms = document.querySelectorAll('form');
-        forms.forEach(form => {
+        // Only target forms that are specifically for mobile functionality
+        const mobileForms = document.querySelectorAll('form.mobile-form, .mobile-section form, [data-mobile="true"] form');
+        mobileForms.forEach(form => {
             form.classList.add('mobile-form');
             
             // Add mobile-specific form handling
             form.addEventListener('submit', (e) => {
+                console.log('📱 Mobile App: Handling mobile form submission');
                 this.showMobileLoading();
             });
         });
+        
+        console.log(`📱 Mobile App: Setup ${mobileForms.length} mobile forms`);
     }
 
     showMobileLoading() {

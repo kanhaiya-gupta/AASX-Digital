@@ -1,14 +1,47 @@
 <!-- Performance Monitoring Component -->
 <div class="tr-performance-monitoring">
+    <!-- Premium Performance Header -->
+    <div class="tr-performance-header">
+        <div class="tr-header-content">
+            <div class="tr-header-info">
+                <h2 class="tr-header-title">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Performance Monitoring & Analytics
+                </h2>
+                <p class="tr-header-subtitle">
+                    Real-time performance insights, advanced analytics, and optimization recommendations for your digital twin ecosystem
+                </p>
+            </div>
+            <div class="tr-header-actions">
+                <button class="tr-btn tr-btn-primary" id="twin_registry_startPerformanceMonitoring">
+                    <i class="fas fa-play"></i>
+                    Start Monitoring
+                </button>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_stopPerformanceMonitoring">
+                    <i class="fas fa-stop"></i>
+                    Stop Monitoring
+                </button>
+                <button class="tr-btn tr-btn-refresh" id="twin_registry_refreshPerformance">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-live-indicator" id="twin_registry_performanceLiveIndicator">
+            <i class="fas fa-circle"></i>
+            Live Monitoring
+        </div>
+    </div>
+
     <!-- Performance Overview Cards -->
     <div class="row mb-4">
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="tr-performance-card tr-performance-cpu">
                 <div class="tr-performance-content">
                     <div class="tr-performance-info">
-                        <div class="tr-performance-value" id="avgCpuUsage">0%</div>
+                        <div class="tr-performance-value" id="twin_registry_avgCpuUsage">0%</div>
                         <div class="tr-performance-label">CPU Usage</div>
-                        <div class="tr-performance-trend tr-trend-down">
+                        <div class="tr-performance-trend tr-trend-down" id="twin_registry_cpuTrend">
                             <i class="fas fa-arrow-down"></i>
                             <span>-2.1%</span>
                         </div>
@@ -18,7 +51,7 @@
                     </div>
                 </div>
                 <div class="tr-performance-progress">
-                    <div class="tr-progress-bar" style="width: 45%"></div>
+                    <div class="tr-progress-bar" id="twin_registry_cpuProgress" style="width: 45%"></div>
                 </div>
             </div>
         </div>
@@ -27,9 +60,9 @@
             <div class="tr-performance-card tr-performance-memory">
                 <div class="tr-performance-content">
                     <div class="tr-performance-info">
-                        <div class="tr-performance-value" id="avgMemoryUsage">0%</div>
+                        <div class="tr-performance-value" id="twin_registry_avgMemoryUsage">0%</div>
                         <div class="tr-performance-label">Memory Usage</div>
-                        <div class="tr-performance-trend tr-trend-up">
+                        <div class="tr-performance-trend tr-trend-up" id="twin_registry_memoryTrend">
                             <i class="fas fa-arrow-up"></i>
                             <span>+1.3%</span>
                         </div>
@@ -39,7 +72,7 @@
                     </div>
                 </div>
                 <div class="tr-performance-progress">
-                    <div class="tr-progress-bar" style="width: 62%"></div>
+                    <div class="tr-progress-bar" id="twin_registry_memoryProgress" style="width: 62%"></div>
                 </div>
             </div>
         </div>
@@ -48,9 +81,9 @@
             <div class="tr-performance-card tr-performance-network">
                 <div class="tr-performance-content">
                     <div class="tr-performance-info">
-                        <div class="tr-performance-value" id="avgNetworkLatency">0ms</div>
+                        <div class="tr-performance-value" id="twin_registry_avgNetworkLatency">0ms</div>
                         <div class="tr-performance-label">Network Latency</div>
-                        <div class="tr-performance-trend tr-trend-down">
+                        <div class="tr-performance-trend tr-trend-down" id="twin_registry_networkTrend">
                             <i class="fas fa-arrow-down"></i>
                             <span>-5.2ms</span>
                         </div>
@@ -60,7 +93,7 @@
                     </div>
                 </div>
                 <div class="tr-performance-progress">
-                    <div class="tr-progress-bar" style="width: 28%"></div>
+                    <div class="tr-progress-bar" id="twin_registry_networkProgress" style="width: 28%"></div>
                 </div>
             </div>
         </div>
@@ -69,9 +102,9 @@
             <div class="tr-performance-card tr-performance-storage">
                 <div class="tr-performance-content">
                     <div class="tr-performance-info">
-                        <div class="tr-performance-value" id="avgStorageUsage">0%</div>
+                        <div class="tr-performance-value" id="twin_registry_avgStorageUsage">0%</div>
                         <div class="tr-performance-label">Storage Usage</div>
-                        <div class="tr-performance-trend tr-trend-up">
+                        <div class="tr-performance-trend tr-trend-up" id="twin_registry_storageTrend">
                             <i class="fas fa-arrow-up"></i>
                             <span>+0.8%</span>
                         </div>
@@ -81,30 +114,43 @@
                     </div>
                 </div>
                 <div class="tr-performance-progress">
-                    <div class="tr-progress-bar" style="width: 73%"></div>
+                    <div class="tr-progress-bar" id="twin_registry_storageProgress" style="width: 73%"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Performance Charts Section -->
-    <div class="tr-performance-charts">
+    <!-- Advanced Performance Analytics Dashboard -->
+    <div class="tr-advanced-performance-dashboard">
         <div class="row mb-4">
             <div class="col-lg-6 mb-3">
                 <div class="tr-chart-card">
                     <div class="tr-card-header">
                         <h6 class="mb-0">
-                            <i class="fas fa-chart-bar"></i>
-                            Resource Usage by Twin
+                            <i class="fas fa-chart-line"></i>
+                            Performance Trends Analysis
                         </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Live
+                        <div class="tr-card-actions">
+                            <select class="tr-select-sm" id="twin_registry_performanceMetric">
+                                <option value="response_time">Response Time</option>
+                                <option value="throughput">Throughput</option>
+                                <option value="error_rate">Error Rate</option>
+                                <option value="health_score">Health Score</option>
+                            </select>
+                            <select class="tr-select-sm" id="twin_registry_performanceTimeRange">
+                                <option value="1h">1 Hour</option>
+                                <option value="24h">24 Hours</option>
+                                <option value="7d">7 Days</option>
+                                <option value="30d">30 Days</option>
+                            </select>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshPerformanceTrends">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="tr-card-body">
-                        <div class="chart-container medium">
-                            <canvas id="resourceUsageChart"></canvas>
+                        <div class="chart-container large">
+                            <canvas id="twin_registry_performanceTrendsChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -115,16 +161,23 @@
                     <div class="tr-card-header">
                         <h6 class="mb-0">
                             <i class="fas fa-chart-pie"></i>
-                            Twin Health Distribution
+                            Performance Distribution
                         </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Real-time
+                        <div class="tr-card-actions">
+                            <select class="tr-select-sm" id="twin_registry_distributionMetric">
+                                <option value="health_score">Health Score</option>
+                                <option value="response_time">Response Time</option>
+                                <option value="error_rate">Error Rate</option>
+                                <option value="throughput">Throughput</option>
+                            </select>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshDistribution">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="tr-card-body">
-                        <div class="chart-container medium">
-                            <canvas id="twinHealthDistributionChart"></canvas>
+                        <div class="chart-container large">
+                            <canvas id="twin_registry_performanceDistributionChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -132,29 +185,290 @@
         </div>
     </div>
 
-    <!-- Performance Alerts Section -->
+    <!-- Real-time Performance Monitoring -->
+    <div class="tr-realtime-performance">
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar"></i>
+                            Resource Usage by Twin
+                        </h6>
+                        <div class="tr-card-actions">
+                            <select class="tr-select-sm" id="twin_registry_resourceMetric">
+                                <option value="cpu">CPU Usage</option>
+                                <option value="memory">Memory Usage</option>
+                                <option value="storage">Storage Usage</option>
+                                <option value="network">Network Usage</option>
+                            </select>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshResourceUsage">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
+                            <canvas id="twin_registry_resourceUsageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-area"></i>
+                            Twin Health Distribution
+                        </h6>
+                        <div class="tr-card-actions">
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshHealthDistribution">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
+                            <canvas id="twin_registry_twinHealthDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Benchmarking & Comparison -->
+    <div class="tr-performance-benchmarking">
+        <div class="row mb-4">
+            <div class="col-lg-8 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            Performance Benchmarking
+                        </h6>
+                        <div class="tr-card-actions">
+                            <select class="tr-select-sm" id="twin_registry_benchmarkMetric">
+                                <option value="response_time">Response Time</option>
+                                <option value="throughput">Throughput</option>
+                                <option value="error_rate">Error Rate</option>
+                                <option value="uptime">Uptime</option>
+                            </select>
+                            <select class="tr-select-sm" id="twin_registry_benchmarkTimeRange">
+                                <option value="24h">24 Hours</option>
+                                <option value="7d">7 Days</option>
+                                <option value="30d">30 Days</option>
+                                <option value="90d">90 Days</option>
+                            </select>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshBenchmark">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container large">
+                            <canvas id="twin_registry_benchmarkChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-trophy"></i>
+                            Performance Rankings
+                        </h6>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="tr-performance-rankings" id="twin_registry_performanceRankings">
+                            <!-- Performance rankings will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Resource Analytics -->
+    <div class="tr-advanced-resource-analytics">
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar"></i>
+                            Resource Efficiency Trends
+                        </h6>
+                        <div class="tr-card-actions">
+                            <select class="tr-select-sm" id="twin_registry_efficiencyMetric">
+                                <option value="cpu_efficiency">CPU Efficiency</option>
+                                <option value="memory_efficiency">Memory Efficiency</option>
+                                <option value="storage_efficiency">Storage Efficiency</option>
+                                <option value="network_efficiency">Network Efficiency</option>
+                            </select>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshEfficiency">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
+                            <canvas id="twin_registry_resourceEfficiencyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-pie"></i>
+                            Resource Allocation
+                        </h6>
+                        <div class="tr-card-actions">
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshAllocation">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
+                            <canvas id="twin_registry_resourceAllocationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Optimization Recommendations -->
+    <div class="tr-performance-optimization">
+        <div class="row mb-4">
+            <div class="col-lg-8 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-lightbulb"></i>
+                            Optimization Recommendations
+                        </h6>
+                        <div class="tr-card-actions">
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshRecommendations">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_applyRecommendations">
+                                <i class="fas fa-check"></i>
+                                Apply All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="tr-optimization-recommendations" id="twin_registry_optimizationRecommendations">
+                            <!-- Optimization recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tr-col-lg-4 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            Optimization Impact
+                        </h6>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="tr-optimization-impact" id="twin_registry_optimizationImpact">
+                            <!-- Optimization impact metrics will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Performance Metrics -->
+    <div class="tr-custom-performance-metrics">
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-cogs"></i>
+                            Custom Metrics Configuration
+                        </h6>
+                        <div class="tr-card-actions">
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_addCustomMetric">
+                                <i class="fas fa-plus"></i>
+                                Add Metric
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="tr-custom-metrics-config" id="twin_registry_customMetricsConfig">
+                            <!-- Custom metrics configuration will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-chart-bar"></i>
+                            Custom Metrics Dashboard
+                        </h6>
+                        <div class="tr-card-actions">
+                            <select class="tr-select-sm" id="twin_registry_customMetricSelect">
+                                <option value="">Select Custom Metric</option>
+                            </select>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_refreshCustomMetrics">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="chart-container medium">
+                            <canvas id="twin_registry_customMetricsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Alerts & Notifications -->
     <div class="tr-performance-alerts">
         <div class="tr-section-header">
             <h6 class="tr-section-title">
                 <i class="fas fa-exclamation-triangle"></i>
                 Performance Alerts & Notifications
             </h6>
-            <div class="tr-alert-count">
-                <span id="performanceAlertCount">0</span> active alerts
+            <div class="tr-section-actions">
+                <select class="tr-select-sm" id="twin_registry_alertSeverity">
+                    <option value="all">All Severities</option>
+                    <option value="critical">Critical</option>
+                    <option value="warning">Warning</option>
+                    <option value="info">Info</option>
+                </select>
+                <button class="tr-btn tr-btn-sm" id="twin_registry_acknowledgeAllAlerts">
+                    <i class="fas fa-check-double"></i>
+                    Acknowledge All
+                </button>
+                <button class="tr-btn tr-btn-sm" id="twin_registry_refreshAlerts">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
             </div>
         </div>
         
-        <div class="tr-alerts-container" id="performanceAlertsContainer">
-            <div class="tr-alert tr-alert-success">
-                <div class="tr-alert-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="tr-alert-content">
-                    <div class="tr-alert-title">All Systems Optimal</div>
-                    <div class="tr-alert-message">No Active Alerts - All twins are performing within normal parameters</div>
-                </div>
-                <div class="tr-alert-time">Just now</div>
-            </div>
+        <div class="tr-alerts-container" id="twin_registry_performanceAlertsContainer">
+            <!-- Performance alerts will be populated here -->
         </div>
     </div>
 
@@ -166,19 +480,87 @@
                 Individual Twin Performance
             </h6>
             <div class="tr-section-actions">
-                <button class="tr-btn tr-btn-refresh" id="refreshPerformanceBtn">
+                <select class="tr-select-sm" id="twin_registry_twinPerformanceFilter">
+                    <option value="all">All Twins</option>
+                    <option value="active">Active</option>
+                    <option value="warning">Warning</option>
+                    <option value="critical">Critical</option>
+                </select>
+                <button class="tr-btn tr-btn-refresh" id="twin_registry_refreshPerformanceBtn">
                     <i class="fas fa-sync-alt"></i>
                     Refresh
                 </button>
-                <button class="tr-btn tr-btn-primary" id="exportPerformanceBtn">
+                <button class="tr-btn tr-btn-primary" id="twin_registry_exportPerformanceBtn">
                     <i class="fas fa-download"></i>
                     Export Report
                 </button>
             </div>
         </div>
         
-        <div class="tr-performance-grid" id="individualTwinPerformance">
+        <div class="tr-performance-grid" id="twin_registry_individualTwinPerformance">
             <!-- Individual twin performance cards will be populated here -->
+        </div>
+    </div>
+
+    <!-- Performance Configuration -->
+    <div class="tr-performance-configuration">
+        <div class="row mb-4">
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-cog"></i>
+                            Monitoring Configuration
+                        </h6>
+                        <div class="tr-card-actions">
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_saveConfig">
+                                <i class="fas fa-save"></i>
+                                Save
+                            </button>
+                            <button class="tr-btn tr-btn-sm" id="twin_registry_resetConfig">
+                                <i class="fas fa-undo"></i>
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="tr-config-grid">
+                            <div class="tr-config-item">
+                                <label>Update Interval (seconds)</label>
+                                <input type="number" id="twin_registry_updateInterval" value="30" min="5" max="300">
+                            </div>
+                            <div class="tr-config-item">
+                                <label>Alert Threshold (CPU %)</label>
+                                <input type="number" id="twin_registry_cpuThreshold" value="80" min="50" max="100">
+                            </div>
+                            <div class="tr-config-item">
+                                <label>Alert Threshold (Memory %)</label>
+                                <input type="number" id="twin_registry_memoryThreshold" value="85" min="50" max="100">
+                            </div>
+                            <div class="tr-config-item">
+                                <label>Response Time Threshold (ms)</label>
+                                <input type="number" id="twin_registry_responseTimeThreshold" value="2000" min="100" max="10000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mb-3">
+                <div class="tr-chart-card">
+                    <div class="tr-card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-info-circle"></i>
+                            Monitoring Status
+                        </h6>
+                    </div>
+                    <div class="tr-card-body">
+                        <div class="tr-monitoring-status" id="twin_registry_monitoringStatus">
+                            <!-- Monitoring status will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div> 

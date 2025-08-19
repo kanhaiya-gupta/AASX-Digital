@@ -1,252 +1,270 @@
 """
 Twin Instance Repository
 
-Data access layer for twin instance management.
-Handles CRUD operations for twin instances and their metadata.
+Data access layer for twin instance management using JSON fields.
+Updated for Phase 2: JSON field operations instead of separate tables.
 """
 
 import logging
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+import json
 
-from src.shared.database.connection_manager import DatabaseConnectionManager
+from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.base_repository import BaseRepository
 from src.twin_registry.models.twin_instance import TwinInstance
 
 logger = logging.getLogger(__name__)
 
 
-class TwinInstanceRepository(BaseRepository):
-    """Repository for managing twin instances."""
+class TwinInstanceRepository(BaseRepository[TwinInstance]):
+    """Repository for managing twin instances using JSON fields."""
     
-    def __init__(self, db_manager: DatabaseConnectionManager):
+    def __init__(self, db_manager: BaseDatabaseManager):
         """Initialize the twin instance repository."""
-        super().__init__(db_manager)
-        self.table_name = "twin_instances"
-        logger.info("Twin Instance Repository initialized")
+        super().__init__(db_manager, TwinInstance)
+        logger.info("Twin Instance Repository initialized (JSON field mode)")
+    
+    def _get_table_name(self) -> str:
+        """Get the table name for this repository."""
+        return "twin_registry"
+    
+    def _get_columns(self) -> List[str]:
+        """Get the list of column names for this table."""
+        return [
+            "registry_id", "twin_id", "twin_name", "registry_name", "twin_category", "twin_type",
+            "twin_priority", "twin_version", "registry_type", "workflow_source", "aasx_integration_id",
+            "physics_modeling_id", "federated_learning_id", "data_pipeline_id", "kg_neo4j_id",
+            "certificate_manager_id", "integration_status", "overall_health_score", "health_status",
+            "lifecycle_status", "lifecycle_phase", "operational_status", "availability_status",
+            "sync_status", "sync_frequency", "last_sync_at", "next_sync_at", "sync_error_count",
+            "sync_error_message", "performance_score", "data_quality_score", "reliability_score",
+            "compliance_score", "security_level", "access_control_level", "encryption_enabled",
+            "audit_logging_enabled", "user_id", "org_id", "owner_team", "steward_user_id",
+            "created_at", "updated_at", "activated_at", "last_accessed_at", "last_modified_at",
+            "registry_config", "registry_metadata", "custom_attributes", "tags", "relationships",
+            "dependencies", "instances"
+        ]
+    
+    def _get_primary_key_column(self) -> str:
+        """Get the primary key column name for twin registry table."""
+        return "registry_id"
     
     async def initialize(self) -> None:
-        """Initialize the repository and create tables if needed."""
-        try:
-            await self._create_tables()
-            logger.info("Twin Instance Repository tables initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize Twin Instance Repository: {e}")
-            raise
+        """Initialize the repository - no tables needed for JSON field approach."""
+        logger.info("Twin Instance Repository initialized (JSON field mode)")
     
-    async def _create_tables(self) -> None:
-        """Create the twin instances tables."""
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS twin_instances (
-            id TEXT PRIMARY KEY,
-            twin_id TEXT NOT NULL,
-            instance_data TEXT NOT NULL,
-            instance_metadata TEXT,
-            created_by TEXT,
-            created_at TEXT NOT NULL,
-            updated_at TEXT,
-            is_active BOOLEAN DEFAULT 1,
-            version INTEGER DEFAULT 1
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_twin_instances_twin_id ON twin_instances(twin_id);
-        CREATE INDEX IF NOT EXISTS idx_twin_instances_created_at ON twin_instances(created_at);
-        CREATE INDEX IF NOT EXISTS idx_twin_instances_is_active ON twin_instances(is_active);
-        """
-        
-        async with self.db_manager.get_connection() as conn:
-            await conn.execute(create_table_sql)
-            await conn.commit()
-    
-    async def create(self, instance: TwinInstance) -> TwinInstance:
-        """Create a new twin instance."""
+    async def create(self, registry_id: str, instance: TwinInstance) -> TwinInstance:
+        """Create a new twin instance by adding to the JSON field."""
         try:
-            sql = """
-            INSERT INTO twin_instances 
-            (id, twin_id, instance_data, instance_metadata, created_by, created_at, updated_at, is_active, version)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            # Get current instances from the registry
+            current_instances = await self._get_instances_json(registry_id)
+            
+            # Add new instance
+            instance_dict = {
+                "id": instance.id,
+                "twin_id": instance.twin_id,
+                "instance_data": instance.instance_data or {},
+                "instance_metadata": instance.instance_metadata or {},
+                "created_by": instance.created_by,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "is_active": instance.is_active,
+                "version": instance.version
+            }
+            
+            current_instances.append(instance_dict)
+            
+            # Update the JSON field
+            query = """
+            UPDATE twin_registry 
+            SET instances = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
             """
+            await self.execute_query(query, (json.dumps(current_instances), registry_id))
             
-            params = (
-                instance.id,
-                instance.twin_id,
-                self._serialize_json(instance.instance_data),
-                self._serialize_json(instance.instance_metadata),
-                instance.created_by,
-                instance.created_at,
-                instance.updated_at,
-                instance.is_active,
-                instance.version
-            )
-            
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Created twin instance: {instance.id}")
+            logger.info(f"Created twin instance: {instance.id} in registry {registry_id}")
             return instance
             
         except Exception as e:
             logger.error(f"Failed to create twin instance: {e}")
             raise
     
-    async def get_by_id(self, instance_id: str) -> Optional[TwinInstance]:
-        """Get a twin instance by ID."""
+    async def get_by_id(self, registry_id: str, instance_id: str) -> Optional[TwinInstance]:
+        """Get a twin instance by ID from the JSON field."""
         try:
-            sql = "SELECT * FROM twin_instances WHERE id = ?"
+            instances = await self._get_instances_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (instance_id,)) as cursor:
-                    row = await cursor.fetchone()
-                    
-            if row:
-                return self._row_to_instance(row)
+            for inst in instances:
+                if inst.get("id") == instance_id:
+                    return self._dict_to_instance(inst)
+            
             return None
             
         except Exception as e:
             logger.error(f"Failed to get twin instance {instance_id}: {e}")
-            raise
+            return None
     
-    async def get_by_twin_id(self, twin_id: str, active_only: bool = True) -> List[TwinInstance]:
-        """Get all instances for a specific twin."""
+    async def get_by_twin_id(self, registry_id: str, twin_id: str, limit: int = 50) -> List[TwinInstance]:
+        """Get all instances for a specific twin from the JSON field."""
         try:
-            sql = "SELECT * FROM twin_instances WHERE twin_id = ?"
-            params = [twin_id]
+            instances = await self._get_instances_json(registry_id)
             
-            if active_only:
-                sql += " AND is_active = 1"
+            # Filter by twin_id and limit results
+            twin_instances = [inst for inst in instances if inst.get("twin_id") == twin_id]
+            twin_instances.sort(key=lambda x: x.get("created_at", ""), reverse=True)
             
-            sql += " ORDER BY created_at DESC"
-            
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, params) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_instance(row) for row in rows]
+            return [self._dict_to_instance(inst) for inst in twin_instances[:limit]]
             
         except Exception as e:
             logger.error(f"Failed to get instances for twin {twin_id}: {e}")
-            raise
+            return []
     
-    async def get_active_instance(self, twin_id: str) -> Optional[TwinInstance]:
-        """Get the currently active instance for a twin."""
+    async def get_instances_by_twin(self, registry_id: str, twin_id: str, limit: int = 50) -> List[TwinInstance]:
+        """Get all instances for a specific twin from the JSON field (alias for get_by_twin_id)."""
+        return await self.get_by_twin_id(registry_id, twin_id, limit=limit)
+    
+    async def get_active_instances(self, registry_id: str) -> List[TwinInstance]:
+        """Get all active instances from the JSON field."""
         try:
-            sql = """
-            SELECT * FROM twin_instances 
-            WHERE twin_id = ? AND is_active = 1 
-            ORDER BY created_at DESC 
-            LIMIT 1
-            """
+            instances = await self._get_instances_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (twin_id,)) as cursor:
-                    row = await cursor.fetchone()
-                    
-            if row:
-                return self._row_to_instance(row)
-            return None
+            # Filter active instances
+            active_instances = [inst for inst in instances if inst.get("is_active", True)]
+            active_instances.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            
+            return [self._dict_to_instance(inst) for inst in active_instances]
             
         except Exception as e:
-            logger.error(f"Failed to get active instance for twin {twin_id}: {e}")
-            raise
+            logger.error(f"Failed to get active instances: {e}")
+            return []
     
-    async def update(self, instance_id: str, update_data: Dict[str, Any]) -> bool:
-        """Update a twin instance."""
+    async def update(self, registry_id: str, instance_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update a twin instance in the JSON field."""
         try:
-            # Build dynamic update SQL
-            set_clauses = []
-            params = []
+            instances = await self._get_instances_json(registry_id)
             
-            for key, value in update_data.items():
-                if key in ['instance_data', 'instance_metadata']:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(self._serialize_json(value))
-                elif key in ['updated_at']:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value)
-                else:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value)
+            # Find and update the instance
+            for i, inst in enumerate(instances):
+                if inst.get("id") == instance_id:
+                    # Update fields
+                    for key, value in update_data.items():
+                        if key in ['instance_data', 'instance_metadata']:
+                            instances[i][key] = value
+                        elif key == 'updated_at':
+                            instances[i][key] = datetime.now(timezone.utc).isoformat()
+                        else:
+                            instances[i][key] = value
+                    break
             
-            if not set_clauses:
-                return False
+            # Update the JSON field
+            query = """
+            UPDATE twin_registry 
+            SET instances = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
+            """
+            await self.execute_query(query, (json.dumps(instances), registry_id))
             
-            sql = f"UPDATE twin_instances SET {', '.join(set_clauses)} WHERE id = ?"
-            params.append(instance_id)
-            
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Updated twin instance: {instance_id}")
+            logger.info(f"Updated twin instance: {instance_id} in registry {registry_id}")
             return True
             
         except Exception as e:
             logger.error(f"Failed to update twin instance {instance_id}: {e}")
-            raise
+            return False
     
-    async def deactivate_instance(self, instance_id: str) -> bool:
-        """Deactivate a twin instance."""
+    async def deactivate_instance(self, registry_id: str, instance_id: str) -> bool:
+        """Deactivate a twin instance in the JSON field."""
         try:
-            sql = "UPDATE twin_instances SET is_active = 0, updated_at = ? WHERE id = ?"
+            instances = await self._get_instances_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, (datetime.utcnow().isoformat(), instance_id))
-                await conn.commit()
+            # Find and deactivate the instance
+            for i, inst in enumerate(instances):
+                if inst.get("id") == instance_id:
+                    instances[i]["is_active"] = False
+                    instances[i]["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    break
             
-            logger.info(f"Deactivated twin instance: {instance_id}")
+            # Update the JSON field
+            query = """
+            UPDATE twin_registry 
+            SET instances = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
+            """
+            await self.execute_query(query, (json.dumps(instances), registry_id))
+            
+            logger.info(f"Deactivated twin instance: {instance_id} in registry {registry_id}")
             return True
             
         except Exception as e:
             logger.error(f"Failed to deactivate twin instance {instance_id}: {e}")
-            raise
+            return False
     
-    async def delete(self, instance_id: str) -> bool:
-        """Delete a twin instance."""
+    async def delete(self, registry_id: str, instance_id: str) -> bool:
+        """Delete a twin instance from the JSON field."""
         try:
-            sql = "DELETE FROM twin_instances WHERE id = ?"
+            instances = await self._get_instances_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, (instance_id,))
-                await conn.commit()
+            # Remove the instance
+            original_count = len(instances)
+            instances = [inst for inst in instances if inst.get("id") != instance_id]
             
-            logger.info(f"Deleted twin instance: {instance_id}")
-            return True
+            if len(instances) < original_count:
+                # Update the JSON field
+                query = """
+                UPDATE twin_registry 
+                SET instances = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE registry_id = ?
+                """
+                await self.execute_query(query, (json.dumps(instances), registry_id))
+                
+                logger.info(f"Deleted twin instance: {instance_id} from registry {registry_id}")
+                return True
+            
+            return False
             
         except Exception as e:
             logger.error(f"Failed to delete twin instance {instance_id}: {e}")
-            raise
+            return False
     
-    async def get_instance_history(self, twin_id: str, limit: int = 50) -> List[TwinInstance]:
-        """Get instance history for a twin."""
+    async def get_instance_history(self, registry_id: str, twin_id: str, limit: int = 50) -> List[TwinInstance]:
+        """Get instance history for a twin from the JSON field."""
         try:
-            sql = """
-            SELECT * FROM twin_instances 
-            WHERE twin_id = ? 
-            ORDER BY created_at DESC 
-            LIMIT ?
-            """
+            instances = await self._get_instances_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (twin_id, limit)) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_instance(row) for row in rows]
+            # Filter by twin_id, sort by created_at, and limit results
+            twin_instances = [inst for inst in instances if inst.get("twin_id") == twin_id]
+            twin_instances.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            
+            return [self._dict_to_instance(inst) for inst in twin_instances[:limit]]
             
         except Exception as e:
             logger.error(f"Failed to get instance history for twin {twin_id}: {e}")
-            raise
+            return []
     
-    def _row_to_instance(self, row) -> TwinInstance:
-        """Convert database row to TwinInstance object."""
+    async def _get_instances_json(self, registry_id: str) -> List[Dict[str, Any]]:
+        """Get the instances JSON field from the registry."""
+        query = "SELECT instances FROM twin_registry WHERE registry_id = ?"
+        result = await self.fetch_one(query, (registry_id,))
+        
+        if result and result.get("instances"):
+            try:
+                return json.loads(result["instances"])
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid JSON in instances field for registry {registry_id}")
+                return []
+        
+        return []
+    
+    def _dict_to_instance(self, inst_dict: Dict[str, Any]) -> TwinInstance:
+        """Convert dictionary to TwinInstance object."""
         return TwinInstance(
-            id=row[0],
-            twin_id=row[1],
-            instance_data=self._deserialize_json(row[2]),
-            instance_metadata=self._deserialize_json(row[3]),
-            created_by=row[4],
-            created_at=row[5],
-            updated_at=row[6],
-            is_active=bool(row[7]),
-            version=row[8]
+            id=inst_dict.get("id"),
+            twin_id=inst_dict.get("twin_id"),
+            instance_data=inst_dict.get("instance_data", {}),
+            instance_metadata=inst_dict.get("instance_metadata", {}),
+            created_by=inst_dict.get("created_by"),
+            created_at=inst_dict.get("created_at"),
+            updated_at=inst_dict.get("updated_at"),
+            is_active=inst_dict.get("is_active", True),
+            version=inst_dict.get("version", 1)
         ) 

@@ -42,7 +42,7 @@ export class ConfigurationUI {
         this.setupFormListeners();
         
         // Save all button
-        const saveAllBtn = document.querySelector('button[onclick="saveAllConfigurations()"]');
+        const saveAllBtn = document.querySelector('button[onclick="twinRegistrySaveAllConfigurations()"]');
         if (saveAllBtn) {
             saveAllBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -51,7 +51,7 @@ export class ConfigurationUI {
         }
 
         // Reset button
-        const resetBtn = document.querySelector('button[onclick="resetToDefaults()"]');
+        const resetBtn = document.querySelector('button[onclick="twinRegistryResetToDefaults()"]');
         if (resetBtn) {
             resetBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -60,7 +60,7 @@ export class ConfigurationUI {
         }
 
         // Tab change events
-        const configTabs = document.querySelectorAll('#configTabs .nav-link');
+        const configTabs = document.querySelectorAll('#twin_registry_configTabs .nav-link');
         configTabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 this.handleTabChange(e.target.getAttribute('data-bs-target'));
@@ -71,9 +71,9 @@ export class ConfigurationUI {
     setupFormListeners() {
         // Registry settings
         const registryInputs = [
-            'registryName', 'defaultTwinType', 'maxTwinsPerProject', 
-            'autoStartMonitoring', 'dataRetentionPeriod', 'backupFrequency',
-            'enableDataCompression', 'enableDataEncryption'
+            'twin_registry_registryName', 'twin_registry_defaultTwinType', 'twin_registry_maxTwinsPerProject', 
+            'twin_registry_autoStartMonitoring', 'twin_registry_dataRetentionPeriod', 'twin_registry_backupFrequency',
+            'twin_registry_enableDataCompression', 'twin_registry_enableDataEncryption'
         ];
 
         registryInputs.forEach(inputId => {
@@ -86,9 +86,9 @@ export class ConfigurationUI {
 
         // Monitoring settings
         const monitoringInputs = [
-            'refreshInterval', 'enableWebSocket', 'enableBrowserNotifications',
-            'maxConcurrentMonitors', 'healthThreshold', 'performanceThreshold',
-            'enableEmailAlerts', 'alertRetentionDays'
+            'twin_registry_refreshInterval', 'twin_registry_enableWebSocket', 'twin_registry_enableBrowserNotifications',
+            'twin_registry_maxConcurrentMonitors', 'twin_registry_healthThreshold', 'twin_registry_performanceThreshold',
+            'twin_registry_enableEmailAlerts', 'twin_registry_alertRetentionDays'
         ];
 
         monitoringInputs.forEach(inputId => {
@@ -101,9 +101,9 @@ export class ConfigurationUI {
 
         // Security settings
         const securityInputs = [
-            'enableAuthentication', 'sessionTimeout', 'maxLoginAttempts',
-            'enableAuditLog', 'auditRetentionDays', 'enableDataEncryption',
-            'encryptionAlgorithm', 'keyRotationDays'
+            'twin_registry_enableAuthentication', 'twin_registry_sessionTimeout', 'twin_registry_maxLoginAttempts',
+            'twin_registry_enableAuditLog', 'twin_registry_auditRetentionDays', 'twin_registry_enableDataEncryption',
+            'twin_registry_encryptionAlgorithm', 'twin_registry_keyRotationDays'
         ];
 
         securityInputs.forEach(inputId => {
@@ -116,6 +116,9 @@ export class ConfigurationUI {
     }
 
     initializeUI() {
+        // Initialize Bootstrap tabs
+        this.initializeBootstrapTabs();
+        
         // Initialize form validation
         this.initializeValidation();
         
@@ -146,9 +149,9 @@ export class ConfigurationUI {
 
     setupAutoSaveIndicators() {
         // Add modified indicators to sections
-        const sections = ['registry', 'monitoring', 'security'];
+        const sections = ['twin_registry_registry', 'twin_registry_monitoring', 'twin_registry_security'];
         sections.forEach(section => {
-            const sectionElement = document.querySelector(`#${section}Section`);
+            const sectionElement = document.querySelector(`#${section}`);
             if (sectionElement) {
                 const indicator = document.createElement('div');
                 indicator.className = 'modified-indicator';
@@ -167,6 +170,27 @@ export class ConfigurationUI {
         });
     }
 
+    initializeBootstrapTabs() {
+        // Initialize Bootstrap tabs for configuration
+        const configTabs = document.querySelector('#twin_registry_configTabs');
+        if (configTabs) {
+            // Ensure Bootstrap is available
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
+                // Initialize all tab elements
+                const tabElements = configTabs.querySelectorAll('.nav-link');
+                tabElements.forEach(tabElement => {
+                    new bootstrap.Tab(tabElement);
+                });
+                
+                console.log('✅ Bootstrap tabs initialized for configuration');
+            } else {
+                console.warn('⚠️ Bootstrap not available for tab initialization');
+            }
+        } else {
+            console.warn('⚠️ Configuration tabs container not found');
+        }
+    }
+
     markSectionModified(section) {
         this.modifiedSections.add(section);
         this.updateModifiedIndicator(section, true);
@@ -180,7 +204,7 @@ export class ConfigurationUI {
     }
 
     updateModifiedIndicator(section, isModified) {
-        const sectionElement = document.querySelector(`#${section}Section`);
+        const sectionElement = document.querySelector(`#${section}`);
         if (sectionElement) {
             const indicator = sectionElement.querySelector('.modified-indicator');
             if (indicator) {
@@ -190,7 +214,7 @@ export class ConfigurationUI {
     }
 
     updateSaveButton() {
-        const saveAllBtn = document.querySelector('button[onclick="saveAllConfigurations()"]');
+        const saveAllBtn = document.querySelector('button[onclick="twinRegistrySaveAllConfigurations()"]');
         if (saveAllBtn) {
             saveAllBtn.disabled = this.modifiedSections.size === 0;
             saveAllBtn.innerHTML = this.modifiedSections.size > 0 
@@ -516,7 +540,7 @@ export class ConfigurationUI {
      */
     updateAuthState() {
         if (window.authManager) {
-            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.isAuthenticated = window.authManager?.isAuthenticated || false;
             this.currentUser = null; // User info not needed currently
             this.authToken = window.authManager.getStoredToken();
             console.log('🔐 Configuration UI: Auth state updated', {

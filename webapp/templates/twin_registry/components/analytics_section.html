@@ -11,7 +11,7 @@
                     <i class="fas fa-external-link-alt me-1"></i>
                     Full Analytics
                 </a>
-                <button class="btn btn-light btn-sm" onclick="refreshAnalytics()">
+                <button class="btn btn-light btn-sm" onclick="twinRegistryRefreshAnalytics()">
                     <i class="fas fa-sync-alt me-1"></i>
                     Refresh
                 </button>
@@ -23,25 +23,25 @@
         <div class="row mb-3">
             <div class="col-md-3">
                 <div class="text-center">
-                    <div class="h4 text-primary mb-1" id="overallQualityScore">94.2%</div>
+                    <div class="h4 text-primary mb-1" id="twin_registry_overallQualityScore">94.2%</div>
                     <div class="text-muted small">Quality Score</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="text-center">
-                    <div class="h4 text-success mb-1" id="complianceRate">98.7%</div>
+                    <div class="h4 text-success mb-1" id="twin_registry_complianceRate">98.7%</div>
                     <div class="text-muted small">Compliance Rate</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="text-center">
-                    <div class="h4 text-info mb-1" id="efficiencyIndex">87.3%</div>
+                    <div class="h4 text-info mb-1" id="twin_registry_efficiencyIndex">87.3%</div>
                     <div class="text-muted small">Efficiency Index</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="text-center">
-                    <div class="h4 text-warning mb-1" id="riskScore">12.5</div>
+                    <div class="h4 text-warning mb-1" id="twin_registry_riskScore">12.5</div>
                     <div class="text-muted small">Risk Score</div>
                 </div>
             </div>
@@ -53,7 +53,7 @@
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body text-center py-2">
                         <i class="fas fa-sync fa-lg mb-1"></i>
-                        <h5 id="analyticsTotalTwins">0</h5>
+                        <h5 id="twin_registry_analyticsTotalTwins">0</h5>
                         <p class="mb-0 small">Total Twins</p>
                     </div>
                 </div>
@@ -62,7 +62,7 @@
                 <div class="card bg-success text-white h-100">
                     <div class="card-body text-center py-2">
                         <i class="fas fa-heartbeat fa-lg mb-1"></i>
-                        <h5 id="analyticsHealthyTwins">0</h5>
+                        <h5 id="twin_registry_analyticsHealthyTwins">0</h5>
                         <p class="mb-0 small">Healthy</p>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
                 <div class="card bg-warning text-white h-100">
                     <div class="card-body text-center py-2">
                         <i class="fas fa-exclamation-triangle fa-lg mb-1"></i>
-                        <h5 id="analyticsWarningTwins">0</h5>
+                        <h5 id="twin_registry_analyticsWarningTwins">0</h5>
                         <p class="mb-0 small">Warning</p>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
                 <div class="card bg-danger text-white h-100">
                     <div class="card-body text-center py-2">
                         <i class="fas fa-times-circle fa-lg mb-1"></i>
-                        <h5 id="analyticsCriticalTwins">0</h5>
+                        <h5 id="twin_registry_analyticsCriticalTwins">0</h5>
                         <p class="mb-0 small">Critical</p>
                     </div>
                 </div>
@@ -95,11 +95,11 @@
                         <i class="fas fa-chart-bar me-1"></i>
                         View Detailed Analytics
                     </a>
-                    <button class="btn btn-outline-success btn-sm" onclick="generateAnalyticsReport()">
+                    <button class="btn btn-outline-success btn-sm" onclick="twinRegistryGenerateAnalyticsReport()">
                         <i class="fas fa-file-alt me-1"></i>
                         Generate Report
                     </button>
-                    <button class="btn btn-outline-info btn-sm" onclick="exportAnalyticsData()">
+                    <button class="btn btn-outline-info btn-sm" onclick="twinRegistryExportAnalyticsData()">
                         <i class="fas fa-download me-1"></i>
                         Export Data
                     </button>

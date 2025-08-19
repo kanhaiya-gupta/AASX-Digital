@@ -440,7 +440,7 @@ class AnalyticsService:
         """
         query = """
             SELECT AVG(m.processing_efficiency_score) FROM aasx_processing_metrics m
-            JOIN aasx_processing p ON m.job_id = p.id
+            JOIN aasx_processing p ON m.job_id = p.job_id 
             WHERE p.processing_status = 'completed'
             AND m.processing_efficiency_score IS NOT NULL
             AND m.timestamp >= datetime('now', '-{} days')
@@ -629,7 +629,7 @@ class AnalyticsService:
         """
         query = """
             SELECT AVG(m.processing_efficiency_score) FROM aasx_processing_metrics m
-            JOIN aasx_processing p ON m.job_id = p.id
+            JOIN aasx_processing p ON m.job_id = p.job_id
             WHERE m.processing_efficiency_score IS NOT NULL
             AND m.timestamp >= datetime('now', '-{} days')
             AND m.timestamp < datetime('now', '-{} days')

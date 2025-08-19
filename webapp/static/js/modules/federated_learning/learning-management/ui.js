@@ -253,13 +253,29 @@ export default class FederatedLearningUI {
             this.handlePrivacyMetricsUpdated(event.detail);
         });
 
-        // Form and button events
+        // Form and button events - SCOPED to Federated Learning only
         document.addEventListener('submit', (event) => {
-            this.handleFormSubmission(event);
+            // Check if this is a Federated Learning form
+            const federatedLearningForm = event.target.closest('.federated-learning-section, .fl-form, [data-module="federated-learning"]');
+            if (federatedLearningForm) {
+                console.log('🔄 Federated Learning UI: Handling form submission');
+                this.handleFormSubmission(event);
+            } else {
+                console.log('⚠️ Federated Learning UI: Ignoring form submission outside Federated Learning section');
+                // Let other modules handle their forms naturally
+            }
         });
 
         document.addEventListener('click', (event) => {
-            this.handleButtonClick(event);
+            // Check if this is a Federated Learning button
+            const federatedLearningButton = event.target.closest('.federated-learning-section, .fl-button, [data-module="federated-learning"]');
+            if (federatedLearningButton) {
+                console.log('🔄 Federated Learning UI: Handling button click');
+                this.handleButtonClick(event);
+            } else {
+                console.log('⚠️ Federated Learning UI: Ignoring button click outside Federated Learning section');
+                // Let other modules handle their buttons naturally
+            }
         });
     }
 

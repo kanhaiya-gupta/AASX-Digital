@@ -1,0 +1,371 @@
+<!-- Knowledge Graph Analytics Tab - World-Class Implementation -->
+<div class="kg-analytics-tab" role="main" aria-label="Knowledge Graph Analytics Dashboard">
+    
+    <!-- Enhanced Tab Header with Better Semantics -->
+    <header class="kg-tab-header mb-4" role="banner">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="header-content">
+                <h1 class="mb-2" id="analytics-title">
+                    <i class="fas fa-chart-bar me-2" aria-hidden="true"></i>
+                    Knowledge Graph Analytics
+                </h1>
+                <p class="text-muted mb-0" id="analytics-description">
+                    Comprehensive insights, performance metrics, and business intelligence for your knowledge graph ecosystem
+                </p>
+            </div>
+            <nav class="kg-tab-actions" role="navigation" aria-label="Primary actions">
+                <select class="form-select me-2" id="analytics_timeRangeFilter">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d" selected>Last 30 Days</option>
+                    <option value="90d">Last 90 Days</option>
+                    <option value="1y">Last Year</option>
+                </select>
+                <button class="btn btn-primary" onclick="generateAnalyticsReport()" id="generate-report-btn">
+                    <i class="fas fa-file-pdf me-2" aria-hidden="true"></i>Generate Report
+                </button>
+                <button class="btn btn-success" onclick="exportAnalyticsData()" id="export-data-btn">
+                    <i class="fas fa-download me-2" aria-hidden="true"></i>Export Data
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Analytics Overview Cards -->
+    <section class="analytics-overview mb-4" aria-labelledby="overview-title">
+        <h2 class="sr-only" id="overview-title">Analytics Overview</h2>
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <article class="card bg-gradient-primary text-white" role="region" aria-labelledby="total-graphs">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="total-graphs" aria-live="polite">150</h3>
+                                <small>Total Graphs</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span>+15.2%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-project-diagram fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <article class="card bg-gradient-success text-white" role="region" aria-labelledby="health-score">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="health-score" aria-live="polite">92%</h3>
+                                <small>Avg Health Score</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span>+3.2%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-heartbeat fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <article class="card bg-gradient-info text-white" role="region" aria-labelledby="response-time">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="response-time" aria-live="polite">120ms</h3>
+                                <small>Avg Response Time</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-down me-1"></i>
+                                    <span>-5.2ms</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-tachometer-alt fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <article class="card bg-gradient-warning text-white" role="region" aria-labelledby="sync-rate">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="sync-rate" aria-live="polite">95%</h3>
+                                <small>Neo4j Sync Rate</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span>+2.1%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-database fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Analytics Charts -->
+    <section class="performance-charts mb-4" aria-labelledby="performance-charts-title">
+        <h2 class="sr-only" id="performance-charts-title">Performance Analytics Charts</h2>
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <article class="card">
+                    <header class="card-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-tachometer-alt me-2" aria-hidden="true"></i>Response Time Trends
+                        </h3>
+                    </header>
+                    <div class="card-body">
+                        <div class="chart-container" role="img" aria-label="Response time trends chart">
+                            <canvas id="response-time-chart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-lg-6 mb-4">
+                <article class="card">
+                    <header class="card-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-heartbeat me-2" aria-hidden="true"></i>Health Score Trends
+                        </h3>
+                    </header>
+                    <div class="card-body">
+                        <div class="chart-container" role="img" aria-label="Health score trends chart">
+                            <canvas id="health-score-chart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Graph Analytics Charts -->
+    <section class="graph-analytics mb-4" aria-labelledby="graph-analytics-title">
+        <h2 class="sr-only" id="graph-analytics-title">Graph Analytics Charts</h2>
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <article class="card">
+                    <header class="card-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-project-diagram me-2" aria-hidden="true"></i>Graph Growth & Performance
+                        </h3>
+                    </header>
+                    <div class="card-body">
+                        <div class="chart-container" role="img" aria-label="Graph growth and performance chart">
+                            <canvas id="graph-growth-chart" width="600" height="300"></canvas>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <article class="card">
+                    <header class="card-header">
+                        <h3 class="mb-0">
+                            <i class="fas fa-database me-2" aria-hidden="true"></i>Neo4j Sync Status
+                        </h3>
+                    </header>
+                    <div class="card-body">
+                        <div class="chart-container" role="img" aria-label="Neo4j sync status chart">
+                            <canvas id="neo4j-sync-chart" width="300" height="300"></canvas>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Neo4j Performance Metrics -->
+    <section class="neo4j-metrics mb-4" aria-labelledby="neo4j-metrics-title">
+        <article class="card">
+            <header class="card-header">
+                <h2 class="mb-0" id="neo4j-metrics-title">
+                    <i class="fas fa-database me-2" aria-hidden="true"></i>Neo4j Performance Metrics
+                </h2>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Memory Usage</h6>
+                            <div class="progress mb-2" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar bg-info" id="memory-usage-bar" style="width: 60%"></div>
+                            </div>
+                            <small id="memory-usage-text">512 MB</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Disk Usage</h6>
+                            <div class="progress mb-2" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar bg-warning" id="disk-usage-bar" style="width: 75%"></div>
+                            </div>
+                            <small id="disk-usage-text">1.2 GB</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Query Performance</h6>
+                            <div class="progress mb-2" role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar bg-success" id="query-performance-bar" style="width: 80%"></div>
+                            </div>
+                            <small id="query-performance-text">50 ms</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6>Connection Health</h6>
+                            <div class="progress mb-2" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar bg-primary" id="connection-health-bar" style="width: 90%"></div>
+                            </div>
+                            <small id="connection-health-text">Stable</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Business Intelligence Insights -->
+    <section class="business-intelligence mb-4" aria-labelledby="bi-title">
+        <article class="card">
+            <header class="card-header">
+                <h2 class="mb-0" id="bi-title">
+                    <i class="fas fa-chart-line me-2" aria-hidden="true"></i>Business Intelligence Insights
+                </h2>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Graph Growth Rate</h6>
+                                <h4 class="text-success" id="growth-rate">+15%</h4>
+                                <small class="text-muted">vs. last period</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>Data Processing Efficiency</h6>
+                                <h4 class="text-info" id="processing-efficiency">87%</h4>
+                                <small class="text-muted">optimal performance</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6>User Satisfaction</h6>
+                                <h4 class="text-warning" id="user-satisfaction">4.2/5</h4>
+                                <small class="text-muted">based on feedback</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Detailed Analytics Table -->
+    <section class="analytics-table mb-4" aria-labelledby="analytics-table-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="analytics-table-title">
+                        <i class="fas fa-table me-2" aria-hidden="true"></i>Detailed Analytics Data
+                    </h2>
+                    <div class="btn-group" role="group" aria-label="Analytics table actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportAnalyticsData()">
+                            <i class="fas fa-download me-1"></i>Export Data
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="printAnalyticsReport()">
+                            <i class="fas fa-print me-1"></i>Print Report
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="analytics-table">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Metric</th>
+                                <th>Current Value</th>
+                                <th>Previous Value</th>
+                                <th>Change</th>
+                                <th>Trend</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analytics-tbody">
+                            <tr>
+                                <td>Total Graphs</td>
+                                <td>150</td>
+                                <td>130</td>
+                                <td>+15.38%</td>
+                                <td><i class="fas fa-arrow-up text-success"></i></td>
+                                <td>Healthy</td>
+                            </tr>
+                            <tr>
+                                <td>Avg Health Score</td>
+                                <td>92%</td>
+                                <td>89%</td>
+                                <td>+3.2%</td>
+                                <td><i class="fas fa-arrow-up text-success"></i></td>
+                                <td>Stable</td>
+                            </tr>
+                            <tr>
+                                <td>Avg Response Time</td>
+                                <td>120ms</td>
+                                <td>125ms</td>
+                                <td>-5.2ms</td>
+                                <td><i class="fas fa-arrow-down text-success"></i></td>
+                                <td>Optimal</td>
+                            </tr>
+                            <tr>
+                                <td>Neo4j Sync Rate</td>
+                                <td>95%</td>
+                                <td>93%</td>
+                                <td>+2.1%</td>
+                                <td><i class="fas fa-arrow-up text-success"></i></td>
+                                <td>Good</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </article>
+    </section>
+</div>
+
+<!-- Enhanced Tab Footer with Better Semantics -->
+<footer class="kg-tab-footer" role="contentinfo" aria-label="Analytics tab footer">
+    <div class="tab-info">
+        <i class="fas fa-chart-line me-2" aria-hidden="true"></i>
+        <span id="analytics-tab-info" aria-live="polite">Analytics dashboard ready - monitoring graph performance</span>
+    </div>
+    <nav class="tab-actions" role="navigation" aria-label="Secondary actions">
+        <button class="btn btn-outline-primary btn-sm" onclick="scheduleAnalyticsReport()">
+            <i class="fas fa-clock me-1"></i>Schedule Report
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showAnalyticsHelp()">
+            <i class="fas fa-question-circle me-1"></i>Help
+        </button>
+    </nav>
+</footer>

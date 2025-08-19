@@ -105,28 +105,28 @@
                 </div>
             </div>
             <div class="aasx-card-body">
-                <!-- Analytics Tabs -->
+                <!-- Analytics Sub-tabs -->
                 <ul class="nav nav-tabs aasx-analytics-tabs" id="analyticsTabList" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
-                            <i class="fas fa-tachometer-alt"></i>
+                        <button class="nav-link active" id="analytics-performance-tab" data-tab="analytics_performance" type="button" role="tab">
+                            <i class="fas fa-chart-line"></i>
                             Performance
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="trends-tab" data-bs-toggle="tab" data-bs-target="#trends" type="button" role="tab">
-                            <i class="fas fa-chart-line"></i>
+                        <button class="nav-link" id="analytics-trends-tab" data-tab="analytics_trends" type="button" role="tab">
+                            <i class="fas fa-chart-bar"></i>
                             Trends
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="insights-tab" data-bs-toggle="tab" data-bs-target="#insights" type="button" role="tab">
+                        <button class="nav-link" id="analytics-insights-tab" data-tab="analytics_insights" type="button" role="tab">
                             <i class="fas fa-lightbulb"></i>
                             Insights
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                        <button class="nav-link" id="analytics-reports-tab" data-tab="analytics_reports" type="button" role="tab">
                             <i class="fas fa-file-alt"></i>
                             Reports
                         </button>
@@ -135,113 +135,63 @@
 
                 <div class="tab-content" id="analyticsTabContent">
                     <!-- Performance Tab -->
-                    <div class="tab-pane fade show active" id="performance" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-lg-6">
-                                <div class="aasx-chart-container" id="performance-chart-container">
-                                    <h4>Processing Performance</h4>
-                                    <div class="aasx-chart-placeholder">
-                                        <i class="fas fa-chart-bar"></i>
-                                        <p>Performance Chart</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="aasx-chart-container">
-                                    <h4>Success Rate Trends</h4>
-                                    <div class="aasx-chart-placeholder">
-                                        <i class="fas fa-chart-line"></i>
-                                        <p>Success Rate Chart</p>
-                                    </div>
+                    <div class="tab-pane fade show active" id="analytics_performance" role="tabpanel">
+                        <div class="aasx-chart-container">
+                            <h4>Performance Metrics</h4>
+                            <div id="analytics_performance-chart-container">
+                                <div class="aasx-chart-placeholder">
+                                    <i class="fas fa-chart-line"></i>
+                                    <p>Performance Chart</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Trends Tab -->
-                    <div class="tab-pane fade" id="trends" role="tabpanel">
-                        <div class="row g-4">
-                            <div class="col-lg-8">
-                                <div class="aasx-chart-container" id="trends-chart-container">
-                                    <h4>Data Processing Trends</h4>
-                                    <div class="aasx-chart-placeholder">
-                                        <i class="fas fa-chart-area"></i>
-                                        <p>Trends Chart</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-4">
-                                <div class="aasx-trends-summary">
-                                    <h4>Key Trends</h4>
-                                    <div class="aasx-trend-item">
-                                        <span class="aasx-trend-label">Processing Volume</span>
-                                        <span class="aasx-trend-value aasx-trend-up">+15%</span>
-                                    </div>
-                                    <div class="aasx-trend-item">
-                                        <span class="aasx-trend-label">Success Rate</span>
-                                        <span class="aasx-trend-value aasx-trend-up">+8%</span>
-                                    </div>
-                                    <div class="aasx-trend-item">
-                                        <span class="aasx-trend-label">Processing Time</span>
-                                        <span class="aasx-trend-value aasx-trend-down">-12%</span>
-                                    </div>
+                    <div class="tab-pane fade" id="analytics_trends" role="tabpanel">
+                        <div class="aasx-trends-summary">
+                            <h4>Processing Trends</h4>
+                            <div id="analytics_trends-chart-container">
+                                <div class="aasx-chart-placeholder">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <p>Trends Chart</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Insights Tab -->
-                    <div class="tab-pane fade" id="insights" role="tabpanel">
+                    <div class="tab-pane fade" id="analytics_insights" role="tabpanel">
                         <div class="aasx-insights-container">
                             <div class="aasx-insight-card">
                                 <div class="aasx-insight-icon">
                                     <i class="fas fa-lightbulb"></i>
                                 </div>
                                 <div class="aasx-insight-content">
-                                    <h4>Performance Optimization</h4>
-                                    <p>Your ETL pipeline shows 15% improvement in processing speed after recent optimizations.</p>
+                                    <h4>Data Quality Insights</h4>
+                                    <p>Analysis of data processing quality and recommendations</p>
                                 </div>
                             </div>
-                            <div class="aasx-insight-card">
-                                <div class="aasx-insight-icon">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="aasx-insight-content">
-                                    <h4>Error Pattern Detected</h4>
-                                    <p>Most processing errors occur during peak hours (2-4 PM). Consider load balancing.</p>
-                                </div>
-                            </div>
-                            <div class="aasx-insight-card">
-                                <div class="aasx-insight-icon">
+                            <div id="analytics_insights-chart-container">
+                                <div class="aasx-chart-placeholder">
                                     <i class="fas fa-chart-pie"></i>
+                                    <p>Insights Chart</p>
                                 </div>
-                                <div class="aasx-insight-content">
-                                    <h4>Data Quality Improvement</h4>
-                                    <p>Data validation success rate increased by 23% with enhanced quality checks.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Add chart container for insights -->
-                        <div class="aasx-chart-container" id="insights-chart-container">
-                            <h4>Quality Insights</h4>
-                            <div class="aasx-chart-placeholder">
-                                <i class="fas fa-chart-pie"></i>
-                                <p>Quality Metrics Chart</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Reports Tab -->
-                    <div class="tab-pane fade" id="reports" role="tabpanel">
+                    <div class="tab-pane fade" id="analytics_reports" role="tabpanel">
                         <div class="aasx-reports-container">
                             <div class="aasx-report-item">
                                 <div class="aasx-report-icon">
-                                    <i class="fas fa-file-pdf"></i>
+                                    <i class="fas fa-file-alt"></i>
                                 </div>
                                 <div class="aasx-report-content">
-                                    <h4>Monthly Performance Report</h4>
-                                    <p>Comprehensive analysis of system performance and data processing metrics</p>
-                                    <span class="aasx-report-date">Generated: Dec 15, 2024</span>
+                                    <h4>User Behavior Report</h4>
+                                    <p>Analysis of user interactions and system usage patterns</p>
+                                    <span class="aasx-report-date">Generated: Today</span>
                                 </div>
                                 <div class="aasx-report-actions">
                                     <button class="aasx-btn aasx-btn-outline btn-sm">
@@ -250,29 +200,11 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="aasx-report-item">
-                                <div class="aasx-report-icon">
-                                    <i class="fas fa-file-excel"></i>
+                            <div id="analytics_reports-chart-container">
+                                <div class="aasx-chart-placeholder">
+                                    <i class="fas fa-chart-area"></i>
+                                    <p>Reports Chart</p>
                                 </div>
-                                <div class="aasx-report-content">
-                                    <h4>Data Quality Assessment</h4>
-                                    <p>Detailed analysis of data quality metrics and improvement recommendations</p>
-                                    <span class="aasx-report-date">Generated: Dec 10, 2024</span>
-                                </div>
-                                <div class="aasx-report-actions">
-                                    <button class="aasx-btn aasx-btn-outline btn-sm">
-                                        <i class="fas fa-download"></i>
-                                        Download
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Add chart container for reports -->
-                        <div class="aasx-chart-container" id="reports-chart-container">
-                            <h4>User Behavior Analytics</h4>
-                            <div class="aasx-chart-placeholder">
-                                <i class="fas fa-chart-radar"></i>
-                                <p>User Behavior Chart</p>
                             </div>
                         </div>
                     </div>

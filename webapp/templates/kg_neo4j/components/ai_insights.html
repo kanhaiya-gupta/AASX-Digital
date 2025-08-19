@@ -1,0 +1,727 @@
+<!-- AI Insights Tab Component - World-Class Implementation -->
+<div class="kg-ai-insights-tab" role="main" aria-label="AI Insights and Graph Enhancement Dashboard">
+    
+    <!-- Enhanced Tab Header with Better Semantics -->
+    <header class="kg-tab-header mb-4" role="banner">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="header-content">
+                <h1 class="mb-2" id="ai-insights-title">
+                    <i class="fas fa-brain me-2" aria-hidden="true"></i>
+                    AI Insights & Graph Enhancement
+                </h1>
+                <p class="text-muted mb-0" id="ai-insights-description">
+                    Leverage AI to discover patterns, identify anomalies, and enhance your knowledge graphs with intelligent recommendations
+                </p>
+            </div>
+            <nav class="kg-tab-actions" role="navigation" aria-label="Primary actions">
+                <button class="btn btn-primary" onclick="generateAIInsights()" id="generate-insights-btn">
+                    <i class="fas fa-magic me-2" aria-hidden="true"></i>Generate AI Insights
+                </button>
+                <button class="btn btn-outline-success" onclick="enhanceGraphWithAI()" id="enhance-graph-btn">
+                    <i class="fas fa-rocket me-2" aria-hidden="true"></i>Enhance Graph
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- AI Configuration & Graph Selection -->
+    <section class="ai-configuration mb-4" aria-labelledby="ai-config-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="ai-config-title">
+                        <i class="fas fa-cog me-2" aria-hidden="true"></i>AI Configuration & Graph Selection
+                    </h2>
+                    <button class="btn btn-outline-primary btn-sm" onclick="saveAIConfig()">
+                        <i class="fas fa-save me-1" aria-hidden="true"></i>Save Configuration
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">LLM Model Selection</h6>
+                        <div class="mb-3">
+                            <label for="llmModel" class="form-label">Primary AI Model</label>
+                            <select class="form-select" id="llmModel" aria-describedby="llmModel-help">
+                                <option value="gpt-4">GPT-4 (Most Capable)</option>
+                                <option value="gpt-3.5-turbo" selected>GPT-3.5 Turbo (Balanced)</option>
+                                <option value="claude-3">Claude-3 (Analytical)</option>
+                                <option value="llama-2">Llama-2 (Open Source)</option>
+                                <option value="gemini-pro">Gemini Pro (Google)</option>
+                                <option value="custom">Custom Model</option>
+                            </select>
+                            <small class="text-muted" id="llmModel-help">Select the AI model for graph analysis and insights</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="aiTemperature" class="form-label">AI Creativity Level</label>
+                            <input type="range" class="form-range" id="aiTemperature" min="0.0" max="2.0" step="0.1" value="0.7">
+                            <div class="d-flex justify-content-between">
+                                <small>0.0 (Deterministic)</small>
+                                <small id="aiTemperatureValue">0.7</small>
+                                <small>2.0 (Creative)</small>
+                            </div>
+                            <small class="text-muted" id="aiTemperature-help">Control AI creativity vs. consistency in insights</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="aiMaxTokens" class="form-label">Response Length</label>
+                            <input type="number" class="form-control" id="aiMaxTokens" min="100" max="4000" value="2000" aria-describedby="aiMaxTokens-help">
+                            <small class="text-muted" id="aiMaxTokens-help">Maximum tokens for AI responses</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Analysis Parameters</h6>
+                        <div class="mb-3">
+                            <label for="insightDepth" class="form-label">Insight Depth</label>
+                            <select class="form-select" id="insightDepth" aria-describedby="insightDepth-help">
+                                <option value="basic">Basic (Surface-level patterns)</option>
+                                <option value="intermediate" selected>Intermediate (Detailed analysis)</option>
+                                <option value="advanced">Advanced (Deep insights)</option>
+                                <option value="expert">Expert (Comprehensive analysis)</option>
+                            </select>
+                            <small class="text-muted" id="insightDepth-help">Level of detail in AI analysis</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="analysisFocus" class="form-label">Analysis Focus</label>
+                            <select class="form-select" id="analysisFocus" aria-describedby="analysisFocus-help">
+                                <option value="patterns">Pattern Discovery</option>
+                                <option value="anomalies" selected>Anomaly Detection</option>
+                                <option value="optimization">Optimization Opportunities</option>
+                                <option value="integration">Integration Analysis</option>
+                                <option value="comprehensive">Comprehensive Analysis</option>
+                            </select>
+                            <small class="text-muted" id="analysisFocus-help">Primary focus area for AI analysis</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="updateFrequency" class="form-label">Update Frequency</label>
+                            <select class="form-select" id="updateFrequency" aria-describedby="updateFrequency-help">
+                                <option value="realtime">Real-time</option>
+                                <option value="hourly">Hourly</option>
+                                <option value="daily" selected>Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="manual">Manual</option>
+                            </select>
+                            <small class="text-muted" id="updateFrequency-help">How often to update AI insights</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Graph Selection Interface -->
+    <section class="graph-selection mb-4" aria-labelledby="graph-selection-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="graph-selection-title">
+                        <i class="fas fa-project-diagram me-2" aria-hidden="true"></i>Graph Selection & Targeting
+                    </h2>
+                    <button class="btn btn-outline-info btn-sm" onclick="analyzeSelectedGraphs()">
+                        <i class="fas fa-search me-1" aria-hidden="true"></i>Analyze Selected
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Analysis Scope Selection</h6>
+                        <div class="mb-3">
+                            <label for="analysisScope" class="form-label">What do you want to analyze?</label>
+                            <select class="form-select" id="analysisScope" onchange="updateGraphSelection()" aria-describedby="analysisScope-help">
+                                <option value="single_graph">Single Specific Graph</option>
+                                <option value="mode_graphs">All Graphs from a Mode</option>
+                                <option value="cross_mode">Cross-Mode Analysis</option>
+                            </select>
+                            <small class="text-muted" id="analysisScope-help">Choose whether to analyze one graph or multiple graphs from a mode</small>
+                        </div>
+                        
+                        <!-- Single Graph Selection -->
+                        <div id="singleGraphSection" class="mb-3">
+                            <label for="graphSelector" class="form-label">Select Specific Graph</label>
+                            <select class="form-select" id="graphSelector" aria-describedby="graphSelector-help">
+                                <option value="">Loading graphs...</option>
+                            </select>
+                            <small class="text-muted" id="graphSelector-help">Choose a specific graph from your database</small>
+                        </div>
+                        
+                        <!-- Mode Selection -->
+                        <div id="modeSelectionSection" class="mb-3" style="display: none;">
+                            <label for="modeSelector" class="form-label">Select Graph Generation Mode</label>
+                            <select class="form-select" id="modeSelector" aria-describedby="modeSelector-help">
+                                <option value="">Select Mode</option>
+                                <option value="aasx">AASX Processing Mode</option>
+                                <option value="twin">Digital Twin Mode</option>
+                                <option value="ai_rag">AI/RAG Mode</option>
+                            </select>
+                            <small class="text-muted" id="modeSelector-help">Analyze all graphs generated by this mode</small>
+                        </div>
+                        
+                        <!-- Cross-Mode Selection -->
+                        <div id="crossModeSection" class="mb-3" style="display: none;">
+                            <label class="form-label">Select Modes for Cross-Analysis</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="crossAasx" checked>
+                                <label class="form-check-label" for="crossAasx">AASX Processing Mode</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="crossTwin" checked>
+                                <label class="form-check-label" for="crossTwin">Digital Twin Mode</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="crossAiRag" checked>
+                                <label class="form-check-label" for="crossAiRag">AI/RAG Mode</label>
+                            </div>
+                            <small class="text-muted">Analyze relationships between graphs from different modes</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Data Subset Filtering</h6>
+                        <div class="mb-3">
+                            <label for="nodeTypeFilter" class="form-label">Node Type Filter</label>
+                            <select class="form-select" id="nodeTypeFilter" multiple aria-describedby="nodeTypeFilter-help">
+                                <option value="Person" selected>Person</option>
+                                <option value="Organization" selected>Organization</option>
+                                <option value="Product" selected>Product</option>
+                                <option value="Process" selected>Process</option>
+                                <option value="Location" selected>Location</option>
+                                <option value="Equipment" selected>Equipment</option>
+                                <option value="Document" selected>Document</option>
+                                <option value="Event" selected>Event</option>
+                            </select>
+                            <small class="text-muted" id="nodeTypeFilter-help">Select specific node types to analyze</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationshipFilter" class="form-label">Relationship Filter</label>
+                            <select class="form-select" id="relationshipFilter" multiple aria-describedby="relationshipFilter-help">
+                                <option value="WORKS_FOR" selected>WORKS_FOR</option>
+                                <option value="BELONGS_TO" selected>BELONGS_TO</option>
+                                <option value="CONTAINS" selected>CONTAINS</option>
+                                <option value="PRODUCES" selected>PRODUCES</option>
+                                <option value="LOCATED_IN" selected>LOCATED_IN</option>
+                                <option value="DEPENDS_ON" selected>DEPENDS_ON</option>
+                                <option value="REFERENCES" selected>REFERENCES</option>
+                                <option value="SIMILAR_TO" selected>SIMILAR_TO</option>
+                            </select>
+                            <small class="text-muted" id="relationshipFilter-help">Select specific relationship types to analyze</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="timeRangeFilter" class="form-label">Time Range Filter</label>
+                            <select class="form-select" id="timeRangeFilter" aria-describedby="timeRangeFilter-help">
+                                <option value="all" selected>All Time</option>
+                                <option value="last_24h">Last 24 Hours</option>
+                                <option value="last_7d">Last 7 Days</option>
+                                <option value="last_30d">Last 30 Days</option>
+                                <option value="last_90d">Last 90 Days</option>
+                                <option value="last_year">Last Year</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                            <small class="text-muted" id="timeRangeFilter-help">Filter data by time period</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Selected Graph/Mode Information -->
+                <div class="mt-4" id="selectionInfo" style="display: none;">
+                    <h6 class="text-info mb-3">Selection Information</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-primary" id="selectedGraphsCount">0</div>
+                                <div class="text-muted">Graphs Selected</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-success" id="totalNodesCount">0</div>
+                                <div class="text-muted">Total Nodes</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-warning" id="totalRelationshipsCount">0</div>
+                                <div class="text-muted">Total Relationships</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h4 text-info" id="graphHealthScore">0%</div>
+                                <div class="text-muted">Health Score</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Graph Details Table -->
+                    <div class="mt-3" id="graphDetailsTable" style="display: none;">
+                        <h6 class="text-muted mb-2">Graph Details</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Graph Name</th>
+                                        <th>Source Mode</th>
+                                        <th>Nodes</th>
+                                        <th>Relationships</th>
+                                        <th>Created</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="graphDetailsTableBody">
+                                    <!-- Graph details will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- AI Query Interface -->
+    <section class="ai-query-interface mb-4" aria-labelledby="ai-query-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="ai-query-title">
+                        <i class="fas fa-comments me-2" aria-hidden="true"></i>AI Query Interface
+                    </h2>
+                    <button class="btn btn-outline-primary btn-sm" onclick="clearQueryHistory()">
+                        <i class="fas fa-eraser me-1" aria-hidden="true"></i>Clear History
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label for="aiQueryInput" class="form-label">Ask AI About Your Knowledge Graphs</label>
+                            <textarea class="form-control" id="aiQueryInput" rows="3" 
+                                      placeholder="e.g., 'What patterns exist in our manufacturing process graph?' or 'Find anomalies in the digital twin relationships' or 'Suggest improvements for graph performance'"
+                                      aria-describedby="aiQueryInput-help"></textarea>
+                            <small class="text-muted" id="aiQueryInput-help">Ask AI questions about your graphs, patterns, anomalies, or request analysis</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="submitAIQuery()" id="submit-query-btn">
+                                <i class="fas fa-paper-plane me-2" aria-hidden="true"></i>Ask AI
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="showQueryTemplates()">
+                                <i class="fas fa-list me-2" aria-hidden="true"></i>Query Templates
+                            </button>
+                            <button class="btn btn-outline-info" onclick="saveQuery()">
+                                <i class="fas fa-bookmark me-2" aria-hidden="true"></i>Save Query
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-primary mb-3">Quick Query Examples</h6>
+                        <div class="query-example mb-2 p-2 border rounded cursor-pointer" onclick="useQueryExample('Find disconnected nodes in the graph')">
+                            <small class="text-primary">🔍 Find disconnected nodes in the graph</small>
+                        </div>
+                        <div class="query-example mb-2 p-2 border rounded cursor-pointer" onclick="useQueryExample('Identify circular dependencies')">
+                            <small class="text-success">🔄 Identify circular dependencies</small>
+                        </div>
+                        <div class="query-example mb-2 p-2 border rounded cursor-pointer" onclick="useQueryExample('Suggest missing relationships')">
+                            <small class="text-warning">➕ Suggest missing relationships</small>
+                        </div>
+                        <div class="query-example mb-2 p-2 border rounded cursor-pointer" onclick="useQueryExample('Analyze graph performance bottlenecks')">
+                            <small class="text-info">⚡ Analyze graph performance bottlenecks</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Response Display -->
+                <div class="mt-4" id="aiResponseSection" style="display: none;">
+                    <h6 class="text-success mb-3">AI Response</h6>
+                    <div class="ai-response p-3 border rounded bg-light" id="aiResponseContent">
+                        <!-- AI response will be displayed here -->
+                    </div>
+                    <div class="mt-3 d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="explainAIResponse()">
+                            <i class="fas fa-question-circle me-1" aria-hidden="true"></i>Explain
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="applyAIRecommendations()">
+                            <i class="fas fa-check me-1" aria-hidden="true"></i>Apply Recommendations
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="exportAIResponse()">
+                            <i class="fas fa-download me-1" aria-hidden="true"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- AI-Generated Insights Dashboard -->
+    <section class="ai-insights-dashboard mb-4" aria-labelledby="ai-insights-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="ai-insights-title">
+                        <i class="fas fa-lightbulb me-2" aria-hidden="true"></i>AI-Generated Insights
+                    </h2>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshAIInsights()">
+                        <i class="fas fa-sync-alt me-1" aria-hidden="true"></i>Refresh Insights
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Pattern Discovery</h6>
+                        <div class="insight-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-primary">Graph Pattern</span>
+                                <small class="text-muted">2 hours ago</small>
+                            </div>
+                            <h6 class="mb-2">Manufacturing Process Clustering</h6>
+                            <p class="text-muted mb-2">AI discovered 5 distinct clusters in your manufacturing process graph, with 23% of processes having overlapping quality control steps.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-success">
+                                    <i class="fas fa-arrow-up me-1"></i>Confidence: 94%
+                                </span>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewPatternDetails('pattern1')">
+                                    <i class="fas fa-eye me-1" aria-hidden="true"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                        <div class="insight-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-success">Relationship Pattern</span>
+                                <small class="text-muted">4 hours ago</small>
+                            </div>
+                            <h6 class="mb-2">Bidirectional Twin Relationships</h6>
+                            <p class="text-muted mb-2">AI found that 67% of digital twin relationships are bidirectional, indicating strong interdependencies in your industrial ecosystem.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Confidence: 87%
+                                </span>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewPatternDetails('pattern2')">
+                                    <i class="fas fa-eye me-1" aria-hidden="true"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-warning mb-3">Anomaly Detection</h6>
+                        <div class="insight-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-warning">Data Anomaly</span>
+                                <small class="text-muted">1 hour ago</small>
+                            </div>
+                            <h6 class="mb-2">Orphaned Nodes Detected</h6>
+                            <p class="text-muted mb-2">AI identified 156 orphaned nodes in your AASX processing graph that have no incoming or outgoing relationships.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-danger">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Confidence: 91%
+                                </span>
+                                <button class="btn btn-sm btn-outline-warning" onclick="viewAnomalyDetails('anomaly1')">
+                                    <i class="fas fa-eye me-1" aria-hidden="true"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                        <div class="insight-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-danger">Performance Anomaly</span>
+                                <small class="text-muted">3 hours ago</small>
+                            </div>
+                            <h6 class="mb-2">Graph Query Bottlenecks</h6>
+                            <p class="text-muted mb-2">AI detected 3 query bottlenecks in your graph structure that could cause performance issues with complex traversals.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Confidence: 89%
+                                </span>
+                                <button class="btn btn-sm btn-outline-danger" onclick="viewAnomalyDetails('anomaly2')">
+                                    <i class="fas fa-eye me-1" aria-hidden="true"></i>View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Graph Optimization Insights -->
+                <div class="mt-4">
+                    <h6 class="text-info mb-3">Graph Optimization Suggestions</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="optimization-card mb-3 p-3 border rounded">
+                                <h6 class="mb-2">Performance Optimization</h6>
+                                <p class="text-muted mb-2">AI suggests adding 12 index properties to improve query performance by 23%.</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-info">23% Improvement</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewOptimization('perf1')">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="optimization-card mb-3 p-3 border rounded">
+                                <h6 class="mb-2">Structure Optimization</h6>
+                                <p class="text-muted mb-2">AI recommends restructuring 8 relationship types to reduce graph complexity and improve maintainability.</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-success">Complexity -15%</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewOptimization('struct1')">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="optimization-card mb-3 p-3 border rounded">
+                                <h6 class="mb-2">Data Quality Optimization</h6>
+                                <p class="text-muted mb-2">AI suggests adding validation rules for 34% of node properties to improve data consistency.</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-warning">34% Properties</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewOptimization('quality1')">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- AI Graph Enhancement Recommendations -->
+    <section class="ai-graph-enhancement mb-4" aria-labelledby="enhancement-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="enhancement-title">
+                        <i class="fas fa-rocket me-2" aria-hidden="true"></i>AI Graph Enhancement Recommendations
+                    </h2>
+                    <button class="btn btn-success btn-sm" onclick="applyAllEnhancements()">
+                        <i class="fas fa-check-double me-1" aria-hidden="true"></i>Apply All
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">New Relationships to Add</h6>
+                        <div class="enhancement-item mb-3 p-3 border rounded">
+                            <h6 class="mb-2">Manufacturing Process Dependencies</h6>
+                            <p class="text-muted mb-2">AI suggests adding 15 new relationship types to better model process dependencies and improve workflow understanding.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary">15 Relationships</span>
+                                <button class="btn btn-sm btn-outline-success" onclick="applyEnhancement('rel1')">
+                                    <i class="fas fa-plus me-1" aria-hidden="true"></i>Add
+                                </button>
+                            </div>
+                        </div>
+                        <div class="enhancement-item mb-3 p-3 border rounded">
+                            <h6 class="mb-2">Quality Control Links</h6>
+                            <p class="text-muted mb-2">AI recommends creating 8 new relationship types to connect quality control processes with manufacturing steps.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-success">8 Relationships</span>
+                                <button class="btn btn-sm btn-outline-success" onclick="applyEnhancement('rel2')">
+                                    <i class="fas fa-plus me-1" aria-hidden="true"></i>Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Missing Nodes to Create</h6>
+                        <div class="enhancement-item mb-3 p-3 border rounded">
+                            <h6 class="mb-2">Intermediate Process Nodes</h6>
+                            <p class="text-muted mb-2">AI identified 12 missing intermediate nodes that would improve the granularity of your manufacturing process graph.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-warning">12 Nodes</span>
+                                <button class="btn btn-sm btn-outline-success" onclick="applyEnhancement('node1')">
+                                    <i class="fas fa-plus me-1" aria-hidden="true"></i>Create
+                                </button>
+                            </div>
+                        </div>
+                        <div class="enhancement-item mb-3 p-3 border rounded">
+                            <h6 class="mb-2">Metadata Enrichment Nodes</h6>
+                            <p class="text-muted mb-2">AI suggests creating 7 new metadata nodes to enrich existing entities with additional context and properties.</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-info">7 Nodes</span>
+                                <button class="btn btn-sm btn-outline-success" onclick="applyEnhancement('node2')">
+                                    <i class="fas fa-plus me-1" aria-hidden="true"></i>Create
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Graph Structure Improvements -->
+                <div class="mt-4">
+                    <h6 class="text-info mb-3">Graph Structure Improvements</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="structure-improvement mb-3 p-3 border rounded">
+                                <h6 class="mb-2">Hierarchical Organization</h6>
+                                <p class="text-muted mb-2">AI recommends implementing hierarchical structures for 8 entity types to improve graph navigation and query performance.</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary">8 Entity Types</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewStructureImprovement('hier1')">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="structure-improvement mb-3 p-3 border rounded">
+                                <h6 class="mb-2">Property Standardization</h6>
+                                <p class="text-muted mb-2">AI suggests standardizing 23 property types across different node categories to improve data consistency and query efficiency.</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-success">23 Properties</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewStructureImprovement('prop1')">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="structure-improvement mb-3 p-3 border rounded">
+                                <h6 class="mb-2">Index Optimization</h6>
+                                <p class="text-muted mb-2">AI recommends adding 18 strategic indexes to improve query performance and reduce traversal time by up to 35%.</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-warning">35% Performance</span>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewStructureImprovement('index1')">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- AI Enhancement Progress Tracking -->
+    <section class="ai-enhancement-progress mb-4" aria-labelledby="progress-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="progress-title">
+                        <i class="fas fa-chart-line me-2" aria-hidden="true"></i>AI Enhancement Progress
+                    </h2>
+                    <button class="btn btn-outline-info btn-sm" onclick="exportProgressReport()">
+                        <i class="fas fa-download me-1" aria-hidden="true"></i>Export Report
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Enhancement Status</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Relationships Added</small>
+                                <small id="relationshipsAdded">23/45</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 51%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Nodes Created</small>
+                                <small id="nodesCreated">19/31</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-info" style="width: 61%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Structure Improvements</small>
+                                <small id="structureImprovements">12/18</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: 67%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Performance Impact</h6>
+                        <div class="metric-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary">Query Performance</span>
+                                <span class="h5 mb-0" id="queryPerformance">+23%</span>
+                            </div>
+                            <small class="text-muted">Improvement in graph query speed</small>
+                        </div>
+                        <div class="metric-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-success">Data Consistency</span>
+                                <span class="h5 mb-0" id="dataConsistency">+18%</span>
+                            </div>
+                            <small class="text-muted">Improvement in data quality</small>
+                        </div>
+                        <div class="metric-card mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-warning">Graph Completeness</span>
+                                <span class="h5 mb-0" id="graphCompleteness">+31%</span>
+                            </div>
+                            <small class="text-muted">Improvement in graph coverage</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Enhancements -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">Recent Enhancements Applied</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Enhancement Type</th>
+                                    <th>Description</th>
+                                    <th>Applied Date</th>
+                                    <th>Status</th>
+                                    <th>Impact</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentEnhancementsTableBody">
+                                <tr>
+                                    <td>New Relationship</td>
+                                    <td>Added 5 quality control links</td>
+                                    <td>2024-01-15</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>+12% Consistency</td>
+                                </tr>
+                                <tr>
+                                    <td>New Node</td>
+                                    <td>Created 3 intermediate process nodes</td>
+                                    <td>2024-01-14</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>+8% Completeness</td>
+                                </tr>
+                                <tr>
+                                    <td>Structure Improvement</td>
+                                    <td>Added hierarchical organization</td>
+                                    <td>2024-01-13</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>+15% Performance</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+</div>
+
+<!-- Enhanced Tab Footer with Better Semantics -->
+<footer class="kg-tab-footer" role="contentinfo" aria-label="AI Insights tab footer">
+    <div class="tab-info">
+        <i class="fas fa-brain me-2" aria-hidden="true"></i>
+        <span id="ai-insights-tab-info" aria-live="polite">AI Insights active - 47 insights generated, 23 enhancements applied, 31% graph completeness improvement</span>
+    </div>
+    <nav class="tab-actions" role="navigation" aria-label="Secondary actions">
+        <button class="btn btn-outline-primary btn-sm" onclick="scheduleAIAnalysis()">
+            <i class="fas fa-clock me-1" aria-hidden="true"></i>Schedule Analysis
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showAIInsightsHelp()">
+            <i class="fas fa-question-circle me-1" aria-hidden="true"></i>Help
+        </button>
+    </nav>
+</footer>
+

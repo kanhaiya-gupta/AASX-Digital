@@ -14,11 +14,12 @@ from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.project_repository import ProjectRepository
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.use_case_repository import UseCaseRepository
-from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
+# Migrated to new twin registry system
+from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.services.project_service import ProjectService as SharedProjectService
 from src.shared.services.file_service import FileService
 from src.shared.services.use_case_service import UseCaseService
-from src.shared.services.digital_twin_service import DigitalTwinService
+from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,8 @@ class ProjectService:
         self.project_repo = ProjectRepository(self.db_manager)
         self.file_repo = FileRepository(self.db_manager)
         self.use_case_repo = UseCaseRepository(self.db_manager)
-        self.digital_twin_repo = DigitalTwinRepository(self.db_manager)
+        # Migrated to new twin registry system
+        self.twin_registry_service = CoreTwinRegistryService()
         
         # Initialize shared services
         self.shared_project_service = SharedProjectService(
@@ -55,11 +57,8 @@ class ProjectService:
             self.db_manager,
             self.project_repo
         )
-        self.digital_twin_service = DigitalTwinService(
-            self.db_manager,
-            self.file_repo,
-            self.project_repo
-        )
+        # Migrated to new twin registry system
+        self.twin_lifecycle_service = TwinLifecycleService()
         
         logger.info("AI/RAG Project Service initialized with complete central data management system")
     

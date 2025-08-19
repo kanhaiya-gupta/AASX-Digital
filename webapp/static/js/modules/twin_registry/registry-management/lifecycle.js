@@ -386,7 +386,15 @@ export default class TwinLifecycleManager {
      */
     updateAuthState() {
         if (window.authManager) {
-            this.isAuthenticated = window.authManager.isAuthenticated();
+            // Check if new auth system is available
+            if (typeof window.authManager.getSessionInfo === 'function') {
+                const sessionInfo = window.authManager.getSessionInfo();
+                this.isAuthenticated = sessionInfo && sessionInfo.isAuthenticated;
+            } else if (typeof window.authManager.isAuthenticated === 'function') {
+                this.isAuthenticated = window.authManager.isAuthenticated();
+            } else {
+                this.isAuthenticated = false;
+            }
             this.currentUser = null; // User info not needed currently
             this.authToken = window.authManager.getStoredToken();
             console.log('🔐 Twin Lifecycle Manager: Auth state updated', {
@@ -449,5 +457,82 @@ export default class TwinLifecycleManager {
         this.activeOperations.clear();
         this.isInitialized = false;
         console.log('🧹 Twin Lifecycle Manager cleaned up');
+    }
+    
+    /**
+     * Load lifecycle data for UI display
+     */
+    async loadLifecycleData() {
+        try {
+            console.log('🔄 Loading lifecycle data...');
+            
+            // Get twins data to calculate lifecycle metrics
+            const response = await fetch('/api/twin-registry/twins', {
+                headers: this.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const twins = data.twins || [];
+                
+                // Calculate lifecycle metrics
+                const lifecycleData = {
+                    totalTwins: twins.length,
+                    lifecyclePhases: this.calculateLifecycleDistribution(twins),
+                    phaseTransitions: this.calculatePhaseTransitions(twins)
+                };
+                
+                this.lifecycleData = lifecycleData;
+                
+                console.log('✅ Lifecycle data loaded:', lifecycleData);
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to load lifecycle data:', error);
+        }
+    }
+    
+    /**
+     * Update lifecycle UI with loaded data
+     */
+    async updateLifecycleUI() {
+        try {
+            console.log('🔄 Updating lifecycle UI...');
+            
+            // Update lifecycle dashboard elements
+            if (this.lifecycleData) {
+                const data = this.lifecycleData;
+                
+                // Update overview metrics
+                const totalTwinsElement = document.getElementById('twin_registry_lifecycle_totalTwins');
+                if (totalTwinsElement) totalTwinsElement.textContent = data.totalTwins;
+            }
+            
+            console.log('✅ Lifecycle UI updated');
+            
+        } catch (error) {
+            console.error('❌ Failed to update lifecycle UI:', error);
+        }
+    }
+    
+    /**
+     * Calculate lifecycle distribution
+     */
+    calculateLifecycleDistribution(twins) {
+        const distribution = {};
+        twins.forEach(twin => {
+            const phase = twin.lifecycle_phase || 'Unknown';
+            distribution[phase] = (distribution[phase] || 0) + 1;
+        });
+        return distribution;
+    }
+    
+    /**
+     * Calculate phase transitions
+     */
+    calculatePhaseTransitions(twins) {
+        // This would typically come from a separate API endpoint
+        // For now, return empty data
+        return {};
     }
 } 

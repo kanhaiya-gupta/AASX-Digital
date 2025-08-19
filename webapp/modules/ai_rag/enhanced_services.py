@@ -14,11 +14,12 @@ from pathlib import Path
 from src.shared.services.file_service import FileService
 from src.shared.services.project_service import ProjectService
 from src.shared.services.use_case_service import UseCaseService
-from src.shared.services.digital_twin_service import DigitalTwinService
+# Migrated to new twin registry system
+from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.project_repository import ProjectRepository
 from src.shared.repositories.use_case_repository import UseCaseRepository
-from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
+from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,8 @@ class EnhancedQueryService:
         self.file_repository = FileRepository(db_manager)
         self.project_repository = ProjectRepository(db_manager)
         self.use_case_repository = UseCaseRepository(db_manager)
-        self.digital_twin_repository = DigitalTwinRepository(db_manager)
+        # Migrated to new twin registry system
+        self.twin_registry_service = CoreTwinRegistryService()
         
         # Initialize services with repositories
         self.file_service = FileService(
@@ -53,11 +55,8 @@ class EnhancedQueryService:
             db_manager,
             self.project_repository
         )
-        self.digital_twin_service = DigitalTwinService(
-            db_manager,
-            self.file_repository,
-            self.project_repository
-        )
+        # Migrated to new twin registry system
+        self.twin_lifecycle_service = TwinLifecycleService()
         
         logger.info("Enhanced Query Service initialized with all src/shared/ services")
     

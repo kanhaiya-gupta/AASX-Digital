@@ -1,0 +1,728 @@
+<!-- Graph Schema & Ontology Tab Component - World-Class Implementation -->
+<div class="kg-schema-ontology-tab" role="main" aria-label="Graph Schema & Ontology Management Dashboard">
+    
+    <!-- Enhanced Tab Header with Better Semantics -->
+    <header class="kg-tab-header mb-4" role="banner">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="header-content">
+                <h1 class="mb-2" id="schema-ontology-title">
+                    <i class="fas fa-sitemap me-2" aria-hidden="true"></i>
+                    Graph Schema & Ontology
+                </h1>
+                <p class="text-muted mb-0" id="schema-ontology-description">
+                    Define, manage, and validate the structure and rules for your knowledge graphs. ETL processes will use these definitions to create and populate graphs.
+                </p>
+            </div>
+            <nav class="kg-tab-actions" role="navigation" aria-label="Primary actions">
+                <button class="btn btn-primary" onclick="defineSchemaStructure()" id="define-schema-btn">
+                    <i class="fas fa-edit me-2" aria-hidden="true"></i>Define Schema Structure
+                </button>
+                <button class="btn btn-outline-secondary" onclick="importOntology()" id="import-ontology-btn">
+                    <i class="fas fa-upload me-2" aria-hidden="true"></i>Import Ontology
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Schema Overview Dashboard -->
+    <section class="schema-overview-dashboard mb-4" aria-labelledby="schema-overview-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="schema-overview-title">
+                        <i class="fas fa-chart-bar me-2" aria-hidden="true"></i>Schema Overview Dashboard
+                    </h2>
+                    <span class="badge bg-success" id="schema-status-badge">Valid</span>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-primary" id="totalNodeTypes">24</div>
+                            <div class="text-muted">Node Types</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-success" id="totalRelationshipTypes">18</div>
+                            <div class="text-muted">Relationship Types</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-success" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-warning" id="totalProperties">156</div>
+                            <div class="text-muted">Properties</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-warning" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-info" id="schemaVersion">2.1.0</div>
+                            <div class="text-muted">Schema Version</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-info" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Schema Health Indicators -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Schema Health</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Validation Status</small>
+                                <small id="validationStatus">100%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Consistency Check</small>
+                                <small id="consistencyStatus">98%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 98%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Documentation</small>
+                                <small id="documentationStatus">85%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: 85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Ontology Coverage</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Domain Coverage</small>
+                                <small id="domainCoverage">92%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 92%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Semantic Relations</small>
+                                <small id="semanticRelations">89%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-info" style="width: 89%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Standards Compliance</small>
+                                <small id="standardsCompliance">95%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Schema Definition Interface -->
+    <section class="schema-definition-interface mb-4" aria-labelledby="schema-definition-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="schema-definition-title">
+                        <i class="fas fa-edit me-2" aria-hidden="true"></i>Schema Definition Interface
+                    </h2>
+                    <button class="btn btn-success btn-sm" onclick="saveSchemaDefinition()">
+                        <i class="fas fa-save me-1" aria-hidden="true"></i>Save Schema Definition
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Node Type Definition</h6>
+                        <div class="mb-3">
+                            <label for="nodeTypeName" class="form-label">Node Type Name</label>
+                            <input type="text" class="form-control" id="nodeTypeName" 
+                                   placeholder="e.g., Person, Organization, Product..."
+                                   aria-describedby="nodeTypeName-help">
+                            <small class="text-muted" id="nodeTypeName-help">Define the name of the node type for ETL processing</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nodeTypeDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="nodeTypeDescription" rows="2" 
+                                      placeholder="Describe the purpose and characteristics of this node type..."
+                                      aria-describedby="nodeTypeDescription-help"></textarea>
+                            <small class="text-muted" id="nodeTypeDescription-help">Human-readable description for ETL developers</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nodeTypeCategory" class="form-label">Category</label>
+                            <select class="form-select" id="nodeTypeCategory" aria-describedby="nodeTypeCategory-help">
+                                <option value="entity">Entity</option>
+                                <option value="concept">Concept</option>
+                                <option value="event">Event</option>
+                                <option value="location">Location</option>
+                                <option value="temporal">Temporal</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <small class="text-muted" id="nodeTypeCategory-help">Classify the node type for ETL mapping</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Relationship Type Definition</h6>
+                        <div class="mb-3">
+                            <label for="relationshipTypeName" class="form-label">Relationship Type Name</label>
+                            <input type="text" class="form-control" id="relationshipTypeName" 
+                                   placeholder="e.g., WORKS_FOR, BELONGS_TO, CONTAINS..."
+                                   aria-describedby="relationshipTypeName-help">
+                            <small class="text-muted" id="relationshipTypeName-help">Define the name of the relationship type for ETL processing</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sourceNodeType" class="form-label">Source Node Type</label>
+                            <select class="form-select" id="sourceNodeType" aria-describedby="sourceNodeType-help">
+                                <option value="">Select source node type...</option>
+                                <option value="Person">Person</option>
+                                <option value="Organization">Organization</option>
+                                <option value="Product">Product</option>
+                                <option value="Location">Location</option>
+                            </select>
+                            <small class="text-muted" id="sourceNodeType-help">Starting node type for ETL relationship mapping</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="targetNodeType" class="form-label">Target Node Type</label>
+                            <select class="form-select" id="targetNodeType" aria-describedby="targetNodeType-help">
+                                <option value="">Select target node type...</option>
+                                <option value="Person">Person</option>
+                                <option value="Organization">Organization</option>
+                                <option value="Product">Product</option>
+                                <option value="Location">Location</option>
+                            </select>
+                            <small class="text-muted" id="targetNodeType-help">Ending node type for ETL relationship mapping</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Property Definition -->
+                <div class="mt-4">
+                    <h6 class="text-info mb-3">Property Definition</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="propertyName" class="form-label">Property Name</label>
+                                <input type="text" class="form-control" id="propertyName" 
+                                       placeholder="e.g., name, age, location..."
+                                       aria-describedby="propertyName-help">
+                                <small class="text-muted" id="propertyName-help">Name of the property for ETL field mapping</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="propertyType" class="form-label">Data Type</label>
+                                <select class="form-select" id="propertyType" aria-describedby="propertyType-help">
+                                    <option value="string">String</option>
+                                    <option value="integer">Integer</option>
+                                    <option value="float">Float</option>
+                                    <option value="boolean">Boolean</option>
+                                    <option value="date">Date</option>
+                                    <option value="datetime">DateTime</option>
+                                    <option value="array">Array</option>
+                                    <option value="object">Object</option>
+                                </select>
+                                <small class="text-muted" id="propertyType-help">Data type for ETL validation and transformation</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="propertyRequired" class="form-label">Required</label>
+                                <select class="form-select" id="propertyRequired" aria-describedby="propertyRequired-help">
+                                    <option value="true">Required</option>
+                                    <option value="false" selected>Optional</option>
+                                </select>
+                                <small class="text-muted" id="propertyRequired-help">Is this property mandatory for ETL processing?</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="propertyDescription" class="form-label">Property Description</label>
+                        <textarea class="form-control" id="propertyDescription" rows="2" 
+                                  placeholder="Describe the purpose and constraints of this property..."
+                                  aria-describedby="propertyDescription-help"></textarea>
+                        <small class="text-muted" id="propertyDescription-help">Detailed description and constraints for ETL developers</small>
+                    </div>
+                    <div class="text-center">
+                        <button class="btn btn-info" onclick="addPropertyDefinition()">
+                            <i class="fas fa-plus me-2" aria-hidden="true"></i>Add Property Definition
+                        </button>
+                        <button class="btn btn-outline-secondary ms-2" onclick="clearPropertyForm()">
+                            <i class="fas fa-eraser me-2" aria-hidden="true"></i>Clear Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Ontology Management -->
+    <section class="ontology-management mb-4" aria-labelledby="ontology-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="ontology-title">
+                        <i class="fas fa-graduation-cap me-2" aria-hidden="true"></i>Ontology Management
+                    </h2>
+                    <button class="btn btn-outline-primary btn-sm" onclick="exportOntologyForETL()">
+                        <i class="fas fa-download me-1" aria-hidden="true"></i>Export for ETL
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Ontology Structure</h6>
+                        <div class="mb-3">
+                            <label for="ontologyName" class="form-label">Ontology Name</label>
+                            <input type="text" class="form-control" id="ontologyName" 
+                                   value="Industrial Knowledge Graph Ontology" 
+                                   aria-describedby="ontologyName-help">
+                            <small class="text-muted" id="ontologyName-help">Name of the ontology for ETL reference</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ontologyVersion" class="form-label">Version</label>
+                            <input type="text" class="form-control" id="ontologyVersion" 
+                                   value="1.2.0" aria-describedby="ontologyVersion-help">
+                            <small class="text-muted" id="ontologyVersion-help">Ontology version for ETL compatibility</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ontologyNamespace" class="form-label">Namespace</label>
+                            <input type="text" class="form-control" id="ontologyNamespace" 
+                                   value="http://example.com/ontology/industrial#" 
+                                   aria-describedby="ontologyNamespace-help">
+                            <small class="text-muted" id="ontologyNamespace-help">URI namespace for ETL semantic mapping</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Ontology Metadata</h6>
+                        <div class="mb-3">
+                            <label for="ontologyCreator" class="form-label">Creator</label>
+                            <input type="text" class="form-control" id="ontologyCreator" 
+                                   value="Knowledge Graph Team" 
+                                   aria-describedby="ontologyCreator-help">
+                            <small class="text-muted" id="ontologyCreator-help">Who defined this ontology</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ontologyDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="ontologyDescription" rows="3" 
+                                      aria-describedby="ontologyDescription-help">Comprehensive ontology for industrial knowledge graphs covering manufacturing, supply chain, and operational processes. Used by ETL processes for data mapping and validation.</textarea>
+                            <small class="text-muted" id="ontologyDescription-help">Detailed description for ETL developers</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ontologyLicense" class="form-label">License</label>
+                            <select class="form-select" id="ontologyLicense" aria-describedby="ontologyLicense-help">
+                                <option value="MIT">MIT License</option>
+                                <option value="Apache">Apache 2.0</option>
+                                <option value="GPL">GPL v3</option>
+                                <option value="CC-BY">Creative Commons BY</option>
+                                <option value="Proprietary" selected>Proprietary</option>
+                            </select>
+                            <small class="text-muted" id="ontologyLicense-help">License for the ontology</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ontology Classes and Properties -->
+                <div class="mt-4">
+                    <h6 class="text-info mb-3">Ontology Classes and Properties</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Class/Property</th>
+                                    <th>Type</th>
+                                    <th>Parent</th>
+                                    <th>Properties</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ontologyTableBody">
+                                <tr>
+                                    <td>IndustrialEntity</td>
+                                    <td><span class="badge bg-primary">Class</span></td>
+                                    <td>owl:Thing</td>
+                                    <td>12</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editOntologyItem('class1')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteOntologyItem('class1')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>hasLocation</td>
+                                    <td><span class="badge bg-success">Property</span></td>
+                                    <td>IndustrialEntity</td>
+                                    <td>3</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editOntologyItem('prop1')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteOntologyItem('prop1')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>ManufacturingProcess</td>
+                                    <td><span class="badge bg-primary">Class</span></td>
+                                    <td>IndustrialEntity</td>
+                                    <td>8</td>
+                                    <td><span class="badge bg-warning">Draft</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editOntologyItem('class2')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteOntologyItem('class2')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Schema Validation -->
+    <section class="schema-validation mb-4" aria-labelledby="validation-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="validation-title">
+                        <i class="fas fa-check-double me-2" aria-hidden="true"></i>Schema Validation
+                    </h2>
+                    <button class="btn btn-warning btn-sm" onclick="validateSchemaDefinition()">
+                        <i class="fas fa-play me-1" aria-hidden="true"></i>Validate Schema
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Validation Results</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Schema Consistency</small>
+                                <small id="schemaConsistency">100%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Data Type Validation</small>
+                                <small id="dataTypeValidation">98%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 98%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Constraint Validation</small>
+                                <small id="constraintValidation">95%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Validation Issues</h6>
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>Minor Issues Found
+                            </h6>
+                            <p class="mb-2">3 constraint violations detected in schema definition</p>
+                            <button class="btn btn-sm btn-outline-warning" onclick="viewValidationIssues()">
+                                <i class="fas fa-search me-1" aria-hidden="true"></i>View Details
+                            </button>
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2" aria-hidden="true"></i>ETL Ready
+                            </h6>
+                            <p class="mb-2">Schema is ready for ETL consumption</p>
+                            <button class="btn btn-sm btn-outline-info" onclick="exportSchemaForETL()">
+                                <i class="fas fa-download me-1" aria-hidden="true"></i>Export Schema
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Validation Details -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">Validation Details</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Validation Rule</th>
+                                    <th>Status</th>
+                                    <th>Issues Found</th>
+                                    <th>Severity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="validationDetailsTableBody">
+                                <tr>
+                                    <td>Node Type Consistency</td>
+                                    <td><span class="badge bg-success">Passed</span></td>
+                                    <td>0</td>
+                                    <td><span class="badge bg-success">Low</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewRuleDetails('rule1')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Property Type Validation</td>
+                                    <td><span class="badge bg-warning">Warning</span></td>
+                                    <td>2</td>
+                                    <td><span class="badge bg-warning">Medium</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-warning" onclick="fixValidationIssue('rule2')">
+                                            <i class="fas fa-wrench"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Relationship Constraints</td>
+                                    <td><span class="badge bg-success">Passed</span></td>
+                                    <td>0</td>
+                                    <td><span class="badge bg-success">Low</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewRuleDetails('rule3')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Semantic Relationship Management -->
+    <section class="semantic-relationship-management mb-4" aria-labelledby="semantic-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="semantic-title">
+                        <i class="fas fa-project-diagram me-2" aria-hidden="true"></i>Semantic Relationship Management
+                    </h2>
+                    <button class="btn btn-outline-success btn-sm" onclick="addSemanticRelation()">
+                        <i class="fas fa-plus me-1" aria-hidden="true"></i>Add Relation
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Semantic Relations</h6>
+                        <div class="mb-3">
+                            <label for="relationName" class="form-label">Relation Name</label>
+                            <input type="text" class="form-control" id="relationName" 
+                                   placeholder="e.g., isPartOf, hasComponent, produces..."
+                                   aria-describedby="relationName-help">
+                            <small class="text-muted" id="relationName-help">Name of the semantic relation for ETL mapping</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationType" class="form-label">Relation Type</label>
+                            <select class="form-select" id="relationType" aria-describedby="relationType-help">
+                                <option value="partitive">Partitive (isPartOf)</option>
+                                <option value="taxonomic">Taxonomic (isA)</option>
+                                <option value="functional">Functional (hasFunction)</option>
+                                <option value="temporal">Temporal (before, after)</option>
+                                <option value="spatial">Spatial (locatedIn)</option>
+                                <option value="causal">Causal (causes)</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <small class="text-muted" id="relationType-help">Type of semantic relation for ETL understanding</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationInverse" class="form-label">Inverse Relation</label>
+                            <input type="text" class="form-control" id="relationInverse" 
+                                   placeholder="e.g., contains, hasInstance, requires..."
+                                   aria-describedby="relationInverse-help">
+                            <small class="text-muted" id="relationInverse-help">Inverse of this relation for ETL bidirectional mapping</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Relation Properties</h6>
+                        <div class="mb-3">
+                            <label for="relationTransitivity" class="form-label">Transitivity</label>
+                            <select class="form-select" id="relationTransitivity" aria-describedby="relationTransitivity-help">
+                                <option value="transitive">Transitive</option>
+                                <option value="intransitive">Intransitive</option>
+                                <option value="non-transitive">Non-transitive</option>
+                            </select>
+                            <small class="text-muted" id="relationTransitivity-help">Transitive property for ETL relationship inference</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationSymmetry" class="form-label">Symmetry</label>
+                            <select class="form-select" id="relationSymmetry" aria-describedby="relationSymmetry-help">
+                                <option value="symmetric">Symmetric</option>
+                                <option value="asymmetric">Asymmetric</option>
+                                <option value="anti-symmetric">Anti-symmetric</option>
+                            </select>
+                            <small class="text-muted" id="relationSymmetry-help">Symmetry property for ETL relationship validation</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="relationReflexivity" class="form-label">Reflexivity</label>
+                            <select class="form-select" id="relationReflexivity" aria-describedby="relationReflexivity-help">
+                                <option value="reflexive">Reflexive</option>
+                                <option value="irreflexive">Irreflexive</option>
+                                <option value="non-reflexive">Non-reflexive</option>
+                            </select>
+                            <small class="text-muted" id="relationReflexivity-help">Reflexivity property for ETL relationship constraints</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Semantic Relations Table -->
+                <div class="mt-4">
+                    <h6 class="text-info mb-3">Active Semantic Relations</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Relation</th>
+                                    <th>Type</th>
+                                    <th>Properties</th>
+                                    <th>Usage Count</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="semanticRelationsTableBody">
+                                <tr>
+                                    <td>isPartOf</td>
+                                    <td><span class="badge bg-primary">Partitive</span></td>
+                                    <td>Transitive, Asymmetric</td>
+                                    <td>156</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editSemanticRelation('rel1')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteSemanticRelation('rel1')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>hasComponent</td>
+                                    <td><span class="badge bg-success">Functional</span></td>
+                                    <td>Transitive, Asymmetric</td>
+                                    <td>89</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editSemanticRelation('rel2')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteSemanticRelation('rel2')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>produces</td>
+                                    <td><span class="badge bg-warning">Causal</span></td>
+                                    <td>Intransitive, Asymmetric</td>
+                                    <td>234</td>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editSemanticRelation('rel3')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteSemanticRelation('rel3')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+</div>
+
+<!-- Schema Editor Modal -->
+<div class="modal fade" id="schemaEditorModal" tabindex="-1" aria-labelledby="schemaEditorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="schemaEditorModalLabel">
+                    <i class="fas fa-edit me-2" aria-hidden="true"></i>
+                    Schema Definition Editor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="schemaEditorModalContent">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveSchemaDefinitionChanges()">Save Definition</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Tab Footer with Better Semantics -->
+<footer class="kg-tab-footer" role="contentinfo" aria-label="Schema & Ontology tab footer">
+    <div class="tab-info">
+        <i class="fas fa-sitemap me-2" aria-hidden="true"></i>
+        <span id="schema-ontology-tab-info" aria-live="polite">Schema & Ontology definition active - 24 node types, 18 relationship types ready for ETL consumption</span>
+    </div>
+    <nav class="tab-actions" role="navigation" aria-label="Secondary actions">
+        <button class="btn btn-outline-primary btn-sm" onclick="scheduleSchemaValidation()">
+            <i class="fas fa-clock me-1" aria-hidden="true"></i>Schedule Validation
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showSchemaHelp()">
+            <i class="fas fa-question-circle me-1" aria-hidden="true"></i>Help
+        </button>
+    </nav>
+</footer>

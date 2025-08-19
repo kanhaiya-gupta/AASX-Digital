@@ -1,0 +1,535 @@
+<!-- Knowledge Graph Advanced Operations Tab -->
+<div class="kg-advanced-tab">
+    <!-- Tab Header -->
+    <div class="kg-tab-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="mb-2">
+                    <i class="fas fa-rocket me-2"></i>Advanced Operations & Workflow Management
+                </h3>
+                <p class="text-muted mb-0">Advanced graph transformations, workflow orchestration, and enterprise-grade analytics</p>
+            </div>
+            <div class="kg-tab-actions">
+                <button class="btn btn-primary" onclick="createWorkflow()">
+                    <i class="fas fa-plus me-2"></i>Create Workflow
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshAdvancedOps()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Operations Dashboard -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="active-workflows">0</h4>
+                            <small>Active Workflows</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-project-diagram fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="completed-transformations">0</h4>
+                            <small>Completed Transformations</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-magic fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="pending-jobs">0</h4>
+                            <small>Pending Jobs</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-gradient-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0" id="system-performance">0%</h4>
+                            <small>System Performance</small>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-tachometer-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graph Transformation Engine -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-magic me-2"></i>Graph Transformation Engine
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="transformation-input">
+                        <h6>Input Configuration</h6>
+                        <div class="mb-3">
+                            <label for="source-graph" class="form-label">Source Graph</label>
+                            <select class="form-select" id="source-graph">
+                                <option value="">Select source graph...</option>
+                                <!-- Options will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transformation-type" class="form-label">Transformation Type</label>
+                            <select class="form-select" id="transformation-type">
+                                <option value="structural">Structural Transformation</option>
+                                <option value="semantic">Semantic Enhancement</option>
+                                <option value="topological">Topological Optimization</option>
+                                <option value="clustering">Intelligent Clustering</option>
+                                <option value="custom">Custom Transformation</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transformation-rules" class="form-label">Transformation Rules</label>
+                            <textarea class="form-control" id="transformation-rules" rows="4" placeholder="Define transformation rules in JSON format..."></textarea>
+                            <small class="text-muted">Specify rules for node/edge transformations</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="transformation-output">
+                        <h6>Output Configuration</h6>
+                        <div class="mb-3">
+                            <label for="output-graph-name" class="form-label">Output Graph Name</label>
+                            <input type="text" class="form-control" id="output-graph-name" placeholder="Enter output graph name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="output-format" class="form-label">Output Format</label>
+                            <select class="form-select" id="output-format">
+                                <option value="neo4j">Neo4j Database</option>
+                                <option value="json">JSON File</option>
+                                <option value="graphml">GraphML File</option>
+                                <option value="cypher">Cypher Script</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transformation-options" class="form-label">Transformation Options</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="preserve-metadata" checked>
+                                <label class="form-check-label" for="preserve-metadata">Preserve metadata</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="optimize-performance" checked>
+                                <label class="form-check-label" for="optimize-performance">Optimize for performance</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="create-indexes">
+                                <label class="form-check-label" for="create-indexes">Create indexes</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="executeTransformation()">
+                            <i class="fas fa-magic me-2"></i>Execute Transformation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Management -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-sitemap me-2"></i>Workflow Management & Orchestration
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="workflow-canvas">
+                        <div class="workflow-toolbar mb-3">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addWorkflowNode('input')">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Input
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addWorkflowNode('process')">
+                                    <i class="fas fa-cogs me-1"></i>Process
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addWorkflowNode('output')">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Output
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addWorkflowNode('decision')">
+                                    <i class="fas fa-question-circle me-1"></i>Decision
+                                </button>
+                            </div>
+                            <div class="btn-group ms-2" role="group">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="connectNodes()">
+                                    <i class="fas fa-link me-1"></i>Connect
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deleteSelected()">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearWorkflow()">
+                                    <i class="fas fa-eraser me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="workflow-workspace" id="workflow-workspace" style="min-height: 400px; border: 2px dashed #ccc; border-radius: 8px; padding: 20px;">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-sitemap fa-3x mb-3"></i>
+                                <p>Drag and drop workflow components here or use the toolbar above</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="workflow-properties">
+                        <h6>Workflow Properties</h6>
+                        <div class="mb-3">
+                            <label for="workflow-name" class="form-label">Workflow Name</label>
+                            <input type="text" class="form-control" id="workflow-name" placeholder="Enter workflow name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="workflow-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="workflow-description" rows="3" placeholder="Describe the workflow purpose"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="workflow-trigger" class="form-label">Trigger Type</label>
+                            <select class="form-select" id="workflow-trigger">
+                                <option value="manual">Manual</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="event">Event-based</option>
+                                <option value="continuous">Continuous</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="workflow-priority" class="form-label">Priority</label>
+                            <select class="form-select" id="workflow-priority">
+                                <option value="low">Low</option>
+                                <option value="normal" selected>Normal</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" onclick="saveWorkflow()">
+                                <i class="fas fa-save me-2"></i>Save Workflow
+                            </button>
+                            <button class="btn btn-primary" onclick="deployWorkflow()">
+                                <i class="fas fa-rocket me-2"></i>Deploy Workflow
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="testWorkflow()">
+                                <i class="fas fa-play me-2"></i>Test Workflow
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Analytics -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-network me-2"></i>Advanced Analytics & Insights
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="analytics-metrics">
+                        <h6>Graph Analytics Metrics</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center mb-3">
+                                    <h6>Centrality Score</h6>
+                                    <h4 class="text-primary" id="centrality-score">0.0</h4>
+                                    <small class="text-muted">average</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center mb-3">
+                                    <h6>Clustering Coefficient</h6>
+                                    <h4 class="text-success" id="clustering-coefficient">0.0</h4>
+                                    <small class="text-muted">average</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center mb-3">
+                                    <h6>Diameter</h6>
+                                    <h4 class="text-warning" id="graph-diameter">0</h4>
+                                    <small class="text-muted">longest path</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center mb-3">
+                                    <h6>Density</h6>
+                                    <h4 class="text-info" id="graph-density">0.0</h4>
+                                    <small class="text-muted">edge ratio</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="analytics-charts">
+                        <canvas id="advancedAnalyticsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Machine Learning Integration -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-brain me-2"></i>Machine Learning Integration
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="ml-models">
+                        <h6>Available ML Models</h6>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="node-classification" checked>
+                                <label class="form-check-label" for="node-classification">Node Classification</label>
+                                <small class="d-block text-muted">Classify nodes based on properties and structure</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="link-prediction" checked>
+                                <label class="form-check-label" for="link-prediction">Link Prediction</label>
+                                <small class="d-block text-muted">Predict missing relationships between nodes</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="community-detection">
+                                <label class="form-check-label" for="community-detection">Community Detection</label>
+                                <small class="d-block text-muted">Identify communities and clusters</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="anomaly-detection">
+                                <label class="form-check-label" for="anomaly-detection">Anomaly Detection</label>
+                                <small class="d-block text-muted">Detect unusual patterns and outliers</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="ml-configuration">
+                        <h6>ML Configuration</h6>
+                        <div class="mb-3">
+                            <label for="ml-algorithm" class="form-label">Algorithm</label>
+                            <select class="form-select" id="ml-algorithm">
+                                <option value="random_forest">Random Forest</option>
+                                <option value="neural_network">Neural Network</option>
+                                <option value="support_vector">Support Vector Machine</option>
+                                <option value="gradient_boosting">Gradient Boosting</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="training-split" class="form-label">Training Split</label>
+                            <select class="form-select" id="training-split">
+                                <option value="0.7" selected>70% Training, 30% Testing</option>
+                                <option value="0.8">80% Training, 20% Testing</option>
+                                <option value="0.6">60% Training, 40% Testing</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cross-validation" class="form-label">Cross-Validation Folds</label>
+                            <select class="form-select" id="cross-validation">
+                                <option value="3">3-fold</option>
+                                <option value="5" selected>5-fold</option>
+                                <option value="10">10-fold</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100" onclick="trainMLModel()">
+                            <i class="fas fa-brain me-2"></i>Train Model
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Optimization -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-tachometer-alt me-2"></i>Performance Optimization
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="optimization-tools">
+                        <h6>Optimization Tools</h6>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-primary w-100" onclick="optimizeIndexes()">
+                                <i class="fas fa-database me-2"></i>Optimize Database Indexes
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-success w-100" onclick="optimizeQueries()">
+                                <i class="fas fa-search me-2"></i>Query Performance Analysis
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-warning w-100" onclick="optimizeMemory()">
+                                <i class="fas fa-memory me-2"></i>Memory Usage Optimization
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-outline-info w-100" onclick="optimizeNetwork()">
+                                <i class="fas fa-network-wired me-2"></i>Network I/O Optimization
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="optimization-results">
+                        <h6>Optimization Results</h6>
+                        <div id="optimization-results-container">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <p>Run optimization tools to see results here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health & Monitoring -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-heartbeat me-2"></i>System Health & Monitoring
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="health-metrics">
+                        <canvas id="systemHealthChart" width="600" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="health-status">
+                        <h6>System Status</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Database Health</span>
+                                <span class="badge bg-success" id="db-health">Healthy</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>API Performance</span>
+                                <span class="badge bg-success" id="api-health">Optimal</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Memory Usage</span>
+                                <span class="badge bg-warning" id="memory-health">Moderate</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Disk Space</span>
+                                <span class="badge bg-success" id="disk-health">Good</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Network Latency</span>
+                                <span class="badge bg-info" id="network-health">Low</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary w-100" onclick="runHealthCheck()">
+                            <i class="fas fa-stethoscope me-2"></i>Run Health Check
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Operations Modal -->
+    <div class="modal fade" id="advancedOperationsModal" tabindex="-1" aria-labelledby="advancedOperationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="advancedOperationsModalLabel">
+                        <i class="fas fa-rocket me-2"></i>Advanced Operations Console
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="advanced-operations-content">
+                        <!-- Advanced operations content will be displayed here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="executeAdvancedOperation()">
+                        <i class="fas fa-play me-2"></i>Execute Operation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab Footer -->
+<div class="kg-tab-footer">
+    <div class="tab-info">
+        <i class="fas fa-rocket me-2"></i>
+        <span id="advanced-tab-info">Advanced operations ready - managing workflows and transformations</span>
+    </div>
+    <div class="tab-actions">
+        <button class="btn btn-outline-primary btn-sm" onclick="exportAdvancedReport()">
+            <i class="fas fa-file-export me-1"></i>Export Report
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showAdvancedHelp()">
+            <i class="fas fa-question-circle me-1"></i>Help
+        </button>
+    </div>
+</div>
+

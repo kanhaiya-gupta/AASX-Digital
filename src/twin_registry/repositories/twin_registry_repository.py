@@ -1,375 +1,544 @@
 """
 Twin Registry Repository
 
-Data access layer for twin registry metadata and configuration.
-Handles registry metadata, configuration, and summary statistics.
+Updated to use our new comprehensive database schema.
+Handles twin registry operations with the new twin_registry table.
 """
 
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
-from src.shared.database.connection_manager import DatabaseConnectionManager
+from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.base_repository import BaseRepository
 from src.twin_registry.models.twin_registry import (
-    TwinRegistryMetadata,
+    TwinRegistry,
     TwinRegistryQuery,
-    TwinRegistrySummary,
-    TwinRegistryConfig
+    TwinRegistrySummary
 )
 
 logger = logging.getLogger(__name__)
 
 
-class TwinRegistryRepository(BaseRepository):
-    """Repository for managing twin registry metadata and configuration."""
+class TwinRegistryRepository(BaseRepository[TwinRegistry]):
+    """Repository for managing twin registry data with new comprehensive schema."""
     
-    def __init__(self, db_manager: DatabaseConnectionManager):
+    def __init__(self, db_manager: BaseDatabaseManager):
         """Initialize the twin registry repository."""
-        super().__init__(db_manager)
-        self.table_name = "twin_registry"
-        logger.info("Twin Registry Repository initialized")
+        super().__init__(db_manager, TwinRegistry)
+        logger.info("Twin Registry Repository initialized with new schema")
+    
+    def _get_table_name(self) -> str:
+        """Get the table name for this repository."""
+        return "twin_registry"
+    
+    def _get_columns(self) -> List[str]:
+        """Get the list of column names for this table."""
+        return [
+            "registry_id", "twin_id", "twin_name", "registry_name", "twin_category", "twin_type",
+            "twin_priority", "twin_version", "registry_type", "workflow_source", "aasx_integration_id",
+            "physics_modeling_id", "federated_learning_id", "data_pipeline_id", "kg_neo4j_id",
+            "certificate_manager_id", "integration_status", "overall_health_score", "health_status",
+            "lifecycle_status", "lifecycle_phase", "operational_status", "availability_status",
+            "sync_status", "sync_frequency", "last_sync_at", "next_sync_at", "sync_error_count",
+            "sync_error_message", "performance_score", "data_quality_score", "reliability_score",
+            "compliance_score", "security_level", "access_control_level", "encryption_enabled",
+            "audit_logging_enabled", "user_id", "org_id", "owner_team", "steward_user_id",
+            "created_at", "updated_at", "activated_at", "last_accessed_at", "last_modified_at",
+            "registry_config", "registry_metadata", "custom_attributes", "tags", "relationships",
+            "dependencies", "instances"
+        ]
+    
+    def _get_primary_key_column(self) -> str:
+        """Get the primary key column name for twin registry table."""
+        return "registry_id"
     
     async def initialize(self) -> None:
-        """Initialize the repository and create tables if needed."""
+        """Initialize the repository - tables already exist from Phase 1."""
         try:
-            await self._create_tables()
-            logger.info("Twin Registry Repository tables initialized")
+            # Tables are already created by our migration script
+            logger.info("Twin Registry Repository ready - tables already exist")
         except Exception as e:
             logger.error(f"Failed to initialize Twin Registry Repository: {e}")
             raise
     
-    async def _create_tables(self) -> None:
-        """Create the twin registry tables."""
-        create_tables_sql = """
-        CREATE TABLE IF NOT EXISTS twin_registry_metadata (
-            registry_id TEXT PRIMARY KEY,
-            twin_id TEXT NOT NULL,
-            registry_name TEXT NOT NULL,
-            registry_type TEXT NOT NULL,
-            registry_config TEXT,
-            registry_metadata TEXT,
-            created_at TEXT NOT NULL,
-            updated_at TEXT,
-            is_active BOOLEAN DEFAULT 1,
-            version TEXT DEFAULT '1.0.0'
-        );
-        
-        CREATE TABLE IF NOT EXISTS twin_registry_config (
-            config_id TEXT PRIMARY KEY,
-            auto_sync_enabled BOOLEAN DEFAULT 0,
-            sync_interval_minutes INTEGER DEFAULT 30,
-            health_check_enabled BOOLEAN DEFAULT 1,
-            health_check_interval_minutes INTEGER DEFAULT 5,
-            max_instances_per_twin INTEGER DEFAULT 10,
-            retention_days INTEGER DEFAULT 90,
-            backup_enabled BOOLEAN DEFAULT 1,
-            backup_interval_hours INTEGER DEFAULT 24,
-            created_at TEXT NOT NULL,
-            updated_at TEXT
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_registry_metadata_twin_id ON twin_registry_metadata(twin_id);
-        CREATE INDEX IF NOT EXISTS idx_registry_metadata_type ON twin_registry_metadata(registry_type);
-        CREATE INDEX IF NOT EXISTS idx_registry_metadata_active ON twin_registry_metadata(is_active);
-        CREATE INDEX IF NOT EXISTS idx_registry_metadata_created_at ON twin_registry_metadata(created_at);
-        """
-        
-        async with self.db_manager.get_connection() as conn:
-            await conn.execute(create_tables_sql)
-            await conn.commit()
-    
-    async def create_metadata(self, metadata: TwinRegistryMetadata) -> TwinRegistryMetadata:
-        """Create new registry metadata."""
+    async def create_registry(self, registry: TwinRegistry) -> TwinRegistry:
+        """Create new twin registry entry."""
         try:
             sql = """
-            INSERT INTO twin_registry_metadata 
-            (registry_id, twin_id, registry_name, registry_type, registry_config, registry_metadata, 
-             created_at, updated_at, is_active, version)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO twin_registry (
+                registry_id, twin_id, twin_name, registry_name, twin_category, twin_type,
+                twin_priority, twin_version, registry_type, workflow_source, aasx_integration_id,
+                physics_modeling_id, federated_learning_id, data_pipeline_id, kg_neo4j_id,
+                certificate_manager_id, integration_status, overall_health_score, health_status,
+                lifecycle_status, lifecycle_phase, operational_status, availability_status,
+                sync_status, sync_frequency, last_sync_at, next_sync_at, sync_error_count,
+                sync_error_message, performance_score, data_quality_score, reliability_score,
+                compliance_score, security_level, access_control_level, encryption_enabled,
+                audit_logging_enabled, user_id, org_id, owner_team, steward_user_id,
+                created_at, updated_at, activated_at, last_accessed_at, last_modified_at,
+                registry_config, registry_metadata, custom_attributes, tags, relationships,
+                dependencies, instances
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
             params = (
-                metadata.registry_id,
-                metadata.twin_id,
-                metadata.registry_name,
-                metadata.registry_type,
-                self._serialize_json(metadata.registry_config),
-                self._serialize_json(metadata.registry_metadata),
-                metadata.created_at.isoformat(),
-                metadata.updated_at.isoformat() if metadata.updated_at else None,
-                metadata.is_active,
-                metadata.version
+                registry.registry_id,
+                registry.twin_id,
+                registry.twin_name,
+                registry.registry_name,
+                registry.twin_category,
+                registry.twin_type,
+                registry.twin_priority,
+                registry.twin_version,
+                registry.registry_type,
+                registry.workflow_source,
+                registry.aasx_integration_id,
+                registry.physics_modeling_id,
+                registry.federated_learning_id,
+                registry.data_pipeline_id,
+                registry.kg_neo4j_id,
+                registry.certificate_manager_id,
+                registry.integration_status,
+                registry.overall_health_score,
+                registry.health_status,
+                registry.lifecycle_status,
+                registry.lifecycle_phase,
+                registry.operational_status,
+                registry.availability_status,
+                registry.sync_status,
+                registry.sync_frequency,
+                registry.last_sync_at.isoformat() if registry.last_sync_at else None,
+                registry.next_sync_at.isoformat() if registry.next_sync_at else None,
+                registry.sync_error_count,
+                registry.sync_error_message,
+                registry.performance_score,
+                registry.data_quality_score,
+                registry.reliability_score,
+                registry.compliance_score,
+                registry.security_level,
+                registry.access_control_level,
+                registry.encryption_enabled,
+                registry.audit_logging_enabled,
+                registry.user_id,
+                registry.org_id,
+                registry.owner_team,
+                registry.steward_user_id,
+                registry.created_at.isoformat(),
+                registry.updated_at.isoformat(),
+                registry.activated_at.isoformat() if registry.activated_at else None,
+                registry.last_accessed_at.isoformat() if registry.last_accessed_at else None,
+                registry.last_modified_at.isoformat() if registry.last_modified_at else None,
+                self._serialize_json(registry.registry_config),
+                self._serialize_json(registry.registry_metadata),
+                self._serialize_json(registry.custom_attributes),
+                self._serialize_json(registry.tags),
+                self._serialize_json(registry.relationships),
+                self._serialize_json(registry.dependencies),
+                self._serialize_json(registry.instances)
             )
             
             async with self.db_manager.get_connection() as conn:
                 await conn.execute(sql, params)
                 await conn.commit()
             
-            logger.info(f"Created registry metadata: {metadata.registry_id}")
-            return metadata
+            logger.info(f"Created twin registry: {registry.registry_id}")
+            return registry
             
         except Exception as e:
-            logger.error(f"Failed to create registry metadata: {e}")
+            logger.error(f"Failed to create twin registry: {e}")
             raise
     
-    async def get_metadata_by_id(self, registry_id: str) -> Optional[TwinRegistryMetadata]:
-        """Get registry metadata by ID."""
+    async def get_by_id(self, registry_id: str) -> Optional[TwinRegistry]:
+        """Get twin registry by ID."""
         try:
-            sql = "SELECT * FROM twin_registry_metadata WHERE registry_id = ?"
+            sql = "SELECT * FROM twin_registry WHERE registry_id = ?"
             
             async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (registry_id,)) as cursor:
-                    row = await cursor.fetchone()
-                    
+                cursor = await conn.execute(sql, (registry_id,))
+                row = await cursor.fetchone()
+            
             if row:
-                return self._row_to_metadata(row)
+                return self._row_to_registry(row)
             return None
             
         except Exception as e:
-            logger.error(f"Failed to get registry metadata {registry_id}: {e}")
+            logger.error(f"Failed to get registry by ID {registry_id}: {e}")
             raise
     
-    async def get_metadata_by_twin_id(self, twin_id: str) -> List[TwinRegistryMetadata]:
-        """Get all registry metadata for a specific twin."""
+    async def get_by_twin_id(self, twin_id: str) -> Optional[TwinRegistry]:
+        """Get twin registry by twin ID."""
         try:
-            sql = """
-            SELECT * FROM twin_registry_metadata 
-            WHERE twin_id = ? 
-            ORDER BY created_at DESC
-            """
+            sql = "SELECT * FROM twin_registry WHERE twin_id = ?"
             
             async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (twin_id,)) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_metadata(row) for row in rows]
+                cursor = await conn.execute(sql, (twin_id,))
+                row = await cursor.fetchone()
+            
+            if row:
+                return self._row_to_registry(row)
+            return None
             
         except Exception as e:
-            logger.error(f"Failed to get registry metadata for twin {twin_id}: {e}")
+            logger.error(f"Failed to get registry by twin ID {twin_id}: {e}")
             raise
     
-    async def query_metadata(self, query: TwinRegistryQuery) -> List[TwinRegistryMetadata]:
-        """Query registry metadata with filters."""
+    async def get_all(self, query: Optional[TwinRegistryQuery] = None) -> List[TwinRegistry]:
+        """Get all twin registries with optional filtering."""
         try:
-            sql = "SELECT * FROM twin_registry_metadata WHERE 1=1"
+            sql = "SELECT * FROM twin_registry"
             params = []
             
-            if query.twin_id:
-                sql += " AND twin_id = ?"
-                params.append(query.twin_id)
-            
-            if query.registry_type:
-                sql += " AND registry_type = ?"
-                params.append(query.registry_type)
-            
-            if query.registry_name:
-                sql += " AND registry_name LIKE ?"
-                params.append(f"%{query.registry_name}%")
-            
-            if query.is_active is not None:
-                sql += " AND is_active = ?"
-                params.append(query.is_active)
-            
-            if query.created_after:
-                sql += " AND created_at >= ?"
-                params.append(query.created_after.isoformat())
-            
-            if query.created_before:
-                sql += " AND created_at <= ?"
-                params.append(query.created_before.isoformat())
+            if query:
+                conditions = []
+                if query.twin_id:
+                    conditions.append("twin_id = ?")
+                    params.append(query.twin_id)
+                if query.twin_name:
+                    conditions.append("twin_name LIKE ?")
+                    params.append(f"%{query.twin_name}%")
+                if query.registry_type:
+                    conditions.append("registry_type = ?")
+                    params.append(query.registry_type)
+                if query.workflow_source:
+                    conditions.append("workflow_source = ?")
+                    params.append(query.workflow_source)
+                if query.twin_category:
+                    conditions.append("twin_category = ?")
+                    params.append(query.twin_category)
+                if query.integration_status:
+                    conditions.append("integration_status = ?")
+                    params.append(query.integration_status)
+                if query.health_status:
+                    conditions.append("health_status = ?")
+                    params.append(query.health_status)
+                if query.lifecycle_status:
+                    conditions.append("lifecycle_status = ?")
+                    params.append(query.lifecycle_status)
+                if query.user_id:
+                    conditions.append("user_id = ?")
+                    params.append(query.user_id)
+                if query.org_id:
+                    conditions.append("org_id = ?")
+                    params.append(query.org_id)
+                if query.created_after:
+                    conditions.append("created_at >= ?")
+                    params.append(query.created_after.isoformat())
+                if query.created_before:
+                    conditions.append("created_at <= ?")
+                    params.append(query.created_before.isoformat())
+                
+                if conditions:
+                    sql += " WHERE " + " AND ".join(conditions)
             
             sql += " ORDER BY created_at DESC"
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, params) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_metadata(row) for row in rows]
+            # Use the database manager's connection method
+            conn = self.db_manager.connection_manager.get_connection()
+            cursor = conn.execute(sql, params)
+            rows = cursor.fetchall()
+            
+            return [self._row_to_registry(row) for row in rows]
             
         except Exception as e:
-            logger.error(f"Failed to query registry metadata: {e}")
+            logger.error(f"Failed to get registries: {e}")
             raise
     
-    async def update_metadata(self, registry_id: str, update_data: Dict[str, Any]) -> bool:
-        """Update registry metadata."""
+    async def query_registries(self, query: TwinRegistryQuery) -> List[TwinRegistry]:
+        """Query registries with filters - alias for get_all with query."""
+        return await self.get_all(query)
+    
+    async def get_total_count(self) -> int:
+        """Get total count of registries."""
         try:
-            # Build dynamic update SQL
-            set_clauses = []
-            params = []
+            sql = "SELECT COUNT(*) FROM twin_registry"
             
-            for key, value in update_data.items():
-                if key in ['registry_config', 'registry_metadata']:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(self._serialize_json(value))
-                elif key in ['created_at', 'updated_at']:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value.isoformat())
-                else:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value)
+            conn = self.db_manager.connection_manager.get_connection()
+            cursor = conn.execute(sql)
+            result = cursor.fetchone()
             
-            if not set_clauses:
-                return False
+            return result[0] if result else 0
             
-            sql = f"UPDATE twin_registry_metadata SET {', '.join(set_clauses)} WHERE registry_id = ?"
-            params.append(registry_id)
+        except Exception as e:
+            logger.error(f"Failed to get total count: {e}")
+            return 0
+    
+    async def get_count_by_type(self, registry_type: str) -> int:
+        """Get count of registries by type."""
+        try:
+            sql = "SELECT COUNT(*) FROM twin_registry WHERE registry_type = ?"
+            
+            conn = self.db_manager.connection_manager.get_connection()
+            cursor = conn.execute(sql, (registry_type,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else 0
+            
+        except Exception as e:
+            logger.error(f"Failed to get count by type {registry_type}: {e}")
+            return 0
+    
+    async def get_count_by_status(self, status: str) -> int:
+        """Get count of registries by integration status."""
+        try:
+            sql = "SELECT COUNT(*) FROM twin_registry WHERE integration_status = ?"
+            
+            conn = self.db_manager.connection_manager.get_connection()
+            cursor = conn.execute(sql, (status,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else 0
+            
+        except Exception as e:
+            logger.error(f"Failed to get count by status {status}: {e}")
+            return 0
+    
+    async def update_registry(self, registry: TwinRegistry) -> TwinRegistry:
+        """Update existing twin registry."""
+        try:
+            sql = """
+            UPDATE twin_registry SET
+                twin_name = ?, registry_name = ?, twin_category = ?, twin_type = ?,
+                twin_priority = ?, twin_version = ?, registry_type = ?, workflow_source = ?,
+                aasx_integration_id = ?, physics_modeling_id = ?, federated_learning_id = ?,
+                data_pipeline_id = ?, kg_neo4j_id = ?, certificate_manager_id = ?,
+                integration_status = ?, overall_health_score = ?, health_status = ?,
+                lifecycle_status = ?, lifecycle_phase = ?, operational_status = ?,
+                availability_status = ?, sync_status = ?, sync_frequency = ?, last_sync_at = ?,
+                next_sync_at = ?, sync_error_count = ?, sync_error_message = ?,
+                performance_score = ?, data_quality_score = ?, reliability_score = ?,
+                compliance_score = ?, security_level = ?, access_control_level = ?,
+                encryption_enabled = ?, audit_logging_enabled = ?, owner_team = ?,
+                steward_user_id = ?, updated_at = ?, activated_at = ?, last_accessed_at = ?,
+                last_modified_at = ?, registry_config = ?, registry_metadata = ?,
+                custom_attributes = ?, tags = ?, relationships = ?, dependencies = ?, instances = ?
+            WHERE registry_id = ?
+            """
+            
+            params = (
+                registry.twin_name,
+                registry.registry_name,
+                registry.twin_category,
+                registry.twin_type,
+                registry.twin_priority,
+                registry.twin_version,
+                registry.registry_type,
+                registry.workflow_source,
+                registry.aasx_integration_id,
+                registry.physics_modeling_id,
+                registry.federated_learning_id,
+                registry.data_pipeline_id,
+                registry.kg_neo4j_id,
+                registry.certificate_manager_id,
+                registry.integration_status,
+                registry.overall_health_score,
+                registry.health_status,
+                registry.lifecycle_status,
+                registry.lifecycle_phase,
+                registry.operational_status,
+                registry.availability_status,
+                registry.sync_status,
+                registry.sync_frequency,
+                registry.last_sync_at.isoformat() if registry.last_sync_at else None,
+                registry.next_sync_at.isoformat() if registry.next_sync_at else None,
+                registry.sync_error_count,
+                registry.sync_error_message,
+                registry.performance_score,
+                registry.data_quality_score,
+                registry.reliability_score,
+                registry.compliance_score,
+                registry.security_level,
+                registry.access_control_level,
+                registry.encryption_enabled,
+                registry.audit_logging_enabled,
+                registry.owner_team,
+                registry.steward_user_id,
+                registry.updated_at.isoformat(),
+                registry.activated_at.isoformat() if registry.activated_at else None,
+                registry.last_accessed_at.isoformat() if registry.last_accessed_at else None,
+                registry.last_modified_at.isoformat() if registry.last_modified_at else None,
+                self._serialize_json(registry.registry_config),
+                self._serialize_json(registry.registry_metadata),
+                self._serialize_json(registry.custom_attributes),
+                self._serialize_json(registry.tags),
+                self._serialize_json(registry.relationships),
+                self._serialize_json(registry.dependencies),
+                self._serialize_json(registry.instances),
+                registry.registry_id
+            )
             
             async with self.db_manager.get_connection() as conn:
                 await conn.execute(sql, params)
                 await conn.commit()
             
-            logger.info(f"Updated registry metadata: {registry_id}")
-            return True
+            logger.info(f"Updated twin registry: {registry.registry_id}")
+            return registry
             
         except Exception as e:
-            logger.error(f"Failed to update registry metadata {registry_id}: {e}")
+            logger.error(f"Failed to update twin registry: {e}")
             raise
     
-    async def delete_metadata(self, registry_id: str) -> bool:
-        """Delete registry metadata."""
+    async def delete_registry(self, registry_id: str) -> bool:
+        """Delete twin registry by ID."""
         try:
-            sql = "DELETE FROM twin_registry_metadata WHERE registry_id = ?"
+            sql = "DELETE FROM twin_registry WHERE registry_id = ?"
             
             async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, (registry_id,))
+                cursor = await conn.execute(sql, (registry_id,))
                 await conn.commit()
             
-            logger.info(f"Deleted registry metadata: {registry_id}")
-            return True
+            deleted = cursor.rowcount > 0
+            if deleted:
+                logger.info(f"Deleted twin registry: {registry_id}")
+            return deleted
             
         except Exception as e:
-            logger.error(f"Failed to delete registry metadata {registry_id}: {e}")
+            logger.error(f"Failed to delete twin registry {registry_id}: {e}")
             raise
     
-    async def get_registry_summary(self) -> TwinRegistrySummary:
+    async def get_summary(self) -> TwinRegistrySummary:
         """Get registry summary statistics."""
         try:
-            # Get total registries
-            total_sql = "SELECT COUNT(*) FROM twin_registry_metadata"
             async with self.db_manager.get_connection() as conn:
-                async with conn.execute(total_sql) as cursor:
-                    total_registries = (await cursor.fetchone())[0]
-            
-            # Get active registries
-            active_sql = "SELECT COUNT(*) FROM twin_registry_metadata WHERE is_active = 1"
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(active_sql) as cursor:
-                    active_registries = (await cursor.fetchone())[0]
-            
-            # Get registries by type
-            type_sql = """
-            SELECT registry_type, COUNT(*) as count 
-            FROM twin_registry_metadata 
-            GROUP BY registry_type
-            """
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(type_sql) as cursor:
-                    registries_by_type = {row[0]: row[1] for row in await cursor.fetchall()}
-            
-            # Get registries by name
-            name_sql = """
-            SELECT registry_name, COUNT(*) as count 
-            FROM twin_registry_metadata 
-            GROUP BY registry_name
-            """
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(name_sql) as cursor:
-                    registries_by_name = {row[0]: row[1] for row in await cursor.fetchall()}
+                # Total registries
+                cursor = await conn.execute("SELECT COUNT(*) FROM twin_registry")
+                total = (await cursor.fetchone())[0]
+                
+                # Active registries (integration_status = 'active')
+                cursor = await conn.execute("SELECT COUNT(*) FROM twin_registry WHERE integration_status = 'active'")
+                active = (await cursor.fetchone())[0]
+                
+                # By type
+                cursor = await conn.execute("SELECT registry_type, COUNT(*) FROM twin_registry GROUP BY registry_type")
+                by_type = {row[0]: row[1] for row in await cursor.fetchall()}
+                
+                # By workflow
+                cursor = await conn.execute("SELECT workflow_source, COUNT(*) FROM twin_registry GROUP BY workflow_source")
+                by_workflow = {row[0]: row[1] for row in await cursor.fetchall()}
+                
+                # By category
+                cursor = await conn.execute("SELECT twin_category, COUNT(*) FROM twin_registry GROUP BY twin_category")
+                by_category = {row[0]: row[1] for row in await cursor.fetchall()}
+                
+                # By status
+                cursor = await conn.execute("SELECT integration_status, COUNT(*) FROM twin_registry GROUP BY integration_status")
+                by_status = {row[0]: row[1] for row in await cursor.fetchall()}
             
             return TwinRegistrySummary(
-                total_registries=total_registries,
-                active_registries=active_registries,
-                registries_by_type=registries_by_type,
-                registries_by_name=registries_by_name
+                total_registries=total,
+                active_registries=active,
+                registries_by_type=by_type,
+                registries_by_workflow=by_workflow,
+                registries_by_category=by_category,
+                registries_by_status=by_status
             )
             
         except Exception as e:
             logger.error(f"Failed to get registry summary: {e}")
             raise
     
-    async def get_default_config(self) -> TwinRegistryConfig:
-        """Get default registry configuration."""
+    def _row_to_registry(self, row) -> TwinRegistry:
+        """Convert database row to TwinRegistry model."""
         try:
-            sql = "SELECT * FROM twin_registry_config WHERE config_id = 'default'"
-            
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql) as cursor:
-                    row = await cursor.fetchone()
-                    
-            if row:
-                return self._row_to_config(row)
+            # Handle different row types
+            if hasattr(row, 'keys') and hasattr(row, '__getitem__'):
+                # Row is a dictionary-like object (sqlite3.Row or dict)
+                def safe_get(key, default=None):
+                    try:
+                        return row[key] if key in row else default
+                    except (KeyError, IndexError):
+                        return default
             else:
-                # Create default config if it doesn't exist
-                default_config = TwinRegistryConfig()
-                await self.save_config("default", default_config)
-                return default_config
-                
-        except Exception as e:
-            logger.error(f"Failed to get default config: {e}")
-            raise
-    
-    async def save_config(self, config_id: str, config: TwinRegistryConfig) -> bool:
-        """Save registry configuration."""
-        try:
-            sql = """
-            INSERT OR REPLACE INTO twin_registry_config 
-            (config_id, auto_sync_enabled, sync_interval_minutes, health_check_enabled,
-             health_check_interval_minutes, max_instances_per_twin, retention_days,
-             backup_enabled, backup_interval_hours, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
+                # Row is a tuple, convert to dictionary using column names
+                columns = self._get_columns()
+                row_dict = dict(zip(columns, row))
+                def safe_get(key, default=None):
+                    return row_dict.get(key, default)
             
-            now = datetime.utcnow()
-            params = (
-                config_id,
-                config.auto_sync_enabled,
-                config.sync_interval_minutes,
-                config.health_check_enabled,
-                config.health_check_interval_minutes,
-                config.max_instances_per_twin,
-                config.retention_days,
-                config.backup_enabled,
-                config.backup_interval_hours,
-                now.isoformat(),
-                now.isoformat()
+            return TwinRegistry(
+                registry_id=safe_get('registry_id'),
+                twin_id=safe_get('twin_id'),
+                twin_name=safe_get('twin_name'),
+                registry_name=safe_get('registry_name'),
+                twin_category=safe_get('twin_category') or 'generic',
+                twin_type=safe_get('twin_type') or 'physical',
+                twin_priority=safe_get('twin_priority') or 'normal',
+                twin_version=safe_get('twin_version') or '1.0.0',
+                registry_type=safe_get('registry_type') or 'extraction',
+                workflow_source=safe_get('workflow_source') or 'aasx_file',
+                aasx_integration_id=safe_get('aasx_integration_id'),
+                physics_modeling_id=safe_get('physics_modeling_id'),
+                federated_learning_id=safe_get('federated_learning_id'),
+                data_pipeline_id=safe_get('data_pipeline_id'),
+                kg_neo4j_id=safe_get('kg_neo4j_id'),
+                certificate_manager_id=safe_get('certificate_manager_id'),
+                integration_status=safe_get('integration_status') or 'pending',
+                overall_health_score=safe_get('overall_health_score') or 0,
+                health_status=safe_get('health_status') or 'unknown',
+                lifecycle_status=safe_get('lifecycle_status') or 'created',
+                lifecycle_phase=safe_get('lifecycle_phase') or 'development',
+                operational_status=safe_get('operational_status') or 'stopped',
+                availability_status=safe_get('availability_status') or 'offline',
+                sync_status=safe_get('sync_status') or 'pending',
+                sync_frequency=safe_get('sync_frequency') or 'daily',
+                last_sync_at=self._parse_datetime(safe_get('last_sync_at')),
+                next_sync_at=self._parse_datetime(safe_get('next_sync_at')),
+                sync_error_count=safe_get('sync_error_count') or 0,
+                sync_error_message=safe_get('sync_error_message'),
+                performance_score=safe_get('performance_score') or 0.0,
+                data_quality_score=safe_get('data_quality_score') or 0.0,
+                reliability_score=safe_get('reliability_score') or 0.0,
+                compliance_score=safe_get('compliance_score') or 0.0,
+                security_level=safe_get('security_level') or 'standard',
+                access_control_level=safe_get('access_control_level') or 'user',
+                encryption_enabled=bool(safe_get('encryption_enabled')),
+                audit_logging_enabled=bool(safe_get('audit_logging_enabled')),
+                user_id=safe_get('user_id'),
+                org_id=safe_get('org_id'),
+                owner_team=safe_get('owner_team'),
+                steward_user_id=safe_get('steward_user_id'),
+                created_at=self._parse_datetime(safe_get('created_at')) or datetime.now(),
+                updated_at=self._parse_datetime(safe_get('updated_at')) or datetime.now(),
+                activated_at=self._parse_datetime(safe_get('activated_at')),
+                last_accessed_at=self._parse_datetime(safe_get('last_accessed_at')),
+                last_modified_at=self._parse_datetime(safe_get('last_modified_at')),
+                registry_config=self._deserialize_json(safe_get('registry_config')),
+                registry_metadata=self._deserialize_json(safe_get('registry_metadata')),
+                custom_attributes=self._deserialize_json(safe_get('custom_attributes')),
+                tags=self._deserialize_json(safe_get('tags')) or [],
+                relationships=self._deserialize_json(safe_get('relationships')) or [],
+                dependencies=self._deserialize_json(safe_get('dependencies')) or [],
+                instances=self._deserialize_json(safe_get('instances')) or []
             )
-            
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Saved registry config: {config_id}")
-            return True
-            
         except Exception as e:
-            logger.error(f"Failed to save registry config {config_id}: {e}")
+            logger.error(f"Failed to convert row to TwinRegistry: {e}")
             raise
     
-    def _row_to_metadata(self, row) -> TwinRegistryMetadata:
-        """Convert database row to TwinRegistryMetadata object."""
-        return TwinRegistryMetadata(
-            registry_id=row[0],
-            twin_id=row[1],
-            registry_name=row[2],
-            registry_type=row[3],
-            registry_config=self._deserialize_json(row[4]),
-            registry_metadata=self._deserialize_json(row[5]),
-            created_at=datetime.fromisoformat(row[6]),
-            updated_at=datetime.fromisoformat(row[7]) if row[7] else None,
-            is_active=bool(row[8]),
-            version=row[9]
-        )
+    def _parse_datetime(self, value) -> Optional[datetime]:
+        """Parse datetime from string."""
+        if not value:
+            return None
+        try:
+            return datetime.fromisoformat(value)
+        except:
+            return None
     
-    def _row_to_config(self, row) -> TwinRegistryConfig:
-        """Convert database row to TwinRegistryConfig object."""
-        return TwinRegistryConfig(
-            auto_sync_enabled=bool(row[1]),
-            sync_interval_minutes=row[2],
-            health_check_enabled=bool(row[3]),
-            health_check_interval_minutes=row[4],
-            max_instances_per_twin=row[5],
-            retention_days=row[6],
-            backup_enabled=bool(row[7]),
-            backup_interval_hours=row[8]
-        ) 
+    def _serialize_json(self, data) -> str:
+        """Serialize data to JSON string."""
+        if data is None:
+            return "{}"
+        try:
+            import json
+            return json.dumps(data)
+        except:
+            return "{}"
+    
+    def _deserialize_json(self, data) -> Any:
+        """Deserialize JSON string to data."""
+        if not data:
+            return {}
+        try:
+            import json
+            return json.loads(data)
+        except:
+            return {} 

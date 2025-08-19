@@ -1,6 +1,6 @@
 <!-- Twin Management Component -->
 <div class="tr-twin-management w-100">
-    <!-- Twin Management Header -->
+    <!-- Premium Header -->
     <div class="tr-management-header">
         <div class="tr-header-content">
             <div class="tr-header-info">
@@ -8,10 +8,10 @@
                     <i class="fas fa-cogs"></i>
                     Twin Registry Management
                 </h5>
-                <p class="tr-header-subtitle">Comprehensive digital twin lifecycle management</p>
+                <p class="tr-header-subtitle">Search, filter, and manage digital twins in the registry. View twin details, relationships, and operational status.</p>
             </div>
             <div class="tr-header-actions">
-                <button class="tr-btn tr-btn-refresh" id="refreshTwinManagement">
+                <button class="tr-btn tr-btn-refresh" id="twin_registry_refreshAllBtn">
                     <i class="fas fa-sync-alt"></i>
                     Refresh
                 </button>
@@ -27,184 +27,444 @@
         </div>
     </div>
 
-    <!-- Action Buttons Section -->
-    <div class="tr-action-section">
-        <div class="tr-section-header">
-            <h6 class="tr-section-title">
-                <i class="fas fa-tools"></i>
-                Twin Actions
-            </h6>
-            <div class="tr-twin-count">
-                <span id="totalRecords">0</span> twins managed
+
+
+    <!-- Management Operations Overview -->
+    <div class="tr-health-grid">
+        <div class="tr-health-card tr-health-primary">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="totalRecords">0</div>
+                    <div class="tr-health-label">Total Twins</div>
+                    <div class="tr-health-range">In Registry</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-cube"></i>
+                </div>
             </div>
         </div>
         
-        <div class="tr-action-buttons">
-            <div class="tr-primary-actions">
-                <button class="tr-btn tr-btn-success" id="bulkStartBtn" disabled>
-                    <i class="fas fa-play"></i>
-                    Start Selected
-                </button>
-                <button class="tr-btn tr-btn-warning" id="bulkStopBtn" disabled>
-                    <i class="fas fa-stop"></i>
-                    Stop Selected
-                </button>
-                <button class="tr-btn tr-btn-info" id="bulkSyncBtn" disabled>
-                    <i class="fas fa-sync-alt"></i>
-                    Sync Selected
-                </button>
-                <button class="tr-btn tr-btn-danger" id="bulkDeleteBtn" disabled>
-                    <i class="fas fa-trash"></i>
-                    Delete Selected
-                </button>
+        <div class="tr-health-card tr-health-excellent">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="activeTwinsCount">0</div>
+                    <div class="tr-health-label">Active Twins</div>
+                    <div class="tr-health-range">Currently Running</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-play-circle"></i>
+                </div>
             </div>
-            
-            <div class="tr-search-container">
-                <div class="tr-search-wrapper">
-                    <i class="fas fa-search tr-search-icon"></i>
-                    <input type="text" class="tr-search-input" id="twinSearch" placeholder="Search twins...">
+        </div>
+        
+        <div class="tr-health-card tr-health-good">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="healthyTwinsCount">0</div>
+                    <div class="tr-health-label">Healthy Twins</div>
+                    <div class="tr-health-range">Good Status</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tr-health-card tr-health-warning">
+            <div class="tr-health-content">
+                <div class="tr-health-info">
+                    <div class="tr-health-value" id="warningTwinsCount">0</div>
+                    <div class="tr-health-label">Warning Twins</div>
+                    <div class="tr-health-range">Needs Attention</div>
+                </div>
+                <div class="tr-health-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Advanced Filtering Section -->
-    <div class="tr-filter-section">
-        <div class="tr-section-header">
-            <h6 class="tr-section-title">
-                <i class="fas fa-filter"></i>
-                Advanced Filtering
+    <!-- Search Section -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-search"></i>
+                Find & Filter Twins
             </h6>
-            <button class="tr-btn tr-btn-outline" id="clearFilters">
-                <i class="fas fa-times"></i>
-                Clear Filters
-            </button>
+            <div class="tr-twin-count">
+                <span id="totalRecordsDisplay">0</span> twins available
+            </div>
         </div>
-        
-        <div class="tr-filter-grid">
-            <div class="tr-filter-item">
-                <label class="tr-filter-label">Type</label>
-                <select class="tr-filter-select" id="typeFilter">
-                    <option value="">All Types</option>
-                    <option value="manufacturing">Manufacturing</option>
-                    <option value="energy">Energy</option>
-                    <option value="component">Component</option>
-                    <option value="facility">Facility</option>
-                    <option value="process">Process</option>
-                    <option value="generic">Generic</option>
-                </select>
+        <div class="tr-card-body">
+            <div class="tr-search-container">
+                <div class="tr-search-wrapper">
+                    <input type="text" class="tr-search-input" id="twin_registry_twinSearch" placeholder="Search twins by name, ID, or type...">
+                    <button class="tr-search-btn" type="button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                    <i class="fas fa-search tr-search-icon"></i>
+                    <input type="text" class="tr-search-input" id="twinSearch" placeholder="Search twins by name, ID, category, tags, or custom attributes...">
+                </div>
+                <div class="tr-advanced-search">
+                    <button class="tr-btn tr-btn-outline" id="advancedSearchToggle">
+                        <i class="fas fa-sliders-h"></i>
+                        Advanced Search
+                    </button>
+                </div>
             </div>
             
-            <div class="tr-filter-item">
-                <label class="tr-filter-label">Status</label>
-                <select class="tr-filter-select" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="error">Error</option>
-                    <option value="maintenance">Maintenance</option>
-                </select>
-            </div>
-            
-            <div class="tr-filter-item">
-                <label class="tr-filter-label">Owner</label>
-                <select class="tr-filter-select" id="ownerFilter">
-                    <option value="">All Owners</option>
-                    <option value="system">System</option>
-                    <option value="admin">Admin</option>
-                    <option value="user">User</option>
-                </select>
+            <!-- Advanced Search Panel -->
+            <div class="tr-advanced-search-panel" id="advancedSearchPanel" style="display: none;">
+                <div class="tr-advanced-search-grid">
+                    <div class="tr-advanced-search-item">
+                        <label class="tr-advanced-search-label">Tags</label>
+                        <input type="text" class="tr-advanced-search-input" id="tagsSearch" placeholder="Search by tags (comma-separated)">
+                    </div>
+                    <div class="tr-advanced-search-item">
+                        <label class="tr-advanced-search-label">Custom Attributes</label>
+                        <input type="text" class="tr-advanced-search-input" id="customAttributesSearch" placeholder="Search custom attributes">
+                    </div>
+                    <div class="tr-advanced-search-item">
+                        <label class="tr-advanced-search-label">Performance Score</label>
+                        <div class="tr-range-inputs">
+                            <input type="number" class="tr-range-input" id="minPerformanceScore" placeholder="Min" min="0" max="1" step="0.1">
+                            <span class="tr-range-separator">to</span>
+                            <input type="number" class="tr-range-input" id="maxPerformanceScore" placeholder="Max" min="0" max="1" step="0.1">
+                        </div>
+                    </div>
+                    <div class="tr-advanced-search-item">
+                        <label class="tr-advanced-search-label">Data Quality Score</label>
+                        <div class="tr-range-inputs">
+                            <input type="number" class="tr-range-input" id="minDataQualityScore" placeholder="Min" min="0" max="1" step="0.1">
+                            <span class="tr-range-separator">to</span>
+                            <input type="number" class="tr-range-input" id="maxDataQualityScore" placeholder="Max" min="0" max="1" step="0.1">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Twin Table Section -->
-    <div class="tr-table-section">
-        <div class="tr-table-container">
-            <div class="tr-table-responsive">
-                <table class="tr-twin-table" id="twinRegistryTable">
+    <!-- Enhanced Filtering -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-filter"></i>
+                Advanced Filtering & Sorting
+            </h6>
+            <div class="tr-sort-controls">
+                <span class="tr-sort-label">Sort by:</span>
+                <select class="tr-sort-select" id="sortBy">
+                    <option value="created_at">Creation Date</option>
+                    <option value="twin_name">Name</option>
+                    <option value="overall_health_score">Health Score</option>
+                    <option value="performance_score">Performance Score</option>
+                    <option value="data_quality_score">Data Quality Score</option>
+                    <option value="twin_priority">Priority</option>
+                    <option value="last_sync_at">Last Sync</option>
+                    <option value="updated_at">Last Updated</option>
+                </select>
+                <button class="tr-sort-direction" id="sortDirection" title="Toggle sort direction">
+                    <i class="fas fa-sort-amount-down"></i>
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="tr-filter-grid">
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Category</label>
+                    <select class="tr-filter-select" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="energy">Energy</option>
+                        <option value="component">Component</option>
+                        <option value="facility">Facility</option>
+                        <option value="process">Process</option>
+                        <option value="generic">Generic</option>
+                    </select>
+                </div>
+                
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Type</label>
+                    <select class="tr-filter-select" id="twin_registry_typeFilter">
+                        <option value="">All Types</option>
+                        <option value="physical">Physical</option>
+                        <option value="virtual">Virtual</option>
+                        <option value="hybrid">Hybrid</option>
+                        <option value="composite">Composite</option>
+                    </select>
+                </div>
+                
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Priority</label>
+                    <select class="tr-filter-select" id="twin_registry_priorityFilter">
+                        <option value="">All Priorities</option>
+                        <option value="low">Low</option>
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                        <option value="emergency">Emergency</option>
+                    </select>
+                </div>
+                
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Integration Status</label>
+                    <select class="tr-filter-select" id="integrationStatusFilter">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="error">Error</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="deprecated">Deprecated</option>
+                    </select>
+                </div>
+                
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Lifecycle Phase</label>
+                    <select class="tr-filter-select" id="lifecyclePhaseFilter">
+                        <option value="">All Phases</option>
+                        <option value="development">Development</option>
+                        <option value="testing">Testing</option>
+                        <option value="production">Production</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="sunset">Sunset</option>
+                    </select>
+                </div>
+                
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Operational Status</label>
+                    <select class="tr-filter-select" id="operationalStatusFilter">
+                        <option value="">All Status</option>
+                        <option value="running">Running</option>
+                        <option value="stopped">Stopped</option>
+                        <option value="paused">Paused</option>
+                        <option value="error">Error</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+                
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Security Level</label>
+                    <select class="tr-filter-select" id="securityLevelFilter">
+                        <option value="">All Levels</option>
+                        <option value="public">Public</option>
+                        <option value="internal">Internal</option>
+                        <option value="confidential">Confidential</option>
+                        <option value="secret">Secret</option>
+                        <option value="top_secret">Top Secret</option>
+                    </select>
+                </div>
+                
+                <div class="tr-filter-item">
+                    <label class="tr-filter-label">Health Status</label>
+                    <select class="tr-filter-select" id="healthStatusFilter">
+                        <option value="">All Health</option>
+                        <option value="healthy">Healthy</option>
+                        <option value="warning">Warning</option>
+                        <option value="critical">Critical</option>
+                        <option value="offline">Offline</option>
+                        <option value="unknown">Unknown</option>
+                    </select>
+                </div>
+            </div>
+            <div class="text-end mt-3">
+                <button class="tr-btn tr-btn-outline" id="twin_registry_clearFilters">
+                    <i class="fas fa-times"></i>
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AASX-ETL Integration Info -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-info-circle"></i>
+                Twin Management Information
+            </h6>
+        </div>
+        <div class="tr-card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Note:</strong> Digital twins are automatically created and managed through the AASX-ETL page. 
+                The Twin Registry provides read-only access to view twin information, relationships, and status. 
+                To create, modify, or delete twins, please use the <a href="/aasx-etl" class="alert-link">AASX-ETL page</a>.
+            </div>
+        </div>
+    </div>
+
+    <!-- Relationship Management -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-link"></i>
+                Twin Relationships
+            </h6>
+            <div class="tr-relationship-actions">
+                <button class="tr-btn tr-btn-outline" id="viewAllRelationships">
+                    <i class="fas fa-eye"></i>
+                    View All
+                </button>
+                <button class="tr-btn tr-btn-outline" id="exportRelationships">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="tr-relationship-summary">
+                <div class="tr-relationship-stats">
+                    <div class="tr-relationship-stat">
+                        <span class="tr-relationship-number" id="totalRelationships">0</span>
+                        <span class="tr-relationship-label">Total Relationships</span>
+                    </div>
+                    <div class="tr-relationship-stat">
+                        <span class="tr-relationship-number" id="activeRelationships">0</span>
+                        <span class="tr-relationship-label">Active</span>
+                    </div>
+                    <div class="tr-relationship-stat">
+                        <span class="tr-relationship-number" id="dependencyRelationships">0</span>
+                        <span class="tr-relationship-label">Dependencies</span>
+                    </div>
+                </div>
+                
+                <div class="tr-relationship-filters">
+                    <select class="tr-filter-select" id="relationshipTypeFilter">
+                        <option value="">All Relationship Types</option>
+                        <option value="parent-child">Parent-Child</option>
+                        <option value="dependency">Dependency</option>
+                        <option value="composition">Composition</option>
+                        <option value="association">Association</option>
+                        <option value="aggregation">Aggregation</option>
+                    </select>
+                    
+                    <select class="tr-filter-select" id="relationshipStatusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending</option>
+                        <option value="deprecated">Deprecated</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="tr-relationship-table-container">
+                <table class="tr-twin-table" id="relationshipTable">
                     <thead>
                         <tr>
-                            <th class="tr-checkbox-column">
-                                <div class="tr-checkbox-wrapper">
-                                    <input type="checkbox" id="selectAll" class="tr-select-all">
-                                    <label class="tr-checkbox-label" for="selectAll">Select All</label>
-                                </div>
-                            </th>
-                            <th>Twin ID</th>
-                            <th>Name</th>
-                            <th>Type</th>
+                            <th>Source Twin</th>
+                            <th>Relationship Type</th>
+                            <th>Target Twin</th>
                             <th>Status</th>
-                            <th>Health</th>
-                            <th>Owner</th>
-                            <th>Last Sync</th>
+                            <th>Created</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="twinTableBody">
-                        <!-- Twin data will be loaded here -->
+                    <tbody id="relationshipTableBody">
+                        <!-- Relationship data will be loaded here -->
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
 
-        <!-- Loading State -->
-        <div id="loadingTwins" class="tr-loading-state">
-            <div class="tr-loading-content">
-                <div class="tr-loading-spinner"></div>
-                <div class="tr-loading-text">Loading twin registry...</div>
-                <div class="tr-loading-subtitle">Please wait while we fetch your digital twins</div>
+
+
+    <!-- Twin Registry Table -->
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-table"></i>
+                Twin Registry
+            </h6>
+            <div class="tr-pagination-info">
+                <span>Showing <span id="twin_registry_showingStart">1</span> to <span id="twin_registry_showingEnd">10</span> of <span id="twin_registry_totalRecords">0</span> twins</span>
             </div>
         </div>
+        <div class="tr-card-body">
+            <div class="tr-table-responsive">
+                <table class="tr-twin-table" id="twinRegistryTable">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 150px;">Twin ID/Name</th>
+                            <th style="min-width: 80px;">Category</th>
+                            <th style="min-width: 80px;">Type</th>
+                            <th style="min-width: 80px;">Priority</th>
+                            <th style="min-width: 120px;">Integration Status</th>
+                            <th style="min-width: 100px;">Health Score</th>
+                            <th style="min-width: 120px;">Lifecycle Phase</th>
+                            <th style="min-width: 120px;">Operational Status</th>
+                            <th style="min-width: 100px;">Security Level</th>
+                            <th style="min-width: 120px;">Last Sync</th>
+                            <th style="min-width: 150px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="twin_registry_twinTableBody">
+                        <!-- Twin data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
 
-        <!-- Empty State -->
-        <div id="emptyTwins" class="tr-empty-state">
-            <div class="tr-empty-content">
-                <div class="tr-empty-icon">
-                    <i class="fas fa-inbox"></i>
+            <!-- Loading State -->
+            <div id="twin_registry_loadingTwins" class="tr-loading-state">
+                <div class="tr-loading-content">
+                    <div class="tr-loading-spinner"></div>
+                    <div class="tr-loading-text">Loading twin registry...</div>
+                    <div class="tr-loading-subtitle">Please wait while we fetch your digital twins</div>
                 </div>
-                <div class="tr-empty-title">No Digital Twins Found</div>
-                <div class="tr-empty-message">Digital twins are automatically created from the ETL page. No manual creation is needed.</div>
-                <div class="tr-empty-actions">
-                    <button class="tr-btn tr-btn-outline" id="clearFiltersEmpty">
-                        <i class="fas fa-times"></i>
-                        Clear Filters
-                    </button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="twin_registry_emptyTwins" class="tr-empty-state">
+                <div class="tr-empty-content">
+                    <div class="tr-empty-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <div class="tr-empty-title">No Digital Twins Found</div>
+                    <div class="tr-empty-message">Digital twins are automatically created from the ETL page. No manual creation is needed.</div>
+                    <div class="tr-empty-actions">
+                        <button class="tr-btn tr-btn-outline" id="twin_registry_clearFiltersEmpty">
+                            <i class="fas fa-times"></i>
+                            Clear Filters
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Pagination Section -->
-    <div class="tr-pagination-section">
-        <div class="tr-pagination-info">
-            <div class="tr-pagination-details">
-                Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalRecordsPagination">0</span> twins
-            </div>
+    <div class="tr-chart-card">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-list-ol"></i>
+                Navigation & Selection
+            </h6>
             <div class="tr-selection-info">
-                <span id="selectedCount">0</span> twins selected
+                <span id="twin_registry_selectedCount">0</span> twins selected
             </div>
         </div>
-        
-        <div class="tr-pagination-controls">
+        <div class="tr-card-body">
             <div class="tr-pagination">
-                <ul class="tr-pagination-list">
-                    <li class="tr-pagination-item">
-                        <button class="tr-pagination-btn" id="prevPage" disabled>
-                            <i class="fas fa-chevron-left"></i>
-                            Previous
-                        </button>
-                    </li>
-                    <li class="tr-pagination-item">
-                        <span class="tr-pagination-info">Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
-                    </li>
-                    <li class="tr-pagination-item">
-                        <button class="tr-pagination-btn" id="nextPage" disabled>
-                            Next
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </li>
-                </ul>
+                <div class="tr-pagination-info">
+                    <span>Page <span id="twin_registry_currentPage">1</span> of <span id="twin_registry_totalPages">1</span></span>
+                </div>
+                <div class="tr-pagination-controls">
+                    <button class="tr-btn tr-btn-outline" id="twin_registry_prevPage" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </button>
+                    <div class="tr-page-numbers">
+                        <button class="tr-btn tr-btn-outline tr-page-btn active" data-page="1">1</button>
+                    </div>
+                    <button class="tr-btn tr-btn-outline" id="twin_registry_nextPage" disabled>
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

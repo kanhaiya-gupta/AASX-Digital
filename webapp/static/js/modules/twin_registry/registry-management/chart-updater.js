@@ -683,7 +683,15 @@ export default class TwinRegistryChartUpdater {
      */
     updateAuthState() {
         if (window.authManager) {
-            this.isAuthenticated = window.authManager.isAuthenticated();
+            // Check if new auth system is available
+            if (typeof window.authManager.getSessionInfo === 'function') {
+                const sessionInfo = window.authManager.getSessionInfo();
+                this.isAuthenticated = sessionInfo && sessionInfo.isAuthenticated;
+            } else if (typeof window.authManager.isAuthenticated === 'function') {
+                this.isAuthenticated = window.authManager.isAuthenticated();
+            } else {
+                this.isAuthenticated = false;
+            }
             this.currentUser = null; // User info not needed currently
             this.authToken = window.authManager.getStoredToken();
             console.log('🔐 Twin Registry Chart Updater: Auth state updated', {

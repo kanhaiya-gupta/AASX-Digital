@@ -1,0 +1,519 @@
+/* ========================================
+ * ETL PIPELINE TAB COMPONENTS
+ * World-Class Styling for Data Processing
+ * ======================================== */
+
+/* ===== ETL PIPELINE SECTION ===== */
+
+.aasx-etl-pipeline-section {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* ===== CONVERSION MODE SELECTOR ===== */
+
+.aasx-conversion-mode-selector {
+    margin-bottom: 2rem;
+}
+
+.aasx-mode-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-etl-mode-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+.aasx-etl-mode-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(30, 60, 114, 0.05), transparent);
+    transition: left 0.5s ease;
+}
+
+.aasx-etl-mode-tab:hover::before {
+    left: 100%;
+}
+
+.aasx-etl-mode-tab:hover {
+    border-color: #1e3c72;
+    background: rgba(30, 60, 114, 0.02);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.15);
+}
+
+.aasx-etl-mode-tab.active {
+    border-color: #1e3c72;
+    background: rgba(30, 60, 114, 0.05);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.1);
+}
+
+.aasx-mode-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+}
+
+.aasx-mode-content {
+    flex: 1;
+}
+
+.aasx-mode-title {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-mode-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+.aasx-mode-arrow {
+    width: 40px;
+    height: 40px;
+    background: rgba(30, 60, 114, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3c72;
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.aasx-etl-mode-tab:hover .aasx-mode-arrow {
+    background: rgba(30, 60, 114, 0.2);
+    transform: scale(1.1);
+}
+
+/* ===== ETL CONTENT ===== */
+
+.aasx-etl-content {
+    margin-top: 2rem;
+}
+
+/* ===== CONFIGURATION SECTION ===== */
+
+.aasx-configuration-section {
+    margin-bottom: 2rem;
+}
+
+.aasx-config-panel {
+    display: none;
+    animation: slideInUp 0.4s ease-out;
+}
+
+.aasx-config-panel.active {
+    display: block;
+}
+
+/* ===== FILE SELECTION CONTROLS ===== */
+
+.aasx-file-selection-controls {
+    margin-bottom: 2rem;
+}
+
+.aasx-selection-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-selection-group {
+    flex: 1;
+}
+
+.aasx-selection-group .aasx-form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.aasx-selection-group .aasx-form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.aasx-selection-group .aasx-form-select:focus {
+    outline: none;
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    transform: translateY(-1px);
+}
+
+.aasx-file-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.aasx-action-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.aasx-action-group .aasx-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.aasx-action-group .aasx-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.aasx-selection-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.aasx-selection-count {
+    font-weight: 600;
+    color: #1e3c72;
+    font-size: 1.1rem;
+}
+
+/* ===== FILE LIST CONTAINER ===== */
+
+.aasx-file-list-container {
+    margin-bottom: 2rem;
+}
+
+.aasx-file-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.aasx-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.aasx-empty-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(30, 60, 114, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e3c72;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.aasx-empty-state:hover .aasx-empty-icon {
+    transform: scale(1.1);
+    background: rgba(30, 60, 114, 0.15);
+}
+
+.aasx-empty-state h4 {
+    color: #1e3c72;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.aasx-empty-state p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ===== ETL PROGRESS SECTION ===== */
+
+.aasx-etl-progress-section {
+    margin-bottom: 2rem;
+    animation: slideInUp 0.4s ease-out;
+}
+
+.aasx-progress-container {
+    padding: 1rem 0;
+}
+
+.aasx-overall-progress {
+    margin-bottom: 2rem;
+}
+
+.aasx-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.aasx-progress-header h4 {
+    color: #1e3c72;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.aasx-progress-percentage {
+    font-weight: 600;
+    color: #1e3c72;
+    font-size: 1.1rem;
+}
+
+.aasx-progress-bar-container {
+    margin-bottom: 1rem;
+}
+
+.aasx-progress-bar {
+    width: 100%;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.aasx-progress-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+    box-shadow: 0 2px 4px rgba(30, 60, 114, 0.3);
+    position: relative;
+}
+
+.aasx-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.aasx-processing-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.aasx-processing-actions .aasx-btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.aasx-processing-actions .aasx-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.aasx-processing-actions .aasx-btn:hover::before {
+    left: 100%;
+}
+
+.aasx-processing-actions .aasx-btn-danger {
+    background: #dc3545;
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.aasx-processing-actions .aasx-btn-danger:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+.aasx-processing-actions .aasx-btn-secondary {
+    background: #6c757d;
+    border: none;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.aasx-processing-actions .aasx-btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+}
+
+/* ===== ETL RESULTS SECTION ===== */
+
+.aasx-etl-results-section {
+    margin-bottom: 2rem;
+    animation: slideInUp 0.4s ease-out;
+}
+
+#etlResultsContent {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-style: italic;
+    background: rgba(30, 60, 114, 0.02);
+    border-radius: 8px;
+    border: 2px dashed rgba(30, 60, 114, 0.2);
+}
+
+/* ===== ANIMATIONS ===== */
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+@media (max-width: 991.98px) {
+    .aasx-mode-tabs {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .aasx-etl-mode-tab {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .aasx-selection-row {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .aasx-file-actions {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .aasx-action-group {
+        justify-content: center;
+    }
+    
+    .aasx-selection-info {
+        justify-content: center;
+    }
+    
+    .aasx-processing-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .aasx-etl-mode-tab {
+        padding: 1rem;
+    }
+    
+    .aasx-mode-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .aasx-empty-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .aasx-empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .aasx-empty-state h4 {
+        font-size: 1.1rem;
+    }
+    
+    .aasx-progress-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}

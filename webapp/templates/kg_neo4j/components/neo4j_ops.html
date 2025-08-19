@@ -1,0 +1,530 @@
+<!-- Knowledge Graph Neo4j Operations Tab -->
+<div class="kg-neo4j-ops-tab" role="main" aria-label="Neo4j Operations and Docker Management">
+    
+    <!-- Enhanced Tab Header with Better Semantics -->
+    <header class="kg-tab-header mb-4" role="banner">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="header-content">
+                <h1 class="mb-2" id="neo4j-ops-title">
+                    <i class="fas fa-database me-2" aria-hidden="true"></i>
+                    Neo4j Operations & Docker Management
+                </h1>
+                <p class="text-muted mb-0" id="neo4j-ops-description">
+                    Manage Neo4j Docker container, monitor performance, and execute graph operations
+                </p>
+            </div>
+            <nav class="kg-tab-actions" role="navigation" aria-label="Primary actions">
+                <button class="btn btn-success" onclick="startNeo4j()" id="start-neo4j-btn" 
+                        aria-label="Start Neo4j container" title="Start Neo4j container">
+                    <i class="fas fa-play me-2" aria-hidden="true"></i>Start Neo4j
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshNeo4jStatus()" id="refresh-status-btn"
+                        aria-label="Refresh Neo4j status" title="Refresh container status">
+                    <i class="fas fa-sync-alt me-2" aria-hidden="true"></i>Refresh
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Enhanced Neo4j Status Dashboard with Better Accessibility -->
+    <section class="neo4j-status-dashboard mb-4" aria-labelledby="status-dashboard-title">
+        <h2 class="sr-only" id="status-dashboard-title">Neo4j Status Dashboard</h2>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <article class="card bg-gradient-primary text-white status-card" role="region" aria-labelledby="container-status">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="status-info">
+                                <h3 class="mb-0" id="neo4j-status" aria-live="polite">Stopped</h3>
+                                <small>Container Status</small>
+                            </div>
+                            <div class="status-icon" aria-hidden="true">
+                                <i class="fas fa-server fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-md-3">
+                <article class="card bg-gradient-success text-white status-card" role="region" aria-labelledby="uptime-status">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="status-info">
+                                <h3 class="mb-0" id="neo4j-uptime" aria-live="polite">0h</h3>
+                                <small>Uptime</small>
+                            </div>
+                            <div class="status-icon" aria-hidden="true">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-md-3">
+                <article class="card bg-gradient-warning text-white status-card" role="region" aria-labelledby="memory-status">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="status-info">
+                                <h3 class="mb-0" id="neo4j-memory" aria-live="polite">0 MB</h3>
+                                <small>Memory Usage</small>
+                            </div>
+                            <div class="status-icon" aria-hidden="true">
+                                <i class="fas fa-memory fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-md-3">
+                <article class="card bg-gradient-info text-white status-card" role="region" aria-labelledby="port-status">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="status-info">
+                                <h3 class="mb-0" id="neo4j-port" aria-live="polite">7474</h3>
+                                <small>Port</small>
+                            </div>
+                            <div class="status-icon" aria-hidden="true">
+                                <i class="fas fa-network-wired fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Enhanced Docker Container Management with Better Structure -->
+    <section class="docker-container-management mb-4" aria-labelledby="docker-management-title">
+        <article class="card mb-4">
+            <header class="card-header">
+                <h2 class="mb-0" id="docker-management-title">
+                    <i class="fas fa-docker me-2" aria-hidden="true"></i>Docker Container Management
+                </h2>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <section class="container-controls" aria-labelledby="container-controls-title">
+                            <h3 class="h6" id="container-controls-title">Container Controls</h3>
+                            <div class="d-grid gap-2" role="group" aria-label="Container control buttons">
+                                <button class="btn btn-success" onclick="startNeo4j()" id="start-btn"
+                                        aria-label="Start Neo4j container" title="Start the Neo4j container">
+                                    <i class="fas fa-play me-2" aria-hidden="true"></i>Start Neo4j Container
+                                </button>
+                                <button class="btn btn-warning" onclick="stopNeo4j()" id="stop-btn"
+                                        aria-label="Stop Neo4j container" title="Stop the Neo4j container">
+                                    <i class="fas fa-stop me-2" aria-hidden="true"></i>Stop Neo4j Container
+                                </button>
+                                <button class="btn btn-info" onclick="restartNeo4j()" id="restart-btn"
+                                        aria-label="Restart Neo4j container" title="Restart the Neo4j container">
+                                    <i class="fas fa-redo me-2" aria-hidden="true"></i>Restart Container
+                                </button>
+                                <button class="btn btn-danger" onclick="removeNeo4j()" id="remove-btn"
+                                        aria-label="Remove Neo4j container" title="Remove the Neo4j container">
+                                    <i class="fas fa-trash me-2" aria-hidden="true"></i>Remove Container
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="col-md-6">
+                        <section class="container-info" aria-labelledby="container-info-title">
+                            <h3 class="h6" id="container-info-title">Container Information</h3>
+                            <div class="table-responsive">
+                                <table class="table table-sm" role="table" aria-labelledby="container-info-title">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="row">Container ID:</th>
+                                            <td id="container-id" aria-live="polite">N/A</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Image:</th>
+                                            <td id="container-image" aria-live="polite">N/A</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Created:</th>
+                                            <td id="container-created" aria-live="polite">N/A</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Size:</th>
+                                            <td id="container-size" aria-live="polite">N/A</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row">Command:</th>
+                                            <td id="container-command" aria-live="polite">N/A</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Enhanced Neo4j Performance Monitoring with Better Accessibility -->
+    <section class="neo4j-performance-monitoring mb-4" aria-labelledby="performance-monitoring-title">
+        <article class="card mb-4">
+            <header class="card-header">
+                <h2 class="mb-0" id="performance-monitoring-title">
+                    <i class="fas fa-tachometer-alt me-2" aria-hidden="true"></i>Performance Monitoring
+                </h2>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <section class="performance-charts" aria-labelledby="performance-charts-title">
+                            <h3 class="sr-only" id="performance-charts-title">Performance Charts</h3>
+                            <div class="chart-container" role="img" aria-label="Neo4j performance chart">
+                                <canvas id="neo4jPerformanceChart" width="600" height="300" 
+                                        aria-label="Performance monitoring chart"></canvas>
+                            </div>
+                        </section>
+                    </div>
+                    <div class="col-md-4">
+                        <section class="performance-metrics" aria-labelledby="performance-metrics-title">
+                            <h3 class="h6" id="performance-metrics-title">Real-Time Metrics</h3>
+                            <div class="metric-item mb-3">
+                                <label class="form-label" for="cpu-usage-bar">CPU Usage</label>
+                                <div class="progress mb-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar bg-primary" id="cpu-usage-bar" style="width: 0%"></div>
+                                </div>
+                                <small id="cpu-usage-text" aria-live="polite">0%</small>
+                            </div>
+                            <div class="metric-item mb-3">
+                                <label class="form-label" for="memory-usage-bar">Memory Usage</label>
+                                <div class="progress mb-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar bg-warning" id="memory-usage-bar" style="width: 0%"></div>
+                                </div>
+                                <small id="memory-usage-text" aria-live="polite">0 MB / 0 MB</small>
+                            </div>
+                            <div class="metric-item mb-3">
+                                <label class="form-label" for="disk-usage-bar">Disk Usage</label>
+                                <div class="progress mb-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar bg-info" id="disk-usage-bar" style="width: 0%"></div>
+                                </div>
+                                <small id="disk-usage-text" aria-live="polite">0 MB / 0 MB</small>
+                            </div>
+                            <div class="metric-item mb-3">
+                                <label class="form-label" for="network-io">Network I/O</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="network-io" value="0 KB/s" readonly 
+                                           aria-label="Network input/output rate">
+                                    <span class="input-group-text">KB/s</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Enhanced Graph Operations with Better Form Structure -->
+    <section class="graph-operations mb-4" aria-labelledby="graph-operations-title">
+        <article class="card mb-4">
+            <header class="card-header">
+                <h2 class="mb-0" id="graph-operations-title">
+                    <i class="fas fa-project-diagram me-2" aria-hidden="true"></i>Graph Operations
+                </h2>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <section class="graph-import" aria-labelledby="graph-import-title">
+                            <h3 class="h6" id="graph-import-title">Import Graph Data</h3>
+                            <form class="import-form" role="form" aria-labelledby="graph-import-title">
+                                <div class="mb-3">
+                                    <label for="graph-file" class="form-label">Graph File</label>
+                                    <input type="file" class="form-control" id="graph-file" accept=".json,.csv,.xml"
+                                           aria-describedby="graph-file-help">
+                                    <small class="text-muted" id="graph-file-help">Supported formats: JSON, CSV, XML</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="graph-format" class="form-label">Data Format</label>
+                                    <select class="form-select" id="graph-format" aria-describedby="graph-format-help">
+                                        <option value="auto">Auto-detect</option>
+                                        <option value="json">JSON</option>
+                                        <option value="csv">CSV</option>
+                                        <option value="xml">XML</option>
+                                        <option value="cypher">Cypher</option>
+                                    </select>
+                                    <small class="text-muted" id="graph-format-help">Select the format of your data file</small>
+                                </div>
+                                <fieldset class="mb-3">
+                                    <legend class="form-label">Import Options</legend>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="clear-existing" checked>
+                                        <label class="form-check-label" for="clear-existing">Clear existing data</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="create-indexes" checked>
+                                        <label class="form-check-label" for="create-indexes">Create indexes</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="validate-data" checked>
+                                        <label class="form-check-label" for="validate-data">Validate data</label>
+                                    </div>
+                                </fieldset>
+                                <button type="button" class="btn btn-primary" onclick="importGraphData()" 
+                                        aria-label="Import graph data">
+                                    <i class="fas fa-upload me-2" aria-hidden="true"></i>Import Graph
+                                </button>
+                            </form>
+                        </section>
+                    </div>
+                    <div class="col-md-6">
+                        <section class="graph-export" aria-labelledby="graph-export-title">
+                            <h3 class="h6" id="graph-export-title">Export Graph Data</h3>
+                            <form class="export-form" role="form" aria-labelledby="graph-export-title">
+                                <div class="mb-3">
+                                    <label for="export-format" class="form-label">Export Format</label>
+                                    <select class="form-select" id="export-format" aria-describedby="export-format-help">
+                                        <option value="json">JSON</option>
+                                        <option value="csv">CSV</option>
+                                        <option value="xml">XML</option>
+                                        <option value="cypher">Cypher</option>
+                                        <option value="graphml">GraphML</option>
+                                    </select>
+                                    <small class="text-muted" id="export-format-help">Choose the output format for your data</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="export-query" class="form-label">Export Query (Optional)</label>
+                                    <textarea class="form-control" id="export-query" rows="3" 
+                                              placeholder="MATCH (n) RETURN n LIMIT 1000"
+                                              aria-describedby="export-query-help"></textarea>
+                                    <small class="text-muted" id="export-query-help">Leave empty to export entire graph</small>
+                                </div>
+                                <fieldset class="mb-3">
+                                    <legend class="form-label">Export Options</legend>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="include-properties" checked>
+                                        <label class="form-check-label" for="include-properties">Include properties</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="include-labels" checked>
+                                        <label class="form-check-label" for="include-labels">Include labels</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="include-relationships" checked>
+                                        <label class="form-check-label" for="include-relationships">Include relationships</label>
+                                    </div>
+                                </fieldset>
+                                <button type="button" class="btn btn-success" onclick="exportGraphData()"
+                                        aria-label="Export graph data">
+                                    <i class="fas fa-download me-2" aria-hidden="true"></i>Export Graph
+                                </button>
+                            </form>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Enhanced Cypher Query Interface with Better Form Structure -->
+    <section class="cypher-query-interface mb-4" aria-labelledby="cypher-query-title">
+        <article class="card mb-4">
+            <header class="card-header">
+                <h2 class="mb-0" id="cypher-query-title">
+                    <i class="fas fa-code me-2" aria-hidden="true"></i>Cypher Query Interface
+                </h2>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <form class="query-form" role="form" aria-labelledby="cypher-query-title">
+                            <div class="mb-3">
+                                <label for="cypher-query" class="form-label">Cypher Query</label>
+                                <textarea class="form-control" id="cypher-query" rows="4" 
+                                          placeholder="MATCH (n) RETURN n LIMIT 10"
+                                          aria-describedby="cypher-query-help"></textarea>
+                                <small class="text-muted" id="cypher-query-help">Enter your Cypher query here</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="query-parameters" class="form-label">Query Parameters (JSON)</label>
+                                <textarea class="form-control" id="query-parameters" rows="2" 
+                                          placeholder='{"limit": 10}'
+                                          aria-describedby="query-parameters-help"></textarea>
+                                <small class="text-muted" id="query-parameters-help">Optional parameters in JSON format</small>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <section class="query-controls" aria-labelledby="query-controls-title">
+                            <h3 class="h6" id="query-controls-title">Query Controls</h3>
+                            <div class="d-grid gap-2" role="group" aria-label="Query control buttons">
+                                <button class="btn btn-primary" onclick="executeCypherQuery()" 
+                                        aria-label="Execute Cypher query">
+                                    <i class="fas fa-play me-2" aria-hidden="true"></i>Execute Query
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="clearQuery()" 
+                                        aria-label="Clear query fields">
+                                    <i class="fas fa-eraser me-2" aria-hidden="true"></i>Clear
+                                </button>
+                                <button class="btn btn-outline-info" onclick="saveQuery()" 
+                                        aria-label="Save current query">
+                                    <i class="fas fa-save me-2" aria-hidden="true"></i>Save Query
+                                </button>
+                            </div>
+                            <div class="mt-3">
+                                <h4 class="h6" id="query-history-title">Query History</h4>
+                                <select class="form-select" id="query-history" onchange="loadQueryFromHistory()"
+                                        aria-labelledby="query-history-title">
+                                    <option value="">Select saved query...</option>
+                                    <!-- Saved queries will be populated here -->
+                                </select>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Enhanced Query Results with Better Table Structure -->
+    <section class="query-results mb-4" aria-labelledby="query-results-title">
+        <article class="card mb-4">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="query-results-title">
+                        <i class="fas fa-table me-2" aria-hidden="true"></i>Query Results
+                    </h2>
+                    <div class="btn-group" role="group" aria-label="Query results actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportResults()"
+                                aria-label="Export query results">
+                            <i class="fas fa-download me-1" aria-hidden="true"></i>Export
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearResults()"
+                                aria-label="Clear query results">
+                            <i class="fas fa-trash me-1" aria-hidden="true"></i>Clear
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <div class="card-body">
+                <div id="query-results-container" role="region" aria-labelledby="query-results-title" aria-live="polite">
+                    <div class="text-center py-4" id="no-results-message">
+                        <i class="fas fa-database fa-3x text-muted mb-3" aria-hidden="true"></i>
+                        <p class="text-muted">No query results yet. Execute a Cypher query to see results here.</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Enhanced Container Logs with Better Log Management -->
+    <section class="container-logs mb-4" aria-labelledby="container-logs-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="container-logs-title">
+                        <i class="fas fa-list-alt me-2" aria-hidden="true"></i>Container Logs
+                    </h2>
+                    <div class="btn-group" role="group" aria-label="Log management actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshLogs()"
+                                aria-label="Refresh container logs">
+                            <i class="fas fa-sync-alt me-1" aria-hidden="true"></i>Refresh
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearLogs()"
+                                aria-label="Clear container logs">
+                            <i class="fas fa-trash me-1" aria-hidden="true"></i>Clear
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadLogs()"
+                                aria-label="Download container logs">
+                            <i class="fas fa-download me-1" aria-hidden="true"></i>Download
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <div class="card-body">
+                <section class="log-controls mb-3" aria-labelledby="log-controls-title">
+                    <h3 class="sr-only" id="log-controls-title">Log Display Controls</h3>
+                    <form class="log-settings-form" role="form" aria-labelledby="log-controls-title">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="log-level" class="form-label">Log Level</label>
+                                <select class="form-select" id="log-level" aria-describedby="log-level-help">
+                                    <option value="all">All Levels</option>
+                                    <option value="error">Error Only</option>
+                                    <option value="warning">Warning & Error</option>
+                                    <option value="info">Info, Warning & Error</option>
+                                </select>
+                                <small class="text-muted" id="log-level-help">Filter logs by severity level</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="log-lines" class="form-label">Lines to Show</label>
+                                <select class="form-select" id="log-lines" aria-describedby="log-lines-help">
+                                    <option value="100">Last 100</option>
+                                    <option value="500" selected>Last 500</option>
+                                    <option value="1000">Last 1000</option>
+                                    <option value="all">All</option>
+                                </select>
+                                <small class="text-muted" id="log-lines-help">Number of log lines to display</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="log-follow" class="form-label">Follow Logs</label>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="log-follow">
+                                    <label class="form-check-label" for="log-follow">Auto-scroll to latest</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-primary w-100 mt-4" onclick="applyLogSettings()"
+                                        aria-label="Apply log display settings">
+                                    <i class="fas fa-filter me-2" aria-hidden="true"></i>Apply Settings
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+                <section class="log-container" aria-labelledby="log-display-title">
+                    <h3 class="sr-only" id="log-display-title">Log Display</h3>
+                    <div class="log-viewer" role="log" aria-label="Container logs">
+                        <pre id="container-logs" class="bg-dark text-light p-3 rounded" 
+                             style="max-height: 400px; overflow-y: auto;"
+                             aria-live="polite" aria-label="Container log output">
+<!-- Container logs will be displayed here -->
+                        </pre>
+                    </div>
+                </section>
+            </div>
+        </article>
+    </section>
+
+    <!-- Enhanced Neo4j Browser Link with Better Accessibility -->
+    <section class="neo4j-browser-access mt-4" aria-labelledby="browser-access-title">
+        <article class="card">
+            <div class="card-body text-center">
+                <h2 class="h6" id="browser-access-title">Neo4j Browser Access</h2>
+                <p class="text-muted">Access the Neo4j browser for advanced graph visualization and querying</p>
+                <a href="http://localhost:7474" target="_blank" class="btn btn-primary"
+                   aria-label="Open Neo4j browser in new tab" rel="noopener noreferrer">
+                    <i class="fas fa-external-link-alt me-2" aria-hidden="true"></i>Open Neo4j Browser
+                </a>
+                <small class="d-block text-muted mt-2" id="browser-credentials">
+                    Default credentials: neo4j / password
+                </small>
+            </div>
+        </article>
+    </section>
+</div>
+
+<!-- Enhanced Tab Footer with Better Semantics -->
+<footer class="kg-tab-footer" role="contentinfo" aria-label="Neo4j operations tab footer">
+    <div class="tab-info">
+        <i class="fas fa-database me-2" aria-hidden="true"></i>
+        <span id="neo4j-ops-tab-info" aria-live="polite">Neo4j operations ready - managing Docker container and graph operations</span>
+    </div>
+    <nav class="tab-actions" role="navigation" aria-label="Secondary actions">
+        <button class="btn btn-outline-primary btn-sm" onclick="exportNeo4jReport()"
+                aria-label="Export Neo4j operations report">
+            <i class="fas fa-file-export me-1" aria-hidden="true"></i>Export Report
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showNeo4jOpsHelp()"
+                aria-label="Show Neo4j operations help">
+            <i class="fas fa-question-circle me-1" aria-hidden="true"></i>Help
+        </button>
+    </nav>
+</footer>
+

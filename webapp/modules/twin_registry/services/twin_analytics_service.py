@@ -4,6 +4,7 @@ Twin Analytics Service
 
 Service for twin analytics and reporting.
 Handles performance trends, usage statistics, and analytics reports.
+Now integrated with src/twin_registry core services.
 """
 
 from typing import Dict, List, Optional, Any
@@ -11,24 +12,63 @@ from datetime import datetime, timedelta
 import logging
 import json
 
-# Import shared services
-from src.shared.services.digital_twin_service import DigitalTwinService
-from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
+# Import core Twin Registry services (only those that exist)
+try:
+    from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+    from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+    print("✅ Twin Registry core services imported successfully")
+    CORE_SERVICES_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️  Twin Registry core services not available: {e}")
+    CORE_SERVICES_AVAILABLE = False
+    CoreTwinRegistryService = None
+    TwinLifecycleService = None
 
 logger = logging.getLogger(__name__)
 
 class TwinAnalyticsService:
     """
     Service for twin analytics and reporting.
-    Handles performance trends, usage statistics, and analytics reports.
+    Now integrated with src/twin_registry core services.
     """
     
-    def __init__(self, twin_service: DigitalTwinService):
-        """Initialize the twin analytics service."""
-        self.twin_service = twin_service
-        self.twin_repo = twin_service.get_repository()
+    def __init__(self):
+        """Initialize the twin analytics service with core services."""
+        if not CORE_SERVICES_AVAILABLE:
+            logger.warning("⚠️ Core services not available - using fallback mode")
+            self.core_registry = None
+            self.lifecycle_service = None
+            return
         
-        logger.info("Twin Analytics Service initialized")
+        try:
+            # Initialize core services from src/twin_registry
+            self.core_registry = CoreTwinRegistryService()
+            self.lifecycle_service = TwinLifecycleService()
+            
+            logger.info("✅ Twin Analytics Service initialized with core services")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize core services: {e}")
+            # Fallback to None if initialization fails
+            self.core_registry = None
+            self.lifecycle_service = None
+    
+    async def initialize(self) -> None:
+        """Initialize all core services"""
+        if not CORE_SERVICES_AVAILABLE:
+            logger.warning("⚠️ Core services not available - skipping initialization")
+            return
+            
+        try:
+            if self.core_registry:
+                await self.core_registry.initialize()
+            if self.lifecycle_service:
+                await self.lifecycle_service.initialize()
+                
+            logger.info("✅ All core services initialized successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize core services: {e}")
+            raise
     
     async def get_twin_analytics(self, twin_id: str = None, 
                                time_range: str = "30d") -> Dict[str, Any]:
@@ -160,7 +200,7 @@ class TwinAnalyticsService:
                 start_time = end_time - timedelta(days=30)
             
             # Get all twins
-            all_twins = self.twin_repo.get_all()
+            all_twins = await self.core_registry.get_all_twins() # Assuming core service has this method
             
             # Calculate usage statistics
             usage_stats = await self._calculate_usage_statistics(all_twins, start_time, end_time)
@@ -293,7 +333,7 @@ class TwinAnalyticsService:
         """Get analytics for a single twin."""
         try:
             # Get twin
-            twin = self.twin_repo.get_by_id(twin_id)
+            twin = await self.core_registry.get_twin_by_id(twin_id) # Assuming core service has this method
             if not twin:
                 raise Exception(f"Twin not found: {twin_id}")
             
@@ -335,7 +375,7 @@ class TwinAnalyticsService:
         """Get system-wide analytics."""
         try:
             # Get all twins
-            all_twins = self.twin_repo.get_all()
+            all_twins = await self.core_registry.get_all_twins() # Assuming core service has this method
             
             # Calculate system analytics
             total_twins = len(all_twins)
@@ -582,7 +622,7 @@ class TwinAnalyticsService:
     async def _export_twins_data(self, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Export twins data."""
         try:
-            all_twins = self.twin_repo.get_all()
+            all_twins = await self.core_registry.get_all_twins() # Assuming core service has this method
             
             # Apply filters if provided
             if filters:

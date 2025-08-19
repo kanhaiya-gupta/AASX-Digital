@@ -16,9 +16,10 @@ from fastapi import HTTPException
 # Import shared database components
 try:
     from src.shared.database.base_manager import BaseDatabaseManager
-    from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
-    from src.shared.models.digital_twin import DigitalTwin
-    from src.shared.services.digital_twin_service import DigitalTwinService
+    # Migrated to new twin registry system
+from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+from src.twin_registry.models.twin_registry import TwinRegistry
+from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
 except ImportError as e:
     logging.error(f"Shared database components not available: {e}")
     raise
@@ -44,10 +45,11 @@ logger = logging.getLogger(__name__)
 class PhysicsModelService:
     """Service for managing physics models using DigitalTwin data"""
     
-    def __init__(self, db_manager: BaseDatabaseManager = None, digital_twin_service: DigitalTwinService = None):
+    def __init__(self, db_manager: BaseDatabaseManager = None, twin_registry_service: CoreTwinRegistryService = None):
         self.db_manager = db_manager
-        self.digital_twin_repository = DigitalTwinRepository(db_manager) if db_manager else None
-        self.digital_twin_service = digital_twin_service
+        # Migrated to new twin registry system
+        self.twin_registry_service = twin_registry_service
+        self.twin_lifecycle_service = TwinLifecycleService() if twin_registry_service else None
         self.physics_framework = None
         self._initialize_framework()
     

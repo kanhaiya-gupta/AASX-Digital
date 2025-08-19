@@ -27,7 +27,7 @@ class AASXProcessingService:
             job_data: Dictionary containing job information
             
         Returns:
-            str: The created job ID
+            str: The created job ID (UUID)
             
         Raises:
             Exception: If job creation fails
@@ -38,6 +38,10 @@ class AASXProcessingService:
             for field in required_fields:
                 if field not in job_data:
                     raise ValueError(f"Missing required field: {field}")
+            
+            # Generate UUID for job_id
+            import uuid
+            job_id = str(uuid.uuid4())
             
             # Set default values
             job_data.setdefault('processing_status', 'pending')
@@ -51,18 +55,19 @@ class AASXProcessingService:
             if isinstance(job_data['generation_options'], dict):
                 job_data['generation_options'] = json.dumps(job_data['generation_options'])
             
-            # Insert job record
+            # Insert job record with UUID job_id
             query = """
                 INSERT INTO aasx_processing (
-                    file_id, project_id, processing_status, job_type, source_type,
+                    job_id, file_id, project_id, processing_status, job_type, source_type,
                     processed_by, org_id, federated_learning, user_consent_timestamp,
                     consent_terms_version, federated_participation_status,
                     extraction_options, generation_options, timestamp, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
             current_time = datetime.now().isoformat()
             params = (
+                job_id,  # Include the generated UUID job_id
                 job_data['file_id'],
                 job_data['project_id'],
                 job_data['processing_status'],
@@ -83,13 +88,8 @@ class AASXProcessingService:
             
             self.db_manager.execute_update(query, params)
             
-            # Get the created job ID
-            job_id = self.db_manager.execute_query(
-                "SELECT last_insert_rowid() as id"
-            )[0]['id']
-            
             logger.info(f"Created AASX processing job {job_id} for file {job_data['file_id']}")
-            return str(job_id)
+            return job_id
             
         except Exception as e:
             logger.error(f"Failed to create AASX processing job: {e}")
@@ -127,7 +127,7 @@ class AASXProcessingService:
             query = f"""
                 UPDATE aasx_processing 
                 SET {', '.join(update_fields)}
-                WHERE id = ?
+                WHERE job_id = ?
             """
             
             self.db_manager.execute_update(query, params)
@@ -138,6 +138,28 @@ class AASXProcessingService:
         except Exception as e:
             logger.error(f"Failed to update job {job_id} status: {e}")
             return False
+    
+    def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get job information by job_id.
+        
+        Args:
+            job_id: The job ID to retrieve
+            
+        Returns:
+            Dict containing job information or None if not found
+        """
+        try:
+            query = "SELECT * FROM aasx_processing WHERE job_id = ?"
+            results = self.db_manager.execute_query(query, (job_id,))
+            
+            if results:
+                return dict(results[0])  # Convert sqlite3.Row to dict
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get job {job_id}: {e}")
+            return None
     
     def complete_job(self, job_id: str, results: Dict[str, Any], 
                     status: str = 'completed', error_message: str = None,

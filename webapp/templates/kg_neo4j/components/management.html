@@ -1,0 +1,548 @@
+<!-- Knowledge Graph Management Tab - World-Class Implementation -->
+<div class="kg-management-tab" role="main" aria-label="Knowledge Graph Management Dashboard">
+    
+    <!-- Enhanced Tab Header with Better Semantics -->
+    <header class="kg-tab-header mb-4" role="banner">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="header-content">
+                <h1 class="mb-2" id="management-title">
+                    <i class="fas fa-cogs me-2" aria-hidden="true"></i>
+                    Knowledge Graph Management
+                </h1>
+                <p class="text-muted mb-0" id="management-description">
+                    Search, filter, and manage knowledge graphs in the registry. View graph details, relationships, and operational status.
+                </p>
+            </div>
+            <nav class="kg-tab-actions" role="navigation" aria-label="Primary actions">
+                <button class="btn btn-outline-secondary" id="kg_refreshAllBtn">
+                    <i class="fas fa-sync-alt me-2" aria-hidden="true"></i>Refresh
+                </button>
+                <button class="btn btn-primary" id="exportData">
+                    <i class="fas fa-download me-2" aria-hidden="true"></i>Export
+                </button>
+                <button class="btn btn-success" id="importData">
+                    <i class="fas fa-upload me-2" aria-hidden="true"></i>Import
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Management Operations Overview -->
+    <section class="management-overview mb-4" aria-labelledby="management-overview-title">
+        <h2 class="sr-only" id="management-overview-title">Management Operations Overview</h2>
+        <div class="row">
+            <div class="col-md-3">
+                <article class="card bg-gradient-primary text-white" role="region" aria-labelledby="total-graphs">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="total-graphs" aria-live="polite">0</h3>
+                                <small>Total Graphs</small>
+                                <div class="text-light">In Registry</div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-project-diagram fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-md-3">
+                <article class="card bg-gradient-success text-white" role="region" aria-labelledby="active-graphs">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="active-graphs" aria-live="polite">0</h3>
+                                <small>Active Graphs</small>
+                                <div class="text-light">Currently Running</div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-play-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-md-3">
+                <article class="card bg-gradient-info text-white" role="region" aria-labelledby="healthy-graphs">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="healthy-graphs" aria-live="polite">0</h3>
+                                <small>Healthy Graphs</small>
+                                <div class="text-light">Good Status</div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-heartbeat fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-md-3">
+                <article class="card bg-gradient-warning text-white" role="region" aria-labelledby="warning-graphs">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="warning-graphs" aria-live="polite">0</h3>
+                                <small>Warning Graphs</small>
+                                <div class="text-light">Needs Attention</div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Source Distribution Overview -->
+    <section class="source-overview mb-4" aria-labelledby="source-overview-title">
+        <h2 class="sr-only" id="source-overview-title">Source Distribution Overview</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <article class="card bg-light" role="region" aria-labelledby="aasx-graphs">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-file-archive fa-3x text-primary" aria-hidden="true"></i>
+                        </div>
+                        <h6>AASX-ETL Graphs</h6>
+                        <div class="h4 text-primary" id="aasx-graphs-count">0</div>
+                        <span class="badge bg-success" id="aasx-graphs-status">Active</span>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-md-4">
+                <article class="card bg-light" role="region" aria-labelledby="twin-graphs">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-robot fa-3x text-success" aria-hidden="true"></i>
+                        </div>
+                        <h6>Twin Registry Graphs</h6>
+                        <div class="h4 text-success" id="twin-graphs-count">0</div>
+                        <span class="badge bg-success" id="twin-graphs-status">Active</span>
+                    </div>
+                </article>
+            </div>
+            
+            <div class="col-md-4">
+                <article class="card bg-light" role="region" aria-labelledby="ai-graphs">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-brain fa-3x text-warning" aria-hidden="true"></i>
+                        </div>
+                        <h6>AI/RAG Graphs</h6>
+                        <div class="h4 text-warning" id="ai-graphs-count">0</div>
+                        <span class="badge bg-success" id="ai-graphs-status">Active</span>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="search-section mb-4" aria-labelledby="search-section-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="search-section-title">
+                        <i class="fas fa-search me-2" aria-hidden="true"></i>Find & Filter Graphs
+                    </h2>
+                    <div class="text-muted">
+                        <span id="total-graphs-display">0</span> graphs available
+                    </div>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="search-container">
+                    <div class="search-wrapper mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                            </span>
+                            <input type="text" class="form-control" id="graph-search" 
+                                   placeholder="Search graphs by name, type, or description...">
+                            <button class="btn btn-outline-secondary" id="clear-search" style="display: none;">
+                                <i class="fas fa-times" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="filter-container">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label" for="status-filter">Status</label>
+                                    <select class="form-select" id="status-filter">
+                                        <option value="">All Statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="error">Error</option>
+                                        <option value="stopped">Stopped</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label" for="type-filter">Type</label>
+                                    <select class="form-select" id="type-filter">
+                                        <option value="">All Types</option>
+                                        <option value="asset_graph">Asset Graph</option>
+                                        <option value="process_graph">Process Graph</option>
+                                        <option value="relationship_graph">Relationship Graph</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label" for="source-filter">Source</label>
+                                    <select class="form-select" id="source-filter">
+                                        <option value="">All Sources</option>
+                                        <option value="aasx_etl">AASX-ETL</option>
+                                        <option value="twin_registry">Twin Registry</option>
+                                        <option value="ai_rag">AI/RAG</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label" for="lifecycle-filter">Lifecycle</label>
+                                    <select class="form-select" id="lifecycle-filter">
+                                        <option value="">All Phases</option>
+                                        <option value="development">Development</option>
+                                        <option value="testing">Testing</option>
+                                        <option value="production">Production</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="sunset">Sunset</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label" for="priority-filter">Priority</label>
+                                    <select class="form-select" id="priority-filter">
+                                        <option value="">All Priorities</option>
+                                        <option value="low">Low</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button class="btn btn-primary w-100" onclick="applyFilters()">
+                                        <i class="fas fa-filter me-1"></i>Apply Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Bulk Operations Panel -->
+    <section class="bulk-operations mb-4" aria-labelledby="bulk-operations-title" id="bulk-operations-panel" style="display: none;">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="bulk-operations-title">
+                        <i class="fas fa-tasks me-2" aria-hidden="true"></i>Bulk Operations
+                    </h2>
+                    <div class="text-muted">
+                        <span id="selected-count">0 graphs selected</span>
+                    </div>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="bulk-actions">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="bulk-status-select">Status Update</label>
+                                <select class="form-select" id="bulk-status-select">
+                                    <option value="">Select Status</option>
+                                    <option value="active">Activate</option>
+                                    <option value="suspended">Suspend</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="archived">Archive</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100" onclick="bulkUpdateStatus()">
+                                <i class="fas fa-save me-1"></i>Update
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label" for="bulk-priority-select">Priority Update</label>
+                                <select class="form-select" id="bulk-priority-select">
+                                    <option value="">Select Priority</option>
+                                    <option value="low">Low</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary btn-sm w-100" onclick="bulkUpdatePriority()">
+                                <i class="fas fa-save me-1"></i>Update
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-success btn-sm w-100" onclick="bulkExportGraphs()">
+                                    <i class="fas fa-download me-1"></i>Export Selected
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">&nbsp;</label>
+                                <button class="btn btn-danger btn-sm w-100" onclick="bulkDeleteGraphs()">
+                                    <i class="fas fa-trash me-1"></i>Delete Selected
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Graph Registry Table -->
+    <section class="graph-registry mb-4" aria-labelledby="graph-registry-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="graph-registry-title">
+                        <i class="fas fa-table me-2" aria-hidden="true"></i>Graph Registry
+                    </h2>
+                    <div class="text-muted">
+                        <span>Showing <span id="kg_showingStart">1</span> to <span id="kg_showingEnd">10</span> of <span id="kg_totalRecords">0</span> graphs</span>
+                    </div>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="graphRegistryTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="select-all-graphs">
+                                    </div>
+                                </th>
+                                <th>Graph Name</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th>Type</th>
+                                <th>Health Score</th>
+                                <th>Neo4j Sync</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="kg_graphTableBody">
+                            <!-- Graph data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Loading State -->
+                <div id="kg_loadingGraphs" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div>Loading graph registry...</div>
+                    <div class="text-muted">Please wait while we fetch your knowledge graphs</div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="kg_emptyGraphs" class="text-center py-4" style="display: none;">
+                    <div class="mb-3">
+                        <i class="fas fa-project-diagram fa-3x text-muted" aria-hidden="true"></i>
+                    </div>
+                    <h6>No Knowledge Graphs Found</h6>
+                    <p class="text-muted">Knowledge graphs are automatically created from AASX-ETL, Twin Registry, and AI/RAG sources. No manual creation is needed.</p>
+                    <button class="btn btn-outline-secondary" id="kg_clearFiltersEmpty">
+                        <i class="fas fa-times me-1"></i>Clear Filters
+                    </button>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Pagination Section -->
+    <section class="pagination-section mb-4" aria-labelledby="pagination-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="pagination-title">
+                        <i class="fas fa-list-ol me-2" aria-hidden="true"></i>Navigation & Selection
+                    </h2>
+                    <div class="text-muted">
+                        <span id="kg_selectedCount">0</span> graphs selected
+                    </div>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        <span>Page <span id="kg_currentPage">1</span> of <span id="kg_totalPages">1</span></span>
+                    </div>
+                    <div class="btn-group" role="group" aria-label="Pagination controls">
+                        <button class="btn btn-outline-secondary" id="kg_prevPage" disabled>
+                            <i class="fas fa-chevron-left me-1"></i>Previous
+                        </button>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary active" data-page="1">1</button>
+                        </div>
+                        <button class="btn btn-outline-secondary" id="kg_nextPage" disabled>
+                            Next<i class="fas fa-chevron-right ms-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+</div>
+
+<!-- Create Graph Modal -->
+<div class="modal fade" id="createGraphModal" tabindex="-1" aria-labelledby="createGraphModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createGraphModalLabel">
+                    <i class="fas fa-plus me-2" aria-hidden="true"></i>Create New Knowledge Graph
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="create-graph-form">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="graph-name" class="form-label">Graph Name *</label>
+                                <input type="text" class="form-control" id="graph-name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="graph-type" class="form-label">Graph Type *</label>
+                                <select class="form-select" id="graph-type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="asset_graph">Asset Graph</option>
+                                    <option value="process_graph">Process Graph</option>
+                                    <option value="relationship_graph">Relationship Graph</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="graph-category" class="form-label">Category</label>
+                                <select class="form-select" id="graph-category">
+                                    <option value="generic">Generic</option>
+                                    <option value="industrial">Industrial</option>
+                                    <option value="business">Business</option>
+                                    <option value="technical">Technical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="graph-priority" class="form-label">Priority</label>
+                                <select class="form-select" id="graph-priority">
+                                    <option value="low">Low</option>
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="graph-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="graph-description" rows="3" 
+                                  placeholder="Describe the purpose and scope of this knowledge graph"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="source-file" class="form-label">Source File</label>
+                                <select class="form-select" id="source-file">
+                                    <option value="">Select Source File</option>
+                                    <!-- Options will be populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="workflow-source" class="form-label">Workflow Source</label>
+                                <select class="form-select" id="workflow-source">
+                                    <option value="aasx_file">AASX File</option>
+                                    <option value="structured_data">Structured Data</option>
+                                    <option value="both">Both</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitCreateGraph()">
+                    <i class="fas fa-save me-2" aria-hidden="true"></i>Create Graph
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graph Details Modal -->
+<div class="modal fade" id="graphDetailsModal" tabindex="-1" aria-labelledby="graphDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="graphDetailsModalLabel">
+                    <i class="fas fa-info-circle me-2" aria-hidden="true"></i>Graph Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="graph-details-content">
+                <!-- Graph details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editGraph()">
+                    <i class="fas fa-edit me-2" aria-hidden="true"></i>Edit Graph
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Tab Footer with Better Semantics -->
+<footer class="kg-tab-footer" role="contentinfo" aria-label="Management tab footer">
+    <div class="tab-info">
+        <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+        <span id="management-tab-info" aria-live="polite">Ready to manage knowledge graphs</span>
+    </div>
+    <nav class="tab-actions" role="navigation" aria-label="Secondary actions">
+        <button class="btn btn-outline-primary btn-sm" onclick="exportManagementReport()">
+            <i class="fas fa-file-export me-1"></i>Export Report
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showManagementHelp()">
+            <i class="fas fa-question-circle me-1"></i>Help
+        </button>
+    </nav>
+</footer>

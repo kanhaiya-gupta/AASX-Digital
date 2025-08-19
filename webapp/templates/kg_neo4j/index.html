@@ -3,71 +3,146 @@
 {% block title %}Knowledge Graph - Advanced Graph Analytics{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', path='/css/kg_neo4j.css') }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/kg_neo4j.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="kg-container container-fluid">
-    <!-- Enhanced Header Section -->
-    <div class="kg-header row mb-4">
+    <!-- Enhanced Header -->
+    <div class="kg-header row">
         <div class="col-12">
-            <div class="kg-header-content d-flex justify-content-between align-items-center">
-                <div class="kg-header-main">
-                    <div class="kg-header-info">
-                        <h2 class="kg-title mb-2">
-                            <i class="fas fa-project-diagram me-3"></i>
-                            Knowledge Graph Analytics Platform
-                        </h2>
-                        <p class="kg-subtitle mb-3">Advanced Neo4j graph database management and visualization platform - Integrated with ETL Pipeline</p>
-                        <div class="kg-feature-badges">
-                            <span class="badge bg-gradient-primary me-2">
-                                <i class="fas fa-brain me-1"></i>Neo4j Integration
-                            </span>
-                            <span class="badge bg-gradient-success me-2">
-                                <i class="fas fa-chart-network me-1"></i>Graph Analytics
-                            </span>
-                            <span class="badge bg-gradient-info me-2">
-                                <i class="fas fa-database me-1"></i>Real-time Data
-                            </span>
-                            <span class="badge bg-gradient-warning">
-                                <i class="fas fa-cogs me-1"></i>Modular System
-                            </span>
-                        </div>
-                    </div>
+            <div class="kg-header-content d-flex justify-content-between align-items-center flex-wrap">
+                <div class="kg-header-info">
+                    <h1 class="kg-title">
+                        <i class="fas fa-project-diagram"></i>
+                        Knowledge Graph
+                    </h1>
+                    <p class="kg-subtitle">Advanced graph analytics and management</p>
                 </div>
-                <div class="kg-header-status text-end">
-                    <div class="kg-status-badge bg-gradient-success text-white px-3 py-2 rounded-pill mb-2">
-                        <i class="fas fa-check-circle me-2"></i>System Online
-                    </div>
-                    <div class="kg-version-info text-white-50">
-                        <small>v3.0 - Enhanced with Digital Twins</small>
-                    </div>
+                <div class="kg-header-actions d-flex gap-2">
+                    <button class="kg-btn kg-btn-refresh" id="kg-refresh-btn">
+                        <i class="fas fa-sync-alt"></i>Refresh
+                    </button>
+                    <button class="kg-btn kg-btn-export" id="kg-export-btn">
+                        <i class="fas fa-download"></i>Export
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Docker Management - Using Modular Component -->
-    {% include "kg_neo4j/components/docker_management.html" %}
+    <!-- Main Content Tabs -->
+    <div class="kg-main-content row">
+        <div class="col-12">
+            <div class="kg-main-card card">
+                <div class="kg-card-header card-header">
+                    <ul class="kg-nav-tabs nav nav-tabs card-header-tabs" id="kg_neo4j_tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link active" id="kg_management-tab" data-bs-toggle="tab" data-bs-target="#kg_management" type="button" role="tab">
+                                <i class="fas fa-cogs"></i>Management
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link" id="kg_analytics-tab" data-bs-toggle="tab" data-bs-target="#kg_analytics" type="button" role="tab">
+                                <i class="fas fa-chart-line"></i>Analytics
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link" id="kg_ai_insights-tab" data-bs-toggle="tab" data-bs-target="#kg_ai_insights" type="button" role="tab">
+                                <i class="fas fa-brain"></i>AI Insights
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link" id="kg_data_quality-tab" data-bs-toggle="tab" data-bs-target="#kg_data_quality" type="button" role="tab">
+                                <i class="fas fa-shield-alt"></i>Data Quality
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link" id="kg_schema_ontology-tab" data-bs-toggle="tab" data-bs-target="#kg_schema_ontology" type="button" role="tab">
+                                <i class="fas fa-sitemap"></i>Schema & Ontology
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link" id="kg_integration-tab" data-bs-toggle="tab" data-bs-target="#kg_integration" type="button" role="tab">
+                                <i class="fas fa-link"></i>Integration
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link" id="kg_neo4j_ops-tab" data-bs-toggle="tab" data-bs-target="#kg_neo4j_ops" type="button" role="tab">
+                                <i class="fas fa-database"></i>Neo4j Ops
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="kg-tab-link nav-link" id="kg_advanced-tab" data-bs-toggle="tab" data-bs-target="#kg_advanced" type="button" role="tab">
+                                <i class="fas fa-rocket"></i>Advanced
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="kg-card-body card-body">
+                    <div class="kg-tab-content tab-content" id="kg_neo4j_tab_content">
+                        <!-- Management Tab -->
+                        <div class="kg-tab-pane tab-pane fade show active" id="kg_management" role="tabpanel">
+                            {% include 'kg_neo4j/components/management.html' %}
+                        </div>
 
-    <!-- Analytics Dashboard - Using Modular Component -->
-    {% include "kg_neo4j/components/analytics_dashboard.html" %}
+                        <!-- Analytics Tab -->
+                        <div class="kg-tab-pane tab-pane fade" id="kg_analytics" role="tabpanel">
+                            {% include 'kg_neo4j/components/analytics.html' %}
+                        </div>
 
-    <!-- Main Content Area -->
-    <div class="kg-main-content row g-4">
-        <!-- Left Column - Graph Interface -->
-        <div class="kg-content-left col-lg-8">
-            <!-- Graph Visualization - Using Modular Component -->
-            {% include "kg_neo4j/components/graph_visualization.html" %}
+                        <!-- AI Insights Tab -->
+                        <div class="kg-tab-pane tab-pane fade" id="kg_ai_insights" role="tabpanel">
+                            {% include 'kg_neo4j/components/ai_insights.html' %}
+                        </div>
 
-            <!-- Query Interface - Using Modular Component -->
-            {% include "kg_neo4j/components/query_interface.html" %}
+                        <!-- Data Quality Tab -->
+                        <div class="kg-tab-pane tab-pane fade" id="kg_data_quality" role="tabpanel">
+                            {% include 'kg_neo4j/components/data_quality.html' %}
+                        </div>
+
+                        <!-- Schema & Ontology Tab -->
+                        <div class="kg-tab-pane tab-pane fade" id="kg_schema_ontology" role="tabpanel">
+                            {% include 'kg_neo4j/components/schema_ontology.html' %}
+                        </div>
+
+                        <!-- Integration Tab -->
+                        <div class="kg-tab-pane tab-pane fade" id="kg_integration" role="tabpanel">
+                            {% include 'kg_neo4j/components/integration.html' %}
+                        </div>
+
+                        <!-- Neo4j Operations Tab -->
+                        <div class="kg-tab-pane tab-pane fade" id="kg_neo4j_ops" role="tabpanel">
+                            {% include 'kg_neo4j/components/neo4j_ops.html' %}
+                        </div>
+
+                        <!-- Advanced Operations Tab -->
+                        <div class="kg-tab-pane tab-pane fade" id="kg_advanced" role="tabpanel">
+                            {% include 'kg_neo4j/components/advanced.html' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+</div>
 
-        <!-- Right Column - Tools & Management -->
-        <div class="kg-sidebar col-lg-4">
-            <!-- Data Management - Using Modular Component -->
-            {% include "kg_neo4j/components/data_management.html" %}
+<!-- Graph Details Modal -->
+<div class="modal fade" id="kg_graphDetailsModal" tabindex="-1" aria-labelledby="kg_graphDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="kg_graphDetailsModalLabel">
+                    <i class="fas fa-project-diagram me-2"></i>Graph Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="kg_graphDetailsContent">
+                <!-- Graph details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -75,23 +150,273 @@
 
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script type="module">
     console.log('🧠 Knowledge Graph Template: Loading modular KG system...');
     
     try {
-        // Import the module but don't initialize immediately
-        await import("{{ url_for('static', path='/js/modules/kg_neo4j/index.js') }}?v=2025-01-27-2");
+        const { initKnowledgeGraphModule } = await import("{{ url_for('static', path='/js/modules/kg_neo4j/index.js') }}?v={{ range(1, 1000) | random }}");
         console.log('✅ Knowledge Graph Template: Modular system imported successfully');
         
-        // 🔐 CRITICAL FIX: Don't initialize immediately - wait for post-login orchestrator
-        // This prevents 500 errors by ensuring services are initialized after auth is ready
-        console.log('⏳ Knowledge Graph Template: Waiting for post-login orchestration...');
+        // Initialize the modular Knowledge Graph system
+        await initKnowledgeGraphModule();
+        console.log('✅ Knowledge Graph Template: Modular system initialized');
         
-        // The post-login orchestrator will call window.initializeKGIfNeeded() when ready
+        // Initialize analytics module
+        try {
+            await import("{{ url_for('static', path='/js/modules/kg_neo4j/modules/analytics/index.js') }}?v={{ range(1, 1000) | random }}");
+            console.log('✅ Knowledge Graph Template: Analytics module loaded');
+        } catch (analyticsError) {
+            console.warn('⚠️ Analytics module not available:', analyticsError);
+        }
         
     } catch (error) {
         console.error('❌ Knowledge Graph Template: Modular system failed to load:', error);
+        
+        // Fallback: Initialize basic configuration functionality
+        console.log('🔄 Fallback: Initializing basic configuration functionality...');
+        try {
+            const { ConfigurationManager } = await import("{{ url_for('static', path='/js/modules/kg_neo4j/modules/configuration/index.js') }}?v={{ range(1, 1000) | random }}");
+            const configManager = new ConfigurationManager('/api/kg-neo4j');
+            await configManager.init();
+            window.configurationManager = configManager;
+            console.log('✅ Fallback: Basic configuration functionality initialized');
+        } catch (fallbackError) {
+            console.error('❌ Fallback also failed:', fallbackError);
+        }
     }
 </script>
+<script>
+    // Global functions for HTML onclick handlers
+    function refreshKnowledgeGraphData() {
+        // Trigger data refresh
+        document.dispatchEvent(new CustomEvent('knowledgeGraphRefresh'));
+        console.log('🔄 Refreshing Knowledge Graph data...');
+    }
+
+    function exportKnowledgeGraphData() {
+        // TODO: Implement data export
+        console.log('Export knowledge graph data');
+    }
+
+    function kgShowRelationshipModal(graphId) {
+        // Populate modal with graph data
+        document.getElementById('kg_sourceGraphId').value = graphId;
+        const modal = new bootstrap.Modal(document.getElementById('kg_relationshipModal'));
+        modal.show();
+    }
+
+    function kgShowRelationships(graphId) {
+        // Trigger relationship fetch
+        document.dispatchEvent(new CustomEvent('kgRelationshipFetch', { detail: { graphId } }));
+    }
+
+    function kgViewGraphDetails(graphId) {
+        // Show graph details modal
+        const modal = new bootstrap.Modal(document.getElementById('kg_graphDetailsModal'));
+        modal.show();
+        // TODO: Populate graph details
+    }
+
+    function kgEditGraph(graphId) {
+        // TODO: Implement graph editing
+        console.log('Edit graph:', graphId);
+    }
+
+    function kgSaveAllConfigurations() {
+        if (window.configurationManager) {
+            window.configurationManager.saveAllConfigurations();
+        } else {
+            console.log('Save all configurations');
+        }
+    }
+
+    function kgResetToDefaults() {
+        if (window.configurationManager) {
+            window.configurationManager.resetToDefaults();
+        } else {
+            console.log('Reset to defaults');
+        }
+    }
+
+    // ===== KNOWLEDGE GRAPH MANAGEMENT FUNCTIONS =====
+    
+    // Refresh graph registry data
+    function refreshGraphRegistry() {
+        console.log('🔄 Refreshing graph registry...');
+        // TODO: Implement API call to refresh data
+        document.dispatchEvent(new CustomEvent('kgRefreshRegistry'));
+    }
+
+    // Apply filters to graph registry
+    function applyFilters() {
+        const statusFilter = document.getElementById('status-filter').value;
+        const typeFilter = document.getElementById('type-filter').value;
+        const sourceFilter = document.getElementById('source-filter').value;
+        const lifecycleFilter = document.getElementById('lifecycle-filter').value;
+        const priorityFilter = document.getElementById('priority-filter').value;
+        
+        console.log('🔍 Applying filters:', { statusFilter, typeFilter, sourceFilter, lifecycleFilter, priorityFilter });
+        // TODO: Implement filter logic
+        document.dispatchEvent(new CustomEvent('kgApplyFilters', { 
+            detail: { statusFilter, typeFilter, sourceFilter, lifecycleFilter, priorityFilter } 
+        }));
+    }
+
+    // Bulk operations
+    function bulkUpdateStatus() {
+        const selectedGraphs = getSelectedGraphs();
+        if (selectedGraphs.length === 0) {
+            alert('Please select graphs to update');
+            return;
+        }
+        console.log('📝 Bulk status update for:', selectedGraphs);
+        // TODO: Show status update modal
+    }
+
+    function bulkUpdatePriority() {
+        const selectedGraphs = getSelectedGraphs();
+        if (selectedGraphs.length === 0) {
+            alert('Please select graphs to update');
+            return;
+        }
+        console.log('🚩 Bulk priority update for:', selectedGraphs);
+        // TODO: Show priority update modal
+    }
+
+    function bulkUpdateLifecycle() {
+        const selectedGraphs = getSelectedGraphs();
+        if (selectedGraphs.length === 0) {
+            alert('Please select graphs to update');
+            return;
+        }
+        console.log('🔄 Bulk lifecycle update for:', selectedGraphs);
+        // TODO: Show lifecycle update modal
+    }
+
+    function bulkExport() {
+        const selectedGraphs = getSelectedGraphs();
+        if (selectedGraphs.length === 0) {
+            alert('Please select graphs to export');
+            return;
+        }
+        console.log('📤 Bulk export for:', selectedGraphs);
+        // TODO: Implement bulk export
+    }
+
+    function bulkDelete() {
+        const selectedGraphs = getSelectedGraphs();
+        if (selectedGraphs.length === 0) {
+            alert('Please select graphs to delete');
+            return;
+        }
+        if (confirm(`Are you sure you want to delete ${selectedGraphs.length} graphs?`)) {
+            console.log('🗑️ Bulk delete for:', selectedGraphs);
+            // TODO: Implement bulk delete
+        }
+    }
+
+    // Helper functions
+    function getSelectedGraphs() {
+        const checkboxes = document.querySelectorAll('#graph-registry-table tbody input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    function updateBulkOperationsPanel() {
+        const selectedCount = getSelectedGraphs().length;
+        const bulkPanel = document.getElementById('bulk-operations-panel');
+        const countSpan = document.getElementById('bulk-selection-count');
+        
+        if (selectedCount > 0) {
+            bulkPanel.style.display = 'block';
+            countSpan.textContent = selectedCount;
+        } else {
+            bulkPanel.style.display = 'none';
+        }
+    }
+
+    // Export functions
+    function exportGraphData() {
+        console.log('📤 Exporting all graph data...');
+        // TODO: Implement export functionality
+    }
+
+    function exportManagementReport() {
+        console.log('📊 Exporting management report...');
+        // TODO: Implement report export
+    }
+
+    // Initialize management tab
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up checkbox event listeners for bulk operations
+        const selectAllCheckbox = document.getElementById('select-all-graphs');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('#graph-registry-table tbody input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = this.checked);
+                updateBulkOperationsPanel();
+            });
+        }
+
+        // Set up individual checkbox listeners
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' && e.target.closest('#graph-registry-table')) {
+                updateBulkOperationsPanel();
+            }
+        });
+    });
+
+    // Handle configuration tab clicks
+    function handleKGConfigurationTabClick(tabId) {
+        console.log('🖱️ KG Configuration tab clicked:', tabId);
+        
+        // Hide all configuration tab panes
+        const allPanes = document.querySelectorAll('#kg_configTabContent .tab-pane');
+        allPanes.forEach(pane => {
+            pane.classList.remove('show', 'active');
+        });
+        
+        // Remove active class from all configuration tab buttons
+        const allTabs = document.querySelectorAll('#kg_configTabs .nav-link');
+        allTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Show target tab pane
+        const targetPane = document.querySelector(tabId);
+        if (targetPane) {
+            targetPane.classList.add('show', 'active');
+            console.log('✅ KG Configuration tab switch: Showed', tabId);
+        }
+        
+        // Activate target tab button
+        const targetTab = document.querySelector(`[data-bs-target="${tabId}"]`);
+        if (targetTab) {
+            targetTab.classList.add('active');
+            console.log('✅ KG Configuration tab switch: Activated tab button for', tabId);
+        }
+    }
+
+    // Handle relationship form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const relationshipForm = document.getElementById('kgRelationshipForm');
+        if (relationshipForm) {
+            relationshipForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const sourceGraphId = document.getElementById('kgSourceGraphId').value;
+                const targetGraphId = document.getElementById('kgTargetGraphId').value;
+                const relationshipType = document.getElementById('kgRelationshipType').value;
+                const description = document.getElementById('kgRelationshipDescription').value;
+
+                if (sourceGraphId && targetGraphId && relationshipType) {
+                    createKGRelationship(sourceGraphId, targetGraphId, relationshipType, { description });
+                    relationshipForm.reset();
+                    bootstrap.Modal.getInstance(document.getElementById('kgRelationshipModal')).hide();
+                }
+            });
+        }
+    });
+</script>
+
 {% endblock %} 

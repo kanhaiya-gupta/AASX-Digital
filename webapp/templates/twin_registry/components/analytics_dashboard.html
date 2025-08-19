@@ -1,6 +1,6 @@
 <!-- Analytics Dashboard Component -->
 <div class="tr-analytics-dashboard">
-    <!-- Analytics Header -->
+    <!-- Premium Header -->
     <div class="tr-analytics-header">
         <div class="tr-header-content">
             <div class="tr-header-info">
@@ -8,20 +8,21 @@
                     <i class="fas fa-chart-bar"></i>
                     Registry Analytics
                 </h5>
-                <p class="tr-header-subtitle">Comprehensive insights and performance metrics</p>
+                <p class="tr-header-subtitle">Comprehensive insights, performance metrics, and business intelligence for your digital twin ecosystem</p>
             </div>
             <div class="tr-header-actions">
-                <select class="tr-time-filter" id="timeRangeFilter">
+                <select class="tr-time-filter" id="twin_registry_timeRangeFilter">
                     <option value="24h">Last 24 Hours</option>
                     <option value="7d">Last 7 Days</option>
                     <option value="30d" selected>Last 30 Days</option>
                     <option value="90d">Last 90 Days</option>
+                    <option value="1y">Last Year</option>
                 </select>
-                <button class="tr-btn tr-btn-primary" onclick="generateReport()">
+                <button class="tr-btn tr-btn-primary" onclick="twinRegistryGenerateReport()">
                     <i class="fas fa-file-pdf"></i>
                     Generate Report
                 </button>
-                <button class="tr-btn tr-btn-success" onclick="exportData()">
+                <button class="tr-btn tr-btn-success" onclick="twinRegistryExportData()">
                     <i class="fas fa-download"></i>
                     Export Data
                 </button>
@@ -36,11 +37,11 @@
                 <div class="tr-analytics-card tr-analytics-primary">
                     <div class="tr-analytics-content">
                         <div class="tr-analytics-info">
-                            <div class="tr-analytics-value" id="totalTwinsAnalytics">0</div>
+                            <div class="tr-analytics-value" id="twin_registry_totalTwinsAnalytics">0</div>
                             <div class="tr-analytics-label">Total Twins</div>
                             <div class="tr-analytics-trend tr-trend-up">
                                 <i class="fas fa-arrow-up"></i>
-                                <span>+12.5%</span>
+                                <span id="twin_registry_twinGrowthRate">+12.5%</span>
                             </div>
                         </div>
                         <div class="tr-analytics-icon">
@@ -57,11 +58,11 @@
                 <div class="tr-analytics-card tr-analytics-success">
                     <div class="tr-analytics-content">
                         <div class="tr-analytics-info">
-                            <div class="tr-analytics-value" id="avgHealthScore">0%</div>
+                            <div class="tr-analytics-value" id="twin_registry_avgHealthScore">0%</div>
                             <div class="tr-analytics-label">Avg Health Score</div>
                             <div class="tr-analytics-trend tr-trend-up">
                                 <i class="fas fa-arrow-up"></i>
-                                <span>+3.2%</span>
+                                <span id="twin_registry_healthTrend">+3.2%</span>
                             </div>
                         </div>
                         <div class="tr-analytics-icon">
@@ -78,15 +79,15 @@
                 <div class="tr-analytics-card tr-analytics-info">
                     <div class="tr-analytics-content">
                         <div class="tr-analytics-info">
-                            <div class="tr-analytics-value" id="totalEvents">0</div>
-                            <div class="tr-analytics-label">Total Events</div>
-                            <div class="tr-analytics-trend tr-trend-up">
-                                <i class="fas fa-arrow-up"></i>
-                                <span>+8.7%</span>
+                            <div class="tr-analytics-value" id="twin_registry_avgResponseTime">0ms</div>
+                            <div class="tr-analytics-label">Avg Response Time</div>
+                            <div class="tr-analytics-trend tr-trend-down">
+                                <i class="fas fa-arrow-down"></i>
+                                <span id="twin_registry_responseTimeTrend">-5.2ms</span>
                             </div>
                         </div>
                         <div class="tr-analytics-icon">
-                            <i class="fas fa-calendar-alt"></i>
+                            <i class="fas fa-tachometer-alt"></i>
                         </div>
                     </div>
                     <div class="tr-analytics-progress">
@@ -99,11 +100,11 @@
                 <div class="tr-analytics-card tr-analytics-warning">
                     <div class="tr-analytics-content">
                         <div class="tr-analytics-info">
-                            <div class="tr-analytics-value" id="uptimePercentage">0%</div>
-                            <div class="tr-analytics-label">Uptime</div>
+                            <div class="tr-analytics-value" id="twin_registry_uptimePercentage">0%</div>
+                            <div class="tr-analytics-label">System Uptime</div>
                             <div class="tr-analytics-trend tr-trend-up">
                                 <i class="fas fa-arrow-up"></i>
-                                <span>+1.2%</span>
+                                <span id="twin_registry_uptimeTrend">+1.2%</span>
                             </div>
                         </div>
                         <div class="tr-analytics-icon">
@@ -118,87 +119,483 @@
         </div>
     </div>
 
-    <!-- Analytics Charts Section -->
-    <div class="tr-analytics-charts">
-        <div class="row mb-4">
-            <div class="col-lg-6 mb-3">
-                <div class="tr-chart-card">
-                    <div class="tr-card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chart-line"></i>
-                            Twin Growth Trend
-                        </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Live
-                        </div>
-                    </div>
-                    <div class="tr-card-body">
-                        <div class="chart-container large">
-                            <canvas id="twinGrowthChart"></canvas>
-                        </div>
+    <!-- Performance Analytics Dashboard -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-tachometer-alt"></i>
+                Performance Analytics
+            </h6>
+            <div class="tr-performance-filters">
+                <select class="tr-filter-select" id="twin_registry_performanceMetric">
+                    <option value="response_time">Response Time</option>
+                    <option value="throughput">Throughput</option>
+                    <option value="error_rate">Error Rate</option>
+                    <option value="availability">Availability</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshPerformance">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_performanceAnalyticsChart"></canvas>
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-lg-6 mb-3">
-                <div class="tr-chart-card">
-                    <div class="tr-card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chart-pie"></i>
-                            Health Score Distribution
-                        </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Real-time
+                <div class="col-lg-6">
+                    <div class="tr-performance-metrics">
+                        <div class="tr-metric-item">
+                            <div class="tr-metric-label">Current Response Time</div>
+                            <div class="tr-metric-value" id="twin_registry_currentResponseTime">0ms</div>
+                            <div class="tr-metric-trend tr-trend-down">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>12% faster</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="tr-card-body">
-                        <div class="chart-container large">
-                            <canvas id="healthDistributionChart"></canvas>
+                        <div class="tr-metric-item">
+                            <div class="tr-metric-label">Throughput (ops/sec)</div>
+                            <div class="tr-metric-value" id="twin_registry_currentThroughput">0</div>
+                            <div class="tr-metric-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8%</span>
+                            </div>
+                        </div>
+                        <div class="tr-metric-item">
+                            <div class="tr-metric-label">Error Rate</div>
+                            <div class="tr-metric-value" id="twin_registry_currentErrorRate">0%</div>
+                            <div class="tr-metric-trend tr-trend-down">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>-15%</span>
+                            </div>
+                        </div>
+                        <div class="tr-metric-item">
+                            <div class="tr-metric-label">Availability</div>
+                            <div class="tr-metric-value" id="twin_registry_currentAvailability">0%</div>
+                            <div class="tr-metric-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row mb-4">
-            <div class="col-lg-6 mb-3">
-                <div class="tr-chart-card">
-                    <div class="tr-card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chart-bar"></i>
-                            Event Activity
-                        </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Live
-                        </div>
+    <!-- Resource Analytics Dashboard -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-server"></i>
+                Resource Analytics
+            </h6>
+            <div class="tr-resource-filters">
+                <select class="tr-filter-select" id="twin_registry_resourceType">
+                    <option value="cpu">CPU Usage</option>
+                    <option value="memory">Memory Usage</option>
+                    <option value="network">Network Usage</option>
+                    <option value="storage">Storage Usage</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshResources">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_resourceUsageChart"></canvas>
                     </div>
-                    <div class="tr-card-body">
-                        <div class="chart-container large">
-                            <canvas id="eventActivityChart"></canvas>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-resource-metrics">
+                        <div class="tr-resource-metric">
+                            <div class="tr-resource-header">
+                                <i class="fas fa-microchip"></i>
+                                <span>CPU Usage</span>
+                            </div>
+                            <div class="tr-resource-value" id="twin_registry_cpuUsage">0%</div>
+                            <div class="tr-resource-bar">
+                                <div class="tr-resource-fill" id="twin_registry_cpuBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tr-resource-trend">+2.1% from last period</div>
+                        </div>
+                        <div class="tr-resource-metric">
+                            <div class="tr-resource-header">
+                                <i class="fas fa-memory"></i>
+                                <span>Memory Usage</span>
+                            </div>
+                            <div class="tr-resource-value" id="twin_registry_memoryUsage">0%</div>
+                            <div class="tr-resource-bar">
+                                <div class="tr-resource-fill" id="twin_registry_memoryBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tr-resource-trend">+1.3% from last period</div>
+                        </div>
+                        <div class="tr-resource-metric">
+                            <div class="tr-resource-header">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Network Usage</span>
+                            </div>
+                            <div class="tr-resource-value" id="twin_registry_networkUsage">0%</div>
+                            <div class="tr-resource-bar">
+                                <div class="tr-resource-fill" id="twin_registry_networkBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tr-resource-trend">+0.8% from last period</div>
+                        </div>
+                        <div class="tr-resource-metric">
+                            <div class="tr-resource-header">
+                                <i class="fas fa-hdd"></i>
+                                <span>Storage Usage</span>
+                            </div>
+                            <div class="tr-resource-value" id="twin_registry_storageUsage">0%</div>
+                            <div class="tr-resource-bar">
+                                <div class="tr-resource-fill" id="twin_registry_storageBar" style="width: 0%"></div>
+                            </div>
+                            <div class="tr-resource-trend">+1.2% from last period</div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-lg-6 mb-3">
-                <div class="tr-chart-card">
-                    <div class="tr-card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chart-area"></i>
-                            Performance Trends
-                        </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Real-time
+        </div>
+    </div>
+
+    <!-- Quality & Compliance Analytics -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-shield-alt"></i>
+                Quality & Compliance Analytics
+            </h6>
+            <div class="tr-quality-filters">
+                <select class="tr-filter-select" id="twin_registry_qualityMetric">
+                    <option value="data_quality">Data Quality</option>
+                    <option value="compliance">Compliance</option>
+                    <option value="security">Security</option>
+                    <option value="reliability">Reliability</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshQuality">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="tr-quality-score">
+                        <div class="tr-quality-circle">
+                            <div class="tr-quality-value" id="twin_registry_dataQualityScore">0</div>
+                            <div class="tr-quality-label">Data Quality Score</div>
+                        </div>
+                        <div class="tr-quality-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+5.2% from last period</span>
                         </div>
                     </div>
-                    <div class="tr-card-body">
-                        <div class="chart-container large">
-                            <canvas id="performanceTrendsChart"></canvas>
+                </div>
+                <div class="col-lg-4">
+                    <div class="tr-quality-score">
+                        <div class="tr-quality-circle">
+                            <div class="tr-quality-value" id="twin_registry_complianceScore">0</div>
+                            <div class="tr-quality-label">Compliance Score</div>
                         </div>
+                        <div class="tr-quality-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+2.1% from last period</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="tr-quality-score">
+                        <div class="tr-quality-circle">
+                            <div class="tr-quality-value" id="twin_registry_securityScore">0</div>
+                            <div class="tr-quality-label">Security Score</div>
+                        </div>
+                        <div class="tr-quality-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+3.8% from last period</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="chart-container medium">
+                        <canvas id="twin_registry_qualityTrendsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business Intelligence Dashboard -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-chart-line"></i>
+                Business Intelligence
+            </h6>
+            <div class="tr-business-filters">
+                <select class="tr-filter-select" id="twin_registry_businessMetric">
+                    <option value="roi">ROI Metrics</option>
+                    <option value="efficiency">Efficiency Metrics</option>
+                    <option value="cost">Cost Metrics</option>
+                    <option value="value">Value Metrics</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshBusiness">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_businessMetricsChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-business-metrics">
+                        <div class="tr-business-metric">
+                            <div class="tr-business-header">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>ROI</span>
+                            </div>
+                            <div class="tr-business-value" id="twin_registry_roiValue">0%</div>
+                            <div class="tr-business-description">Return on Investment</div>
+                        </div>
+                        <div class="tr-business-metric">
+                            <div class="tr-business-header">
+                                <i class="fas fa-cogs"></i>
+                                <span>Efficiency</span>
+                            </div>
+                            <div class="tr-business-value" id="twin_registry_efficiencyValue">0%</div>
+                            <div class="tr-business-description">Operational Efficiency</div>
+                        </div>
+                        <div class="tr-business-metric">
+                            <div class="tr-business-header">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Cost Savings</span>
+                            </div>
+                            <div class="tr-business-value" id="twin_registry_costSavings">$0</div>
+                            <div class="tr-business-description">Total Cost Savings</div>
+                        </div>
+                        <div class="tr-business-metric">
+                            <div class="tr-business-header">
+                                <i class="fas fa-star"></i>
+                                <span>Value Score</span>
+                            </div>
+                            <div class="tr-business-value" id="twin_registry_valueScore">0</div>
+                            <div class="tr-business-description">Business Value Score</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Analytics Dashboard -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-brain"></i>
+                Advanced Analytics
+            </h6>
+            <div class="tr-advanced-filters">
+                <select class="tr-filter-select" id="twin_registry_advancedMetric">
+                    <option value="predictions">Predictions</option>
+                    <option value="anomalies">Anomaly Detection</option>
+                    <option value="correlations">Correlations</option>
+                    <option value="patterns">Pattern Analysis</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshAdvanced">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="tr-prediction-panel">
+                        <h6 class="tr-panel-title">Predictive Insights</h6>
+                        <div class="tr-prediction-item">
+                            <div class="tr-prediction-icon">
+                                <i class="fas fa-arrow-trend-up"></i>
+                            </div>
+                            <div class="tr-prediction-content">
+                                <div class="tr-prediction-title">Health Score Prediction</div>
+                                <div class="tr-prediction-value">Expected: 87% in 7 days</div>
+                                <div class="tr-prediction-confidence">Confidence: 92%</div>
+                            </div>
+                        </div>
+                        <div class="tr-prediction-item">
+                            <div class="tr-prediction-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="tr-prediction-content">
+                                <div class="tr-prediction-title">Potential Issues</div>
+                                <div class="tr-prediction-value">3 twins may need attention</div>
+                                <div class="tr-prediction-confidence">Confidence: 89%</div>
+                            </div>
+                        </div>
+                        <div class="tr-prediction-item">
+                            <div class="tr-prediction-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="tr-prediction-content">
+                                <div class="tr-prediction-title">Performance Forecast</div>
+                                <div class="tr-prediction-value">Response time: 45ms in 14 days</div>
+                                <div class="tr-prediction-confidence">Confidence: 85%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-anomaly-panel">
+                        <h6 class="tr-panel-title">Anomaly Detection</h6>
+                        <div class="tr-anomaly-item">
+                            <div class="tr-anomaly-severity tr-anomaly-high">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="tr-anomaly-content">
+                                <div class="tr-anomaly-title">High CPU Usage Spike</div>
+                                <div class="twin_registry_anomaly-description">Detected at 14:32 - 15:47</div>
+                                <div class="tr-anomaly-impact">Impact: Medium</div>
+                            </div>
+                        </div>
+                        <div class="tr-anomaly-item">
+                            <div class="tr-anomaly-severity tr-anomaly-medium">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="tr-anomaly-content">
+                                <div class="tr-anomaly-title">Response Time Increase</div>
+                                <div class="tr-anomaly-description">Detected at 09:15 - 10:30</div>
+                                <div class="tr-anomaly-impact">Impact: Low</div>
+                            </div>
+                        </div>
+                        <div class="tr-anomaly-item">
+                            <div class="tr-anomaly-severity tr-anomaly-low">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="tr-anomaly-content">
+                                <div class="tr-anomaly-title">Memory Usage Pattern</div>
+                                <div class="tr-anomaly-description">Detected at 16:00 - 17:15</div>
+                                <div class="tr-anomaly-impact">Impact: Minimal</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Analytics Dashboard -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-broadcast-tower"></i>
+                Real-time Analytics
+            </h6>
+            <div class="tr-realtime-controls">
+                <div class="tr-live-indicator">
+                    <i class="fas fa-circle"></i>
+                    <span>Live</span>
+                </div>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_toggleRealtime">
+                    <i class="fas fa-pause"></i>
+                    Pause
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_realtimeChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-realtime-metrics">
+                        <div class="tr-realtime-metric">
+                            <div class="tr-realtime-header">Live Response Time</div>
+                            <div class="tr-realtime-value" id="twin_registry_liveResponseTime">0ms</div>
+                            <div class="tr-realtime-trend">Trending down</div>
+                        </div>
+                        <div class="tr-realtime-metric">
+                            <div class="tr-realtime-header">Active Connections</div>
+                            <div class="tr-realtime-value" id="twin_registry_activeConnections">0</div>
+                            <div class="tr-realtime-trend">Stable</div>
+                        </div>
+                        <div class="tr-realtime-metric">
+                            <div class="tr-realtime-header">Current Load</div>
+                            <div class="tr-realtime-value" id="twin_registry_currentLoad">0%</div>
+                            <div class="tr-realtime-trend">Normal</div>
+                        </div>
+                        <div class="tr-realtime-metric">
+                            <div class="tr-realtime-header">System Status</div>
+                            <div class="tr-realtime-value tr-status-healthy">Healthy</div>
+                            <div class="tr-realtime-trend">All systems operational</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparative Analytics Dashboard -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-balance-scale"></i>
+                Comparative Analytics
+            </h6>
+            <div class="tr-comparison-controls">
+                <select class="tr-filter-select" id="twin_registry_comparisonMetric">
+                    <option value="performance">Performance</option>
+                    <option value="health">Health</option>
+                    <option value="efficiency">Efficiency</option>
+                    <option value="quality">Quality</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshComparison">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-12">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_comparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="tr-comparison-table">
+                        <table class="tr-twin-table">
+                            <thead>
+                                <tr>
+                                    <th>Twin Name</th>
+                                    <th>Performance Score</th>
+                                    <th>Health Score</th>
+                                    <th>Efficiency</th>
+                                    <th>Quality</th>
+                                    <th>Rank</th>
+                                </tr>
+                            </thead>
+                            <tbody id="twin_registry_comparisonTableBody">
+                                <!-- Comparison data will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -210,14 +607,14 @@
         <div class="tr-section-header">
             <h6 class="tr-section-title">
                 <i class="fas fa-table"></i>
-                Usage Statistics
+                Comprehensive Usage Statistics
             </h6>
             <div class="tr-section-actions">
-                <button class="tr-btn tr-btn-refresh" id="refreshStatsBtn">
+                <button class="tr-btn tr-btn-refresh" id="twin_registry_refreshStatsBtn">
                     <i class="fas fa-sync-alt"></i>
                     Refresh
                 </button>
-                <button class="tr-btn tr-btn-primary" id="exportStatsBtn">
+                <button class="tr-btn tr-btn-primary" id="twin_registry_exportStatsBtn">
                     <i class="fas fa-download"></i>
                     Export
                 </button>
@@ -229,14 +626,15 @@
                 <table class="tr-stats-table">
                     <thead>
                         <tr>
-                            <th>Metric</th>
-                            <th>Current</th>
+                            <th>Metric Category</th>
+                            <th>Current Value</th>
                             <th>Previous Period</th>
                             <th>Change</th>
                             <th>Trend</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody id="usageStatsTable">
+                    <tbody id="twin_registry_usageStatsTable">
                         <!-- Usage statistics will be populated here -->
                     </tbody>
                 </table>

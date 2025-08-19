@@ -388,7 +388,15 @@ export default class TwinInstanceManager {
      */
     updateAuthState() {
         if (window.authManager) {
-            this.isAuthenticated = window.authManager.isAuthenticated();
+            // Check if new auth system is available
+            if (typeof window.authManager.getSessionInfo === 'function') {
+                const sessionInfo = window.authManager.getSessionInfo();
+                this.isAuthenticated = sessionInfo && sessionInfo.isAuthenticated;
+            } else if (typeof window.authManager.isAuthenticated === 'function') {
+                this.isAuthenticated = window.authManager.isAuthenticated();
+            } else {
+                this.isAuthenticated = false;
+            }
             this.currentUser = null; // User info not needed currently
             this.authToken = window.authManager.getStoredToken();
             console.log('🔐 Twin Instance Manager: Auth state updated', {
@@ -451,5 +459,76 @@ export default class TwinInstanceManager {
         this.instances.clear();
         this.isInitialized = false;
         console.log('🧹 Twin Instance Manager cleaned up');
+    }
+    
+    /**
+     * Load instances data for UI display
+     */
+    async loadInstancesData() {
+        try {
+            console.log('🔧 Loading instances data...');
+            
+            // Get twins data to calculate instances metrics
+            const response = await fetch('/api/twin-registry/twins', {
+                headers: this.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const twins = data.twins || [];
+                
+                // Calculate instances metrics
+                const instancesData = {
+                    totalTwins: twins.length,
+                    activeInstances: twins.filter(t => t.operational_status === 'running').length,
+                    instanceTypes: this.calculateInstanceTypeDistribution(twins)
+                };
+                
+                this.instancesData = instancesData;
+                
+                console.log('✅ Instances data loaded:', instancesData);
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to load instances data:', error);
+        }
+    }
+    
+    /**
+     * Update instances UI with loaded data
+     */
+    async updateInstancesUI() {
+        try {
+            console.log('🔧 Updating instances UI...');
+            
+            // Update instances dashboard elements
+            if (this.instancesData) {
+                const data = this.instancesData;
+                
+                // Update overview metrics
+                const totalTwinsElement = document.getElementById('twin_registry_instances_totalTwins');
+                const activeInstancesElement = document.getElementById('twin_registry_instances_activeInstances');
+                
+                if (totalTwinsElement) totalTwinsElement.textContent = data.totalTwins;
+                if (activeInstancesElement) activeInstancesElement.textContent = data.activeInstances;
+            }
+            
+            console.log('✅ Instances UI updated');
+            
+        } catch (error) {
+            console.error('❌ Failed to update instances UI:', error);
+        }
+    }
+    
+    /**
+     * Calculate instance type distribution
+     */
+    calculateInstanceTypeDistribution(twins) {
+        const distribution = {};
+        twins.forEach(twin => {
+            const type = twin.twin_type || 'Unknown';
+            distribution[type] = (distribution[type] || 0) + 1;
+        });
+        return distribution;
     }
 } 

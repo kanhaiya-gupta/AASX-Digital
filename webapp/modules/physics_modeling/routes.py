@@ -31,7 +31,8 @@ from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.project_repository import ProjectRepository
-from src.shared.services.digital_twin_service import DigitalTwinService
+# Migrated to new twin registry system
+from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from pathlib import Path
 
 # Create data directory and set database path
@@ -47,12 +48,12 @@ db_manager = BaseDatabaseManager(connection_manager)
 file_repository = FileRepository(db_manager)
 project_repository = ProjectRepository(db_manager)
 
-# Initialize shared services
-digital_twin_service = DigitalTwinService(db_manager, file_repository, project_repository)
+# Initialize shared services - migrated to new twin registry system
+twin_registry_service = CoreTwinRegistryService()
 
 # Initialize physics modeling services with database manager
-physics_model_service = PhysicsModelService(db_manager, digital_twin_service)
-simulation_service = SimulationService(db_manager, digital_twin_service)
+physics_model_service = PhysicsModelService(db_manager, twin_registry_service)
+simulation_service = SimulationService(db_manager, twin_registry_service)
 validation_service = ValidationService()
 use_case_service = UseCaseService()
 

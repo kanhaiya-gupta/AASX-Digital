@@ -31,7 +31,8 @@ from .services.organization_service import FederatedLearningOrganizationService
 
 # Import shared services and database managers (following twin_registry pattern)
 from src.federated_learning.core.federated_learning_service import FederatedLearningService
-from src.shared.services.digital_twin_service import DigitalTwinService
+# Migrated to new twin registry system
+from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
@@ -55,12 +56,13 @@ db_manager = BaseDatabaseManager(connection_manager)
 # Create shared service instances
 file_repo = FileRepository(db_manager)
 project_repo = ProjectRepository(db_manager)
-digital_twin_service = DigitalTwinService(db_manager, file_repo, project_repo)
-federated_learning_service = FederatedLearningService(digital_twin_service)
+# Migrated to new twin registry system
+twin_registry_service = CoreTwinRegistryService()
+federated_learning_service = FederatedLearningService(twin_registry_service)
 
 # Initialize federated learning services
 federation_service = FederationService(db_manager, digital_twin_service, federated_learning_service)
-twin_performance_service = TwinPerformanceService(db_manager, digital_twin_service, federated_learning_service)
+twin_performance_service = TwinPerformanceService(db_manager, twin_registry_service, federated_learning_service)
 insights_service = InsightsService(db_manager, digital_twin_service, federated_learning_service)
 monitoring_service = MonitoringService(db_manager, digital_twin_service, federated_learning_service)
 

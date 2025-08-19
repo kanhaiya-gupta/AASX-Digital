@@ -7,8 +7,8 @@ export default class LifecycleOperations {
     constructor(apiBaseUrl) {
         this.apiBaseUrl = apiBaseUrl;
         this.endpoints = {
-            start: '/twins/{twin_id}/lifecycle/start',
-            stop: '/twins/{twin_id}/lifecycle/stop',
+            // Note: Start/stop operations are handled by AASX-ETL integration
+            // This registry only provides monitoring and sync operations
             sync: '/twins/{twin_id}/lifecycle/sync'
         };
         this.activeOperations = new Map();
@@ -33,50 +33,24 @@ export default class LifecycleOperations {
         }
     }
 
+    /**
+     * Start a twin
+     * Note: Twin start operations are handled by AASX-ETL integration
+     * This registry only provides monitoring and sync operations
+     */
     async startTwin(twinId, user = 'system') {
-        try {
-            if (this.activeOperations.has(twinId)) {
-                throw new Error(`Operation already in progress for twin ${twinId}`);
-            }
-
-            this.activeOperations.set(twinId, 'starting');
-
-            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.start.replace('{twin_id}', twinId)}?user=${user}`, {
-                method: 'POST',
-                headers: this.getAuthHeaders()
-            });
-
-            const result = await response.json();
-            this.activeOperations.delete(twinId);
-            return result;
-
-        } catch (error) {
-            this.activeOperations.delete(twinId);
-            throw error;
-        }
+        console.log('⚠️ Twin start operations are handled by AASX-ETL integration');
+        return { success: false, message: 'Twin start operations are handled by AASX-ETL integration' };
     }
 
+    /**
+     * Stop a twin
+     * Note: Twin stop operations are handled by AASX-ETL integration
+     * This registry only provides monitoring and sync operations
+     */
     async stopTwin(twinId, user = 'system') {
-        try {
-            if (this.activeOperations.has(twinId)) {
-                throw new Error(`Operation already in progress for twin ${twinId}`);
-            }
-
-            this.activeOperations.set(twinId, 'stopping');
-
-            const response = await fetch(`${this.apiBaseUrl}${this.endpoints.stop.replace('{twin_id}', twinId)}?user=${user}`, {
-                method: 'POST',
-                headers: this.getAuthHeaders()
-            });
-
-            const result = await response.json();
-            this.activeOperations.delete(twinId);
-            return result;
-
-        } catch (error) {
-            this.activeOperations.delete(twinId);
-            throw error;
-        }
+        console.log('⚠️ Twin stop operations are handled by AASX-ETL integration');
+        return { success: false, message: 'Twin stop operations are handled by AASX-ETL integration' };
     }
 
     async syncTwin(twinId, syncData = {}, user = 'system') {
@@ -225,5 +199,47 @@ export default class LifecycleOperations {
         // Clear any cached data that might be user-specific
         this.activeOperations.clear();
         console.log('🧹 Lifecycle Operations: Sensitive data cleared');
+    }
+
+    /**
+     * Get lifecycle status for a twin
+     */
+    async getTwinLifecycleStatus(twinId) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/twins/${twinId}/lifecycle/status`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting twin lifecycle status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get lifecycle events for a twin
+     */
+    async getTwinLifecycleEvents(twinId, limit = 10) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/twins/${twinId}/lifecycle/events?limit=${limit}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting twin lifecycle events:', error);
+            throw error;
+        }
     }
 }

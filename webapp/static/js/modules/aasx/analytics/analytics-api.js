@@ -28,11 +28,23 @@ class AnalyticsAPI {
      */
     async init() {
         try {
+            console.log('🔄 Analytics Service: Starting initialization...');
+            
             // Wait for global auth manager to be ready first
             await this.waitForAuthManager();
             
+            // Update auth state
+            this.updateAuthState();
+            
+            console.log('🔐 Analytics Service: Auth state after init:', {
+                isAuthenticated: this.isAuthenticated,
+                currentUser: this.currentUser
+            });
+            
             // Test connection to analytics health endpoint
+            console.log('🏥 Analytics Service: Testing health endpoint...');
             const healthResponse = await this.makeRequest(`${this.analyticsUrl}/health`);
+            
             if (healthResponse.success) {
                 this.isInitialized = true;
                 console.log('✅ Analytics service initialized successfully');
@@ -53,8 +65,8 @@ class AnalyticsAPI {
     async waitForAuthManager() {
         console.log('🔐 Analytics Service: Waiting for global auth manager...');
         
-        // Wait for global auth manager to be ready
-        while (!window.authManager) {
+        // Wait for either authManager or CoreModule.authUI to be ready
+        while (!window.authManager && !(window.CoreModule && window.CoreModule.components && window.CoreModule.components.authUI)) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         
@@ -79,15 +91,25 @@ class AnalyticsAPI {
      * Update authentication state from global auth manager
      */
     updateAuthState() {
-        if (!window.authManager) return;
-        
         try {
-            const sessionInfo = window.authManager.getSessionInfo();
-            console.log('🔐 Analytics Service: Auth state update:', sessionInfo);
+            let sessionInfo = null;
             
-            // Update local state based on global auth manager
-            this.isAuthenticated = sessionInfo.isAuthenticated;
-            this.currentUser = sessionInfo.user;
+            // Try CoreModule.authUI first (newer system)
+            if (window.CoreModule && window.CoreModule.components && window.CoreModule.components.authUI) {
+                sessionInfo = window.CoreModule.components.authUI.getAuthState();
+                console.log('🔐 Analytics Service: Auth state update from CoreModule:', sessionInfo);
+            }
+            // Fallback to authManager (legacy system)
+            else if (window.authManager) {
+                sessionInfo = window.authManager.getSessionInfo();
+                console.log('🔐 Analytics Service: Auth state update from authManager:', sessionInfo);
+            }
+            
+            if (sessionInfo) {
+                // Update local state based on auth manager
+                this.isAuthenticated = sessionInfo.isAuthenticated;
+                this.currentUser = sessionInfo.user || sessionInfo.currentUser;
+            }
             
         } catch (error) {
             console.warn('⚠️ Analytics Service: Error updating auth state:', error);
@@ -98,22 +120,35 @@ class AnalyticsAPI {
      * Get current authentication state from global auth manager
      */
     getCurrentAuthState() {
-        // Try multiple ways to get the auth state
-        if (window.authSystemManager && window.authSystemManager.authManager) {
-            const state = window.authSystemManager.authManager.getCurrentState();
-            console.log('🔐 Analytics Service: Got auth state from authSystemManager:', state);
-            return state;
+        try {
+            // Try CoreModule.authUI first (newer system)
+            if (window.CoreModule && window.CoreModule.components && window.CoreModule.components.authUI) {
+                const state = window.CoreModule.components.authUI.getAuthState();
+                console.log('🔐 Analytics Service: Got auth state from CoreModule:', state);
+                return state;
+            }
+            
+            // Try authSystemManager (legacy system)
+            if (window.authSystemManager && window.authSystemManager.authManager) {
+                const state = window.authSystemManager.authManager.getCurrentState();
+                console.log('🔐 Analytics Service: Got auth state from authSystemManager:', state);
+                return state;
+            }
+            
+            // Fallback: check if we have a stored token
+            const token = this.getStoredToken();
+            if (token) {
+                console.log('🔐 Analytics Service: Using fallback auth state (token exists)');
+                return { isAuthenticated: true, user: { username: 'authenticated_user' } };
+            }
+            
+            console.log('🔐 Analytics Service: No auth state available, defaulting to unauthenticated');
+            return { isAuthenticated: false, user: null };
+            
+        } catch (error) {
+            console.warn('⚠️ Analytics Service: Error getting auth state:', error);
+            return { isAuthenticated: false, user: null };
         }
-        
-        // Fallback: check if we have a stored token
-        const token = this.getStoredToken();
-        if (token) {
-            console.log('🔐 Analytics Service: Using fallback auth state (token exists)');
-            return { isAuthenticated: true, user: { username: 'authenticated_user' } };
-        }
-        
-        console.log('🔐 Analytics Service: No auth state available, defaulting to unauthenticated');
-        return { isAuthenticated: false, user: null };
     }
 
     /**
@@ -144,12 +179,21 @@ class AnalyticsAPI {
      */
     getStoredToken() {
         try {
-            // Try to get token from auth manager first
-            if (window.authManager && typeof window.authManager.getStoredToken === 'function') {
-                return window.authManager.getStoredToken();
+            // Try CoreModule.authUI first (newer system)
+            if (window.CoreModule && window.CoreModule.components && window.CoreModule.components.authUI) {
+                const authState = window.CoreModule.components.authUI.getAuthState();
+                if (authState && authState.authToken) {
+                    console.log('🔐 Analytics Service: Got token from CoreModule');
+                    return authState.authToken;
+                }
             }
             
-            // Fallback to localStorage
+            // Use the shared auth helper
+            if (window.getAuthToken) {
+                return window.getAuthToken();
+            }
+            
+            // Fallback to direct storage access
             return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
         } catch (error) {
             console.warn('⚠️ Could not retrieve stored token:', error);
@@ -168,13 +212,20 @@ class AnalyticsAPI {
                 ...options
             };
 
+            console.log(`🌐 Analytics Service: Making API request to: ${url}`);
+            console.log(`🔐 Analytics Service: Request headers:`, defaultOptions.headers);
+            console.log(`🔐 Analytics Service: Auth state:`, this.getCurrentAuthState());
+
             const response = await fetch(url, defaultOptions);
+            
+            console.log(`📡 Analytics Service: Response status: ${response.status}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
+            console.log(`✅ Analytics Service: API response received:`, data);
             return data;
         } catch (error) {
             console.error(`❌ API request failed for ${url}:`, error);

@@ -42,6 +42,7 @@
 .nav-tabs .nav-link:hover i,
 .nav-tabs .nav-link.active i {
     opacity: 1;
+    color: #ffffff !important;
 }
 
 /* Card header background for better contrast */
@@ -94,10 +95,80 @@
     }
     
     .nav-tabs .nav-link:hover {
-        background-color: rgba(255, 255, 255, 0.2);
+        color: #0d6efd !important;
+        background-color: rgba(13, 110, 253, 0.2);
     }
     
     .nav-tabs .nav-link.active {
-        background-color: rgba(255, 255, 255, 0.25);
+        color: #0d6efd !important;
+        background-color: rgba(13, 110, 253, 0.25);
     }
+    
+    .nav-tabs .nav-link i {
+        color: #ffffff !important;
+    }
+    
+    .nav-tabs .nav-link:hover i,
+    .nav-tabs .nav-link.active i {
+        color: #0d6efd !important;
+    }
+}
+
+/* ===== CONFIGURATION SUB-TABS SPECIFIC STYLING ===== */
+/* Ensure configuration sub-tabs have visible text */
+.tr-configuration-tabs .nav-tabs .nav-link {
+    color: #495057 !important; /* Dark text for visibility */
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+}
+
+.tr-configuration-tabs .nav-tabs .nav-link:hover {
+    color: #0d6efd !important;
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: rgba(13, 110, 253, 0.3);
+}
+
+.tr-configuration-tabs .nav-tabs .nav-link.active {
+    color: #0d6efd !important;
+    background-color: rgba(13, 110, 253, 0.15);
+    border-bottom-color: #0d6efd;
+    font-weight: 600;
+}
+
+.tr-configuration-tabs .nav-tabs .nav-link i {
+    color: #495057 !important;
+    margin-right: 0.5rem;
+    opacity: 0.8;
+}
+
+.tr-configuration-tabs .nav-tabs .nav-link:hover i,
+.tr-configuration-tabs .nav-tabs .nav-link.active i {
+    color: #0d6efd !important;
+    opacity: 1;
+}
+
+/* Override any conflicting styles for configuration tabs */
+#twin_registry_configTabs .nav-link {
+    color: #495057 !important;
+}
+
+#twin_registry_configTabs .nav-link:hover {
+    color: #0d6efd !important;
+}
+
+#twin_registry_configTabs .nav-link.active {
+    color: #0d6efd !important;
+}
+
+#twin_registry_configTabs .nav-link i {
+    color: #495057 !important;
+}
+
+#twin_registry_configTabs .nav-link:hover i,
+#twin_registry_configTabs .nav-link.active i {
+    color: #0d6efd !important;
 } 

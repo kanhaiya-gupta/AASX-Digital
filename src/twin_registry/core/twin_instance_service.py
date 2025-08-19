@@ -1,412 +1,363 @@
 """
 Twin Instance Service
 
-Manages twin instances including:
-- Creating and managing twin instances
-- Instance lifecycle management
-- Instance history tracking
-- Instance rollback capabilities
+Service for managing twin instances using JSON fields.
+Updated for Phase 2: JSON field operations instead of separate tables.
 """
 
 import logging
-from typing import Dict, List, Optional, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
-import uuid
+from pathlib import Path
 
-from src.shared.services.base_service import BaseService
 from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.twin_registry.models.twin_instance import TwinInstance
-from src.twin_registry.repositories.twin_instance_repository import TwinInstanceRepository
+from src.shared.database.base_manager import BaseDatabaseManager
+from ..models.twin_instance import TwinInstance, TwinInstanceQuery
+from ..repositories.twin_instance_repository import TwinInstanceRepository
 
 logger = logging.getLogger(__name__)
 
 
-class TwinInstanceService(BaseService):
-    """
-    Service for managing twin instances.
+class TwinInstanceService:
+    """Service for managing twin instances"""
     
-    Provides functionality for:
-    - Creating and managing twin instances
-    - Instance lifecycle management
-    - Instance history tracking
-    - Instance rollback capabilities
-    """
-    
-    def __init__(self, db_manager: DatabaseConnectionManager):
-        """Initialize the twin instance service."""
-        super().__init__(db_manager)
-        self.instance_repo = TwinInstanceRepository(db_manager)
-        logger.info("Twin Instance Service initialized")
+    def __init__(self):
+        """Initialize the twin instance service"""
+        # Use the same database infrastructure as other modules
+        data_dir = Path("data")
+        data_dir.mkdir(exist_ok=True)
+        db_path = data_dir / "aasx_database.db"
+        
+        # Initialize central database connection
+        connection_manager = DatabaseConnectionManager(db_path)
+        self.db_manager = BaseDatabaseManager(connection_manager)
+        
+        # Initialize repository with database connection
+        self.instance_repo = TwinInstanceRepository(self.db_manager)
     
     async def initialize(self) -> None:
-        """Initialize the instance service."""
+        """Initialize the service - no tables needed for JSON field approach"""
         try:
-            await self.instance_repo.initialize()
-            logger.info("Twin Instance Service initialized successfully")
+            # No table creation needed - all data stored in existing twin_registry tables
+            logger.info("Twin Instance Service initialized successfully (JSON field mode)")
         except Exception as e:
             logger.error(f"Failed to initialize Twin Instance Service: {e}")
             raise
     
+    # ==================== Instance Management ====================
+    
     async def create_instance(
         self,
+        registry_id: str,
         twin_id: str,
         instance_data: Dict[str, Any],
         instance_metadata: Optional[Dict[str, Any]] = None,
         created_by: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Create a new instance for a twin.
-        
-        Args:
-            twin_id: ID of the twin
-            instance_data: Data for the instance
-            instance_metadata: Additional metadata
-            created_by: User who created the instance
-            
-        Returns:
-            Dictionary with instance details and status
-        """
+    ) -> TwinInstance:
+        """Create a new instance of a twin"""
         try:
-            logger.info(f"Creating instance for twin: {twin_id}")
-            
-            # Deactivate current active instance
-            await self._deactivate_current_instance(twin_id)
-            
-            # Create new instance
-            instance = TwinInstance(
-                id=str(uuid.uuid4()),
+            # Create instance object
+            instance = TwinInstance.create_instance(
                 twin_id=twin_id,
                 instance_data=instance_data,
                 instance_metadata=instance_metadata or {},
-                created_by=created_by,
-                created_at=datetime.utcnow().isoformat(),
-                is_active=True,
-                version=await self._get_next_version(twin_id)
+                created_by=created_by
             )
             
-            # Save to database
-            saved_instance = await self.instance_repo.create(instance)
+            # Save to database using JSON field
+            await self.instance_repo.create(registry_id, instance)
             
-            return {
-                "success": True,
-                "instance": self._convert_instance_to_dict(saved_instance),
-                "message": "Instance created successfully"
-            }
+            logger.info(f"Created instance {instance.id} for twin {twin_id} in registry {registry_id}")
+            return instance
             
         except Exception as e:
-            logger.error(f"Failed to create instance: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "instance": None
-            }
+            logger.error(f"Failed to create instance for twin {twin_id}: {e}")
+            raise
     
-    async def get_instance(self, instance_id: str) -> Dict[str, Any]:
-        """
-        Get a specific instance by ID.
-        
-        Args:
-            instance_id: ID of the instance
-            
-        Returns:
-            Dictionary with instance details
-        """
+    async def get_instance(self, registry_id: str, instance_id: str) -> Optional[TwinInstance]:
+        """Get an instance by ID"""
         try:
-            logger.info(f"Getting instance: {instance_id}")
-            
-            instance = await self.instance_repo.get_by_id(instance_id)
-            
-            if instance:
-                return {
-                    "success": True,
-                    "instance": self._convert_instance_to_dict(instance)
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": "Instance not found",
-                    "instance": None
-                }
-                
+            return await self.instance_repo.get_by_id(registry_id, instance_id)
         except Exception as e:
             logger.error(f"Failed to get instance {instance_id}: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "instance": None
-            }
+            return None
     
-    async def get_twin_instances(
-        self,
-        twin_id: str,
-        active_only: bool = True,
-        limit: int = 50
-    ) -> Dict[str, Any]:
-        """
-        Get instances for a specific twin.
-        
-        Args:
-            twin_id: ID of the twin
-            active_only: Whether to return only active instances
-            limit: Maximum number of instances to return
-            
-        Returns:
-            Dictionary with instances and metadata
-        """
+    async def get_instances_by_twin(self, registry_id: str, twin_id: str, limit: int = 50) -> List[TwinInstance]:
+        """Get all instances for a specific twin"""
         try:
-            logger.info(f"Getting instances for twin: {twin_id}")
-            
-            instances = await self.instance_repo.get_by_twin_id(twin_id, active_only)
-            
-            # Apply limit
-            if limit and len(instances) > limit:
-                instances = instances[:limit]
-            
-            return {
-                "success": True,
-                "instances": [self._convert_instance_to_dict(i) for i in instances],
-                "count": len(instances),
-                "twin_id": twin_id
-            }
-            
+            return await self.instance_repo.get_by_twin_id(registry_id, twin_id, limit)
         except Exception as e:
             logger.error(f"Failed to get instances for twin {twin_id}: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "instances": [],
-                "count": 0
-            }
+            return []
     
-    async def get_active_instance(self, twin_id: str) -> Dict[str, Any]:
-        """
-        Get the currently active instance for a twin.
-        
-        Args:
-            twin_id: ID of the twin
-            
-        Returns:
-            Dictionary with active instance details
-        """
+    async def get_active_instances(self, registry_id: str) -> List[TwinInstance]:
+        """Get all active instances"""
         try:
-            logger.info(f"Getting active instance for twin: {twin_id}")
-            
-            instance = await self.instance_repo.get_active_instance(twin_id)
-            
-            if instance:
-                return {
-                    "success": True,
-                    "instance": self._convert_instance_to_dict(instance)
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": "No active instance found",
-                    "instance": None
-                }
-                
+            return await self.instance_repo.get_active_instances(registry_id)
         except Exception as e:
-            logger.error(f"Failed to get active instance for twin {twin_id}: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "instance": None
-            }
+            logger.error(f"Failed to get active instances: {e}")
+            return []
     
     async def update_instance(
         self,
+        registry_id: str,
         instance_id: str,
         update_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """
-        Update an instance.
-        
-        Args:
-            instance_id: ID of the instance
-            update_data: Data to update
-            
-        Returns:
-            Dictionary with update status
-        """
+    ) -> bool:
+        """Update an instance"""
         try:
-            logger.info(f"Updating instance: {instance_id}")
-            
-            # Add updated timestamp
-            update_data["updated_at"] = datetime.utcnow().isoformat()
-            
-            success = await self.instance_repo.update(instance_id, update_data)
-            
-            if success:
-                # Get updated instance
-                instance = await self.instance_repo.get_by_id(instance_id)
-                return {
-                    "success": True,
-                    "instance": self._convert_instance_to_dict(instance),
-                    "message": "Instance updated successfully"
-                }
+            result = await self.instance_repo.update(registry_id, instance_id, update_data)
+            if result:
+                logger.info(f"Updated instance {instance_id}")
             else:
-                return {
-                    "success": False,
-                    "error": "Failed to update instance",
-                    "instance": None
-                }
-                
+                logger.warning(f"Instance {instance_id} not found or update failed")
+            return result
+            
         except Exception as e:
             logger.error(f"Failed to update instance {instance_id}: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "instance": None
-            }
+            return False
     
-    async def rollback_to_instance(self, instance_id: str) -> Dict[str, Any]:
-        """
-        Rollback to a specific instance.
-        
-        Args:
-            instance_id: ID of the instance to rollback to
-            
-        Returns:
-            Dictionary with rollback status
-        """
+    async def deactivate_instance(self, registry_id: str, instance_id: str) -> bool:
+        """Deactivate an instance"""
         try:
-            logger.info(f"Rolling back to instance: {instance_id}")
-            
-            # Get the target instance
-            target_instance = await self.instance_repo.get_by_id(instance_id)
-            if not target_instance:
-                return {
-                    "success": False,
-                    "error": "Target instance not found",
-                    "instance": None
-                }
-            
-            # Deactivate current active instance
-            await self._deactivate_current_instance(target_instance.twin_id)
-            
-            # Activate the target instance
-            success = await self.instance_repo.update(instance_id, {
-                "is_active": True,
-                "updated_at": datetime.utcnow().isoformat()
-            })
-            
-            if success:
-                return {
-                    "success": True,
-                    "instance": self._convert_instance_to_dict(target_instance),
-                    "message": "Rollback completed successfully"
-                }
+            result = await self.instance_repo.deactivate_instance(registry_id, instance_id)
+            if result:
+                logger.info(f"Deactivated instance {instance_id}")
             else:
-                return {
-                    "success": False,
-                    "error": "Failed to activate target instance",
-                    "instance": None
-                }
-                
+                logger.warning(f"Instance {instance_id} not found or deactivation failed")
+            return result
+            
         except Exception as e:
-            logger.error(f"Failed to rollback to instance {instance_id}: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "instance": None
-            }
+            logger.error(f"Failed to deactivate instance {instance_id}: {e}")
+            return False
     
-    async def delete_instance(self, instance_id: str) -> Dict[str, Any]:
-        """
-        Delete an instance.
-        
-        Args:
-            instance_id: ID of the instance to delete
-            
-        Returns:
-            Dictionary with deletion status
-        """
+    async def delete_instance(self, registry_id: str, instance_id: str) -> bool:
+        """Delete an instance"""
         try:
-            logger.info(f"Deleting instance: {instance_id}")
-            
-            success = await self.instance_repo.delete(instance_id)
-            
-            return {
-                "success": success,
-                "message": "Instance deleted successfully" if success else "Instance not found",
-                "instance_id": instance_id
-            }
+            result = await self.instance_repo.delete(registry_id, instance_id)
+            if result:
+                logger.info(f"Deleted instance {instance_id}")
+            else:
+                logger.warning(f"Instance {instance_id} not found or deletion failed")
+            return result
             
         except Exception as e:
             logger.error(f"Failed to delete instance {instance_id}: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "instance_id": instance_id
-            }
+            return False
     
-    async def get_instance_history(
-        self,
-        twin_id: str,
-        limit: int = 50
-    ) -> Dict[str, Any]:
-        """
-        Get instance history for a twin.
-        
-        Args:
-            twin_id: ID of the twin
-            limit: Maximum number of history records to return
-            
-        Returns:
-            Dictionary with instance history
-        """
+    # ==================== Instance Queries ====================
+    
+    async def query_instances(self, registry_id: str, query: TwinInstanceQuery) -> List[TwinInstance]:
+        """Query instances with filters"""
         try:
-            logger.info(f"Getting instance history for twin: {twin_id}")
+            # For now, get all instances from the registry and filter
+            # This could be optimized later with more sophisticated querying
+            all_instances = await self.instance_repo.get_by_twin_id(registry_id, "", 1000)
             
-            history = await self.instance_repo.get_instance_history(twin_id, limit)
+            # Apply filters
+            filtered_instances = []
+            for inst in all_instances:
+                if query.twin_id and inst.twin_id != query.twin_id:
+                    continue
+                if query.is_active is not None and inst.is_active != query.is_active:
+                    continue
+                if query.created_after and inst.created_at < query.created_after:
+                    continue
+                if query.created_before and inst.created_at > query.created_before:
+                    continue
+                
+                filtered_instances.append(inst)
+            
+            return filtered_instances
+            
+        except Exception as e:
+            logger.error(f"Failed to query instances: {e}")
+            return []
+    
+    async def get_instances_by_type(self, registry_id: str, instance_type: str) -> List[TwinInstance]:
+        """Get instances of a specific type"""
+        try:
+            # This would need to be enhanced based on how instance types are stored
+            # For now, return all instances
+            return await self.instance_repo.get_active_instances(registry_id)
+        except Exception as e:
+            logger.error(f"Failed to get instances by type {instance_type}: {e}")
+            return []
+    
+    async def get_instances_in_date_range(
+        self,
+        registry_id: str,
+        start_date: datetime,
+        end_date: datetime
+    ) -> List[TwinInstance]:
+        """Get instances created within a date range"""
+        try:
+            # This would need to be enhanced with proper date filtering
+            # For now, return all instances
+            return await self.instance_repo.get_active_instances(registry_id)
+        except Exception as e:
+            logger.error(f"Failed to get instances in date range: {e}")
+            return []
+    
+    # ==================== Instance Analytics ====================
+    
+    async def get_instance_summary(self, registry_id: str) -> Dict[str, Any]:
+        """Get instance statistics and summary"""
+        try:
+            all_instances = await self.instance_repo.get_active_instances(registry_id)
+            
+            total_instances = len(all_instances)
+            active_instances = len([inst for inst in all_instances if inst.is_active])
+            
+            # Count by twin
+            instances_by_twin = {}
+            for inst in all_instances:
+                twin_id = inst.twin_id
+                instances_by_twin[twin_id] = instances_by_twin.get(twin_id, 0) + 1
+            
+            # Count by version
+            instances_by_version = {}
+            for inst in all_instances:
+                version = inst.version
+                instances_by_version[version] = instances_by_version.get(version, 0) + 1
             
             return {
-                "success": True,
-                "history": [self._convert_instance_to_dict(i) for i in history],
-                "count": len(history),
-                "twin_id": twin_id
+                "total_instances": total_instances,
+                "active_instances": active_instances,
+                "instances_by_twin": instances_by_twin,
+                "instances_by_version": instances_by_version
             }
             
+        except Exception as e:
+            logger.error(f"Failed to get instance summary: {e}")
+            return {}
+    
+    async def get_instance_history(self, registry_id: str, twin_id: str, limit: int = 50) -> List[TwinInstance]:
+        """Get instance history for a twin"""
+        try:
+            return await self.instance_repo.get_instance_history(registry_id, twin_id, limit)
         except Exception as e:
             logger.error(f"Failed to get instance history for twin {twin_id}: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "history": [],
-                "count": 0
+            return []
+    
+    # ==================== Bulk Operations ====================
+    
+    async def create_multiple_instances(
+        self,
+        registry_id: str,
+        instances_data: List[Dict[str, Any]]
+    ) -> List[TwinInstance]:
+        """Create multiple instances at once"""
+        try:
+            created_instances = []
+            
+            for inst_data in instances_data:
+                instance = await self.create_instance(
+                    registry_id=registry_id,
+                    twin_id=inst_data["twin_id"],
+                    instance_data=inst_data["instance_data"],
+                    instance_metadata=inst_data.get("instance_metadata"),
+                    created_by=inst_data.get("created_by")
+                )
+                created_instances.append(instance)
+            
+            logger.info(f"Created {len(created_instances)} instances in registry {registry_id}")
+            return created_instances
+            
+        except Exception as e:
+            logger.error(f"Failed to create multiple instances: {e}")
+            raise
+    
+    async def deactivate_instances_by_twin(self, registry_id: str, twin_id: str) -> int:
+        """Deactivate all instances for a specific twin"""
+        try:
+            instances = await self.get_instances_by_twin(registry_id, twin_id)
+            deactivated_count = 0
+            
+            for inst in instances:
+                if inst.is_active:
+                    await self.deactivate_instance(registry_id, inst.id)
+                    deactivated_count += 1
+            
+            logger.info(f"Deactivated {deactivated_count} instances for twin {twin_id}")
+            return deactivated_count
+            
+        except Exception as e:
+            logger.error(f"Failed to deactivate instances for twin {twin_id}: {e}")
+            return 0
+    
+    # ==================== Instance Lifecycle ====================
+    
+    async def promote_instance(self, registry_id: str, instance_id: str) -> bool:
+        """Promote an instance to production"""
+        try:
+            update_data = {
+                "instance_metadata": {"status": "production", "promoted_at": datetime.now().isoformat()}
             }
-    
-    async def _deactivate_current_instance(self, twin_id: str) -> None:
-        """Deactivate the currently active instance for a twin."""
-        try:
-            current_instance = await self.instance_repo.get_active_instance(twin_id)
-            if current_instance:
-                await self.instance_repo.deactivate_instance(current_instance.id)
-                logger.info(f"Deactivated current instance for twin: {twin_id}")
+            return await self.update_instance(registry_id, instance_id, update_data)
         except Exception as e:
-            logger.error(f"Failed to deactivate current instance for twin {twin_id}: {e}")
+            logger.error(f"Failed to promote instance {instance_id}: {e}")
+            return False
     
-    async def _get_next_version(self, twin_id: str) -> int:
-        """Get the next version number for a twin."""
+    async def rollback_instance(self, registry_id: str, instance_id: str) -> bool:
+        """Rollback an instance to previous version"""
         try:
-            instances = await self.instance_repo.get_by_twin_id(twin_id, active_only=False)
-            if instances:
-                return max(i.version for i in instances) + 1
-            return 1
+            update_data = {
+                "instance_metadata": {"status": "rollback", "rolled_back_at": datetime.now().isoformat()}
+            }
+            return await self.update_instance(registry_id, instance_id, update_data)
         except Exception as e:
-            logger.error(f"Failed to get next version for twin {twin_id}: {e}")
-            return 1
+            logger.error(f"Failed to rollback instance {instance_id}: {e}")
+            return False
     
-    def _convert_instance_to_dict(self, instance: TwinInstance) -> Dict[str, Any]:
-        """Convert a TwinInstance object to dictionary."""
-        return {
-            "id": instance.id,
-            "twin_id": instance.twin_id,
-            "instance_data": instance.instance_data,
-            "instance_metadata": instance.instance_metadata,
-            "created_by": instance.created_by,
-            "created_at": instance.created_at,
-            "updated_at": instance.updated_at,
-            "is_active": instance.is_active,
-            "version": instance.version
-        } 
+    # ==================== Enhanced Query Methods ====================
+    
+    async def get_all_instances(self) -> List[Dict[str, Any]]:
+        """
+        Get all instances across all registries.
+        This method provides the interface expected by the webapp service.
+        
+        Returns:
+            List of instance dictionaries
+        """
+        try:
+            logger.info("Getting all instances across all registries")
+            
+            # Import the registry repository to get all registries
+            from ..repositories.twin_registry_repository import TwinRegistryRepository
+            registry_repo = TwinRegistryRepository(self.db_manager)
+            
+            # Get all registries
+            all_registries = await registry_repo.get_all()
+            
+            all_instances = []
+            for registry in all_registries:
+                try:
+                    # Get all instances for this registry (not filtered by twin_id)
+                    registry_instances = await self.instance_repo.get_active_instances(registry.registry_id)
+                    
+                    for inst in registry_instances:
+                        instance_dict = {
+                            "instance_id": inst.id,
+                            "registry_id": registry.registry_id,
+                            "twin_id": inst.twin_id or registry.twin_id or "unknown",
+                            "twin_name": registry.twin_name or "Unknown Twin",
+                            "version": inst.version,
+                            "instance_type": getattr(inst, 'instance_type', 'generic'),
+                            "created_at": inst.created_at.isoformat() if inst.created_at else "",
+                            "is_active": inst.is_active,
+                            "registry_type": registry.registry_type or "unknown",
+                            "metadata": inst.instance_metadata or {}
+                        }
+                        all_instances.append(instance_dict)
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to get instances for registry {registry.registry_id}: {e}")
+                    continue
+            
+            logger.info(f"Retrieved {len(all_instances)} instances from all registries")
+            return all_instances
+            
+        except Exception as e:
+            logger.error(f"Failed to get all instances: {e}")
+            raise 

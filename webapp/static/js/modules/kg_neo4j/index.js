@@ -19,6 +19,8 @@ import KGNeo4jCore from './graph-management/core.js?v=2025-01-27-2';
 // import KGNeo4jVisualization from './graph-management/visualization.js?v=2025-01-27-2';
 import KGNeo4jQueryEngine from './graph-management/query-engine.js?v=2025-01-27-2';
 import KGNeo4jDataProcessor from './graph-management/data-processor.js?v=2025-01-27-2';
+import { graphManagement } from './graph-management/graph-management.js?v=2025-01-27-2';
+import { kgAnalytics } from './analytics.js?v=2025-01-27-1';
 console.log('✅ Knowledge Graph index.js: KG core modules imported');
 
 // Import UI component modules
@@ -29,6 +31,19 @@ import { initQueryInterface } from './ui-components/query_interface.js?v=2025-01
 import DataManagementComponent from './ui-components/data_management.js?v=2025-01-27-2';
 import DockerManagementComponent from './ui-components/docker_management.js?v=2025-01-27-2';
 import { initAnalyticsDashboard } from './ui-components/analytics_dashboard.js?v=2025-01-27-2';
+import { KGAIInsightsComponent } from './ui-components/ai_insights.js?v=2025-01-27-1';
+import { KGIntegrationComponent } from './ui-components/integration.js?v=2025-01-27-1';
+
+// Import Neo4j OPS module
+console.log('📦 Knowledge Graph index.js: Importing Neo4j OPS module...');
+import { Neo4jOpsManager } from './neo4j_ops.js?v=2025-01-27-1';
+console.log('✅ Knowledge Graph index.js: Neo4j OPS module imported');
+
+// Import Advanced Operations module
+console.log('📦 Knowledge Graph index.js: Importing Advanced Operations module...');
+import { AdvancedOperationsManager } from './advanced.js?v=2025-01-27-1';
+console.log('✅ Knowledge Graph index.js: Advanced Operations module imported');
+
 console.log('✅ Knowledge Graph index.js: UI component modules imported');
 
 // Global instances
@@ -141,6 +156,35 @@ export async function initKGModule() {
         window.dockerManagementComponent = new DockerManagementComponent();
         await initAnalyticsDashboard();
         
+        // Initialize Neo4j OPS Manager
+        console.log('🔧 Initializing Neo4j OPS Manager...');
+        try {
+            window.neo4jOpsManager = new Neo4jOpsManager();
+            console.log('✅ Neo4j OPS Manager initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ Neo4j OPS Manager initialization failed, continuing with other modules:', error);
+        }
+        
+        // Initialize Advanced Operations Manager
+        console.log('🔧 Initializing Advanced Operations Manager...');
+        try {
+            window.advancedOperationsManager = new AdvancedOperationsManager();
+            console.log('✅ Advanced Operations Manager initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ Advanced Operations Manager initialization failed, continuing with other modules:', error);
+        }
+        
+        // Initialize graph management with authentication
+        if (window.authManager) {
+            await graphManagement.initialize(window.authManager);
+            console.log('✅ Graph management initialized with authentication');
+            
+            await kgAnalytics.initialize(window.authManager);
+            console.log('✅ Analytics initialized with authentication');
+        } else {
+            console.warn('⚠️ Auth manager not available, graph management and analytics will initialize later');
+        }
+        
         // Load initial graph data
         await loadGraphData();
         
@@ -150,8 +194,10 @@ export async function initKGModule() {
             window.kgModules.analyticsDashboard = window.analyticsDashboard;
             window.kgModules.graphVisualization = window.graphVisualization;
             window.kgModules.queryInterface = window.queryInterface;
-            window.kgModules.systemStatus = window.systemStatus;
-            window.kgModules.dockerManagement = window.dockerManagementComponent;
+                window.kgModules.systemStatus = window.systemStatus;
+                window.kgModules.dockerManagement = window.dockerManagementComponent;
+                window.kgModules.neo4jOps = window.neo4jOpsManager;
+                window.kgModules.advancedOperations = window.advancedOperationsManager;
             console.log('✅ Knowledge Graph Module: Populated window.kgModules for post-login orchestrator');
         }
         
@@ -171,9 +217,11 @@ export async function initKGModule() {
                     systemStatus: true,
                     graphVisualization: true,
                     queryInterface: true,
-                    dataManagement: true,
-                    dockerManagement: true,
-                    analyticsDashboard: true
+                        dataManagement: true,
+                        dockerManagement: true,
+                        analyticsDashboard: true,
+                        neo4jOps: true,
+                        advancedOperations: true
                 },
                 authentication: {
                     isAuthenticated: kgNeo4jCore.isAuthenticated,
@@ -224,6 +272,18 @@ export function cleanupKGModule() {
         }
         if (kgNeo4jDataProcessor) {
             kgNeo4jDataProcessor.cleanup();
+        }
+        
+        // Cleanup Neo4j OPS Manager
+        if (window.neo4jOpsManager) {
+            window.neo4jOpsManager.destroy();
+            window.neo4jOpsManager = null;
+        }
+        
+        // Cleanup Advanced Operations Manager
+        if (window.advancedOperationsManager) {
+            window.advancedOperationsManager.destroy();
+            window.advancedOperationsManager = null;
         }
         
         // Reset global instances
@@ -277,6 +337,27 @@ window.initializeKGIfNeeded = async function() {
         throw error;
     }
 };
+
+// Export graph management functions globally for HTML templates
+window.refreshKnowledgeGraphData = () => graphManagement.refreshKnowledgeGraphData();
+window.exportKnowledgeGraphData = () => graphManagement.exportKnowledgeGraphData();
+window.kgShowRelationshipModal = (graphId) => graphManagement.kgShowRelationshipModal(graphId);
+window.kgShowRelationships = (graphId) => graphManagement.kgShowRelationships(graphId);
+window.kgViewGraphDetails = (graphId) => graphManagement.kgViewGraphDetails(graphId);
+window.kgEditGraph = (graphId) => graphManagement.kgEditGraph(graphId);
+window.kgSaveAllConfigurations = () => graphManagement.kgSaveAllConfigurations();
+window.kgResetToDefaults = () => graphManagement.kgResetToDefaults();
+window.handleKGConfigurationTabClick = (event) => graphManagement.handleKGConfigurationTabClick(event);
+
+// Make graph management instance available globally
+window.graphManagement = graphManagement;
+
+// Analytics functions
+window.kgGenerateAnalyticsReport = () => kgAnalytics.generateAnalyticsReport();
+window.kgExportAnalyticsData = () => kgAnalytics.exportAnalyticsData();
+window.kgRefreshChart = (chartType) => kgAnalytics.refreshChart(chartType);
+window.kgGenerateBusinessReport = () => kgAnalytics.generateBusinessReport();
+window.kgAnalytics = kgAnalytics; // Make instance globally available
 
 // Also export for module system
 if (typeof module !== 'undefined' && module.exports) {

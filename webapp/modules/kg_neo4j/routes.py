@@ -1124,3 +1124,800 @@ async def get_demo_data():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# PHASE 1: NEW BACKEND INTEGRATION ENDPOINTS
+# ============================================================================
+
+# Pydantic models for new endpoints
+class CreateGraphRequest(BaseModel):
+    file_id: str
+    config: Dict[str, Any]
+
+class UpdateGraphStatusRequest(BaseModel):
+    status_updates: Dict[str, Any]
+
+class AIInsightsRequest(BaseModel):
+    ai_data: Dict[str, Any]
+
+class MergeAIInsightsRequest(BaseModel):
+    ai_graph_id: str
+
+class CreateGraphWithAIRequest(BaseModel):
+    file_id: str
+    ai_data: Dict[str, Any]
+    config: Dict[str, Any]
+
+@router.post("/graphs/create")
+@require_auth("write", allow_independent=True)
+async def create_knowledge_graph(
+    request: Request,
+    create_request: CreateGraphRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Create a new knowledge graph using the new backend services"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can create graphs
+        if not user_specific_service.can_create_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to create knowledge graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.create_knowledge_graph(
+            file_id=create_request.file_id,
+            user_id=user_context.user_id,
+            org_id=user_context.organization_id or "independent",
+            config=create_request.config
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to create knowledge graph: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}")
+@require_auth("read", allow_independent=True)
+async def get_graph_registry(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get knowledge graph registry information"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access knowledge graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_graph_registry(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get graph registry: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs")
+@require_auth("read", allow_independent=True)
+async def list_graph_registries(
+    user_context: UserContext = Depends(get_current_user)
+):
+    """List all knowledge graph registries for a user/organization"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access knowledge graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.list_graph_registries(
+            user_id=user_context.user_id,
+            org_id=user_context.organization_id or "independent"
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to list graph registries: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/graphs/{graph_id}/status")
+@require_auth("write", allow_independent=True)
+async def update_graph_status(
+    graph_id: str,
+    request: Request,
+    status_request: UpdateGraphStatusRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Update knowledge graph status"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update graphs
+        if not user_specific_service.can_update_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to update knowledge graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.update_graph_status(graph_id, status_request.status_updates)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to update graph status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/graphs/{graph_id}")
+@require_auth("admin", allow_independent=False)
+async def delete_graph_registry(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Delete a knowledge graph registry"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can delete graphs
+        if not user_specific_service.can_delete_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to delete knowledge graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.delete_graph_registry(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to delete graph registry: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/performance")
+@require_auth("read", allow_independent=True)
+async def get_graph_performance_summary(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get performance summary for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access knowledge graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_graph_performance_summary(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get performance summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/neo4j/test-connection")
+@require_auth("read", allow_independent=True)
+async def test_neo4j_connection(
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Test Neo4j connection using the new integration service"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to test Neo4j connection")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.test_neo4j_connection()
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to test Neo4j connection: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/system/health")
+@require_auth("read", allow_independent=True)
+async def get_system_health(
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get comprehensive system health using new backend services"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access system status
+        if not user_specific_service.can_access_system_status():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access system health")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_system_health()
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get system health: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# PHASE 2: AI/RAG INTEGRATION ENDPOINTS
+# ============================================================================
+
+@router.post("/graphs/{graph_id}/ai-insights")
+@require_auth("write", allow_independent=True)
+async def import_ai_insights(
+    graph_id: str,
+    request: Request,
+    ai_request: AIInsightsRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Import AI insights into a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update graphs
+        if not user_specific_service.can_update_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to import AI insights")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.import_ai_insights(
+            graph_id=graph_id,
+            ai_data=ai_request.ai_data,
+            user_id=user_context.user_id
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to import AI insights: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/ai-insights")
+@require_auth("read", allow_independent=True)
+async def get_ai_insights(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get AI insights for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access AI insights")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_ai_insights(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get AI insights: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/graphs/{graph_id}/ai-merge")
+@require_auth("write", allow_independent=True)
+async def merge_ai_insights(
+    graph_id: str,
+    request: Request,
+    merge_request: MergeAIInsightsRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Merge AI insights with existing knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update graphs
+        if not user_specific_service.can_update_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to merge AI insights")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.merge_ai_insights(
+            graph_id=graph_id,
+            ai_graph_id=merge_request.ai_graph_id
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to merge AI insights: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/graphs/create-with-ai")
+@require_auth("write", allow_independent=True)
+async def create_graph_with_ai_insights(
+    request: Request,
+    create_ai_request: CreateGraphWithAIRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Create a new knowledge graph with AI insights"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can create graphs
+        if not user_specific_service.can_create_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to create graphs with AI")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.create_graph_with_ai_insights(
+            file_id=create_ai_request.file_id,
+            ai_data=create_ai_request.ai_data,
+            user_id=user_context.user_id,
+            org_id=user_context.organization_id or "independent"
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to create graph with AI insights: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# PHASE 2: CROSS-MODULE INTEGRATION ENDPOINTS
+# ============================================================================
+
+@router.post("/graphs/{graph_id}/link-twin")
+@require_auth("write", allow_independent=True)
+async def link_graph_to_twin(
+    graph_id: str,
+    twin_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Link a knowledge graph to a digital twin"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update graphs
+        if not user_specific_service.can_update_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to link graphs to twins")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.link_graph_to_twin(graph_id, twin_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to link graph to twin: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/linked-twins")
+@require_auth("read", allow_independent=True)
+async def get_linked_twins(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get all digital twins linked to a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access linked twins")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_linked_twins(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get linked twins: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/linked-aasx")
+@require_auth("read", allow_independent=True)
+async def get_linked_aasx_files(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get all AASX files linked to a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access linked AASX files")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_linked_aasx_files(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get linked AASX files: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/cross-module-analytics")
+@require_auth("read", allow_independent=True)
+async def get_cross_module_analytics(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get cross-module analytics for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access cross-module analytics")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_cross_module_analytics(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get cross-module analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# PHASE 2: ADVANCED ANALYTICS ENDPOINTS
+# ============================================================================
+
+@router.get("/graphs/{graph_id}/analytics")
+@require_auth("read", allow_independent=True)
+async def get_graph_analytics(
+    graph_id: str,
+    period: str = "30d",
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get comprehensive analytics for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access graph analytics")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_graph_analytics(graph_id, period)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get graph analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/performance")
+@require_auth("read", allow_independent=True)
+async def get_performance_analytics(
+    graph_id: str,
+    days: str = "30",
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get performance analytics for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access performance analytics")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_performance_analytics(graph_id, days)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get performance analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/user-activity")
+@require_auth("read", allow_independent=True)
+async def get_user_activity_analytics(
+    graph_id: str,
+    days: str = "30",
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get user activity analytics for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access user activity analytics")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_user_activity_analytics(graph_id, days)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get user activity analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/data-quality")
+@require_auth("read", allow_independent=True)
+async def get_data_quality_analytics(
+    graph_id: str,
+    days: str = "30",
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get data quality analytics for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access data quality analytics")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_data_quality_analytics(graph_id, days)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get data quality analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/business-intelligence")
+@require_auth("read", allow_independent=True)
+async def get_business_intelligence_report(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get comprehensive business intelligence report for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access business intelligence reports")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_business_intelligence_report(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get business intelligence report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# PHASE 2: GRAPH OPERATIONS ENDPOINTS
+# ============================================================================
+
+class TransformGraphRequest(BaseModel):
+    transformations: Dict[str, Any]
+
+class MergeGraphsRequest(BaseModel):
+    source_graph_id: str
+    target_graph_id: str
+    config: Dict[str, Any]
+
+class ExportGraphRequest(BaseModel):
+    format: str
+    config: Dict[str, Any]
+
+@router.post("/graphs/{graph_id}/transform")
+@require_auth("write", allow_independent=True)
+async def transform_graph_structure(
+    graph_id: str,
+    request: Request,
+    transform_request: TransformGraphRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Transform the structure of a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update graphs
+        if not user_specific_service.can_update_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to transform graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.transform_graph_structure(
+            graph_id=graph_id,
+            transformations=transform_request.transformations
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to transform graph structure: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/graphs/merge")
+@require_auth("write", allow_independent=True)
+async def merge_graphs(
+    request: Request,
+    merge_graphs_request: MergeGraphsRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Merge two knowledge graphs"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can update graphs
+        if not user_specific_service.can_update_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to merge graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.merge_graphs(
+            source_graph_id=merge_graphs_request.source_graph_id,
+            target_graph_id=merge_graphs_request.target_graph_id,
+            config=merge_graphs_request.config
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to merge graphs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/graphs/{graph_id}/export")
+@require_auth("read", allow_independent=True)
+async def export_graph_workflow(
+    graph_id: str,
+    request: Request,
+    export_request: ExportGraphRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Export a knowledge graph workflow"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to export graphs")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.export_graph_workflow(
+            graph_id=graph_id,
+            format=export_request.format,
+            config=export_request.config
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to export graph workflow: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/graphs/{graph_id}/ai-insights-summary")
+@require_auth("read", allow_independent=True)
+async def get_graph_ai_insights_summary(
+    graph_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get AI insights summary for a knowledge graph"""
+    try:
+        # Initialize authentication services
+        user_specific_service = KGNeo4jUserSpecificService(user_context)
+        
+        # Check if user can access graphs
+        if not user_specific_service.can_access_graphs():
+            raise HTTPException(status_code=403, detail="Insufficient permissions to access AI insights summary")
+        
+        # 🔐 CRITICAL FIX: Create service per-request to prevent 500 errors
+        kg_service = KGNeo4jService()
+        result = await kg_service.get_graph_ai_insights_summary(graph_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result["error"])
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to get AI insights summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

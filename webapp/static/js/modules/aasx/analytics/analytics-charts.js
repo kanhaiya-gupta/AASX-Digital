@@ -13,9 +13,9 @@ class AnalyticsCharts {
         this.analyticsService = null;
         this.isInitialized = false;
         this.charts = new Map();
-        this.currentTab = 'performance';
+        this.currentTab = 'analytics_performance';
         this.updateInterval = null;
-        this.updateFrequency = 45000; // 45 seconds (slightly different from dashboard)
+        this.updateFrequency = 60000; // 60 seconds
     }
 
     /**
@@ -23,11 +23,11 @@ class AnalyticsCharts {
      */
     async init() {
         if (this.isInitialized) {
-            console.log('⚠️ Analytics Tab Integration already initialized, skipping...');
+            console.log('⚠️ Analytics Charts already initialized, skipping...');
             return;
         }
 
-        console.log('🔄 Analytics Tab Integration initializing...');
+        console.log('🔄 Analytics Charts initializing...');
 
         try {
             // Wait for analytics API to be available
@@ -49,14 +49,11 @@ class AnalyticsCharts {
             // Set up auto-refresh
             this.setupAutoRefresh();
             
-            // Set up manual refresh button
-            this.setupRefreshButton();
-            
             this.isInitialized = true;
-            console.log('✅ Analytics Tab Integration initialized successfully');
+            console.log('✅ Analytics Charts initialized successfully');
             
         } catch (error) {
-            console.error('❌ Failed to initialize Analytics Tab Integration:', error);
+            console.error('❌ Failed to initialize Analytics Charts:', error);
             this.isInitialized = false;
         }
     }
@@ -65,26 +62,26 @@ class AnalyticsCharts {
      * Wait for analytics API to be available
      */
     async waitForAnalyticsAPI() {
-        console.log('⏳ Analytics Charts: Waiting for AnalyticsAPI...');
+        console.log('⏳ Waiting for AnalyticsAPI...');
         
         while (!window.AnalyticsAPI) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        console.log('✅ Analytics Charts: AnalyticsAPI available');
+        console.log('✅ AnalyticsAPI available');
     }
 
     /**
      * Wait for analytics tab to be available in DOM
      */
     async waitForAnalyticsTabDOM() {
-        console.log('⏳ Analytics Charts: Waiting for analytics tab...');
+        console.log('⏳ Waiting for analytics section...');
         
-        while (!document.querySelector('#analytics-tab')) {
+        while (!document.querySelector('.aasx-analytics-section')) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        console.log('✅ Analytics Charts: Analytics tab available');
+        console.log('✅ Analytics section available');
     }
 
     /**
@@ -171,27 +168,35 @@ class AnalyticsCharts {
         try {
             console.log(`📈 Loading chart data for tab: ${tabName}`);
             
+            if (!this.analyticsService || !this.analyticsService.isInitialized) {
+                throw new Error('Analytics service not initialized');
+            }
+            
             let chartData;
             
             switch (tabName) {
-                case 'performance':
+                case 'analytics_performance':
                     chartData = await this.analyticsService.getPerformanceMetricsChart(30);
                     break;
-                case 'trends':
+                case 'analytics_trends':
                     chartData = await this.analyticsService.getProcessingTrendsChart(30);
                     break;
-                case 'insights':
+                case 'analytics_insights':
                     chartData = await this.analyticsService.getQualityMetricsChart(30);
                     break;
-                case 'reports':
+                case 'analytics_reports':
                     chartData = await this.analyticsService.getUserBehaviorChart(30);
                     break;
                 default:
                     chartData = await this.analyticsService.getPerformanceMetricsChart(30);
             }
             
+            console.log(`📊 Chart data received for ${tabName}:`, chartData);
+            
             if (chartData.success && chartData.data) {
                 this.renderChart(tabName, chartData.data);
+            } else {
+                console.warn(`⚠️ Invalid chart data for ${tabName}:`, chartData);
             }
             
         } catch (error) {
@@ -247,13 +252,13 @@ class AnalyticsCharts {
      */
     getChartType(tabName) {
         switch (tabName) {
-            case 'performance':
+            case 'analytics_performance':
                 return 'line';
-            case 'trends':
+            case 'analytics_trends':
                 return 'bar';
-            case 'insights':
+            case 'analytics_insights':
                 return 'doughnut';
-            case 'reports':
+            case 'analytics_reports':
                 return 'radar';
             default:
                 return 'line';
@@ -275,28 +280,9 @@ class AnalyticsCharts {
             }]
         };
 
-        // Customize based on tab and data structure
-        switch (tabName) {
-            case 'performance':
-                if (chartData.labels && chartData.datasets) {
-                    formattedData = chartData;
-                }
-                break;
-            case 'trends':
-                if (chartData.labels && chartData.datasets) {
-                    formattedData = chartData;
-                }
-                break;
-            case 'insights':
-                if (chartData.labels && chartData.datasets) {
-                    formattedData = chartData;
-                }
-                break;
-            case 'reports':
-                if (chartData.labels && chartData.datasets) {
-                    formattedData = chartData;
-                }
-                break;
+        // Use provided data if available
+        if (chartData.labels && chartData.datasets) {
+            formattedData = chartData;
         }
 
         return formattedData;
@@ -322,7 +308,7 @@ class AnalyticsCharts {
 
         // Customize options based on tab
         switch (tabName) {
-            case 'performance':
+            case 'analytics_performance':
                 baseOptions.scales = {
                     y: {
                         beginAtZero: true,
@@ -333,7 +319,7 @@ class AnalyticsCharts {
                     }
                 };
                 break;
-            case 'trends':
+            case 'analytics_trends':
                 baseOptions.scales = {
                     y: {
                         beginAtZero: true,
@@ -354,13 +340,13 @@ class AnalyticsCharts {
      */
     getChartTitle(tabName) {
         switch (tabName) {
-            case 'performance':
+            case 'analytics_performance':
                 return 'Performance Metrics';
-            case 'trends':
+            case 'analytics_trends':
                 return 'Processing Trends';
-            case 'insights':
+            case 'analytics_insights':
                 return 'Quality Insights';
-            case 'reports':
+            case 'analytics_reports':
                 return 'User Behavior';
             default:
                 return 'Analytics Data';
@@ -377,7 +363,7 @@ class AnalyticsCharts {
                 <div class="text-center text-muted py-4">
                     <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
                     <p>Failed to load chart data</p>
-                    <button class="btn btn-sm btn-outline-primary" onclick="analyticsTabIntegration.loadChartData('${tabName}')">
+                    <button class="btn btn-sm btn-outline-primary" onclick="analyticsCharts.loadChartData('${tabName}')">
                         <i class="fas fa-redo"></i> Retry
                     </button>
                 </div>
@@ -389,21 +375,44 @@ class AnalyticsCharts {
      * Set up tab switching functionality
      */
     setupTabSwitching() {
-        const tabButtons = document.querySelectorAll('[data-bs-target^="#analytics-"]');
+        const tabButtons = document.querySelectorAll('[data-tab]');
         
         tabButtons.forEach(button => {
             button.addEventListener('click', async (e) => {
-                const targetId = e.target.getAttribute('data-bs-target');
-                const tabName = targetId.replace('#analytics-', '');
+                const tabName = button.getAttribute('data-tab');
+                if (!tabName) return;
                 
                 console.log(`🔄 Switching to analytics tab: ${tabName}`);
+                
+                // Remove active class from all buttons
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Add active class to clicked button
+                button.classList.add('active');
+                
+                // Hide all tab panes
+                const allTabPanes = document.querySelectorAll('.aasx-analytics-section .tab-pane');
+                allTabPanes.forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Show the selected tab pane
+                const targetPane = document.getElementById(tabName);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+                
                 this.currentTab = tabName;
                 
                 // Load chart data for the new tab
                 await this.loadChartData(tabName);
+                
+                console.log(`✅ Tab switch to ${tabName} completed`);
             });
         });
     }
+    
+
 
     /**
      * Show loading state
@@ -465,33 +474,6 @@ class AnalyticsCharts {
     }
 
     /**
-     * Set up manual refresh button
-     */
-    setupRefreshButton() {
-        const refreshBtn = document.getElementById('refreshAnalyticsBtn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', async () => {
-                console.log('🔄 Manual analytics refresh triggered');
-                
-                // Show loading state
-                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Refreshing...</span>';
-                refreshBtn.disabled = true;
-                
-                try {
-                    await this.loadAnalyticsData();
-                    console.log('✅ Manual analytics refresh completed');
-                } catch (error) {
-                    console.error('❌ Manual analytics refresh failed:', error);
-                } finally {
-                    // Restore button state
-                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> <span>Refresh</span>';
-                    refreshBtn.disabled = false;
-                }
-            });
-        }
-    }
-
-    /**
      * Refresh analytics data manually
      */
     async refreshAnalytics() {
@@ -526,9 +508,11 @@ class AnalyticsCharts {
         this.charts.clear();
         
         this.isInitialized = false;
-        console.log('🗑️ Analytics Tab Integration destroyed');
+        console.log('🗑️ Analytics Charts destroyed');
     }
 }
 
 // Export for use in other modules
 window.AnalyticsCharts = AnalyticsCharts;
+
+

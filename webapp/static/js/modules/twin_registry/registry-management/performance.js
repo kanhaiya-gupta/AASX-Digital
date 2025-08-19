@@ -609,19 +609,68 @@ export default class TwinRegistryPerformance {
      * Update authentication state
      */
     updateAuthState() {
-        if (window.authManager) {
-            this.isAuthenticated = window.authManager.isAuthenticated();
-            this.currentUser = null; // User info not needed currently
-            this.authToken = window.authManager.getStoredToken();
-            console.log('🔐 Twin Registry Performance: Auth state updated', {
-                isAuthenticated: this.isAuthenticated,
-                user: this.currentUser?.username || 'anonymous'
-            });
-        } else {
+        if (!window.authManager) {
+            console.log('⚠️ Twin Registry Performance: No auth manager available');
             this.isAuthenticated = false;
             this.currentUser = null;
             this.authToken = null;
-            console.log('🔐 Twin Registry Performance: No auth manager available');
+            return;
+        }
+        
+        try {
+            // Check if new auth system is available
+            if (typeof window.authManager.getSessionInfo === 'function') {
+                const sessionInfo = window.authManager.getSessionInfo();
+                console.log('🔐 Twin Registry Performance: Auth state update (new system):', sessionInfo);
+                
+                if (sessionInfo && sessionInfo.isAuthenticated) {
+                    this.isAuthenticated = true;
+                    this.currentUser = {
+                        user_id: sessionInfo.user_id,
+                        username: sessionInfo.username,
+                        role: sessionInfo.role,
+                        organization_id: sessionInfo.organization_id
+                    };
+                    this.authToken = window.authManager.getStoredToken();
+                    console.log('🔐 Twin Registry Performance: User authenticated:', this.currentUser.username);
+                } else {
+                    this.isAuthenticated = false;
+                    this.currentUser = null;
+                    this.authToken = null;
+                    console.log('🔐 Twin Registry Performance: User not authenticated');
+                }
+            } else if (typeof window.authManager.isAuthenticated === 'function') {
+                // Fallback to old auth system
+                const isAuthenticated = window.authManager.isAuthenticated();
+                console.log('🔐 Twin Registry Performance: Auth state update (old system):', isAuthenticated);
+                
+                if (isAuthenticated) {
+                    this.isAuthenticated = true;
+                    this.currentUser = {
+                        user_id: 'unknown',
+                        username: 'authenticated_user',
+                        role: 'user',
+                        organization_id: 'unknown'
+                    };
+                    this.authToken = window.authManager.getStoredToken();
+                    console.log('🔐 Twin Registry Performance: User authenticated (legacy)');
+                } else {
+                    this.isAuthenticated = false;
+                    this.currentUser = null;
+                    this.authToken = null;
+                    console.log('🔐 Twin Registry Performance: User not authenticated (legacy)');
+                }
+            } else {
+                console.log('⚠️ Twin Registry Performance: Unknown auth manager API');
+                this.isAuthenticated = false;
+                this.currentUser = null;
+                this.authToken = null;
+            }
+        } catch (error) {
+            console.warn('⚠️ Twin Registry Performance: Error updating auth state:', error);
+            this.isAuthenticated = false;
+            this.currentUser = null;
+            this.authToken = null;
         }
     }
 
@@ -680,5 +729,180 @@ export default class TwinRegistryPerformance {
         this.metricsCollector.clear();
         this.isInitialized = false;
         console.log('🧹 Twin Registry Performance Monitoring destroyed');
+    }
+
+    /**
+     * Get registry performance
+     */
+    async getRegistryPerformance() {
+        try {
+            const response = await fetch('/api/twin-registry/performance/registry', {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting registry performance:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get twin analytics
+     */
+    async getTwinAnalytics(twinId = null, timeRange = "30d") {
+        try {
+            const params = new URLSearchParams();
+            if (twinId) params.append('twin_id', twinId);
+            if (timeRange) params.append('time_range', timeRange);
+
+            const response = await fetch(`/api/twin-registry/analytics/twins?${params}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting twin analytics:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get twin trends
+     */
+    async getTwinTrends(twinId, timeRange = "30d") {
+        try {
+            const response = await fetch(`/api/twin-registry/analytics/twins/${twinId}/trends?time_range=${timeRange}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting twin trends:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get usage statistics
+     */
+    async getUsageStatistics(timeRange = "30d") {
+        try {
+            const response = await fetch(`/api/twin-registry/analytics/usage-statistics?time_range=${timeRange}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting usage statistics:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Generate analytics reports
+     */
+    async generateAnalyticsReport(reportData) {
+        try {
+            const response = await fetch('/api/twin-registry/analytics/reports', {
+                method: 'POST',
+                headers: this.getAuthHeaders(),
+                body: JSON.stringify(reportData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error generating analytics report:', error);
+            return { success: false, message: error.message };
+        }
+    }
+    
+    /**
+     * Load performance data for UI display
+     */
+    async loadPerformanceData() {
+        try {
+            console.log('⚡ Loading performance data...');
+            
+            // Get twins data to calculate performance metrics
+            const response = await fetch('/api/twin-registry/twins', {
+                headers: this.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const twins = data.twins || [];
+                
+                // Calculate performance metrics from twins data
+                const performanceMetrics = {
+                    totalTwins: twins.length,
+                    activeTwins: twins.filter(t => t.operational_status === 'running').length,
+                    averageHealthScore: twins.reduce((sum, t) => sum + (t.overall_health_score || 0), 0) / Math.max(twins.length, 1),
+                    responseTime: this.performanceData.metrics.responseTime || 0,
+                    throughput: this.performanceData.metrics.throughput || 0,
+                    errorRate: this.performanceData.metrics.errorRate || 0
+                };
+                
+                this.performanceData.currentMetrics = performanceMetrics;
+                
+                console.log('✅ Performance data loaded:', performanceMetrics);
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to load performance data:', error);
+        }
+    }
+    
+    /**
+     * Update performance UI with loaded data
+     */
+    async updatePerformanceUI() {
+        try {
+            console.log('⚡ Updating performance UI...');
+            
+            // Update performance metrics display
+            if (this.performanceData.currentMetrics) {
+                const metrics = this.performanceData.currentMetrics;
+                
+                // Update any performance display elements
+                const totalTwinsElement = document.getElementById('twin_registry_performance_totalTwins');
+                const activeTwinsElement = document.getElementById('twin_registry_performance_activeTwins');
+                const avgHealthElement = document.getElementById('twin_registry_performance_avgHealth');
+                
+                if (totalTwinsElement) totalTwinsElement.textContent = metrics.totalTwins;
+                if (activeTwinsElement) activeTwinsElement.textContent = metrics.activeTwins;
+                if (avgHealthElement) avgHealthElement.textContent = Math.round(metrics.averageHealthScore);
+            }
+            
+            console.log('✅ Performance UI updated');
+            
+        } catch (error) {
+            console.error('❌ Failed to update performance UI:', error);
+        }
     }
 } 

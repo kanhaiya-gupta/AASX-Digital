@@ -1,346 +1,228 @@
 """
 Twin Lifecycle Repository
 
-Data access layer for twin lifecycle management.
-Handles lifecycle events, status tracking, and history.
+Data access layer for twin lifecycle management using JSON fields.
+Updated for Phase 2: JSON field operations instead of separate tables.
 """
 
 import logging
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+import json
 
-from src.shared.database.connection_manager import DatabaseConnectionManager
+from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.base_repository import BaseRepository
-from src.twin_registry.models.twin_lifecycle import (
-    TwinLifecycleEvent, 
-    TwinLifecycleStatus, 
-    LifecycleEventType,
-    LifecycleStatus,
-    TwinLifecycleQuery,
-    TwinLifecycleSummary
-)
+from src.twin_registry.models.twin_lifecycle import TwinLifecycleEvent, TwinLifecycleStatus, TwinLifecycleSummary, LifecycleStatusEnum
 
 logger = logging.getLogger(__name__)
 
 
-class TwinLifecycleRepository(BaseRepository):
-    """Repository for managing twin lifecycle events and status."""
+class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
+    """Repository for managing twin lifecycle using JSON fields."""
     
-    def __init__(self, db_manager: DatabaseConnectionManager):
+    def __init__(self, db_manager: BaseDatabaseManager):
         """Initialize the twin lifecycle repository."""
-        super().__init__(db_manager)
-        self.table_name = "twin_lifecycle"
-        logger.info("Twin Lifecycle Repository initialized")
+        super().__init__(db_manager, TwinLifecycleEvent)
+        logger.info("Twin Lifecycle Repository initialized (JSON field mode)")
+    
+    def _get_table_name(self) -> str:
+        """Get the table name for this repository."""
+        return "twin_registry"
+    
+    def _get_columns(self) -> List[str]:
+        """Get the list of column names for this table."""
+        return [
+            "registry_id", "twin_id", "twin_name", "registry_name", "twin_category", "twin_type",
+            "twin_priority", "twin_version", "registry_type", "workflow_source", "aasx_integration_id",
+            "physics_modeling_id", "federated_learning_id", "data_pipeline_id", "kg_neo4j_id",
+            "certificate_manager_id", "integration_status", "overall_health_score", "health_status",
+            "lifecycle_status", "lifecycle_phase", "operational_status", "availability_status",
+            "sync_status", "sync_frequency", "last_sync_at", "next_sync_at", "sync_error_count",
+            "sync_error_message", "performance_score", "data_quality_score", "reliability_score",
+            "compliance_score", "security_level", "access_control_level", "encryption_enabled",
+            "audit_logging_enabled", "user_id", "org_id", "owner_team", "steward_user_id",
+            "created_at", "updated_at", "activated_at", "last_accessed_at", "last_modified_at",
+            "registry_config", "registry_metadata", "custom_attributes", "tags", "relationships",
+            "dependencies", "instances"
+        ]
+    
+    def _get_primary_key_column(self) -> str:
+        """Get the primary key column name for twin registry table."""
+        return "registry_id"
     
     async def initialize(self) -> None:
-        """Initialize the repository and create tables if needed."""
-        try:
-            await self._create_tables()
-            logger.info("Twin Lifecycle Repository tables initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize Twin Lifecycle Repository: {e}")
-            raise
+        """Initialize the repository - no tables needed for JSON field approach."""
+        logger.info("Twin Lifecycle Repository initialized (JSON field mode)")
     
-    async def _create_tables(self) -> None:
-        """Create the twin lifecycle tables."""
-        create_tables_sql = """
-        CREATE TABLE IF NOT EXISTS twin_lifecycle_events (
-            event_id TEXT PRIMARY KEY,
-            twin_id TEXT NOT NULL,
-            event_type TEXT NOT NULL,
-            event_data TEXT,
-            event_metadata TEXT,
-            timestamp TEXT NOT NULL,
-            triggered_by TEXT,
-            status TEXT DEFAULT 'completed',
-            error_message TEXT
-        );
-        
-        CREATE TABLE IF NOT EXISTS twin_lifecycle_status (
-            twin_id TEXT PRIMARY KEY,
-            current_status TEXT NOT NULL,
-            last_event_id TEXT,
-            last_updated TEXT NOT NULL,
-            lifecycle_metadata TEXT
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_lifecycle_events_twin_id ON twin_lifecycle_events(twin_id);
-        CREATE INDEX IF NOT EXISTS idx_lifecycle_events_timestamp ON twin_lifecycle_events(timestamp);
-        CREATE INDEX IF NOT EXISTS idx_lifecycle_events_type ON twin_lifecycle_events(event_type);
-        CREATE INDEX IF NOT EXISTS idx_lifecycle_events_status ON twin_lifecycle_events(status);
-        """
-        
-        async with self.db_manager.get_connection() as conn:
-            await conn.execute(create_tables_sql)
-            await conn.commit()
-    
-    async def create_event(self, event: TwinLifecycleEvent) -> TwinLifecycleEvent:
-        """Create a new lifecycle event."""
+    async def create_event(self, registry_id: str, event: TwinLifecycleEvent) -> TwinLifecycleEvent:
+        """Create a new lifecycle event by adding to the JSON field."""
         try:
-            sql = """
-            INSERT INTO twin_lifecycle_events 
-            (event_id, twin_id, event_type, event_data, event_metadata, timestamp, triggered_by, status, error_message)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            # Get current lifecycle events from metrics table
+            current_events = await self._get_lifecycle_events_json(registry_id)
+            
+            # Add new event
+            event_dict = {
+                "event_id": event.event_id,
+                "twin_id": event.twin_id,
+                "event_type": event.event_type.value,
+                "event_data": event.event_data or {},
+                "event_metadata": event.event_metadata or {},
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "triggered_by": event.triggered_by,
+                "status": event.status,
+                "error_message": event.error_message
+            }
+            
+            current_events.append(event_dict)
+            
+            # Update the JSON field in metrics table
+            query = """
+            UPDATE twin_registry_metrics 
+            SET lifecycle_events = ?, timestamp = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
             """
+            await self.execute_query(query, (json.dumps(current_events), registry_id))
             
-            params = (
-                event.event_id,
-                event.twin_id,
-                event.event_type.value,
-                self._serialize_json(event.event_data),
-                self._serialize_json(event.event_metadata),
-                event.timestamp.isoformat(),
-                event.triggered_by,
-                event.status,
-                event.error_message
-            )
+            # Also update the lifecycle status in main registry table
+            await self._update_lifecycle_status(registry_id, event.event_type.value, event.status)
             
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Created lifecycle event: {event.event_id}")
+            logger.info(f"Created lifecycle event {event.event_id} in registry {registry_id}")
             return event
             
         except Exception as e:
             logger.error(f"Failed to create lifecycle event: {e}")
             raise
     
-    async def get_event_by_id(self, event_id: str) -> Optional[TwinLifecycleEvent]:
-        """Get a lifecycle event by ID."""
+    async def get_event(self, registry_id: str, event_id: str) -> Optional[TwinLifecycleEvent]:
+        """Get a lifecycle event by ID from the JSON field."""
         try:
-            sql = "SELECT * FROM twin_lifecycle_events WHERE event_id = ?"
+            events = await self._get_lifecycle_events_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (event_id,)) as cursor:
-                    row = await cursor.fetchone()
-                    
-            if row:
-                return self._row_to_event(row)
+            for event in events:
+                if event.get("event_id") == event_id:
+                    return self._dict_to_event(event)
+            
             return None
             
         except Exception as e:
             logger.error(f"Failed to get lifecycle event {event_id}: {e}")
-            raise
+            return None
     
-    async def get_events_by_twin_id(self, twin_id: str, limit: int = 50) -> List[TwinLifecycleEvent]:
-        """Get lifecycle events for a specific twin."""
+    async def get_events_by_twin(self, registry_id: str, twin_id: str, query: Optional[TwinLifecycleEvent] = None) -> List[TwinLifecycleEvent]:
+        """Get all lifecycle events for a twin from the JSON field."""
         try:
-            sql = """
-            SELECT * FROM twin_lifecycle_events 
-            WHERE twin_id = ? 
-            ORDER BY timestamp DESC 
-            LIMIT ?
-            """
+            events = await self._get_lifecycle_events_json(registry_id)
+            filtered_events = []
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (twin_id, limit)) as cursor:
-                    rows = await cursor.fetchall()
+            for event in events:
+                if event.get("twin_id") == twin_id:
+                    # Apply filters if query provided
+                    if query:
+                        if query.event_type and event.get("event_type") != query.event_type.value:
+                            continue
+                        if query.status and event.get("status") != query.status:
+                            continue
+                        if query.triggered_by and event.get("triggered_by") != query.triggered_by:
+                            continue
+                        if query.timestamp_after:
+                            event_timestamp = datetime.fromisoformat(event.get("timestamp", ""))
+                            if event_timestamp < query.timestamp_after:
+                                continue
+                        if query.timestamp_before:
+                            event_timestamp = datetime.fromisoformat(event.get("timestamp", ""))
+                            if event_timestamp > query.timestamp_before:
+                                continue
                     
-            return [self._row_to_event(row) for row in rows]
+                    filtered_events.append(event)
+            
+            # Sort by timestamp descending
+            filtered_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+            
+            return [self._dict_to_event(event) for event in filtered_events]
             
         except Exception as e:
             logger.error(f"Failed to get lifecycle events for twin {twin_id}: {e}")
-            raise
+            return []
     
-    async def query_events(self, query: TwinLifecycleQuery) -> List[TwinLifecycleEvent]:
-        """Query lifecycle events with filters."""
+    async def get_lifecycle_status(self, registry_id: str) -> Optional[TwinLifecycleStatus]:
+        """Get the current lifecycle status from the registry."""
         try:
-            sql = "SELECT * FROM twin_lifecycle_events WHERE 1=1"
-            params = []
+            query = """
+            SELECT lifecycle_status, lifecycle_phase, updated_at 
+            FROM twin_registry 
+            WHERE registry_id = ?
+            """
+            result = await self.fetch_one(query, (registry_id,))
             
-            if query.twin_id:
-                sql += " AND twin_id = ?"
-                params.append(query.twin_id)
+            if result:
+                return TwinLifecycleStatus(
+                    twin_id=registry_id,
+                    current_status=LifecycleStatusEnum(result.get("lifecycle_status", "created")),
+                    last_event=None,  # Would need to fetch from events if needed
+                    last_updated=datetime.fromisoformat(result.get("updated_at", "")) if result.get("updated_at") else datetime.now(timezone.utc),
+                    lifecycle_metadata={"phase": result.get("lifecycle_phase", "development")}
+                )
             
-            if query.event_type:
-                sql += " AND event_type = ?"
-                params.append(query.event_type.value)
-            
-            if query.status:
-                sql += " AND status = ?"
-                params.append(query.status)
-            
-            if query.triggered_by:
-                sql += " AND triggered_by = ?"
-                params.append(query.triggered_by)
-            
-            if query.timestamp_after:
-                sql += " AND timestamp >= ?"
-                params.append(query.timestamp_after.isoformat())
-            
-            if query.timestamp_before:
-                sql += " AND timestamp <= ?"
-                params.append(query.timestamp_before.isoformat())
-            
-            sql += " ORDER BY timestamp DESC"
-            
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, params) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_event(row) for row in rows]
-            
-        except Exception as e:
-            logger.error(f"Failed to query lifecycle events: {e}")
-            raise
-    
-    async def update_event(self, event_id: str, update_data: Dict[str, Any]) -> bool:
-        """Update a lifecycle event."""
-        try:
-            # Build dynamic update SQL
-            set_clauses = []
-            params = []
-            
-            for key, value in update_data.items():
-                if key in ['event_data', 'event_metadata']:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(self._serialize_json(value))
-                elif key == 'timestamp':
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value.isoformat())
-                else:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value)
-            
-            if not set_clauses:
-                return False
-            
-            sql = f"UPDATE twin_lifecycle_events SET {', '.join(set_clauses)} WHERE event_id = ?"
-            params.append(event_id)
-            
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Updated lifecycle event: {event_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to update lifecycle event {event_id}: {e}")
-            raise
-    
-    async def get_lifecycle_status(self, twin_id: str) -> Optional[TwinLifecycleStatus]:
-        """Get current lifecycle status for a twin."""
-        try:
-            sql = "SELECT * FROM twin_lifecycle_status WHERE twin_id = ?"
-            
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (twin_id,)) as cursor:
-                    row = await cursor.fetchone()
-                    
-            if row:
-                return self._row_to_status(row)
             return None
             
         except Exception as e:
-            logger.error(f"Failed to get lifecycle status for twin {twin_id}: {e}")
-            raise
+            logger.error(f"Failed to get lifecycle status for registry {registry_id}: {e}")
+            return None
     
-    async def update_lifecycle_status(self, twin_id: str, status: TwinLifecycleStatus) -> bool:
-        """Update lifecycle status for a twin."""
+    async def update_lifecycle_status(self, registry_id: str, status: LifecycleStatusEnum, phase: str = None) -> bool:
+        """Update the lifecycle status in the registry."""
         try:
-            sql = """
-            INSERT OR REPLACE INTO twin_lifecycle_status 
-            (twin_id, current_status, last_event_id, last_updated, lifecycle_metadata)
-            VALUES (?, ?, ?, ?, ?)
+            set_clauses = ["lifecycle_status = ?", "updated_at = CURRENT_TIMESTAMP"]
+            params = [status.value]
+            
+            if phase:
+                set_clauses.append("lifecycle_phase = ?")
+                params.append(phase)
+            
+            params.append(registry_id)
+            
+            query = f"""
+            UPDATE twin_registry 
+            SET {', '.join(set_clauses)}
+            WHERE registry_id = ?
             """
             
-            params = (
-                twin_id,
-                status.current_status.value,
-                status.last_event.event_id if status.last_event else None,
-                status.last_updated.isoformat(),
-                self._serialize_json(status.lifecycle_metadata)
-            )
-            
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Updated lifecycle status for twin: {twin_id}")
+            await self.execute_query(query, tuple(params))
+            logger.info(f"Updated lifecycle status to {status.value} for registry {registry_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to update lifecycle status for twin {twin_id}: {e}")
-            raise
+            logger.error(f"Failed to update lifecycle status: {e}")
+            return False
     
-    async def get_lifecycle_summary(self, twin_id: str = None) -> TwinLifecycleSummary:
-        """Get lifecycle summary statistics."""
+    async def get_lifecycle_summary(self, registry_id: str) -> TwinLifecycleSummary:
+        """Get lifecycle statistics from the JSON fields."""
         try:
-            # Get total events
-            total_sql = "SELECT COUNT(*) FROM twin_lifecycle_events"
-            if twin_id:
-                total_sql += " WHERE twin_id = ?"
+            events = await self._get_lifecycle_events_json(registry_id)
+            status = await self.get_lifecycle_status(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                if twin_id:
-                    async with conn.execute(total_sql, (twin_id,)) as cursor:
-                        total_events = (await cursor.fetchone())[0]
-                else:
-                    async with conn.execute(total_sql) as cursor:
-                        total_events = (await cursor.fetchone())[0]
+            total_events = len(events)
             
-            # Get events by type
-            type_sql = """
-            SELECT event_type, COUNT(*) as count 
-            FROM twin_lifecycle_events
-            """
-            if twin_id:
-                type_sql += " WHERE twin_id = ?"
-            type_sql += " GROUP BY event_type"
+            # Count by type
+            events_by_type = {}
+            for event in events:
+                event_type = event.get("event_type", "unknown")
+                events_by_type[event_type] = events_by_type.get(event_type, 0) + 1
             
-            async with self.db_manager.get_connection() as conn:
-                if twin_id:
-                    async with conn.execute(type_sql, (twin_id,)) as cursor:
-                        events_by_type = {row[0]: row[1] for row in await cursor.fetchall()}
-                else:
-                    async with conn.execute(type_sql) as cursor:
-                        events_by_type = {row[0]: row[1] for row in await cursor.fetchall()}
+            # Count by status
+            events_by_status = {}
+            for event in events:
+                event_status = event.get("status", "unknown")
+                events_by_status[event_status] = events_by_status.get(event_status, 0) + 1
             
-            # Get events by status
-            status_sql = """
-            SELECT status, COUNT(*) as count 
-            FROM twin_lifecycle_events
-            """
-            if twin_id:
-                status_sql += " WHERE twin_id = ?"
-            status_sql += " GROUP BY status"
+            # Get recent events (last 10)
+            recent_events = sorted(events, key=lambda x: x.get("timestamp", ""), reverse=True)[:10]
+            recent_events = [self._dict_to_event(event) for event in recent_events]
             
-            async with self.db_manager.get_connection() as conn:
-                if twin_id:
-                    async with conn.execute(status_sql, (twin_id,)) as cursor:
-                        events_by_status = {row[0]: row[1] for row in await cursor.fetchall()}
-                else:
-                    async with conn.execute(status_sql) as cursor:
-                        events_by_status = {row[0]: row[1] for row in await cursor.fetchall()}
-            
-            # Get recent events
-            recent_sql = """
-            SELECT * FROM twin_lifecycle_events
-            """
-            if twin_id:
-                recent_sql += " WHERE twin_id = ?"
-            recent_sql += " ORDER BY timestamp DESC LIMIT 10"
-            
-            async with self.db_manager.get_connection() as conn:
-                if twin_id:
-                    async with conn.execute(recent_sql, (twin_id,)) as cursor:
-                        recent_events = [self._row_to_event(row) for row in await cursor.fetchall()]
-                else:
-                    async with conn.execute(recent_sql) as cursor:
-                        recent_events = [self._row_to_event(row) for row in await cursor.fetchall()]
-            
-            # Get status distribution
-            status_dist_sql = """
-            SELECT current_status, COUNT(*) as count 
-            FROM twin_lifecycle_status
-            GROUP BY current_status
-            """
-            
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(status_dist_sql) as cursor:
-                    status_distribution = {row[0]: row[1] for row in await cursor.fetchall()}
+            # Status distribution (from main registry)
+            status_distribution = {}
+            if status:
+                status_distribution[status.current_status.value] = 1
             
             return TwinLifecycleSummary(
                 total_events=total_events,
@@ -352,28 +234,63 @@ class TwinLifecycleRepository(BaseRepository):
             
         except Exception as e:
             logger.error(f"Failed to get lifecycle summary: {e}")
-            raise
+            return TwinLifecycleSummary(
+                total_events=0,
+                events_by_type={},
+                events_by_status={},
+                recent_events=[],
+                status_distribution={}
+            )
     
-    def _row_to_event(self, row) -> TwinLifecycleEvent:
-        """Convert database row to TwinLifecycleEvent object."""
+    async def _get_lifecycle_events_json(self, registry_id: str) -> List[Dict[str, Any]]:
+        """Get the lifecycle_events JSON field from the metrics table."""
+        query = "SELECT lifecycle_events FROM twin_registry_metrics WHERE registry_id = ?"
+        result = await self.fetch_one(query, (registry_id,))
+        
+        if result and result.get("lifecycle_events"):
+            try:
+                return json.loads(result["lifecycle_events"])
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid JSON in lifecycle_events field for registry {registry_id}")
+                return []
+        
+        return []
+    
+    async def _update_lifecycle_status(self, registry_id: str, event_type: str, event_status: str) -> None:
+        """Update lifecycle status based on event type."""
+        try:
+            # Map event types to lifecycle phases
+            phase_mapping = {
+                "created": "development",
+                "started": "testing",
+                "activated": "production",
+                "suspended": "maintenance",
+                "archived": "sunset"
+            }
+            
+            new_phase = phase_mapping.get(event_type, "development")
+            
+            # Update the registry
+            query = """
+            UPDATE twin_registry 
+            SET lifecycle_status = ?, lifecycle_phase = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
+            """
+            await self.execute_query(query, (event_status, new_phase, registry_id))
+            
+        except Exception as e:
+            logger.error(f"Failed to update lifecycle status: {e}")
+    
+    def _dict_to_event(self, event_dict: Dict[str, Any]) -> TwinLifecycleEvent:
+        """Convert dictionary to TwinLifecycleEvent object."""
         return TwinLifecycleEvent(
-            event_id=row[0],
-            twin_id=row[1],
-            event_type=LifecycleEventType(row[2]),
-            event_data=self._deserialize_json(row[3]),
-            event_metadata=self._deserialize_json(row[4]),
-            timestamp=datetime.fromisoformat(row[5]),
-            triggered_by=row[6],
-            status=row[7],
-            error_message=row[8]
-        )
-    
-    def _row_to_status(self, row) -> TwinLifecycleStatus:
-        """Convert database row to TwinLifecycleStatus object."""
-        return TwinLifecycleStatus(
-            twin_id=row[0],
-            current_status=LifecycleStatus(row[1]),
-            last_event=None,  # Would need to fetch separately if needed
-            last_updated=datetime.fromisoformat(row[3]),
-            lifecycle_metadata=self._deserialize_json(row[4])
+            event_id=event_dict.get("event_id"),
+            twin_id=event_dict.get("twin_id"),
+            event_type=TwinLifecycleEvent.LifecycleEventType(event_dict.get("event_type", "created")),
+            event_data=event_dict.get("event_data", {}),
+            event_metadata=event_dict.get("event_metadata", {}),
+            timestamp=datetime.fromisoformat(event_dict.get("timestamp", "")),
+            triggered_by=event_dict.get("triggered_by"),
+            status=event_dict.get("status", "completed"),
+            error_message=event_dict.get("error_message")
         ) 

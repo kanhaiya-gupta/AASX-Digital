@@ -1,0 +1,431 @@
+<!-- Knowledge Graph Cross-Module Integration Tab - World-Class Implementation -->
+<div class="kg-integration-tab" role="main" aria-label="Cross-Module Integration Dashboard">
+    
+    <!-- Enhanced Tab Header with Better Semantics -->
+    <header class="kg-tab-header mb-4" role="banner">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="header-content">
+                <h1 class="mb-2" id="integration-title">
+                    <i class="fas fa-link me-2" aria-hidden="true"></i>
+                    Cross-Module Integration & Data Flow
+                </h1>
+                <p class="text-muted mb-0" id="integration-description">
+                    Manage integrations with AASX-ETL, Twin Registry, and other modules for comprehensive data orchestration
+                </p>
+            </div>
+            <nav class="kg-tab-actions" role="navigation" aria-label="Primary actions">
+                <button class="btn btn-primary" id="create-integration" onclick="createIntegration()">
+                    <i class="fas fa-plus me-2" aria-hidden="true"></i>Create Integration
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshIntegrations()">
+                    <i class="fas fa-sync-alt me-2" aria-hidden="true"></i>Refresh
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Integration Status Dashboard -->
+    <section class="integration-overview mb-4" aria-labelledby="integration-overview-title">
+        <h2 class="sr-only" id="integration-overview-title">Integration Status Overview</h2>
+        <div class="row">
+            <div class="col-md-3">
+                <article class="card bg-gradient-primary text-white" role="region" aria-labelledby="active-integrations">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="active-integrations" aria-live="polite">0</h3>
+                                <small>Active Integrations</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span>+2.1%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-plug fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-md-3">
+                <article class="card bg-gradient-success text-white" role="region" aria-labelledby="data-sync-status">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="data-sync-status" aria-live="polite">0%</h3>
+                                <small>Data Sync Status</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span>+5.3%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-sync fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-md-3">
+                <article class="card bg-gradient-warning text-white" role="region" aria-labelledby="pending-syncs">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="pending-syncs" aria-live="polite">0</h3>
+                                <small>Pending Syncs</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-down me-1"></i>
+                                    <span>-1.2%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+            <div class="col-md-3">
+                <article class="card bg-gradient-info text-white" role="region" aria-labelledby="total-data-flow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div class="card-info">
+                                <h3 class="mb-0" id="total-data-flow" aria-live="polite">0</h3>
+                                <small>Data Flow Events</small>
+                                <div class="trend mt-2">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    <span>+8.7%</span>
+                                </div>
+                            </div>
+                            <div class="card-icon" aria-hidden="true">
+                                <i class="fas fa-stream fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Module Integration Overview -->
+    <section class="module-integration mb-4" aria-labelledby="module-integration-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="module-integration-title">
+                        <i class="fas fa-network-wired me-2" aria-hidden="true"></i>Module Integration Overview
+                    </h2>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshIntegrations()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh Status
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="integration-module-card">
+                            <div class="card bg-light h-100">
+                                <div class="card-body text-center">
+                                    <div class="integration-module-icon mb-3">
+                                        <i class="fas fa-file-archive fa-3x text-primary" aria-hidden="true"></i>
+                                    </div>
+                                    <h6 class="integration-module-title">AASX-ETL Module</h6>
+                                    <div class="integration-status mb-2">
+                                        <span class="badge bg-success" id="aasx-status">Connected</span>
+                                    </div>
+                                    <div class="integration-metrics mb-3">
+                                        <div class="metric-item">
+                                            <span class="metric-label">Processed files:</span>
+                                            <span class="metric-value" id="aasx-file-count">0</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">Data transferred:</span>
+                                            <span class="metric-value" id="aasx-data-transferred">0 GB</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">Last sync:</span>
+                                            <span class="metric-value" id="aasx-last-sync">Never</span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-primary btn-sm w-100" onclick="configureAASXIntegration()" data-module="aasx_etl">
+                                        <i class="fas fa-cog me-1"></i>Configure
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="integration-module-card">
+                            <div class="card bg-light h-100">
+                                <div class="card-body text-center">
+                                    <div class="integration-module-icon mb-3">
+                                        <i class="fas fa-robot fa-3x text-success" aria-hidden="true"></i>
+                                    </div>
+                                    <h6 class="integration-module-title">Twin Registry Module</h6>
+                                    <div class="integration-status mb-2">
+                                        <span class="badge bg-success" id="twin-status">Connected</span>
+                                    </div>
+                                    <div class="integration-metrics mb-3">
+                                        <div class="metric-item">
+                                            <span class="metric-label">Active twins:</span>
+                                            <span class="metric-value" id="twin-count">0</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">Data transferred:</span>
+                                            <span class="metric-value" id="twin-data-transferred">0 GB</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">Last sync:</span>
+                                            <span class="metric-value" id="twin-last-sync">Never</span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-success btn-sm w-100" onclick="configureTwinIntegration()" data-module="twin_registry">
+                                        <i class="fas fa-cog me-1"></i>Configure
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="integration-module-card">
+                            <div class="card bg-light h-100">
+                                <div class="card-body text-center">
+                                    <div class="integration-module-icon mb-3">
+                                        <i class="fas fa-brain fa-3x text-warning" aria-hidden="true"></i>
+                                    </div>
+                                    <h6 class="integration-module-title">AI/RAG Module</h6>
+                                    <div class="integration-status mb-2">
+                                        <span class="badge bg-warning" id="ai-status">Limited</span>
+                                    </div>
+                                    <div class="integration-metrics mb-3">
+                                        <div class="metric-item">
+                                            <span class="metric-label">AI models:</span>
+                                            <span class="metric-value" id="ai-model-count">0</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">Data transferred:</span>
+                                            <span class="metric-value" id="ai-data-transferred">0 MB</span>
+                                        </div>
+                                        <div class="metric-item">
+                                            <span class="metric-label">Last sync:</span>
+                                            <span class="metric-value" id="ai-last-sync">Never</span>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-outline-warning btn-sm w-100" onclick="configureAIIntegration()" data-module="ai_rag">
+                                        <i class="fas fa-cog me-1"></i>Configure
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Data Flow Monitoring -->
+    <section class="data-flow-monitoring mb-4" aria-labelledby="data-flow-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="data-flow-title">
+                        <i class="fas fa-stream me-2" aria-hidden="true"></i>Real-Time Data Flow Monitoring
+                    </h2>
+                    <button class="btn btn-outline-primary btn-sm" id="refresh-data-flow" onclick="refreshDataFlow()">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh Flow
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="data-flow-chart-container">
+                            <canvas id="dataFlowChart" width="600" height="300" aria-label="Data flow monitoring chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="data-flow-stats">
+                            <h6 class="stats-title">Flow Statistics</h6>
+                            <div class="stat-item mb-3">
+                                <label class="form-label">Data Transfer Rate</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="transfer-rate" value="0 KB/s" readonly>
+                                    <span class="input-group-text">KB/s</span>
+                                </div>
+                            </div>
+                            <div class="stat-item mb-3">
+                                <label class="form-label">Active Connections</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="active-connections" value="0" readonly>
+                                    <span class="input-group-text">connections</span>
+                                </div>
+                            </div>
+                            <div class="stat-item mb-3">
+                                <label class="form-label">Queue Status</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="queue-status" value="Empty" readonly>
+                                    <span class="input-group-text">items</span>
+                                </div>
+                            </div>
+                            <div class="stat-item mb-3">
+                                <label class="form-label">Error Count</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="error-count" value="0" readonly>
+                                    <span class="input-group-text">errors</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Integration Configuration -->
+    <section class="integration-config mb-4" aria-labelledby="integration-config-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="integration-config-title">
+                        <i class="fas fa-cogs me-2" aria-hidden="true"></i>Integration Configuration
+                    </h2>
+                    <button class="btn btn-outline-info btn-sm" onclick="showIntegrationSettings()">
+                        <i class="fas fa-sliders-h me-1"></i>Global Settings
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="config-section">
+                            <h6 class="config-section-title">
+                                <i class="fas fa-shield-alt me-2" aria-hidden="true"></i>Security & Authentication
+                            </h6>
+                            <div class="config-options">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="enable-ssl" checked>
+                                    <label class="form-check-label" for="enable-ssl">Enable SSL/TLS Encryption</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="enable-auth" checked>
+                                    <label class="form-check-label" for="enable-auth">Require Authentication</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="enable-audit">
+                                    <label class="form-check-label" for="enable-audit">Enable Audit Logging</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="config-section">
+                            <h6 class="config-section-title">
+                                <i class="fas fa-tachometer-alt me-2" aria-hidden="true"></i>Performance Settings
+                            </h6>
+                            <div class="config-options">
+                                <div class="mb-3">
+                                    <label class="form-label" for="default-batch-size">Default Batch Size</label>
+                                    <select class="form-select" id="default-batch-size">
+                                        <option value="100">100 items</option>
+                                        <option value="500" selected>500 items</option>
+                                        <option value="1000">1000 items</option>
+                                        <option value="2000">2000 items</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="connection-timeout">Connection Timeout (seconds)</label>
+                                    <input type="number" class="form-control" id="connection-timeout" value="30" min="5" max="300">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Integration Logs -->
+    <section class="integration-logs mb-4" aria-labelledby="integration-logs-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="integration-logs-title">
+                        <i class="fas fa-list-alt me-2" aria-hidden="true"></i>Integration Activity Logs
+                    </h2>
+                    <div class="btn-group" role="group" aria-label="Log management actions">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="exportIntegrationLogs()">
+                            <i class="fas fa-download me-1"></i>Export Logs
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="clearIntegrationLogs()">
+                            <i class="fas fa-trash me-1"></i>Clear Logs
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="integration-logs-container">
+                    <div class="logs-filters mb-3">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select class="form-select" id="log-level-filter">
+                                    <option value="">All Levels</option>
+                                    <option value="info">Info</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="error">Error</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="log-module-filter">
+                                    <option value="">All Modules</option>
+                                    <option value="aasx_etl">AASX-ETL</option>
+                                    <option value="twin_registry">Twin Registry</option>
+                                    <option value="ai_rag">AI/RAG</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="log-search" placeholder="Search logs...">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100" onclick="filterLogs()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="logs-table-container">
+                        <table class="table table-hover" id="integration-logs-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Level</th>
+                                    <th>Module</th>
+                                    <th>Message</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="integration-logs-body">
+                                <!-- Logs will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+</div>
+
+<!-- Enhanced Tab Footer with Better Semantics -->
+<footer class="kg-tab-footer" role="contentinfo" aria-label="Integration tab footer">
+    <div class="tab-info">
+        <i class="fas fa-link me-2" aria-hidden="true"></i>
+        <span id="integration-tab-info" aria-live="polite">Integration system operational - All modules connected</span>
+    </div>
+    <nav class="tab-actions" role="navigation" aria-label="Secondary actions">
+        <button class="btn btn-outline-info btn-sm me-2" onclick="showIntegrationHelp()">
+            <i class="fas fa-question-circle me-1"></i>Help
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showIntegrationDocs()">
+            <i class="fas fa-book me-1"></i>Documentation
+        </button>
+    </nav>
+</footer>

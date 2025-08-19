@@ -1,0 +1,1050 @@
+/**
+ * Integration Tab CSS Module
+ * Follows Twin Registry convention with proper content display
+ * Fixes content obstruction and height issues
+ */
+
+/* ===== RESET & BASE STYLES ===== */
+.kg-integration-tab * {
+    box-sizing: border-box;
+}
+
+.kg-integration-tab {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #212529;
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+}
+
+/* ===== INTEGRATION HEADER - MATCHING TWIN REGISTRY STYLE ===== */
+.kg-integration-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(30, 60, 114, 0.3);
+}
+
+.kg-integration-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+}
+
+.kg-integration-header-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.kg-integration-header-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.kg-integration-header-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.kg-integration-header-title i {
+    font-size: 1.5rem;
+    opacity: 0.9;
+}
+
+.kg-integration-header-subtitle {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.kg-integration-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.kg-integration-tab-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* ===== ANALYTICS OVERVIEW CARDS - MATCHING TWIN REGISTRY STYLE ===== */
+.kg-analytics-overview {
+    margin-bottom: 2rem;
+}
+
+.kg-analytics-overview .row {
+    margin: 0 -0.75rem;
+}
+
+.kg-analytics-overview .col-md-3 {
+    padding: 0 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.kg-analytics-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: visible;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 160px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.kg-analytics-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.kg-analytics-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--card-accent) 0%, var(--card-accent-light) 100%);
+}
+
+.kg-card-primary {
+    --card-accent: #007bff;
+    --card-accent-light: #0056b3;
+}
+
+.kg-card-success {
+    --card-accent: #28a745;
+    --card-accent-light: #1e7e34;
+}
+
+.kg-card-warning {
+    --card-accent: #ffc107;
+    --card-accent-light: #e0a800;
+}
+
+.kg-card-info {
+    --card-accent: #17a2b8;
+    --card-accent-light: #138496;
+}
+
+.kg-analytics-content {
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.kg-analytics-info {
+    flex: 1;
+}
+
+.kg-analytics-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--card-accent);
+    line-height: 1;
+    margin-bottom: 0.75rem;
+}
+
+.kg-analytics-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kg-analytics-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--card-accent) 0%, var(--card-accent-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.kg-analytics-trend {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    margin-top: auto;
+}
+
+.trend-up {
+    color: #28a745;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.trend-down {
+    color: #dc3545;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.kg-analytics-trend small {
+    color: #6b7280;
+    font-size: 0.75rem;
+    display: block;
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+/* ===== CHART CONTAINERS - MATCHING TWIN REGISTRY STYLE ===== */
+.kg-chart-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow: visible;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.kg-chart-container:hover {
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.kg-chart-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.kg-chart-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.kg-chart-title i {
+    color: #6c757d;
+}
+
+.kg-chart-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.kg-chart-body {
+    padding: 2rem;
+    min-height: 350px;
+}
+
+/* ===== INTEGRATION MODULE CARDS - MATCHING TWIN REGISTRY STYLE ===== */
+.integration-module-card {
+    margin-bottom: 1.5rem;
+}
+
+.integration-module-card .card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    height: 100%;
+    background: white;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    overflow: visible;
+}
+
+.integration-module-card .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.integration-module-card .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 2rem;
+}
+
+.integration-module-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 1.75rem;
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.integration-module-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.integration-status {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.integration-status .badge {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.integration-metrics {
+    text-align: left;
+    flex: 1;
+    margin-bottom: 1.5rem;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    margin-bottom: 0.5rem;
+}
+
+.metric-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-size: 0.85rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.integration-module-card .btn {
+    margin-top: auto;
+    align-self: center;
+    width: 100%;
+}
+
+/* ===== DATA FLOW MONITORING ===== */
+.data-flow-chart-container {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 2rem;
+    min-height: 350px;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.data-flow-stats {
+    padding: 2rem;
+    height: auto;
+}
+
+.stats-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.stat-item {
+    margin-bottom: 2rem;
+}
+
+.stat-item label {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.stat-item .input-group-text {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* ===== CONFIGURATION SECTIONS ===== */
+.config-section {
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 16px;
+    height: auto;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.config-section-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.config-section-title i {
+    color: #6c757d;
+}
+
+.config-options {
+    padding: 1rem 0;
+    flex: 1;
+}
+
+/* ===== INTEGRATION LOGS ===== */
+.integration-logs-container {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 2rem;
+    min-height: auto;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.logs-filters {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.logs-table-container {
+    background: white;
+    border-radius: 16px;
+    overflow: visible;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    min-height: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.logs-table-container .table {
+    margin: 0;
+}
+
+.logs-table-container .table th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    padding: 1.5rem 1rem;
+    white-space: nowrap;
+}
+
+.logs-table-container .table td {
+    padding: 1.5rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    word-wrap: break-word;
+    max-width: 250px;
+}
+
+.logs-table-container .table tbody tr:hover {
+    background: rgba(0, 123, 255, 0.05);
+}
+
+/* ===== TAB FOOTER ===== */
+.kg-tab-footer {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    height: auto;
+}
+
+.footer-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-indicator.online {
+    background: #28a745;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.status-indicator.offline {
+    background: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
+.status-indicator.warning {
+    background: #ffc107;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+.footer-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .kg-integration-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: center;
+    }
+    
+    .kg-integration-header-actions {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .kg-integration-header {
+        padding: 1.5rem;
+    }
+    
+    .kg-integration-header-title {
+        font-size: 1.5rem;
+    }
+    
+    .kg-analytics-card {
+        padding: 1rem;
+    }
+    
+    .kg-analytics-value {
+        font-size: 1.5rem;
+    }
+    
+    .kg-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .kg-chart-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .logs-filters .row {
+        gap: 0.75rem;
+    }
+    
+    .logs-filters .col-md-2,
+    .logs-filters .col-md-3,
+    .logs-filters .col-md-4 {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .kg-integration-header {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .kg-integration-header-title {
+        font-size: 1.25rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .kg-integration-header-subtitle {
+        font-size: 0.875rem;
+    }
+    
+    .kg-analytics-overview .row {
+        gap: 1rem;
+    }
+    
+    .kg-analytics-card {
+        margin-bottom: 0;
+    }
+    
+    .integration-module-card {
+        margin-bottom: 1rem;
+    }
+    
+    .kg-chart-body {
+        padding: 1rem;
+    }
+    
+    .data-flow-chart-container {
+        min-height: 200px;
+        height: 200px;
+    }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.kg-analytics-card,
+.kg-chart-container,
+.integration-module-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.kg-analytics-card:nth-child(1) { animation-delay: 0.1s; }
+.kg-analytics-card:nth-child(2) { animation-delay: 0.2s; }
+.kg-analytics-card:nth-child(3) { animation-delay: 0.3s; }
+.kg-analytics-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* ===== LOADING STATES ===== */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.text-primary { color: #007bff !important; }
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #17a2b8 !important; }
+.text-danger { color: #dc3545 !important; }
+
+.bg-primary { background-color: #007bff !important; }
+.bg-success { background-color: #28a745 !important; }
+.bg-warning { background-color: #ffc107 !important; }
+.bg-info { background-color: #17a2b8 !important; }
+.bg-danger { background-color: #dc3545 !important; }
+
+.border-primary { border-color: #007bff !important; }
+.border-success { border-color: #28a745 !important; }
+.border-warning { border-color: #ffc107 !important; }
+.border-info { border-color: #17a2b8 !important; }
+.border-danger { border-color: #dc3545 !important; }
+
+/* ===== FIXES FOR CONTENT OBSTRUCTION ===== */
+.kg-integration-tab {
+    overflow: visible;
+}
+
+.kg-chart-container {
+    overflow: visible;
+}
+
+.integration-module-card .card {
+    overflow: visible;
+}
+
+.data-flow-chart-container {
+    overflow: visible;
+}
+
+.integration-logs-container {
+    overflow: visible;
+}
+
+/* ===== BOOTSTRAP UTILITY CLASS OVERRIDES ===== */
+/* Handle bg-light class used in HTML */
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+/* Handle h-100 class used in HTML */
+.h-100 {
+    height: 100% !important;
+}
+
+/* Handle text-center class used in HTML */
+.text-center {
+    text-align: center !important;
+}
+
+/* Handle Bootstrap margin utilities used in HTML */
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+
+/* Handle Bootstrap margin utilities for rows */
+.me-1 { margin-right: 0.25rem !important; }
+.me-2 { margin-right: 0.5rem !important; }
+
+/* Handle FontAwesome sizing classes used in HTML */
+.fa-3x {
+    font-size: 2em !important;
+}
+
+.fa-2x {
+    font-size: 1.5em !important;
+}
+
+/* Handle Bootstrap width utilities used in HTML */
+.w-100 {
+    width: 100% !important;
+}
+
+/* Handle Bootstrap button size classes used in HTML */
+.btn-sm {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    border-radius: 0.2rem !important;
+}
+
+/* Handle Bootstrap outline button variants used in HTML */
+.btn-outline-primary {
+    color: #007bff !important;
+    border-color: #007bff !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-primary:hover {
+    color: #fff !important;
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+}
+
+.btn-outline-secondary {
+    color: #6c757d !important;
+    border-color: #6c757d !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-secondary:hover {
+    color: #fff !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.btn-outline-success {
+    color: #28a745 !important;
+    border-color: #28a745 !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-success:hover {
+    color: #fff !important;
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.btn-outline-warning {
+    color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-warning:hover {
+    color: #000 !important;
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+}
+
+.btn-outline-info {
+    color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-info:hover {
+    color: #fff !important;
+    background-color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+}
+
+.btn-outline-danger {
+    color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-danger:hover {
+    color: #fff !important;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+/* Handle Bootstrap primary button used in HTML */
+.btn-primary {
+    color: #fff !important;
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3 !important;
+    border-color: #0056b3 !important;
+}
+
+/* Handle Bootstrap form classes used in HTML */
+.form-check {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.form-check-input {
+    margin-right: 0.5rem !important;
+}
+
+.form-check-label {
+    margin-bottom: 0 !important;
+    cursor: pointer !important;
+}
+
+.form-label {
+    display: inline-block !important;
+    margin-bottom: 0.5rem !important;
+    font-weight: 500 !important;
+}
+
+/* Handle Bootstrap input group classes used in HTML */
+.input-group {
+    display: flex !important;
+    align-items: stretch !important;
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.input-group-text {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    color: #495057 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    background-color: #e9ecef !important;
+    border: 1px solid #ced4da !important;
+    border-left: 0 !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+}
+
+/* Handle Bootstrap table classes used in HTML */
+.table {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+    color: #212529 !important;
+    border-collapse: collapse !important;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem !important;
+    vertical-align: top !important;
+    border-top: 1px solid #dee2e6 !important;
+}
+
+.table thead th {
+    vertical-align: bottom !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.table-hover tbody tr:hover {
+    color: #212529 !important;
+    background-color: rgba(0, 0, 0, 0.075) !important;
+}
+
+/* Handle Bootstrap badge classes used in HTML */
+.badge {
+    display: inline-block !important;
+    padding: 0.25em 0.4em !important;
+    font-size: 75% !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    vertical-align: baseline !important;
+    border-radius: 0.25rem !important;
+}
+
+.badge-success {
+    color: #fff !important;
+    background-color: #28a745 !important;
+}
+
+.badge-warning {
+    color: #212529 !important;
+    background-color: #ffc107 !important;
+}
+
+.badge-info {
+    color: #fff !important;
+    background-color: #17a2b8 !important;
+}
+
+.badge-danger {
+    color: #fff !important;
+    background-color: #dc3545 !important;
+}
+
+/* Handle Bootstrap grid classes used in HTML */
+.row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    margin-right: -0.75rem !important;
+    margin-left: -0.75rem !important;
+}
+
+.col-md-3 {
+    flex: 0 0 25% !important;
+    max-width: 25% !important;
+    padding-right: 0.75rem !important;
+    padding-left: 0.75rem !important;
+}
+
+.col-md-4 {
+    flex: 0 0 33.333333% !important;
+    max-width: 33.333333% !important;
+    padding-right: 0.75rem !important;
+    padding-left: 0.75rem !important;
+}
+
+.col-md-6 {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+    padding-right: 0.75rem !important;
+    padding-left: 0.75rem !important;
+}
+
+.col-md-8 {
+    flex: 0 0 66.666667% !important;
+    max-width: 66.666667% !important;
+    padding-right: 0.75rem !important;
+    padding-left: 0.75rem !important;
+}
+
+/* Handle text-end class used in HTML */
+.text-end {
+    text-align: right !important;
+}
+
+/* Handle align-items-center class used in HTML */
+.align-items-center {
+    align-items: center !important;
+}
+
+/* Ensure proper spacing between sections */
+.kg-chart-container + .kg-chart-container {
+    margin-top: 2rem;
+}
+
+/* Fix for chart canvas */
+#dataFlowChart {
+    max-height: 100% !important;
+    height: 100% !important;
+}
+
+/* Ensure buttons are properly sized */
+.integration-module-card .btn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* Fix for metric items spacing */
+.metric-item {
+    min-height: 2rem;
+    display: flex;
+    align-items: center;
+}
+
+/* Ensure proper form control heights */
+.form-control, .form-select {
+    min-height: 38px;
+}
+
+/* Fix for badge positioning */
+.integration-status .badge {
+    display: inline-block;
+    margin: 0 auto;
+}

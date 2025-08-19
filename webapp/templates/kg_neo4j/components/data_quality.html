@@ -1,0 +1,523 @@
+<!-- Data Quality & Validation Tab Component - World-Class Implementation -->
+<div class="kg-data-quality-tab" role="main" aria-label="Data Quality & Validation Dashboard">
+    
+    <!-- Enhanced Tab Header with Better Semantics -->
+    <header class="kg-tab-header mb-4" role="banner">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="header-content">
+                <h1 class="mb-2" id="data-quality-title">
+                    <i class="fas fa-shield-alt me-2" aria-hidden="true"></i>
+                    Data Quality & Validation
+                </h1>
+                <p class="text-muted mb-0" id="data-quality-description">
+                    Monitor, validate, and improve the quality of your knowledge graph data with comprehensive quality metrics and validation rules
+                </p>
+            </div>
+            <nav class="kg-tab-actions" role="navigation" aria-label="Primary actions">
+                <button class="btn btn-primary" onclick="runQualityAssessment()" id="quality-assessment-btn">
+                    <i class="fas fa-search me-2" aria-hidden="true"></i>Run Assessment
+                </button>
+                <button class="btn btn-outline-secondary" onclick="configureValidationRules()" id="configure-rules-btn">
+                    <i class="fas fa-cog me-2" aria-hidden="true"></i>Configure Rules
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Quality Score Dashboard -->
+    <section class="quality-score-dashboard mb-4" aria-labelledby="quality-dashboard-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="quality-dashboard-title">
+                        <i class="fas fa-chart-pie me-2" aria-hidden="true"></i>Quality Score Dashboard
+                    </h2>
+                    <span class="badge bg-success" id="overall-quality-badge">Excellent</span>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-primary" id="overallQualityScore">95%</div>
+                            <div class="text-muted">Overall Quality</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-primary" style="width: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-success" id="dataCompleteness">92%</div>
+                            <div class="text-muted">Completeness</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-success" style="width: 92%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-warning" id="dataAccuracy">88%</div>
+                            <div class="text-muted">Accuracy</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-warning" style="width: 88%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h2 text-info" id="dataConsistency">94%</div>
+                            <div class="text-muted">Consistency</div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-info" style="width: 94%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quality Trend Chart -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">Quality Trend (Last 30 Days)</h6>
+                    <canvas id="qualityTrendChart" height="100"></canvas>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Data Completeness Analysis -->
+    <section class="data-completeness-analysis mb-4" aria-labelledby="completeness-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="completeness-title">
+                        <i class="fas fa-check-circle me-2" aria-hidden="true"></i>Data Completeness Analysis
+                    </h2>
+                    <button class="btn btn-outline-info btn-sm" onclick="exportCompletenessReport()">
+                        <i class="fas fa-download me-1" aria-hidden="true"></i>Export Report
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Entity Completeness</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Nodes</small>
+                                <small id="nodeCompleteness">87%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" style="width: 87%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Relationships</small>
+                                <small id="relationshipCompleteness">91%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 91%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Properties</small>
+                                <small id="propertyCompleteness">78%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: 78%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Data Source Completeness</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>AASX Data</small>
+                                <small id="aasxCompleteness">95%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 95%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>Twin Registry</small>
+                                <small id="twinCompleteness">89%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-info" style="width: 89%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>External APIs</small>
+                                <small id="externalCompleteness">72%</small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" style="width: 72%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Completeness Details Table -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">Detailed Completeness Breakdown</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data Category</th>
+                                    <th>Total Records</th>
+                                    <th>Complete Records</th>
+                                    <th>Completeness %</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="completenessTableBody">
+                                <tr>
+                                    <td>Graph Nodes</td>
+                                    <td>1,247</td>
+                                    <td>1,085</td>
+                                    <td>87%</td>
+                                    <td><span class="badge bg-warning">Needs Attention</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Graph Edges</td>
+                                    <td>2,891</td>
+                                    <td>2,631</td>
+                                    <td>91%</td>
+                                    <td><span class="badge bg-success">Good</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Node Properties</td>
+                                    <td>8,456</td>
+                                    <td>6,596</td>
+                                    <td>78%</td>
+                                    <td><span class="badge bg-danger">Critical</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Edge Properties</td>
+                                    <td>5,782</td>
+                                    <td>5,234</td>
+                                    <td>90%</td>
+                                    <td><span class="badge bg-success">Good</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Validation Rules Engine -->
+    <section class="validation-rules-engine mb-4" aria-labelledby="validation-rules-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="validation-rules-title">
+                        <i class="fas fa-gavel me-2" aria-hidden="true"></i>Validation Rules Engine
+                    </h2>
+                    <button class="btn btn-success btn-sm" onclick="addValidationRule()">
+                        <i class="fas fa-plus me-1" aria-hidden="true"></i>Add Rule
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="ruleType" class="form-label">Rule Type</label>
+                            <select class="form-select" id="ruleType" aria-describedby="ruleType-help">
+                                <option value="data_type">Data Type Validation</option>
+                                <option value="range_check">Range Check</option>
+                                <option value="format_check">Format Check</option>
+                                <option value="uniqueness">Uniqueness Check</option>
+                                <option value="relationship">Relationship Validation</option>
+                                <option value="business_logic">Business Logic</option>
+                            </select>
+                            <small class="text-muted" id="ruleType-help">Select the type of validation rule</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="ruleTarget" class="form-label">Target Element</label>
+                            <select class="form-select" id="ruleTarget" aria-describedby="ruleTarget-help">
+                                <option value="node_property">Node Property</option>
+                                <option value="edge_property">Edge Property</option>
+                                <option value="node_label">Node Label</option>
+                                <option value="edge_type">Edge Type</option>
+                                <option value="graph_structure">Graph Structure</option>
+                            </select>
+                            <small class="text-muted" id="ruleTarget-help">Select what to validate</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="ruleSeverity" class="form-label">Severity Level</label>
+                            <select class="form-select" id="ruleSeverity" aria-describedby="ruleSeverity-help">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                            <small class="text-muted" id="ruleSeverity-help">Set rule violation severity</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="ruleCondition" class="form-label">Validation Condition</label>
+                    <textarea class="form-control" id="ruleCondition" rows="3" 
+                              placeholder="Enter validation condition (e.g., property != null AND length(property) > 0)..."
+                              aria-describedby="ruleCondition-help"></textarea>
+                    <small class="text-muted" id="ruleCondition-help">Define the validation logic</small>
+                </div>
+                <div class="mb-3">
+                    <label for="ruleDescription" class="form-label">Rule Description</label>
+                    <input type="text" class="form-control" id="ruleDescription" 
+                           placeholder="Enter a clear description of this validation rule..."
+                           aria-describedby="ruleDescription-help">
+                    <small class="text-muted" id="ruleDescription-help">Human-readable description</small>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-primary" onclick="saveValidationRule()">
+                        <i class="fas fa-save me-2" aria-hidden="true"></i>Save Rule
+                    </button>
+                    <button class="btn btn-outline-secondary ms-2" onclick="testValidationRule()">
+                        <i class="fas fa-vial me-2" aria-hidden="true"></i>Test Rule
+                    </button>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Active Validation Rules -->
+    <section class="active-validation-rules mb-4" aria-labelledby="active-rules-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="active-rules-title">
+                        <i class="fas fa-list-check me-2" aria-hidden="true"></i>Active Validation Rules
+                    </h2>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="refreshValidationRules()">
+                        <i class="fas fa-sync-alt me-1" aria-hidden="true"></i>Refresh
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Rule Name</th>
+                                <th>Type</th>
+                                <th>Target</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Violations</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="validationRulesTableBody">
+                            <tr>
+                                <td>Node ID Required</td>
+                                <td><span class="badge bg-primary">Data Type</span></td>
+                                <td>Node Property</td>
+                                <td><span class="badge bg-warning">Medium</span></td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td><span class="badge bg-danger">12</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editRule('rule1')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteRule('rule1')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Property Format Check</td>
+                                <td><span class="badge bg-info">Format</span></td>
+                                <td>Node Property</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td><span class="badge bg-warning">3</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editRule('rule2')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteRule('rule2')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Relationship Consistency</td>
+                                <td><span class="badge bg-warning">Business Logic</span></td>
+                                <td>Graph Structure</td>
+                                <td><span class="badge bg-danger">Critical</span></td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td><span class="badge bg-danger">8</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editRule('rule3')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteRule('rule3')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <!-- Quality Improvement Suggestions -->
+    <section class="quality-improvement-suggestions mb-4" aria-labelledby="improvement-title">
+        <article class="card">
+            <header class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0" id="improvement-title">
+                        <i class="fas fa-lightbulb me-2" aria-hidden="true"></i>Quality Improvement Suggestions
+                    </h2>
+                    <button class="btn btn-outline-success btn-sm" onclick="generateImprovementPlan()">
+                        <i class="fas fa-magic me-1" aria-hidden="true"></i>Generate Plan
+                    </button>
+                </div>
+            </header>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">High Priority</h6>
+                        <div class="alert alert-danger" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>Critical Data Gaps
+                            </h6>
+                            <p class="mb-2">22% of node properties are missing critical information</p>
+                            <button class="btn btn-sm btn-outline-danger" onclick="fixDataGaps()">
+                                <i class="fas fa-wrench me-1" aria-hidden="true"></i>Fix Now
+                            </button>
+                        </div>
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>Validation Rule Violations
+                            </h6>
+                            <p class="mb-2">23 active violations detected in critical rules</p>
+                            <button class="btn btn-sm btn-outline-warning" onclick="reviewViolations()">
+                                <i class="fas fa-search me-1" aria-hidden="true"></i>Review
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Medium Priority</h6>
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2" aria-hidden="true"></i>Data Consistency Issues
+                            </h6>
+                            <p class="mb-2">6% inconsistency detected in relationship properties</p>
+                            <button class="btn btn-sm btn-outline-info" onclick="fixConsistency()">
+                                <i class="fas fa-sync-alt me-1" aria-hidden="true"></i>Fix
+                            </button>
+                        </div>
+                        <div class="alert alert-secondary" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-clock me-2" aria-hidden="true"></i>Data Freshness
+                            </h6>
+                            <p class="mb-2">15% of data is older than 30 days</p>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="updateData()">
+                                <i class="fas fa-upload me-1" aria-hidden="true"></i>Update
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Improvement Actions -->
+                <div class="mt-4">
+                    <h6 class="text-muted mb-3">Recommended Actions</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-database fa-2x text-primary mb-2" aria-hidden="true"></i>
+                                    <h6>Data Enrichment</h6>
+                                    <p class="small text-muted">Fill missing properties with external data sources</p>
+                                    <button class="btn btn-sm btn-primary" onclick="enrichData()">
+                                        <i class="fas fa-plus me-1" aria-hidden="true"></i>Enrich
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-check-double fa-2x text-success mb-2" aria-hidden="true"></i>
+                                    <h6>Validation Enhancement</h6>
+                                    <p class="small text-muted">Add new validation rules for better quality control</p>
+                                    <button class="btn btn-sm btn-success" onclick="enhanceValidation()">
+                                        <i class="fas fa-plus me-1" aria-hidden="true"></i>Enhance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-2x text-info mb-2" aria-hidden="true"></i>
+                                    <h6>Quality Monitoring</h6>
+                                    <p class="small text-muted">Set up automated quality monitoring alerts</p>
+                                    <button class="btn btn-sm btn-info" onclick="setupMonitoring()">
+                                        <i class="fas fa-cog me-1" aria-hidden="true"></i>Setup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+</div>
+
+<!-- Validation Rule Modal -->
+<div class="modal fade" id="validationRuleModal" tabindex="-1" aria-labelledby="validationRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="validationRuleModalLabel">
+                    <i class="fas fa-gavel me-2" aria-hidden="true"></i>
+                    Validation Rule Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="validationRuleModalContent">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveRuleChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Tab Footer with Better Semantics -->
+<footer class="kg-tab-footer" role="contentinfo" aria-label="Data Quality tab footer">
+    <div class="tab-info">
+        <i class="fas fa-shield-alt me-2" aria-hidden="true"></i>
+        <span id="data-quality-tab-info" aria-live="polite">Data Quality monitoring active - 95% overall quality score</span>
+    </div>
+    <nav class="tab-actions" role="navigation" aria-label="Secondary actions">
+        <button class="btn btn-outline-primary btn-sm" onclick="scheduleQualityCheck()">
+            <i class="fas fa-clock me-1" aria-hidden="true"></i>Schedule Check
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showQualityHelp()">
+            <i class="fas fa-question-circle me-1" aria-hidden="true"></i>Help
+        </button>
+    </nav>
+</footer>

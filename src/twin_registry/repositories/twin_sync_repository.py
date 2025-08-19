@@ -1,284 +1,300 @@
 """
 Twin Sync Repository
 
-Data access layer for twin synchronization management.
-Handles sync history, configurations, and status tracking.
+Data access layer for twin synchronization management using JSON fields.
+Updated for Phase 2: JSON field operations instead of separate tables.
 """
 
 import logging
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+import json
 
-from src.shared.database.connection_manager import DatabaseConnectionManager
+from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.base_repository import BaseRepository
 from src.twin_registry.models.twin_sync import TwinSyncHistory, TwinSyncStatus, TwinSyncConfiguration
 
 logger = logging.getLogger(__name__)
 
 
-class TwinSyncRepository(BaseRepository):
-    """Repository for managing twin synchronization."""
+class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
+    """Repository for managing twin synchronization using JSON fields."""
     
-    def __init__(self, db_manager: DatabaseConnectionManager):
+    def __init__(self, db_manager: BaseDatabaseManager):
         """Initialize the twin sync repository."""
-        super().__init__(db_manager)
-        self.table_name = "twin_sync"
-        logger.info("Twin Sync Repository initialized")
+        super().__init__(db_manager, TwinSyncHistory)
+        logger.info("Twin Sync Repository initialized (JSON field mode)")
+    
+    def _get_table_name(self) -> str:
+        """Get the table name for this repository."""
+        return "twin_registry"
+    
+    def _get_columns(self) -> List[str]:
+        """Get the list of column names for this table."""
+        return [
+            "registry_id", "twin_id", "twin_name", "registry_name", "twin_category", "twin_type",
+            "twin_priority", "twin_version", "registry_type", "workflow_source", "aasx_integration_id",
+            "physics_modeling_id", "federated_learning_id", "data_pipeline_id", "kg_neo4j_id",
+            "certificate_manager_id", "integration_status", "overall_health_score", "health_status",
+            "lifecycle_status", "lifecycle_phase", "operational_status", "availability_status",
+            "sync_status", "sync_frequency", "last_sync_at", "next_sync_at", "sync_error_count",
+            "sync_error_message", "performance_score", "data_quality_score", "reliability_score",
+            "compliance_score", "security_level", "access_control_level", "encryption_enabled",
+            "audit_logging_enabled", "user_id", "org_id", "owner_team", "steward_user_id",
+            "created_at", "updated_at", "activated_at", "last_accessed_at", "last_modified_at",
+            "registry_config", "registry_metadata", "custom_attributes", "tags", "relationships",
+            "dependencies", "instances"
+        ]
+    
+    def _get_primary_key_column(self) -> str:
+        """Get the primary key column name for twin registry table."""
+        return "registry_id"
     
     async def initialize(self) -> None:
-        """Initialize the repository and create tables if needed."""
-        try:
-            await self._create_tables()
-            logger.info("Twin Sync Repository tables initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize Twin Sync Repository: {e}")
-            raise
+        """Initialize the repository - no tables needed for JSON field approach."""
+        logger.info("Twin Sync Repository initialized (JSON field mode)")
     
-    async def _create_tables(self) -> None:
-        """Create the twin sync tables."""
-        create_tables_sql = """
-        CREATE TABLE IF NOT EXISTS twin_sync_history (
-            id TEXT PRIMARY KEY,
-            twin_id TEXT NOT NULL,
-            sync_type TEXT NOT NULL,
-            status TEXT NOT NULL,
-            started_at TEXT NOT NULL,
-            completed_at TEXT,
-            error_message TEXT,
-            sync_data TEXT,
-            metadata TEXT
-        );
-        
-        CREATE TABLE IF NOT EXISTS twin_sync_status (
-            twin_id TEXT PRIMARY KEY,
-            last_sync_timestamp TEXT,
-            last_sync_status TEXT DEFAULT 'unknown',
-            last_sync_type TEXT,
-            next_sync_timestamp TEXT,
-            sync_configuration TEXT,
-            metadata TEXT
-        );
-        
-        CREATE INDEX IF NOT EXISTS idx_sync_history_twin_id ON twin_sync_history(twin_id);
-        CREATE INDEX IF NOT EXISTS idx_sync_history_status ON twin_sync_history(status);
-        CREATE INDEX IF NOT EXISTS idx_sync_history_started_at ON twin_sync_history(started_at);
-        """
-        
-        async with self.db_manager.get_connection() as conn:
-            await conn.execute(create_tables_sql)
-            await conn.commit()
-    
-    async def create_sync_history(self, sync_history: TwinSyncHistory) -> TwinSyncHistory:
-        """Create a new sync history record."""
+    async def create_sync_history(self, registry_id: str, sync_history: TwinSyncHistory) -> TwinSyncHistory:
+        """Create a new sync history record by adding to the JSON field."""
         try:
-            sql = """
-            INSERT INTO twin_sync_history 
-            (id, twin_id, sync_type, status, started_at, completed_at, error_message, sync_data, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            # Get current sync history from the registry
+            current_history = await self._get_sync_history_json(registry_id)
+            
+            # Add new sync history
+            history_dict = {
+                "id": sync_history.id,
+                "twin_id": sync_history.twin_id,
+                "sync_type": sync_history.sync_type,
+                "status": sync_history.status,
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "completed_at": sync_history.completed_at,
+                "error_message": sync_history.error_message,
+                "sync_data": sync_history.sync_data or {},
+                "metadata": sync_history.metadata or {}
+            }
+            
+            current_history.append(history_dict)
+            
+            # Update the JSON field
+            query = """
+            UPDATE twin_registry 
+            SET sync_status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
             """
+            await self.execute_query(query, (json.dumps(current_history), registry_id))
             
-            params = (
-                sync_history.id,
-                sync_history.twin_id,
-                sync_history.sync_type,
-                sync_history.status,
-                sync_history.started_at,
-                sync_history.completed_at,
-                sync_history.error_message,
-                self._serialize_json(sync_history.sync_data),
-                self._serialize_json(sync_history.metadata)
-            )
+            # Also update the sync status fields
+            await self._update_sync_status(registry_id, sync_history.status, sync_history.sync_type)
             
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Created sync history: {sync_history.id}")
+            logger.info(f"Created sync history {sync_history.id} in registry {registry_id}")
             return sync_history
             
         except Exception as e:
             logger.error(f"Failed to create sync history: {e}")
             raise
     
-    async def update_sync_history(self, sync_id: str, update_data: Dict[str, Any]) -> bool:
-        """Update a sync history record."""
+    async def get_sync_history(self, registry_id: str, sync_id: str) -> Optional[TwinSyncHistory]:
+        """Get a sync history record by ID from the JSON field."""
         try:
-            # Build dynamic update SQL
-            set_clauses = []
-            params = []
+            history = await self._get_sync_history_json(registry_id)
             
-            for key, value in update_data.items():
-                if key in ['sync_data', 'metadata']:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(self._serialize_json(value))
-                else:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value)
+            for record in history:
+                if record.get("id") == sync_id:
+                    return self._dict_to_sync_history(record)
             
-            if not set_clauses:
-                return False
-            
-            sql = f"UPDATE twin_sync_history SET {', '.join(set_clauses)} WHERE id = ?"
-            params.append(sync_id)
-            
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Updated sync history: {sync_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to update sync history {sync_id}: {e}")
-            raise
-    
-    async def get_sync_history(self, twin_id: str, limit: int = 50) -> List[TwinSyncHistory]:
-        """Get sync history for a twin."""
-        try:
-            sql = """
-            SELECT * FROM twin_sync_history 
-            WHERE twin_id = ? 
-            ORDER BY started_at DESC 
-            LIMIT ?
-            """
-            
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (twin_id, limit)) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_sync_history(row) for row in rows]
-            
-        except Exception as e:
-            logger.error(f"Failed to get sync history for twin {twin_id}: {e}")
-            raise
-    
-    async def get_sync_status(self, twin_id: str) -> Optional[TwinSyncStatus]:
-        """Get sync status for a twin."""
-        try:
-            sql = "SELECT * FROM twin_sync_status WHERE twin_id = ?"
-            
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (twin_id,)) as cursor:
-                    row = await cursor.fetchone()
-                    
-            if row:
-                return self._row_to_sync_status(row)
             return None
             
         except Exception as e:
-            logger.error(f"Failed to get sync status for twin {twin_id}: {e}")
-            raise
+            logger.error(f"Failed to get sync history {sync_id}: {e}")
+            return None
     
-    async def update_sync_status(self, twin_id: str, sync_status: TwinSyncStatus) -> bool:
-        """Update sync status for a twin."""
+    async def get_sync_history_by_twin(self, registry_id: str, twin_id: str, limit: int = 50) -> List[TwinSyncHistory]:
+        """Get sync history for a specific twin from the JSON field."""
         try:
-            sql = """
-            INSERT OR REPLACE INTO twin_sync_status 
-            (twin_id, last_sync_timestamp, last_sync_status, last_sync_type, 
-             next_sync_timestamp, sync_configuration, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            history = await self._get_sync_history_json(registry_id)
+            
+            # Filter by twin_id and limit results
+            twin_history = [record for record in history if record.get("twin_id") == twin_id]
+            twin_history.sort(key=lambda x: x.get("started_at", ""), reverse=True)
+            
+            return [self._dict_to_sync_history(record) for record in twin_history[:limit]]
+            
+        except Exception as e:
+            logger.error(f"Failed to get sync history for twin {twin_id}: {e}")
+            return []
+    
+    async def get_sync_status(self, registry_id: str) -> Optional[TwinSyncStatus]:
+        """Get the current sync status from the registry."""
+        try:
+            query = """
+            SELECT sync_status, sync_frequency, last_sync_at, next_sync_at, sync_error_count, sync_error_message
+            FROM twin_registry 
+            WHERE registry_id = ?
+            """
+            result = await self.fetch_one(query, (registry_id,))
+            
+            if result:
+                return TwinSyncStatus(
+                    twin_id=registry_id,
+                    last_sync_timestamp=result.get("last_sync_at"),
+                    last_sync_status=result.get("sync_status", "unknown"),
+                    last_sync_type="auto",  # Default type
+                    next_sync_timestamp=result.get("next_sync_at"),
+                    sync_configuration={"frequency": result.get("sync_frequency", "daily")},
+                    metadata={
+                        "error_count": result.get("sync_error_count", 0),
+                        "error_message": result.get("sync_error_message")
+                    }
+                )
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get sync status for registry {registry_id}: {e}")
+            return None
+    
+    async def update_sync_status(self, registry_id: str, sync_status: TwinSyncStatus) -> bool:
+        """Update the sync status in the registry."""
+        try:
+            # Update sync-related fields
+            query = """
+            UPDATE twin_registry 
+            SET sync_status = ?, sync_frequency = ?, last_sync_at = ?, next_sync_at = ?, 
+                sync_error_count = ?, sync_error_message = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
             """
             
+            # Extract values from sync_status
+            frequency = sync_status.sync_configuration.get("frequency", "daily") if sync_status.sync_configuration else "daily"
+            error_count = sync_status.metadata.get("error_count", 0) if sync_status.metadata else 0
+            error_message = sync_status.metadata.get("error_message") if sync_status.metadata else None
+            
             params = (
-                twin_id,
-                sync_status.last_sync_timestamp,
                 sync_status.last_sync_status,
-                sync_status.last_sync_type,
+                frequency,
+                sync_status.last_sync_timestamp,
                 sync_status.next_sync_timestamp,
-                self._serialize_json(sync_status.sync_configuration),
-                self._serialize_json(sync_status.metadata)
+                error_count,
+                error_message,
+                registry_id
             )
             
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
-            
-            logger.info(f"Updated sync status for twin: {twin_id}")
+            await self.execute_query(query, params)
+            logger.info(f"Updated sync status for registry {registry_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to update sync status for twin {twin_id}: {e}")
-            raise
+            logger.error(f"Failed to update sync status for registry {registry_id}: {e}")
+            return False
     
-    async def get_failed_syncs(self, limit: int = 100) -> List[TwinSyncHistory]:
-        """Get recent failed sync operations."""
+    async def get_failed_syncs(self, registry_id: str, limit: int = 100) -> List[TwinSyncHistory]:
+        """Get recent failed sync operations from the JSON field."""
         try:
-            sql = """
-            SELECT * FROM twin_sync_history 
-            WHERE status = 'failed' 
-            ORDER BY started_at DESC 
-            LIMIT ?
-            """
+            history = await self._get_sync_history_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql, (limit,)) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_sync_history(row) for row in rows]
+            # Filter failed syncs and limit results
+            failed_syncs = [record for record in history if record.get("status") == "failed"]
+            failed_syncs.sort(key=lambda x: x.get("started_at", ""), reverse=True)
+            
+            return [self._dict_to_sync_history(record) for record in failed_syncs[:limit]]
             
         except Exception as e:
             logger.error(f"Failed to get failed syncs: {e}")
-            raise
+            return []
     
-    async def get_pending_syncs(self) -> List[TwinSyncHistory]:
-        """Get pending sync operations."""
+    async def get_pending_syncs(self, registry_id: str) -> List[TwinSyncHistory]:
+        """Get pending sync operations from the JSON field."""
         try:
-            sql = """
-            SELECT * FROM twin_sync_history 
-            WHERE status = 'pending' 
-            ORDER BY started_at ASC
-            """
+            history = await self._get_sync_history_json(registry_id)
             
-            async with self.db_manager.get_connection() as conn:
-                async with conn.execute(sql) as cursor:
-                    rows = await cursor.fetchall()
-                    
-            return [self._row_to_sync_history(row) for row in rows]
+            # Filter pending syncs
+            pending_syncs = [record for record in history if record.get("status") == "pending"]
+            pending_syncs.sort(key=lambda x: x.get("started_at", ""), reverse=True)
+            
+            return [self._dict_to_sync_history(record) for record in pending_syncs]
             
         except Exception as e:
             logger.error(f"Failed to get pending syncs: {e}")
-            raise
+            return []
     
-    async def cleanup_old_sync_history(self, days: int = 30) -> int:
-        """Clean up old sync history records."""
+    async def cleanup_old_sync_history(self, registry_id: str, days: int = 30) -> int:
+        """Clean up old sync history records from the JSON field."""
         try:
-            cutoff_date = (datetime.utcnow() - datetime.timedelta(days=days)).isoformat()
+            history = await self._get_sync_history_json(registry_id)
+            cutoff_date = (datetime.now(timezone.utc) - datetime.timedelta(days=days)).isoformat()
             
-            sql = "DELETE FROM twin_sync_history WHERE started_at < ?"
+            # Filter out old records
+            original_count = len(history)
+            history = [record for record in history if record.get("started_at", "") >= cutoff_date]
             
-            async with self.db_manager.get_connection() as conn:
-                await conn.execute(sql, (cutoff_date,))
-                await conn.commit()
+            if len(history) < original_count:
+                # Update the JSON field
+                query = """
+                UPDATE twin_registry 
+                SET sync_status = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE registry_id = ?
+                """
+                await self.execute_query(query, (json.dumps(history), registry_id))
+                
+                cleaned_count = original_count - len(history)
+                logger.info(f"Cleaned up {cleaned_count} old sync history records from registry {registry_id}")
+                return cleaned_count
             
-            logger.info(f"Cleaned up sync history older than {days} days")
-            return True
+            return 0
             
         except Exception as e:
             logger.error(f"Failed to cleanup sync history: {e}")
-            raise
+            return 0
     
-    def _row_to_sync_history(self, row) -> TwinSyncHistory:
-        """Convert database row to TwinSyncHistory object."""
+    async def _get_sync_history_json(self, registry_id: str) -> List[Dict[str, Any]]:
+        """Get the sync_status JSON field from the registry."""
+        query = "SELECT sync_status FROM twin_registry WHERE registry_id = ?"
+        result = await self.fetch_one(query, (registry_id,))
+        
+        if result and result.get("sync_status"):
+            try:
+                return json.loads(result["sync_status"])
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid JSON in sync_status field for registry {registry_id}")
+                return []
+        
+        return []
+    
+    async def _update_sync_status(self, registry_id: str, status: str, sync_type: str) -> None:
+        """Update sync status fields based on sync history."""
+        try:
+            now = datetime.now(timezone.utc).isoformat()
+            
+            # Update sync status fields
+            query = """
+            UPDATE twin_registry 
+            SET sync_status = ?, last_sync_at = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
+            """
+            await self.execute_query(query, (status, now, registry_id))
+            
+            # Update error count if failed
+            if status == "failed":
+                error_query = """
+                UPDATE twin_registry 
+                SET sync_error_count = sync_error_count + 1, updated_at = CURRENT_TIMESTAMP
+                WHERE registry_id = ?
+                """
+                await self.execute_query(error_query, (registry_id,))
+            
+        except Exception as e:
+            logger.error(f"Failed to update sync status: {e}")
+    
+    def _dict_to_sync_history(self, history_dict: Dict[str, Any]) -> TwinSyncHistory:
+        """Convert dictionary to TwinSyncHistory object."""
         return TwinSyncHistory(
-            id=row[0],
-            twin_id=row[1],
-            sync_type=row[2],
-            status=row[3],
-            started_at=row[4],
-            completed_at=row[5],
-            error_message=row[6],
-            sync_data=self._deserialize_json(row[7]),
-            metadata=self._deserialize_json(row[8])
-        )
-    
-    def _row_to_sync_status(self, row) -> TwinSyncStatus:
-        """Convert database row to TwinSyncStatus object."""
-        return TwinSyncStatus(
-            twin_id=row[0],
-            last_sync_timestamp=row[1],
-            last_sync_status=row[2],
-            last_sync_type=row[3],
-            next_sync_timestamp=row[4],
-            sync_configuration=self._deserialize_json(row[5]),
-            metadata=self._deserialize_json(row[6])
+            id=history_dict.get("id"),
+            twin_id=history_dict.get("twin_id"),
+            sync_type=history_dict.get("sync_type"),
+            status=history_dict.get("status"),
+            started_at=history_dict.get("started_at"),
+            completed_at=history_dict.get("completed_at"),
+            error_message=history_dict.get("error_message"),
+            sync_data=history_dict.get("sync_data", {}),
+            metadata=history_dict.get("metadata", {})
         ) 

@@ -164,11 +164,19 @@ const PhysicsModeling = {
     setupEventListeners() {
         console.log('🔗 Physics Modeling: Setting up event listeners...');
         
-        // Tab switching
+        // Tab switching - SCOPED to only Physics Modeling tabs
         document.addEventListener('click', (e) => {
             if (e.target.matches('[data-bs-toggle="tab"]')) {
-                const targetTab = e.target.getAttribute('data-bs-target').replace('#', '');
-                this.switchTab(targetTab);
+                // Check if this is a Physics Modeling tab by looking for the parent container
+                const physicsModelingContainer = e.target.closest('.pm-main-content, .physics-modeling-section, [data-module="physics-modeling"]');
+                if (physicsModelingContainer) {
+                    console.log('🔄 Physics Modeling: Handling tab switch for Physics Modeling tab');
+                    const targetTab = e.target.getAttribute('data-bs-target').replace('#', '');
+                    this.switchTab(targetTab);
+                } else {
+                    console.log('⚠️ Physics Modeling: Ignoring tab click outside Physics Modeling section');
+                    // Let Bootstrap handle this tab naturally
+                }
             }
         });
         

@@ -1,208 +1,345 @@
 """
 Twin Relationship Repository
 
-Data access layer for managing twin relationships.
+Data access layer for twin relationship management using JSON fields.
+Updated for Phase 2: JSON field operations instead of separate tables.
 """
 
-from src.shared.repositories.base_repository import BaseRepository
-from src.shared.database.connection_manager import DatabaseConnectionManager
-from ..models.twin_relationship import TwinRelationship, TwinRelationshipQuery, TwinRelationshipSummary
-from typing import List, Optional, Dict, Any
-import json
 import logging
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timezone
+import json
+
+from src.shared.database.base_manager import BaseDatabaseManager
+from src.shared.repositories.base_repository import BaseRepository
+from src.twin_registry.models.twin_relationship import TwinRelationship, TwinRelationshipQuery
 
 logger = logging.getLogger(__name__)
 
 
-class TwinRelationshipRepository(BaseRepository):
-    """Repository for managing twin relationships"""
+class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
+    """Repository for managing twin relationships using JSON fields."""
     
-    def __init__(self):
-        super().__init__()
-        self.table_name = "twin_relationships"
+    def __init__(self, db_manager: BaseDatabaseManager):
+        """Initialize the twin relationship repository."""
+        super().__init__(db_manager, TwinRelationship)
+        logger.info("Twin Relationship Repository initialized (JSON field mode)")
     
-    async def create_table(self) -> None:
-        """Create the twin_relationships table if it doesn't exist"""
-        query = """
-        CREATE TABLE IF NOT EXISTS twin_relationships (
-            relationship_id TEXT PRIMARY KEY,
-            source_twin_id TEXT NOT NULL,
-            target_twin_id TEXT NOT NULL,
-            relationship_type TEXT NOT NULL,
-            relationship_data TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_active BOOLEAN DEFAULT TRUE,
-            FOREIGN KEY (source_twin_id) REFERENCES digital_twins(twin_id),
-            FOREIGN KEY (target_twin_id) REFERENCES digital_twins(twin_id)
-        )
-        """
-        await self.execute_query(query)
-        logger.info(f"Created table {self.table_name}")
+    def _get_table_name(self) -> str:
+        """Get the table name for this repository."""
+        return "twin_registry"
     
-    async def create_relationship(self, relationship: TwinRelationship) -> TwinRelationship:
-        """Create a new twin relationship"""
-        query = """
-        INSERT INTO twin_relationships (
-            relationship_id, source_twin_id, target_twin_id, relationship_type,
-            relationship_data, created_at, updated_at, is_active
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """
-        values = (
-            relationship.relationship_id,
-            relationship.source_twin_id,
-            relationship.target_twin_id,
-            relationship.relationship_type,
-            json.dumps(relationship.relationship_data or {}),
-            relationship.created_at.isoformat(),
-            relationship.updated_at.isoformat() if relationship.updated_at else relationship.created_at.isoformat(),
-            relationship.is_active
-        )
-        
-        await self.execute_query(query, values)
-        logger.info(f"Created relationship {relationship.relationship_id}")
-        return relationship
+    def _get_columns(self) -> List[str]:
+        """Get the list of column names for this table."""
+        return [
+            "registry_id", "twin_id", "twin_name", "registry_name", "twin_category", "twin_type",
+            "twin_priority", "twin_version", "registry_type", "workflow_source", "aasx_integration_id",
+            "physics_modeling_id", "federated_learning_id", "data_pipeline_id", "kg_neo4j_id",
+            "certificate_manager_id", "integration_status", "overall_health_score", "health_status",
+            "lifecycle_status", "lifecycle_phase", "operational_status", "availability_status",
+            "sync_status", "sync_frequency", "last_sync_at", "next_sync_at", "sync_error_count",
+            "sync_error_message", "performance_score", "data_quality_score", "reliability_score",
+            "compliance_score", "security_level", "access_control_level", "encryption_enabled",
+            "audit_logging_enabled", "user_id", "org_id", "owner_team", "steward_user_id",
+            "created_at", "updated_at", "activated_at", "last_accessed_at", "last_modified_at",
+            "registry_config", "registry_metadata", "custom_attributes", "tags", "relationships",
+            "dependencies", "instances"
+        ]
     
-    async def get_relationship(self, relationship_id: str) -> Optional[TwinRelationship]:
-        """Get a relationship by ID"""
-        query = "SELECT * FROM twin_relationships WHERE relationship_id = ?"
-        result = await self.fetch_one(query, (relationship_id,))
-        
-        if result:
-            return self._row_to_relationship(result)
-        return None
+    def _get_primary_key_column(self) -> str:
+        """Get the primary key column name for twin registry table."""
+        return "registry_id"
     
-    async def get_relationships_by_twin(self, twin_id: str, query: Optional[TwinRelationshipQuery] = None) -> List[TwinRelationship]:
-        """Get all relationships for a twin (as source or target)"""
-        base_query = """
-        SELECT * FROM twin_relationships 
-        WHERE (source_twin_id = ? OR target_twin_id = ?)
-        """
-        params = [twin_id, twin_id]
-        
-        if query:
-            if query.relationship_type:
-                base_query += " AND relationship_type = ?"
-                params.append(query.relationship_type)
-            if query.is_active is not None:
-                base_query += " AND is_active = ?"
-                params.append(query.is_active)
-            if query.created_after:
-                base_query += " AND created_at >= ?"
-                params.append(query.created_after.isoformat())
-            if query.created_before:
-                base_query += " AND created_at <= ?"
-                params.append(query.created_before.isoformat())
-        
-        base_query += " ORDER BY created_at DESC"
-        
-        results = await self.fetch_all(base_query, tuple(params))
-        return [self._row_to_relationship(row) for row in results]
+    async def initialize(self) -> None:
+        """Initialize the repository - no tables needed for JSON field approach."""
+        logger.info("Twin Relationship Repository initialized (JSON field mode)")
     
-    async def get_relationships(self, query: TwinRelationshipQuery) -> List[TwinRelationship]:
-        """Get relationships with filtering"""
-        base_query = "SELECT * FROM twin_relationships WHERE 1=1"
-        params = []
-        
-        if query.source_twin_id:
-            base_query += " AND source_twin_id = ?"
-            params.append(query.source_twin_id)
-        if query.target_twin_id:
-            base_query += " AND target_twin_id = ?"
-            params.append(query.target_twin_id)
-        if query.relationship_type:
-            base_query += " AND relationship_type = ?"
-            params.append(query.relationship_type)
-        if query.is_active is not None:
-            base_query += " AND is_active = ?"
-            params.append(query.is_active)
-        if query.created_after:
-            base_query += " AND created_at >= ?"
-            params.append(query.created_after.isoformat())
-        if query.created_before:
-            base_query += " AND created_at <= ?"
-            params.append(query.created_before.isoformat())
-        
-        base_query += " ORDER BY created_at DESC"
-        
-        results = await self.fetch_all(base_query, tuple(params))
-        return [self._row_to_relationship(row) for row in results]
+    async def create(self, registry_id: str, relationship: TwinRelationship) -> TwinRelationship:
+        """Create a new relationship by adding to the JSON field."""
+        try:
+            # Get current relationships from the registry
+            current_relationships = await self._get_relationships_json(registry_id)
+            
+            # Add new relationship
+            relationship_dict = {
+                "id": relationship.id,
+                "source_twin_id": relationship.source_twin_id,
+                "target_twin_id": relationship.target_twin_id,
+                "relationship_type": relationship.relationship_type,
+                "relationship_data": relationship.relationship_data or {},
+                "relationship_metadata": relationship.relationship_metadata or {},
+                "created_by": relationship.created_by,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "is_active": relationship.is_active,
+                "strength": relationship.strength,
+                "direction": relationship.direction
+            }
+            
+            current_relationships.append(relationship_dict)
+            
+            # Update the JSON field
+            query = """
+            UPDATE twin_registry 
+            SET relationships = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
+            """
+            await self.execute_query(query, (json.dumps(current_relationships), registry_id))
+            
+            logger.info(f"Created relationship: {relationship.id} in registry {registry_id}")
+            return relationship
+            
+        except Exception as e:
+            logger.error(f"Failed to create relationship: {e}")
+            raise
     
-    async def update_relationship(self, relationship: TwinRelationship) -> TwinRelationship:
-        """Update a relationship"""
-        query = """
-        UPDATE twin_relationships SET
-            relationship_type = ?,
-            relationship_data = ?,
-            updated_at = ?,
-            is_active = ?
-        WHERE relationship_id = ?
-        """
-        values = (
-            relationship.relationship_type,
-            json.dumps(relationship.relationship_data or {}),
-            relationship.updated_at.isoformat() if relationship.updated_at else relationship.created_at.isoformat(),
-            relationship.is_active,
-            relationship.relationship_id
-        )
-        
-        await self.execute_query(query, values)
-        logger.info(f"Updated relationship {relationship.relationship_id}")
-        return relationship
+    async def get_by_id(self, registry_id: str, relationship_id: str) -> Optional[TwinRelationship]:
+        """Get a relationship by ID from the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            for rel in relationships:
+                if rel.get("id") == relationship_id:
+                    return self._dict_to_relationship(rel)
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get relationship {relationship_id}: {e}")
+            return None
     
-    async def delete_relationship(self, relationship_id: str) -> bool:
-        """Delete a relationship"""
-        query = "DELETE FROM twin_relationships WHERE relationship_id = ?"
-        result = await self.execute_query(query, (relationship_id,))
-        logger.info(f"Deleted relationship {relationship_id}")
-        return result.rowcount > 0
+    async def get_by_twin_id(self, registry_id: str, twin_id: str, limit: int = 50) -> List[TwinRelationship]:
+        """Get all relationships for a specific twin from the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Filter by twin_id (either source or target) and limit results
+            twin_relationships = [
+                rel for rel in relationships 
+                if rel.get("source_twin_id") == twin_id or rel.get("target_twin_id") == twin_id
+            ]
+            twin_relationships.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            
+            return [self._dict_to_relationship(rel) for rel in twin_relationships[:limit]]
+            
+        except Exception as e:
+            logger.error(f"Failed to get relationships for twin {twin_id}: {e}")
+            return []
     
-    async def get_relationship_summary(self) -> TwinRelationshipSummary:
-        """Get relationship statistics"""
-        # Total relationships
-        total_query = "SELECT COUNT(*) as count FROM twin_relationships"
-        total_result = await self.fetch_one(total_query)
-        total_relationships = total_result['count'] if total_result else 0
-        
-        # Active relationships
-        active_query = "SELECT COUNT(*) as count FROM twin_relationships WHERE is_active = TRUE"
-        active_result = await self.fetch_one(active_query)
-        active_relationships = active_result['count'] if active_result else 0
-        
-        # Relationships by type
-        type_query = "SELECT relationship_type, COUNT(*) as count FROM twin_relationships GROUP BY relationship_type"
-        type_results = await self.fetch_all(type_query)
-        relationship_types = {row['relationship_type']: row['count'] for row in type_results}
-        
-        # Source twins
-        source_query = "SELECT DISTINCT source_twin_id FROM twin_relationships"
-        source_results = await self.fetch_all(source_query)
-        source_twins = [row['source_twin_id'] for row in source_results]
-        
-        # Target twins
-        target_query = "SELECT DISTINCT target_twin_id FROM twin_relationships"
-        target_results = await self.fetch_all(target_query)
-        target_twins = [row['target_twin_id'] for row in target_results]
-        
-        return TwinRelationshipSummary(
-            total_relationships=total_relationships,
-            active_relationships=active_relationships,
-            relationship_types=relationship_types,
-            source_twins=source_twins,
-            target_twins=target_twins
-        )
+    async def get_relationships_by_twin(self, registry_id: str, twin_id: str, query: Optional[TwinRelationshipQuery] = None) -> List[TwinRelationship]:
+        """Get all relationships for a specific twin from the JSON field (alias for get_by_twin_id)."""
+        return await self.get_by_twin_id(registry_id, twin_id, limit=50)
     
-    def _row_to_relationship(self, row: Dict[str, Any]) -> TwinRelationship:
-        """Convert database row to TwinRelationship model"""
-        from datetime import datetime
+    async def get_by_type(self, registry_id: str, relationship_type: str, limit: int = 50) -> List[TwinRelationship]:
+        """Get all relationships of a specific type from the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Filter by relationship type and limit results
+            type_relationships = [
+                rel for rel in relationships 
+                if rel.get("relationship_type") == relationship_type
+            ]
+            type_relationships.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            
+            return [self._dict_to_relationship(rel) for rel in type_relationships[:limit]]
+            
+        except Exception as e:
+            logger.error(f"Failed to get relationships of type {relationship_type}: {e}")
+            return []
+    
+    async def get_active_relationships(self, registry_id: str) -> List[TwinRelationship]:
+        """Get all active relationships from the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Filter active relationships
+            active_relationships = [rel for rel in relationships if rel.get("is_active", True)]
+            active_relationships.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            
+            return [self._dict_to_relationship(rel) for rel in active_relationships]
+            
+        except Exception as e:
+            logger.error(f"Failed to get active relationships: {e}")
+            return []
+    
+    async def update(self, registry_id: str, relationship_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update a relationship in the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Find and update the relationship
+            for i, rel in enumerate(relationships):
+                if rel.get("id") == relationship_id:
+                    # Update fields
+                    for key, value in update_data.items():
+                        if key in ['relationship_data', 'relationship_metadata']:
+                            relationships[i][key] = value
+                        elif key == 'updated_at':
+                            relationships[i][key] = datetime.now(timezone.utc).isoformat()
+                        else:
+                            relationships[i][key] = value
+                    break
+            
+            # Update the JSON field
+            query = """
+            UPDATE twin_registry 
+            SET relationships = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
+            """
+            await self.execute_query(query, (json.dumps(relationships), registry_id))
+            
+            logger.info(f"Updated relationship: {relationship_id} in registry {registry_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to update relationship {relationship_id}: {e}")
+            return False
+    
+    async def deactivate_relationship(self, registry_id: str, relationship_id: str) -> bool:
+        """Deactivate a relationship in the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Find and deactivate the relationship
+            for i, rel in enumerate(relationships):
+                if rel.get("id") == relationship_id:
+                    relationships[i]["is_active"] = False
+                    relationships[i]["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    break
+            
+            # Update the JSON field
+            query = """
+            UPDATE twin_registry 
+            SET relationships = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = ?
+            """
+            await self.execute_query(query, (json.dumps(relationships), registry_id))
+            
+            logger.info(f"Deactivated relationship: {relationship_id} in registry {registry_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to deactivate relationship {relationship_id}: {e}")
+            return False
+    
+    async def delete(self, registry_id: str, relationship_id: str) -> bool:
+        """Delete a relationship from the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Remove the relationship
+            original_count = len(relationships)
+            relationships = [rel for rel in relationships if rel.get("id") != relationship_id]
+            
+            if len(relationships) < original_count:
+                # Update the JSON field
+                query = """
+                UPDATE twin_registry 
+                SET relationships = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE registry_id = ?
+                """
+                await self.execute_query(query, (json.dumps(relationships), registry_id))
+                
+                logger.info(f"Deleted relationship: {relationship_id} from registry {registry_id}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Failed to delete relationship {relationship_id}: {e}")
+            return False
+    
+    async def get_relationships_in_date_range(self, registry_id: str, start_date: datetime, end_date: datetime) -> List[TwinRelationship]:
+        """Get relationships created within a date range from the JSON field."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Filter by date range
+            start_iso = start_date.isoformat()
+            end_iso = end_date.isoformat()
+            
+            date_filtered = [
+                rel for rel in relationships
+                if start_iso <= rel.get("created_at", "") <= end_iso
+            ]
+            date_filtered.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            
+            return [self._dict_to_relationship(rel) for rel in date_filtered]
+            
+        except Exception as e:
+            logger.error(f"Failed to get relationships in date range: {e}")
+            return []
+    
+    async def get_relationship_network(self, registry_id: str, twin_id: str, depth: int = 2) -> List[TwinRelationship]:
+        """Get relationship network around a twin up to specified depth."""
+        try:
+            relationships = await self._get_relationships_json(registry_id)
+            
+            # Build network starting from the target twin
+            network = set()
+            visited = set()
+            to_visit = [(twin_id, 0)]  # (twin_id, current_depth)
+            
+            while to_visit:
+                current_twin, current_depth = to_visit.pop(0)
+                
+                if current_depth > depth or current_twin in visited:
+                    continue
+                
+                visited.add(current_twin)
+                
+                # Find all relationships involving this twin
+                for rel in relationships:
+                    if rel.get("is_active", True):
+                        if rel.get("source_twin_id") == current_twin:
+                            network.add(rel["id"])
+                            if current_depth < depth:
+                                to_visit.append((rel.get("target_twin_id"), current_depth + 1))
+                        elif rel.get("target_twin_id") == current_twin:
+                            network.add(rel["id"])
+                            if current_depth < depth:
+                                to_visit.append((rel.get("source_twin_id"), current_depth + 1))
+            
+            # Convert back to relationship objects
+            network_relationships = [
+                rel for rel in relationships if rel.get("id") in network
+            ]
+            network_relationships.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+            
+            return [self._dict_to_relationship(rel) for rel in network_relationships]
+            
+        except Exception as e:
+            logger.error(f"Failed to get relationship network for twin {twin_id}: {e}")
+            return []
+    
+    async def _get_relationships_json(self, registry_id: str) -> List[Dict[str, Any]]:
+        """Get the relationships JSON field from the registry."""
+        query = "SELECT relationships FROM twin_registry WHERE registry_id = ?"
+        result = await self.fetch_one(query, (registry_id,))
         
+        if result and result.get("relationships"):
+            try:
+                return json.loads(result["relationships"])
+            except json.JSONDecodeError:
+                logger.warning(f"Invalid JSON in relationships field for registry {registry_id}")
+                return []
+        
+        return []
+    
+    def _dict_to_relationship(self, rel_dict: Dict[str, Any]) -> TwinRelationship:
+        """Convert dictionary to TwinRelationship object."""
         return TwinRelationship(
-            relationship_id=row['relationship_id'],
-            source_twin_id=row['source_twin_id'],
-            target_twin_id=row['target_twin_id'],
-            relationship_type=row['relationship_type'],
-            relationship_data=json.loads(row['relationship_data']) if row['relationship_data'] else {},
-            created_at=datetime.fromisoformat(row['created_at']),
-            updated_at=datetime.fromisoformat(row['updated_at']) if row['updated_at'] else None,
-            is_active=bool(row['is_active'])
+            id=rel_dict.get("id"),
+            source_twin_id=rel_dict.get("source_twin_id"),
+            target_twin_id=rel_dict.get("target_twin_id"),
+            relationship_type=rel_dict.get("relationship_type"),
+            relationship_data=rel_dict.get("relationship_data", {}),
+            relationship_metadata=rel_dict.get("relationship_metadata", {}),
+            created_by=rel_dict.get("created_by"),
+            created_at=rel_dict.get("created_at"),
+            updated_at=rel_dict.get("updated_at"),
+            is_active=rel_dict.get("is_active", True),
+            strength=rel_dict.get("strength", 1.0),
+            direction=rel_dict.get("direction", "bidirectional")
         ) 

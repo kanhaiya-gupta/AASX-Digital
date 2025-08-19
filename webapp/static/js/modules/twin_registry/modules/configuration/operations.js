@@ -186,7 +186,7 @@ export class ConfigurationOperations {
      */
     updateAuthState() {
         if (window.authManager) {
-            this.isAuthenticated = window.authManager.isAuthenticated();
+            this.isAuthenticated = window.authManager?.isAuthenticated || false;
             this.currentUser = null; // User info not needed currently
             this.authToken = window.authManager.getStoredToken();
             console.log('🔐 Configuration Operations: Auth state updated', {

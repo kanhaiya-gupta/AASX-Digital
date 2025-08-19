@@ -1,318 +1,362 @@
 """
 Twin Relationship Service
 
-Manages relationships between digital twins including:
-- Creating relationships between twins
-- Querying relationship networks
-- Managing relationship metadata
-- Relationship analytics and insights
+Service for managing twin relationships using JSON fields.
+Updated for Phase 2: JSON field operations instead of separate tables.
 """
 
 import logging
-from typing import Dict, List, Optional, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
 
-from src.shared.services.base_service import BaseService
 from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.twin_registry.models.twin_relationship import TwinRelationship
-from src.twin_registry.repositories.twin_relationship_repository import TwinRelationshipRepository
+from src.shared.database.base_manager import BaseDatabaseManager
+from ..models.twin_relationship import TwinRelationship, TwinRelationshipQuery, TwinRelationshipSummary
+from ..repositories.twin_relationship_repository import TwinRelationshipRepository
 
 logger = logging.getLogger(__name__)
 
 
-class TwinRelationshipService(BaseService):
-    """
-    Service for managing relationships between digital twins.
+class TwinRelationshipService:
+    """Service for managing twin relationships"""
     
-    Provides functionality for:
-    - Creating and managing twin relationships
-    - Querying relationship networks
-    - Relationship analytics and insights
-    - Relationship validation and constraints
-    """
-    
-    def __init__(self, db_manager: DatabaseConnectionManager):
-        """Initialize the twin relationship service."""
-        super().__init__(db_manager)
-        self.relationship_repo = TwinRelationshipRepository(db_manager)
-        logger.info("Twin Relationship Service initialized")
+    def __init__(self):
+        """Initialize the twin relationship service"""
+        # Use the same database infrastructure as other modules
+        data_dir = Path("data")
+        data_dir.mkdir(exist_ok=True)
+        db_path = data_dir / "aasx_database.db"
+        
+        # Initialize central database connection
+        connection_manager = DatabaseConnectionManager(db_path)
+        self.db_manager = BaseDatabaseManager(connection_manager)
+        
+        # Initialize repository with database connection
+        self.relationship_repo = TwinRelationshipRepository(self.db_manager)
     
     async def initialize(self) -> None:
-        """Initialize the relationship service."""
+        """Initialize the service - no tables needed for JSON field approach"""
         try:
-            await self.relationship_repo.initialize()
-            logger.info("Twin Relationship Service initialized successfully")
+            # No table creation needed - all data stored in existing twin_registry tables
+            logger.info("Twin Relationship Service initialized successfully (JSON field mode)")
         except Exception as e:
             logger.error(f"Failed to initialize Twin Relationship Service: {e}")
             raise
     
+    # ==================== Relationship Management ====================
+    
     async def create_relationship(
         self,
+        registry_id: str,
         source_twin_id: str,
         target_twin_id: str,
         relationship_type: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        created_by: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Create a relationship between two digital twins.
-        
-        Args:
-            source_twin_id: ID of the source twin
-            target_twin_id: ID of the target twin
-            relationship_type: Type of relationship (e.g., 'contains', 'depends_on', 'communicates_with')
-            metadata: Additional relationship metadata
-            created_by: User who created the relationship
-            
-        Returns:
-            Dictionary with relationship details and status
-        """
+        relationship_data: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> TwinRelationship:
+        """Create a new relationship between twins"""
         try:
-            logger.info(f"Creating relationship: {source_twin_id} -> {target_twin_id} ({relationship_type})")
-            
-            # Validate relationship
-            validation_result = await self._validate_relationship(
-                source_twin_id, target_twin_id, relationship_type
-            )
-            if not validation_result["valid"]:
-                return {
-                    "success": False,
-                    "error": validation_result["error"],
-                    "relationship": None
-                }
-            
-            # Create relationship
-            relationship = TwinRelationship(
+            # Create relationship object
+            relationship = TwinRelationship.create_relationship(
                 source_twin_id=source_twin_id,
                 target_twin_id=target_twin_id,
                 relationship_type=relationship_type,
-                metadata=metadata or {},
-                created_by=created_by,
-                created_at=datetime.utcnow().isoformat()
+                relationship_data=relationship_data or {},
+                metadata=metadata or {}
             )
+            
+            # Save to database using JSON field
+            await self.relationship_repo.create(registry_id, relationship)
+            
+            logger.info(f"Created relationship {relationship.relationship_id} between {source_twin_id} and {target_twin_id} in registry {registry_id}")
+            return relationship
+            
+        except Exception as e:
+            logger.error(f"Failed to create relationship between {source_twin_id} and {target_twin_id}: {e}")
+            raise
+    
+    async def get_relationship(self, registry_id: str, relationship_id: str) -> Optional[TwinRelationship]:
+        """Get a relationship by ID"""
+        try:
+            return await self.relationship_repo.get_by_id(registry_id, relationship_id)
+        except Exception as e:
+            logger.error(f"Failed to get relationship {relationship_id}: {e}")
+            return None
+    
+    async def get_relationships_by_twin(self, registry_id: str, twin_id: str, query: Optional[TwinRelationshipQuery] = None) -> List[TwinRelationship]:
+        """Get all relationships for a twin (as source or target)"""
+        try:
+            return await self.relationship_repo.get_relationships_by_twin(registry_id, twin_id, query)
+        except Exception as e:
+            logger.error(f"Failed to get relationships for twin {twin_id}: {e}")
+            return []
+    
+    async def get_relationships(self, registry_id: str, query: TwinRelationshipQuery) -> List[TwinRelationship]:
+        """Get relationships with filters"""
+        try:
+            # For now, get all relationships from the registry and filter
+            # This could be optimized later with more sophisticated querying
+            all_relationships = await self.relationship_repo.get_relationships_by_twin(registry_id, "", None)
+            
+            # Apply filters
+            filtered_relationships = []
+            for rel in all_relationships:
+                if query.source_twin_id and rel.source_twin_id != query.source_twin_id:
+                    continue
+                if query.target_twin_id and rel.target_twin_id != query.target_twin_id:
+                    continue
+                if query.relationship_type and rel.relationship_type != query.relationship_type:
+                    continue
+                if query.is_active is not None and rel.is_active != query.is_active:
+                    continue
+                if query.created_after and rel.created_at < query.created_after:
+                    continue
+                if query.created_before and rel.created_at > query.created_before:
+                    continue
+                
+                filtered_relationships.append(rel)
+            
+            return filtered_relationships
+            
+        except Exception as e:
+            logger.error(f"Failed to query relationships: {e}")
+            return []
+    
+    async def update_relationship(
+        self,
+        registry_id: str,
+        relationship_id: str,
+        update_data: Dict[str, Any]
+    ) -> Optional[TwinRelationship]:
+        """Update a relationship"""
+        try:
+            # Get current relationship
+            current = await self.relationship_repo.get_relationship(registry_id, relationship_id)
+            if not current:
+                logger.warning(f"Relationship {relationship_id} not found")
+                return None
+            
+            # Update fields
+            for key, value in update_data.items():
+                if hasattr(current, key):
+                    setattr(current, key, value)
+            
+            # Update timestamp
+            current.updated_at = datetime.now()
             
             # Save to database
-            saved_relationship = await self.relationship_repo.create(relationship)
+            await self.relationship_repo.update(registry_id, relationship_id, update_data)
             
-            return {
-                "success": True,
-                "relationship": self._convert_relationship_to_dict(saved_relationship),
-                "message": "Relationship created successfully"
-            }
+            logger.info(f"Updated relationship {relationship_id}")
+            return current
             
         except Exception as e:
-            logger.error(f"Failed to create relationship: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "relationship": None
-            }
+            logger.error(f"Failed to update relationship {relationship_id}: {e}")
+            return None
     
-    async def get_relationships(
+    async def delete_relationship(self, registry_id: str, relationship_id: str) -> bool:
+        """Delete a relationship"""
+        try:
+            result = await self.relationship_repo.delete(registry_id, relationship_id)
+            if result:
+                logger.info(f"Deleted relationship {relationship_id}")
+            else:
+                logger.warning(f"Relationship {relationship_id} not found or already deleted")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Failed to delete relationship {relationship_id}: {e}")
+            return False
+    
+    # ==================== Relationship Queries ====================
+    
+    async def get_relationships_by_type(self, registry_id: str, relationship_type: str) -> List[TwinRelationship]:
+        """Get all relationships of a specific type"""
+        try:
+            query = TwinRelationshipQuery(relationship_type=relationship_type)
+            return await self.get_relationships(registry_id, query)
+        except Exception as e:
+            logger.error(f"Failed to get relationships by type {relationship_type}: {e}")
+            return []
+    
+    async def get_active_relationships(self, registry_id: str) -> List[TwinRelationship]:
+        """Get all active relationships"""
+        try:
+            query = TwinRelationshipQuery(is_active=True)
+            return await self.get_relationships(registry_id, query)
+        except Exception as e:
+            logger.error(f"Failed to get active relationships: {e}")
+            return []
+    
+    async def get_relationships_in_date_range(
         self,
-        twin_id: str,
-        relationship_type: Optional[str] = None,
-        direction: str = "both"
-    ) -> Dict[str, Any]:
-        """
-        Get relationships for a specific twin.
-        
-        Args:
-            twin_id: ID of the twin
-            relationship_type: Filter by relationship type
-            direction: 'incoming', 'outgoing', or 'both'
-            
-        Returns:
-            Dictionary with relationships and metadata
-        """
+        registry_id: str,
+        start_date: datetime,
+        end_date: datetime
+    ) -> List[TwinRelationship]:
+        """Get relationships created within a date range"""
         try:
-            logger.info(f"Getting relationships for twin: {twin_id}")
+            # This would need to be enhanced with proper date filtering
+            # For now, get all sync history and filter
+            all_relationships = await self.relationship_repo.get_relationships_by_twin(registry_id, "", None)
             
-            relationships = await self.relationship_repo.get_relationships(
-                twin_id, relationship_type, direction
+            filtered_relationships = []
+            for rel in all_relationships:
+                if start_date <= rel.created_at <= end_date:
+                    filtered_relationships.append(rel)
+            
+            return filtered_relationships
+            
+        except Exception as e:
+            logger.error(f"Failed to get relationships in date range: {e}")
+            return []
+    
+    # ==================== Relationship Analytics ====================
+    
+    async def get_relationship_summary(self, registry_id: str) -> TwinRelationshipSummary:
+        """Get relationship statistics and summary"""
+        try:
+            return await self.relationship_repo.get_relationship_summary(registry_id)
+        except Exception as e:
+            logger.error(f"Failed to get relationship summary: {e}")
+            return TwinRelationshipSummary(
+                total_relationships=0,
+                active_relationships=0,
+                relationship_types={},
+                source_twins=[],
+                target_twins=[]
             )
-            
-            return {
-                "success": True,
-                "relationships": [self._convert_relationship_to_dict(r) for r in relationships],
-                "count": len(relationships),
-                "twin_id": twin_id
-            }
-            
-        except Exception as e:
-            logger.error(f"Failed to get relationships: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "relationships": [],
-                "count": 0
-            }
     
-    async def delete_relationship(self, relationship_id: str) -> Dict[str, Any]:
-        """
-        Delete a relationship by ID.
-        
-        Args:
-            relationship_id: ID of the relationship to delete
-            
-        Returns:
-            Dictionary with deletion status
-        """
+    async def get_relationship_graph(self, registry_id: str) -> Dict[str, Any]:
+        """Get relationship graph data for visualization"""
         try:
-            logger.info(f"Deleting relationship: {relationship_id}")
+            relationships = await self.relationship_repo.get_relationship_summary(registry_id)
             
-            success = await self.relationship_repo.delete(relationship_id)
+            # Build graph structure
+            nodes = set()
+            edges = []
+            
+            # Add all twins as nodes
+            for twin_id in relationships.source_twins:
+                nodes.add(twin_id)
+            for twin_id in relationships.target_twins:
+                nodes.add(twin_id)
+            
+            # Convert to list format
+            nodes_list = [{"id": twin_id, "type": "twin"} for twin_id in nodes]
             
             return {
-                "success": success,
-                "message": "Relationship deleted successfully" if success else "Relationship not found",
-                "relationship_id": relationship_id
+                "nodes": nodes_list,
+                "edges": edges,  # Could be enhanced to include actual relationship data
+                "summary": {
+                    "total_nodes": len(nodes),
+                    "total_relationships": relationships.total_relationships,
+                    "active_relationships": relationships.active_relationships
+                }
             }
             
         except Exception as e:
-            logger.error(f"Failed to delete relationship: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "relationship_id": relationship_id
-            }
+            logger.error(f"Failed to get relationship graph: {e}")
+            return {"nodes": [], "edges": [], "summary": {}}
     
-    async def get_relationship_network(
+    # ==================== Bulk Operations ====================
+    
+    async def create_multiple_relationships(
         self,
-        twin_id: str,
-        depth: int = 2,
-        relationship_types: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """
-        Get the relationship network around a twin.
-        
-        Args:
-            twin_id: ID of the central twin
-            depth: How many levels deep to traverse
-            relationship_types: Filter by relationship types
-            
-        Returns:
-            Dictionary with network graph and metadata
-        """
+        registry_id: str,
+        relationships_data: List[Dict[str, Any]]
+    ) -> List[TwinRelationship]:
+        """Create multiple relationships at once"""
         try:
-            logger.info(f"Getting relationship network for twin: {twin_id} (depth: {depth})")
+            created_relationships = []
             
-            network = await self.relationship_repo.get_network(
-                twin_id, depth, relationship_types
-            )
+            for rel_data in relationships_data:
+                relationship = await self.create_relationship(
+                    registry_id=registry_id,
+                    source_twin_id=rel_data["source_twin_id"],
+                    target_twin_id=rel_data["target_twin_id"],
+                    relationship_type=rel_data["relationship_type"],
+                    relationship_data=rel_data.get("relationship_data"),
+                    metadata=rel_data.get("metadata")
+                )
+                created_relationships.append(relationship)
             
-            return {
-                "success": True,
-                "network": network,
-                "central_twin_id": twin_id,
-                "depth": depth,
-                "node_count": len(network.get("nodes", [])),
-                "edge_count": len(network.get("edges", []))
-            }
+            logger.info(f"Created {len(created_relationships)} relationships in registry {registry_id}")
+            return created_relationships
             
         except Exception as e:
-            logger.error(f"Failed to get relationship network: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "network": {"nodes": [], "edges": []}
-            }
+            logger.error(f"Failed to create multiple relationships: {e}")
+            raise
     
-    async def get_relationship_analytics(self) -> Dict[str, Any]:
-        """
-        Get analytics about relationships in the registry.
-        
-        Returns:
-            Dictionary with relationship statistics and insights
-        """
+    async def deactivate_relationships_by_twin(self, registry_id: str, twin_id: str) -> int:
+        """Deactivate all relationships for a specific twin"""
         try:
-            logger.info("Getting relationship analytics")
+            # Get all relationships for the twin
+            relationships = await self.get_relationships_by_twin(registry_id, twin_id)
             
-            analytics = await self.relationship_repo.get_analytics()
+            # Deactivate each relationship
+            deactivated_count = 0
+            for relationship in relationships:
+                relationship.deactivate()
+                await self.relationship_repo.update_relationship(registry_id, relationship)
+                deactivated_count += 1
             
-            return {
-                "success": True,
-                "analytics": analytics,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+            logger.info(f"Deactivated {deactivated_count} relationships for twin {twin_id} in registry {registry_id}")
+            return deactivated_count
             
         except Exception as e:
-            logger.error(f"Failed to get relationship analytics: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "analytics": {}
-            }
+            logger.error(f"Failed to deactivate relationships for twin {twin_id}: {e}")
+            return 0
     
-    async def _validate_relationship(
-        self,
-        source_twin_id: str,
-        target_twin_id: str,
-        relationship_type: str
-    ) -> Dict[str, Any]:
+    # ==================== Enhanced Query Methods ====================
+    
+    async def get_all_relationships(self) -> List[Dict[str, Any]]:
         """
-        Validate a relationship before creation.
+        Get all relationships across all registries.
+        This method provides the interface expected by the webapp service.
         
-        Args:
-            source_twin_id: ID of the source twin
-            target_twin_id: ID of the target twin
-            relationship_type: Type of relationship
-            
         Returns:
-            Dictionary with validation result
+            List of relationship dictionaries
         """
         try:
-            # Check if twins exist
-            source_exists = await self.relationship_repo.twin_exists(source_twin_id)
-            target_exists = await self.relationship_repo.twin_exists(target_twin_id)
+            logger.info("Getting all relationships across all registries")
             
-            if not source_exists:
-                return {
-                    "valid": False,
-                    "error": f"Source twin {source_twin_id} does not exist"
-                }
+            # Import the registry repository to get all registries
+            from ..repositories.twin_registry_repository import TwinRegistryRepository
+            registry_repo = TwinRegistryRepository(self.db_manager)
             
-            if not target_exists:
-                return {
-                    "valid": False,
-                    "error": f"Target twin {target_twin_id} does not exist"
-                }
+            # Get all registries
+            all_registries = await registry_repo.get_all()
             
-            # Check for self-relationship
-            if source_twin_id == target_twin_id:
-                return {
-                    "valid": False,
-                    "error": "Cannot create relationship with self"
-                }
+            all_relationships = []
+            for registry in all_registries:
+                try:
+                    # Get all relationships for this registry (not filtered by twin_id)
+                    registry_relationships = await self.relationship_repo.get_active_relationships(registry.registry_id)
+                    
+                    for rel in registry_relationships:
+                        relationship_dict = {
+                            "relationship_id": rel.id,
+                            "source_twin_id": rel.source_twin_id,
+                            "source_twin_name": registry.twin_name,
+                            "target_twin_id": rel.target_twin_id,
+                            "relationship_type": rel.relationship_type,
+                            "description": rel.relationship_data.get("description", "") if rel.relationship_data else "",
+                            "created_at": rel.created_at.isoformat() if rel.created_at else "",
+                            "is_active": rel.is_active,
+                            "registry_type": registry.registry_type,
+                            "metadata": rel.relationship_metadata
+                        }
+                        all_relationships.append(relationship_dict)
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to get relationships for registry {registry.registry_id}: {e}")
+                    continue
             
-            # Check for duplicate relationship
-            existing = await self.relationship_repo.get_relationship(
-                source_twin_id, target_twin_id, relationship_type
-            )
-            if existing:
-                return {
-                    "valid": False,
-                    "error": f"Relationship already exists: {source_twin_id} -> {target_twin_id} ({relationship_type})"
-                }
-            
-            return {"valid": True, "error": None}
+            logger.info(f"Retrieved {len(all_relationships)} relationships from all registries")
+            return all_relationships
             
         except Exception as e:
-            logger.error(f"Relationship validation failed: {e}")
-            return {
-                "valid": False,
-                "error": f"Validation error: {str(e)}"
-            }
-    
-    def _convert_relationship_to_dict(self, relationship: TwinRelationship) -> Dict[str, Any]:
-        """Convert a TwinRelationship object to dictionary."""
-        return {
-            "id": relationship.id,
-            "source_twin_id": relationship.source_twin_id,
-            "target_twin_id": relationship.target_twin_id,
-            "relationship_type": relationship.relationship_type,
-            "metadata": relationship.metadata,
-            "created_by": relationship.created_by,
-            "created_at": relationship.created_at,
-            "updated_at": relationship.updated_at
-        } 
+            logger.error(f"Failed to get all relationships: {e}")
+            raise 

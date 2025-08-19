@@ -1,12 +1,44 @@
 <!-- Health Monitoring Component -->
 <div class="tr-health-monitoring">
+    <!-- Premium Header -->
+    <div class="tr-health-header">
+        <div class="tr-header-content">
+            <div class="tr-header-info">
+                <h5 class="tr-header-title">
+                    <i class="fas fa-heartbeat"></i>
+                    Health Monitoring
+                </h5>
+                <p class="tr-header-subtitle">Comprehensive health monitoring, real-time system status, and proactive health management for your digital twin ecosystem</p>
+            </div>
+            <div class="tr-header-actions">
+                <div class="tr-monitoring-controls">
+                    <button class="tr-btn tr-btn-outline" id="twin_registry_startMonitoring">
+                        <i class="fas fa-play"></i>
+                        Start Monitoring
+                    </button>
+                    <button class="tr-btn tr-btn-outline" id="twin_registry_stopMonitoring" disabled>
+                        <i class="fas fa-stop"></i>
+                        Stop Monitoring
+                    </button>
+                    <button class="tr-btn tr-btn-refresh" id="twin_registry_refreshHealth">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="tr-live-indicator" id="twin_registry_liveIndicator">
+                    <i class="fas fa-circle"></i>
+                    <span>Live</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Health Overview Cards -->
     <div class="row mb-4">
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="tr-health-card tr-health-excellent">
                 <div class="tr-health-content">
                     <div class="tr-health-info">
-                        <div class="tr-health-value" id="excellentCount">0</div>
+                        <div class="tr-health-value" id="twin_registry_excellentCount">0</div>
                         <div class="tr-health-label">Excellent</div>
                         <div class="tr-health-range">90-100%</div>
                     </div>
@@ -24,7 +56,7 @@
             <div class="tr-health-card tr-health-good">
                 <div class="tr-health-content">
                     <div class="tr-health-info">
-                        <div class="tr-health-value" id="goodCount">0</div>
+                        <div class="tr-health-value" id="twin_registry_goodCount">0</div>
                         <div class="tr-health-label">Good</div>
                         <div class="tr-health-range">75-89%</div>
                     </div>
@@ -42,7 +74,7 @@
             <div class="tr-health-card tr-health-warning">
                 <div class="tr-health-content">
                     <div class="tr-health-info">
-                        <div class="tr-health-value" id="warningCount">0</div>
+                        <div class="tr-health-value" id="twin_registry_warningCount">0</div>
                         <div class="tr-health-label">Warning</div>
                         <div class="tr-health-range">60-74%</div>
                     </div>
@@ -60,7 +92,7 @@
             <div class="tr-health-card tr-health-critical">
                 <div class="tr-health-content">
                     <div class="tr-health-info">
-                        <div class="tr-health-value" id="criticalCount">0</div>
+                        <div class="tr-health-value" id="twin_registry_criticalCount">0</div>
                         <div class="tr-health-label">Critical</div>
                         <div class="tr-health-range">&lt;60%</div>
                     </div>
@@ -75,97 +107,468 @@
         </div>
     </div>
 
-    <!-- Health Charts Section -->
-    <div class="tr-health-charts">
-        <div class="row mb-4">
-            <div class="col-lg-6 mb-3">
-                <div class="tr-chart-card">
-                    <div class="tr-card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chart-pie"></i>
-                            Health Score Distribution
-                        </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Live
-                        </div>
-                    </div>
-                    <div class="tr-card-body">
-                        <div class="chart-container medium">
-                            <canvas id="healthDistributionChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-6 mb-3">
-                <div class="tr-chart-card">
-                    <div class="tr-card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-chart-line"></i>
-                            Health Score Trends
-                        </h6>
-                        <div class="tr-live-badge">
-                            <i class="fas fa-circle"></i>
-                            Real-time
-                        </div>
-                    </div>
-                    <div class="tr-card-body">
-                        <div class="chart-container medium">
-                            <canvas id="healthTrendsChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Individual Twin Health Status -->
-    <div class="tr-individual-health">
-        <div class="tr-section-header">
-            <h6 class="tr-section-title">
-                <i class="fas fa-list"></i>
-                Individual Twin Health Status
+    <!-- Real-time System Health Dashboard -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-tachometer-alt"></i>
+                Real-time System Health Dashboard
             </h6>
-            <div class="tr-section-actions">
-                <button class="tr-btn tr-btn-refresh" id="refreshHealthBtn">
+            <div class="tr-system-health-controls">
+                <select class="tr-filter-select" id="twin_registry_systemHealthMetric">
+                    <option value="overview">System Overview</option>
+                    <option value="resources">Resource Utilization</option>
+                    <option value="processes">Process Health</option>
+                    <option value="network">Network Health</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshSystemHealth">
                     <i class="fas fa-sync-alt"></i>
                     Refresh
                 </button>
-                <button class="tr-btn tr-btn-primary" id="exportHealthBtn">
-                    <i class="fas fa-download"></i>
-                    Export Report
-                </button>
             </div>
         </div>
-        
-        <div class="tr-health-grid" id="individualTwinHealth">
-            <!-- Individual twin health cards will be populated here -->
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_systemHealthChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-system-health-metrics">
+                        <div class="tr-system-metric">
+                            <div class="tr-system-header">
+                                <i class="fas fa-microchip text-primary"></i>
+                                <span>CPU Health</span>
+                            </div>
+                            <div class="tr-system-value" id="twin_registry_cpuHealth">0%</div>
+                            <div class="tr-system-status tr-status-healthy">Healthy</div>
+                            <div class="tr-system-trend tr-trend-down">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>-5%</span>
+                            </div>
+                        </div>
+                        <div class="tr-system-metric">
+                            <div class="tr-system-header">
+                                <i class="fas fa-memory text-info"></i>
+                                <span>Memory Health</span>
+                            </div>
+                            <div class="tr-system-value" id="twin_registry_memoryHealth">0%</div>
+                            <div class="tr-system-status tr-status-warning">Warning</div>
+                            <div class="tr-system-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8%</span>
+                            </div>
+                        </div>
+                        <div class="tr-system-metric">
+                            <div class="tr-system-header">
+                                <i class="fas fa-hdd text-success"></i>
+                                <span>Storage Health</span>
+                            </div>
+                            <div class="tr-system-value" id="twin_registry_storageHealth">0%</div>
+                            <div class="tr-system-status tr-status-healthy">Healthy</div>
+                            <div class="tr-system-trend tr-trend-stable">
+                                <i class="fas fa-minus"></i>
+                                <span>0%</span>
+                            </div>
+                        </div>
+                        <div class="tr-system-metric">
+                            <div class="tr-system-header">
+                                <i class="fas fa-network-wired text-warning"></i>
+                                <span>Network Health</span>
+                            </div>
+                            <div class="tr-system-value" id="twin_registry_networkHealth">0%</div>
+                            <div class="tr-system-status tr-status-healthy">Healthy</div>
+                            <div class="tr-system-trend tr-trend-up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Health Alerts Section -->
-    <div class="tr-health-alerts">
-        <div class="tr-section-header">
-            <h6 class="tr-section-title">
-                <i class="fas fa-bell"></i>
-                Health Alerts
+    <!-- Advanced Health Analytics -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-chart-line"></i>
+                Advanced Health Analytics
             </h6>
-            <div class="tr-alert-count">
-                <span id="alertCount">0</span> active alerts
+            <div class="tr-health-analytics-controls">
+                <select class="tr-filter-select" id="twin_registry_healthAnalyticsMetric">
+                    <option value="trends">Health Trends</option>
+                    <option value="correlation">Health Correlation</option>
+                    <option value="prediction">Health Prediction</option>
+                    <option value="benchmarking">Health Benchmarking</option>
+                </select>
+                <select class="tr-filter-select" id="twin_registry_healthTimeRange">
+                    <option value="1h">Last Hour</option>
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshHealthAnalytics">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
             </div>
         </div>
-        
-        <div class="tr-alerts-container" id="healthAlertsContainer">
-            <div class="tr-alert tr-alert-success">
-                <div class="tr-alert-icon">
-                    <i class="fas fa-check-circle"></i>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_healthAnalyticsChart"></canvas>
+                    </div>
                 </div>
-                <div class="tr-alert-content">
-                    <div class="tr-alert-title">All Systems Healthy</div>
-                    <div class="tr-alert-message">No health alerts - all twins are operating within normal parameters</div>
+                <div class="col-lg-6">
+                    <div class="tr-health-analytics-metrics">
+                        <div class="tr-analytics-metric">
+                            <div class="tr-analytics-header">
+                                <i class="fas fa-chart-line text-primary"></i>
+                                <span>Health Trend</span>
+                            </div>
+                            <div class="tr-analytics-value" id="twin_registry_healthTrend">Stable</div>
+                            <div class="tr-analytics-description">Overall health trend over time</div>
+                        </div>
+                        <div class="tr-analytics-metric">
+                            <div class="tr-analytics-header">
+                                <i class="fas fa-link text-info"></i>
+                                <span>Health Correlation</span>
+                            </div>
+                            <div class="tr-analytics-value" id="twin_registry_healthCorrelation">0.85</div>
+                            <div class="tr-analytics-description">Correlation with system performance</div>
+                        </div>
+                        <div class="tr-analytics-metric">
+                            <div class="tr-analytics-header">
+                                <i class="fas fa-crystal-ball text-success"></i>
+                                <span>Health Prediction</span>
+                            </div>
+                            <div class="tr-analytics-value" id="twin_registry_healthPrediction">92%</div>
+                            <div class="tr-analytics-description">Predicted health in 24h</div>
+                        </div>
+                        <div class="tr-analytics-metric">
+                            <div class="tr-analytics-header">
+                                <i class="fas fa-trophy text-warning"></i>
+                                <span>Health Benchmark</span>
+                            </div>
+                            <div class="tr-analytics-value" id="twin_registry_healthBenchmark">85%</div>
+                            <div class="tr-analytics-description">Industry benchmark comparison</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="tr-alert-time">Just now</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Score Distribution -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-chart-pie"></i>
+                Health Score Distribution
+            </h6>
+            <div class="tr-distribution-controls">
+                <select class="tr-filter-select" id="twin_registry_distributionFilter">
+                    <option value="all">All Twins</option>
+                    <option value="active">Active Only</option>
+                    <option value="critical">Critical Only</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshDistribution">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="chart-container large">
+                        <canvas id="twin_registry_healthDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-distribution-details">
+                        <h6 class="tr-distribution-title">
+                            <i class="fas fa-info-circle"></i>
+                            Distribution Details
+                        </h6>
+                        <div class="tr-distribution-stats">
+                            <div class="tr-distribution-stat">
+                                <span class="tr-stat-label">Total Twins</span>
+                                <span class="tr-stat-value" id="twin_registry_totalTwins">0</span>
+                            </div>
+                            <div class="tr-distribution-stat">
+                                <span class="tr-stat-label">Average Health</span>
+                                <span class="tr-stat-value" id="twin_registry_averageHealth">0%</span>
+                            </div>
+                            <div class="tr-distribution-stat">
+                                <span class="tr-stat-label">Healthiest Twin</span>
+                                <span class="tr-stat-value" id="twin_registry_healthiestTwin">-</span>
+                            </div>
+                            <div class="tr-distribution-stat">
+                                <span class="tr-stat-label">Needs Attention</span>
+                                <span class="tr-stat-value" id="twin_registry_needsAttention">0</span>
+                            </div>
+                        </div>
+                        <div class="tr-health-recommendations">
+                            <h6 class="tr-recommendations-title">
+                                <i class="fas fa-lightbulb"></i>
+                                Health Recommendations
+                            </h6>
+                            <div class="tr-recommendations-list" id="twin_registry_healthRecommendations">
+                                <!-- Health recommendations will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Alerts & Notifications -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-bell"></i>
+                Health Alerts & Notifications
+            </h6>
+            <div class="tr-alerts-controls">
+                <select class="tr-filter-select" id="twin_registry_alertSeverity">
+                    <option value="all">All Severities</option>
+                    <option value="critical">Critical</option>
+                    <option value="warning">Warning</option>
+                    <option value="info">Info</option>
+                </select>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_acknowledgeAll">
+                    <i class="fas fa-check-double"></i>
+                    Acknowledge All
+                </button>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_refreshAlerts">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="tr-alerts-summary">
+                        <h6 class="tr-alerts-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Active Alerts Summary
+                        </h6>
+                        <div class="tr-alerts-stats">
+                            <div class="tr-alert-stat tr-alert-critical">
+                                <div class="tr-alert-icon">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="tr-alert-info">
+                                    <span class="tr-alert-count" id="twin_registry_criticalAlerts">0</span>
+                                    <span class="tr-alert-label">Critical</span>
+                                </div>
+                            </div>
+                            <div class="tr-alert-stat tr-alert-warning">
+                                <div class="tr-alert-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="tr-alert-info">
+                                    <span class="tr-alert-count" id="twin_registry_warningAlerts">0</span>
+                                    <span class="tr-alert-label">Warning</span>
+                                </div>
+                            </div>
+                            <div class="tr-alert-stat tr-alert-info">
+                                <div class="tr-alert-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="tr-alert-info">
+                                    <span class="tr-alert-count" id="twin_registry_infoAlerts">0</span>
+                                    <span class="tr-alert-label">Info</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tr-alert-settings">
+                            <h6>Alert Settings</h6>
+                            <div class="tr-alert-thresholds">
+                                <div class="tr-threshold-item">
+                                    <label>Critical Threshold</label>
+                                    <input type="number" class="tr-threshold-input" id="twin_registry_criticalThreshold" value="60" min="0" max="100">
+                                    <span>%</span>
+                                </div>
+                                <div class="tr-threshold-item">
+                                    <label>Warning Threshold</label>
+                                    <input type="number" class="tr-threshold-input" id="twin_registry_warningThreshold" value="75" min="0" max="100">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-alerts-list">
+                        <h6 class="tr-alerts-title">
+                            <i class="fas fa-list"></i>
+                            Recent Alerts
+                        </h6>
+                        <div class="tr-alerts-container" id="twin_registry_alertsContainer">
+                            <!-- Alerts will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monitoring Configuration -->
+    <div class="tr-chart-card mb-4">
+        <div class="tr-card-header">
+            <h6>
+                <i class="fas fa-cogs"></i>
+                Monitoring Configuration
+            </h6>
+            <div class="tr-config-controls">
+                <button class="tr-btn tr-btn-outline" id="twin_registry_saveConfig">
+                    <i class="fas fa-save"></i>
+                    Save Configuration
+                </button>
+                <button class="tr-btn tr-btn-outline" id="twin_registry_resetConfig">
+                    <i class="fas fa-undo"></i>
+                    Reset to Defaults
+                </button>
+            </div>
+        </div>
+        <div class="tr-card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="tr-monitoring-settings">
+                        <h6 class="tr-settings-title">
+                            <i class="fas fa-sliders-h"></i>
+                            Monitoring Settings
+                        </h6>
+                        <div class="tr-settings-grid">
+                            <div class="tr-setting-item">
+                                <label>Update Interval</label>
+                                <select class="tr-setting-select" id="twin_registry_updateInterval">
+                                    <option value="5">5 seconds</option>
+                                    <option value="15">15 seconds</option>
+                                    <option value="30" selected>30 seconds</option>
+                                    <option value="60">1 minute</option>
+                                </select>
+                            </div>
+                            <div class="tr-setting-item">
+                                <label>Health Check Frequency</label>
+                                <select class="tr-setting-select" id="twin_registry_healthCheckFreq">
+                                    <option value="10">10 seconds</option>
+                                    <option value="30">30 seconds</option>
+                                    <option value="60" selected>1 minute</option>
+                                    <option value="300">5 minutes</option>
+                                </select>
+                            </div>
+                            <div class="tr-setting-item">
+                                <label>Alert Retention</label>
+                                <select class="tr-setting-select" id="twin_registry_alertRetention">
+                                    <option value="1">1 day</option>
+                                    <option value="7" selected>7 days</option>
+                                    <option value="30">30 days</option>
+                                    <option value="90">90 days</option>
+                                </select>
+                            </div>
+                            <div class="tr-setting-item">
+                                <label>Auto-acknowledge</label>
+                                <div class="tr-toggle-switch">
+                                    <input type="checkbox" id="twin_registry_autoAcknowledge">
+                                    <label for="twin_registry_autoAcknowledge"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="tr-monitoring-status">
+                        <h6 class="tr-status-title">
+                            <i class="fas fa-info-circle"></i>
+                            Monitoring Status
+                        </h6>
+                        <div class="tr-status-grid">
+                            <div class="tr-status-item">
+                                <span class="tr-status-label">Monitoring Active</span>
+                                <span class="tr-status-value" id="twin_registry_monitoringActive">No</span>
+                            </div>
+                            <div class="tr-status-item">
+                                <span class="tr-status-label">Last Update</span>
+                                <span class="tr-status-value" id="twin_registry_lastUpdate">Never</span>
+                            </div>
+                            <div class="tr-status-item">
+                                <span class="tr-status-label">Monitored Twins</span>
+                                <span class="tr-status-value" id="twin_registry_monitoredTwins">0</span>
+                            </div>
+                            <div class="tr-status-item">
+                                <span class="tr-status-label">Data Points</span>
+                                <span class="tr-status-value" id="twin_registry_dataPoints">0</span>
+                            </div>
+                        </div>
+                        <div class="tr-monitoring-actions">
+                            <button class="tr-btn tr-btn-outline" id="twin_registry_exportHealthData">
+                                <i class="fas fa-download"></i>
+                                Export Health Data
+                            </button>
+                            <button class="tr-btn tr-btn-outline" id="twin_registry_viewHealthHistory">
+                                <i class="fas fa-history"></i>
+                                View History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Health Details Modal -->
+<div class="modal fade" id="twin_registry_healthDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="twin_registry_healthDetailsTitle">
+                    <i class="fas fa-heartbeat"></i>
+                    Health Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="twin_registry_healthDetailsContent">
+                    <!-- Health details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="twin_registry_exportHealthReport">Export Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Details Modal -->
+<div class="modal fade" id="twin_registry_alertDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="twin_registry_alertDetailsTitle">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Alert Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="twin_registry_alertDetailsContent">
+                    <!-- Alert details will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="twin_registry_acknowledgeAlert">Acknowledge</button>
             </div>
         </div>
     </div>

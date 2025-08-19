@@ -23,7 +23,7 @@
                     <button class="tr-btn tr-btn-refresh" onclick="refreshTwinRegistryData()">
                         <i class="fas fa-sync-alt"></i>Refresh
                     </button>
-                    <button class="tr-btn tr-btn-export" onclick="exportRegistryData()">
+                    <button class="tr-btn tr-btn-export" onclick="exportTwinRegistryData()">
                         <i class="fas fa-download"></i>Export
                     </button>
                 </div>
@@ -39,103 +39,78 @@
         <div class="col-12">
             <div class="tr-main-card card">
                 <div class="tr-card-header card-header">
-                    <ul class="tr-nav-tabs nav nav-tabs card-header-tabs" id="registryTabs" role="tablist">
+                    <ul class="tr-nav-tabs nav nav-tabs card-header-tabs" id="twin_registry_tabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="tr-tab-link nav-link active" id="management-tab" data-bs-toggle="tab" data-bs-target="#management" type="button" role="tab">
+                            <button class="tr-tab-link nav-link active" id="twin_registry_management-tab" data-bs-toggle="tab" data-bs-target="#twin_registry_management" type="button" role="tab">
                                 <i class="fas fa-list"></i>Management
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="tr-tab-link nav-link" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button" role="tab">
+                            <button class="tr-tab-link nav-link" id="twin_registry_monitoring-tab" data-bs-toggle="tab" data-bs-target="#twin_registry_monitoring" type="button" role="tab">
                                 <i class="fas fa-heartbeat"></i>Health Monitoring
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="tr-tab-link nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                            <button class="tr-tab-link nav-link" id="twin_registry_performance-tab" data-bs-toggle="tab" data-bs-target="#twin_registry_performance" type="button" role="tab">
                                 <i class="fas fa-tachometer-alt"></i>Performance
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="tr-tab-link nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                            <button class="tr-tab-link nav-link" id="twin_registry_analytics-tab" data-bs-toggle="tab" data-bs-target="#twin_registry_analytics" type="button" role="tab">
                                 <i class="fas fa-chart-bar"></i>Analytics
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="tr-tab-link nav-link" id="lifecycle-tab" data-bs-toggle="tab" data-bs-target="#lifecycle" type="button" role="tab">
+                            <button class="tr-tab-link nav-link" id="twin_registry_lifecycle-tab" data-bs-toggle="tab" data-bs-target="#twin_registry_lifecycle" type="button" role="tab">
                                 <i class="fas fa-play-circle"></i>Lifecycle
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="tr-tab-link nav-link" id="instances-tab" data-bs-toggle="tab" data-bs-target="#instances" type="button" role="tab">
+                            <button class="tr-tab-link nav-link" id="twin_registry_instances-tab" data-bs-toggle="tab" data-bs-target="#twin_registry_instances" type="button" role="tab">
                                 <i class="fas fa-code-branch"></i>Instances
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="tr-tab-link nav-link" id="configuration-tab" data-bs-toggle="tab" data-bs-target="#configuration" type="button" role="tab">
+                            <button class="tr-tab-link nav-link" id="twin_registry_configuration-tab" data-bs-toggle="tab" data-bs-target="#twin_registry_configuration" type="button" role="tab">
                                 <i class="fas fa-cogs"></i>Configuration
                             </button>
                         </li>
                     </ul>
                 </div>
                 <div class="tr-card-body card-body">
-                    <div class="tr-tab-content tab-content" id="registryTabContent">
+                    <div class="tr-tab-content tab-content" id="twin_registry_tab_content">
                         <!-- Management Tab -->
-                        <div class="tr-tab-pane tab-pane fade show active" id="management" role="tabpanel">
+                        <div class="tr-tab-pane tab-pane fade show active" id="twin_registry_management" role="tabpanel">
                             {% include 'twin_registry/components/twin_management.html' %}
                         </div>
 
                         <!-- Health Monitoring Tab -->
-                        <div class="tr-tab-pane tab-pane fade" id="monitoring" role="tabpanel">
+                        <div class="tr-tab-pane tab-pane fade" id="twin_registry_monitoring" role="tabpanel">
                             {% include 'twin_registry/components/health_monitoring.html' %}
                         </div>
 
                         <!-- Performance Tab -->
-                        <div class="tr-tab-pane tab-pane fade" id="performance" role="tabpanel">
+                        <div class="tr-tab-pane tab-pane fade" id="twin_registry_performance" role="tabpanel">
                             {% include 'twin_registry/components/performance_monitoring.html' %}
                         </div>
 
                         <!-- Analytics Tab -->
-                        <div class="tr-tab-pane tab-pane fade" id="analytics" role="tabpanel">
-                            <div class="tr-analytics-content row">
-                                <div class="col-md-6">
-                                    <div class="tr-analytics-card card">
-                                        <div class="tr-card-header card-header">
-                                            <h6 class="tr-card-title mb-0">Twin Analytics Overview</h6>
-                                        </div>
-                                        <div class="tr-card-body card-body">
-                                            <div class="chart-container tall">
-                                                <canvas id="analyticsOverviewChart"></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="tr-analytics-card card">
-                                        <div class="tr-card-header card-header">
-                                            <h6 class="tr-card-title mb-0">Quality Score</h6>
-                                        </div>
-                                        <div class="tr-card-body card-body">
-                                            <div class="chart-container tall">
-                                                <canvas id="qualityScoreChart"></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="tr-tab-pane tab-pane fade" id="twin_registry_analytics" role="tabpanel">
+                            {% include 'twin_registry/components/analytics_dashboard.html' %}
                         </div>
 
                         <!-- Lifecycle Management Tab -->
-                        <div class="tr-tab-pane tab-pane fade" id="lifecycle" role="tabpanel">
+                        <div class="tr-tab-pane tab-pane fade" id="twin_registry_lifecycle" role="tabpanel">
                             {% include 'twin_registry/components/lifecycle_management.html' %}
                         </div>
 
                         <!-- Instance Management Tab -->
-                        <div class="tr-tab-pane tab-pane fade" id="instances" role="tabpanel">
+                        <div class="tr-tab-pane tab-pane fade" id="twin_registry_instances" role="tabpanel">
                             {% include 'twin_registry/components/instance_management.html' %}
                         </div>
 
                         <!-- System Configuration Tab -->
-                        <div class="tr-tab-pane tab-pane fade" id="configuration" role="tabpanel">
+                        <div class="tr-tab-pane tab-pane fade" id="twin_registry_configuration" role="tabpanel">
                             {% include 'twin_registry/components/system_configuration.html' %}
                         </div>
                     </div>
@@ -149,16 +124,16 @@
 {% include 'twin_registry/components/relationship_modal.html' %}
 
 <!-- Twin Details Modal -->
-<div class="modal fade" id="twinDetailsModal" tabindex="-1" aria-labelledby="twinDetailsModalLabel" aria-hidden="true">
+<div class="modal fade" id="twin_registry_twinDetailsModal" tabindex="-1" aria-labelledby="twin_registry_twinDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="twinDetailsModalLabel">
+                <h5 class="modal-title" id="twin_registry_twinDetailsModalLabel">
                     <i class="fas fa-robot me-2"></i>Twin Details
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="twinDetailsContent">
+            <div class="modal-body" id="twin_registry_twinDetailsContent">
                 <!-- Twin details will be populated here -->
             </div>
             <div class="modal-footer">
@@ -174,15 +149,37 @@
     console.log('🔍 Twin Registry Template: Loading modular Twin Registry system...');
     
     try {
-        const { initTwinRegistryModule } = await import("{{ url_for('static', path='/js/modules/twin_registry/index.js') }}");
+        const { initTwinRegistryModule } = await import("{{ url_for('static', path='/js/modules/twin_registry/index.js') }}?v={{ range(1, 1000) | random }}");
         console.log('✅ Twin Registry Template: Modular system imported successfully');
         
         // Initialize the modular Twin Registry system
         await initTwinRegistryModule();
         console.log('✅ Twin Registry Template: Modular system initialized');
         
+        // Initialize performance monitoring module
+        try {
+            await import("{{ url_for('static', path='/js/modules/twin_registry/modules/performance/index.js') }}?v={{ range(1, 1000) | random }}");
+            console.log('✅ Twin Registry Template: Performance monitoring module loaded');
+        } catch (perfError) {
+            console.warn('⚠️ Performance monitoring module not available:', perfError);
+        }
+        
     } catch (error) {
         console.error('❌ Twin Registry Template: Modular system failed to load:', error);
+        
+        // Fallback: Initialize basic configuration functionality
+        console.log('🔄 Fallback: Initializing basic configuration functionality...');
+        try {
+            const { ConfigurationManager } = await import("{{ url_for('static', path='/js/modules/twin_registry/modules/configuration/index.js') }}?v={{ range(1, 1000) | random }}");
+            const configManager = new ConfigurationManager('/api/twin-registry');
+            await configManager.init();
+            window.configurationManager = configManager;
+            console.log('✅ Fallback: Basic configuration functionality initialized');
+            
+            // Performance monitoring already loaded above, no need to duplicate
+        } catch (fallbackError) {
+            console.error('❌ Fallback also failed:', fallbackError);
+        }
     }
 </script>
 <script>
@@ -193,33 +190,80 @@
         console.log('🔄 Refreshing Twin Registry data...');
     }
 
-    function showRelationshipModal(twinId) {
+    function twinRegistryShowRelationshipModal(twinId) {
         // Populate modal with twin data
-        document.getElementById('sourceTwinId').value = twinId;
-        const modal = new bootstrap.Modal(document.getElementById('relationshipModal'));
+        document.getElementById('twin_registry_sourceTwinId').value = twinId;
+        const modal = new bootstrap.Modal(document.getElementById('twin_registry_relationshipModal'));
         modal.show();
     }
 
-    function showRelationships(twinId) {
+    function twinRegistryShowRelationships(twinId) {
         // Trigger relationship fetch
         document.dispatchEvent(new CustomEvent('twinRelationshipFetch', { detail: { twinId } }));
     }
 
-    function viewTwinDetails(twinId) {
+    function twinRegistryViewTwinDetails(twinId) {
         // Show twin details modal
-        const modal = new bootstrap.Modal(document.getElementById('twinDetailsModal'));
+        const modal = new bootstrap.Modal(document.getElementById('twin_registry_twinDetailsModal'));
         modal.show();
         // TODO: Populate twin details
     }
 
-    function editTwin(twinId) {
+    function twinRegistryEditTwin(twinId) {
         // TODO: Implement twin editing
         console.log('Edit twin:', twinId);
     }
 
-    function exportRegistryData() {
+    function exportTwinRegistryData() {
         // TODO: Implement data export
         console.log('Export registry data');
+    }
+
+    function twinRegistrySaveAllConfigurations() {
+        if (window.configurationManager) {
+            window.configurationManager.saveAllConfigurations();
+        } else {
+            console.log('Save all configurations');
+        }
+    }
+
+    function twinRegistryResetToDefaults() {
+        if (window.configurationManager) {
+            window.configurationManager.resetToDefaults();
+        } else {
+            console.log('Reset to defaults');
+        }
+    }
+
+    // Simple configuration tab handler
+    function handleConfigurationTabClick(tabId) {
+        console.log('🖱️ Configuration tab clicked:', tabId);
+        
+        // Hide all configuration tab panes
+        const allPanes = document.querySelectorAll('#twin_registry_configTabContent .tab-pane');
+        allPanes.forEach(pane => {
+            pane.classList.remove('show', 'active');
+        });
+        
+        // Remove active class from all configuration tab buttons
+        const allTabs = document.querySelectorAll('#twin_registry_configTabs .nav-link');
+        allTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Show target tab pane
+        const targetPane = document.querySelector(tabId);
+        if (targetPane) {
+            targetPane.classList.add('show', 'active');
+            console.log('✅ Configuration tab switch: Showed', tabId);
+        }
+        
+        // Activate target tab button
+        const targetTab = document.querySelector(`[data-bs-target="${tabId}"]`);
+        if (targetTab) {
+            targetTab.classList.add('active');
+            console.log('✅ Configuration tab switch: Activated tab button for', tabId);
+        }
     }
 
     // Handle relationship form submission

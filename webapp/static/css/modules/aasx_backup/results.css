@@ -1,0 +1,311 @@
+/**
+ * AASX Processing Module Results CSS Module
+ * Dedicated styling for results display and data visualization
+ */
+
+/* ===== RESULTS CONTAINER ===== */
+.aasx-results {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.aasx-results-header {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    color: white;
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.aasx-results-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.aasx-results-subtitle {
+    opacity: 0.9;
+    margin: 0.5rem 0 0 0;
+    font-size: 1rem;
+}
+
+/* ===== RESULTS CONTENT ===== */
+.aasx-results-content {
+    padding: 2rem;
+}
+
+.aasx-results-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.aasx-results-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.aasx-results-section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.aasx-results-section-title i {
+    margin-right: 0.5rem;
+    color: #007bff;
+}
+
+/* ===== DATA DISPLAY ===== */
+.aasx-data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-data-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 4px solid #007bff;
+}
+
+.aasx-data-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.aasx-data-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+/* ===== JSON VIEWER ===== */
+.aasx-json-viewer {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+}
+
+.aasx-json-viewer pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ===== FILE LIST ===== */
+.aasx-file-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.aasx-file-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+
+.aasx-file-item:hover {
+    background: #e9ecef;
+    border-left-color: #007bff;
+}
+
+.aasx-file-item i {
+    margin-right: 0.75rem;
+    color: #6c757d;
+    font-size: 1.25rem;
+}
+
+.aasx-file-info {
+    flex: 1;
+}
+
+.aasx-file-name {
+    font-weight: 500;
+    color: #495057;
+    margin: 0;
+}
+
+.aasx-file-meta {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+.aasx-file-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ===== EXPORT OPTIONS ===== */
+.aasx-export-options {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.aasx-export-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.aasx-export-btn.json {
+    background: #007bff;
+    color: white;
+}
+
+.aasx-export-btn.xml {
+    background: #28a745;
+    color: white;
+}
+
+.aasx-export-btn.csv {
+    background: #ffc107;
+    color: #212529;
+}
+
+.aasx-export-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+}
+
+/* ===== STATUS INDICATORS ===== */
+.aasx-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.aasx-status-indicator.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.aasx-status-indicator.processing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.aasx-status-indicator.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.aasx-status-indicator i {
+    font-size: 1rem;
+}
+
+/* ===== METRICS DISPLAY ===== */
+.aasx-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.aasx-metric {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.aasx-metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #007bff;
+    margin-bottom: 0.25rem;
+}
+
+.aasx-metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .aasx-results-content {
+        padding: 1.5rem;
+    }
+    
+    .aasx-data-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .aasx-export-options {
+        flex-direction: column;
+    }
+    
+    .aasx-export-btn {
+        justify-content: center;
+    }
+    
+    .aasx-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .aasx-json-viewer {
+        max-height: 300px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .aasx-results-header {
+        padding: 1rem;
+    }
+    
+    .aasx-results-title {
+        font-size: 1.25rem;
+    }
+    
+    .aasx-results-content {
+        padding: 1rem;
+    }
+    
+    .aasx-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .aasx-metric-value {
+        font-size: 1.5rem;
+    }
+} 

@@ -669,19 +669,29 @@ export default class TwinRegistryHealth {
      * Update authentication state
      */
     updateAuthState() {
-        if (window.authManager) {
+        // Use central authentication system
+        if (window.authSystemReady && window.authManager) {
+            // Check if new auth system is available
+        if (typeof window.authManager.getSessionInfo === 'function') {
+            const sessionInfo = window.authManager.getSessionInfo();
+            this.isAuthenticated = sessionInfo && sessionInfo.isAuthenticated;
+        } else if (typeof window.authManager.isAuthenticated === 'function') {
             this.isAuthenticated = window.authManager.isAuthenticated();
+        } else {
+            this.isAuthenticated = false;
+        }
             this.currentUser = null; // User info not needed currently
             this.authToken = window.authManager.getStoredToken();
-            console.log('🔐 Twin Registry Health: Auth state updated', {
+            console.log('🔐 Twin Registry Health: Central auth state updated', {
                 isAuthenticated: this.isAuthenticated,
                 user: this.currentUser?.username || 'anonymous'
             });
         } else {
+            // Fallback to demo mode if central auth not ready
             this.isAuthenticated = false;
             this.currentUser = null;
             this.authToken = null;
-            console.log('🔐 Twin Registry Health: No auth manager available');
+            console.log('🔐 Twin Registry Health: Central auth not ready, using demo mode');
         }
     }
 
@@ -740,5 +750,299 @@ export default class TwinRegistryHealth {
         this.healthChecks.clear();
         this.isInitialized = false;
         console.log('🧹 Twin Registry Health Monitoring destroyed');
+    }
+
+    /**
+     * Get registry summary
+     */
+    async getRegistrySummary() {
+        try {
+            const response = await fetch('/api/twin-registry/registry/summary', {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting registry summary:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get registry health
+     */
+    async getRegistryHealth() {
+        try {
+            const response = await fetch('/api/twin-registry/registry/health', {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting registry health:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get twin health
+     */
+    async getTwinHealth(twinId) {
+        try {
+            const response = await fetch(`/api/twin-registry/twins/${twinId}/health`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting twin health:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get twin performance
+     */
+    async getTwinPerformance(twinId, timeRange = "24h") {
+        try {
+            const response = await fetch(`/api/twin-registry/twins/${twinId}/performance?time_range=${timeRange}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting twin performance:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get twin events
+     */
+    async getTwinEvents(twinId, eventType = null, limit = 50) {
+        try {
+            const params = new URLSearchParams();
+            if (eventType) params.append('event_type', eventType);
+            if (limit) params.append('limit', limit.toString());
+
+            const response = await fetch(`/api/twin-registry/twins/${twinId}/events?${params}`, {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting twin events:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Start monitoring a twin
+     */
+    async startMonitoring(twinId) {
+        try {
+            const response = await fetch(`/api/twin-registry/twins/${twinId}/monitor`, {
+                method: 'POST',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error starting twin monitoring:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Stop monitoring a twin
+     */
+    async stopMonitoring(twinId) {
+        try {
+            const response = await fetch(`/api/twin-registry/twins/${twinId}/monitor`, {
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error stopping twin monitoring:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Get active monitoring sessions
+     */
+    async getActiveMonitoringSessions() {
+        try {
+            const response = await fetch('/api/twin-registry/monitoring/active-sessions', {
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error getting active monitoring sessions:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Start a monitoring session
+     */
+    async startMonitoringSession(twinId) {
+        try {
+            const response = await fetch('/api/twin-registry/monitoring/start-session', {
+                method: 'POST',
+                headers: this.getAuthHeaders(),
+                body: JSON.stringify({ twin_id: twinId })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error starting monitoring session:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Stop a monitoring session
+     */
+    async stopMonitoringSession(sessionId) {
+        try {
+            const response = await fetch('/api/twin-registry/monitoring/stop-session', {
+                method: 'DELETE',
+                headers: this.getAuthHeaders(),
+                body: JSON.stringify({ session_id: sessionId })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error stopping monitoring session:', error);
+            return { success: false, message: error.message };
+        }
+    }
+    
+    /**
+     * Load health data for UI display
+     */
+    async loadHealthData() {
+        try {
+            console.log('🏥 Loading health data...');
+            
+            // Get twins data to calculate health metrics
+            const response = await fetch('/api/twin-registry/twins', {
+                headers: this.getAuthHeaders()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const twins = data.twins || [];
+                
+                // Calculate health distribution
+                const healthDistribution = {
+                    excellent: twins.filter(t => (t.overall_health_score || 0) >= 90).length,
+                    good: twins.filter(t => (t.overall_health_score || 0) >= 75 && (t.overall_health_score || 0) < 90).length,
+                    warning: twins.filter(t => (t.overall_health_score || 0) >= 60 && (t.overall_health_score || 0) < 75).length,
+                    critical: twins.filter(t => (t.overall_health_score || 0) < 60).length
+                };
+                
+                this.healthData.metrics = healthDistribution;
+                this.healthData.totalTwins = twins.length;
+                
+                console.log('✅ Health data loaded:', healthDistribution);
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to load health data:', error);
+        }
+    }
+    
+    /**
+     * Update health UI with loaded data
+     */
+    async updateHealthUI() {
+        try {
+            console.log('🏥 Updating health UI...');
+            
+            // Update health count cards
+            const excellentCount = document.getElementById('twin_registry_excellentCount');
+            const goodCount = document.getElementById('twin_registry_goodCount');
+            const warningCount = document.getElementById('twin_registry_warningCount');
+            const criticalCount = document.getElementById('twin_registry_criticalCount');
+            
+            if (excellentCount && this.healthData.metrics) {
+                excellentCount.textContent = this.healthData.metrics.excellent || 0;
+            }
+            if (goodCount && this.healthData.metrics) {
+                goodCount.textContent = this.healthData.metrics.good || 0;
+            }
+            if (warningCount && this.healthData.metrics) {
+                warningCount.textContent = this.healthData.metrics.warning || 0;
+            }
+            if (criticalCount && this.healthData.metrics) {
+                criticalCount.textContent = this.healthData.metrics.critical || 0;
+            }
+            
+            // Update live indicator
+            const liveIndicator = document.getElementById('twin_registry_liveIndicator');
+            if (liveIndicator) {
+                liveIndicator.classList.add('live');
+            }
+            
+            console.log('✅ Health UI updated');
+            
+        } catch (error) {
+            console.error('❌ Failed to update health UI:', error);
+        }
     }
 } 

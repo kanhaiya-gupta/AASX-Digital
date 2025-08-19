@@ -261,10 +261,10 @@ class ChartDataService:
             }
             
             for row in results:
-                chart_data['labels'].append(row[0])
-                chart_data['datasets'][0]['data'].append(row[1])
-                chart_data['datasets'][1]['data'].append(row[2])
-                chart_data['datasets'][2]['data'].append(row[3])
+                chart_data['labels'].append(row['date'])
+                chart_data['datasets'][0]['data'].append(row['total_jobs'])
+                chart_data['datasets'][1]['data'].append(row['completed_jobs'])
+                chart_data['datasets'][2]['data'].append(row['failed_jobs'])
             
             return chart_data
             
@@ -311,9 +311,9 @@ class ChartDataService:
             }
             
             for row in results:
-                chart_data['labels'].append(row[0].title())
-                chart_data['data'].append(row[1])
-                chart_data['quality_data'].append(row[2] if row[2] else 0.0)
+                chart_data['labels'].append(row['job_type'].title())
+                chart_data['data'].append(row['count'])
+                chart_data['quality_data'].append(row['avg_quality'] if row['avg_quality'] else 0.0)
             
             return chart_data
             
@@ -363,8 +363,8 @@ class ChartDataService:
             }
             
             for row in results:
-                chart_data['labels'].append(row[0].replace('_', ' ').title())
-                chart_data['data'].append(row[1])
+                chart_data['labels'].append(row['source_type'].replace('_', ' ').title())
+                chart_data['data'].append(row['count'])
             
             return chart_data
             
@@ -429,9 +429,9 @@ class ChartDataService:
             }
             
             for row in results:
-                chart_data['labels'].append(row[0])
-                chart_data['datasets'][0]['data'].append(row[1] if row[1] else 0.0)
-                chart_data['datasets'][1]['data'].append(row[2])
+                chart_data['labels'].append(row['date'])
+                chart_data['datasets'][0]['data'].append(row['avg_quality'] if row['avg_quality'] else 0.0)
+                chart_data['datasets'][1]['data'].append(row['job_count'])
             
             return chart_data
             
@@ -479,9 +479,9 @@ class ChartDataService:
             }
             
             for row in results:
-                chart_data['labels'].append(row[0].title())
-                chart_data['quality_data'].append(row[1] if row[1] else 0.0)
-                chart_data['job_count_data'].append(row[2])
+                chart_data['labels'].append(row['job_type'].title())
+                chart_data['quality_data'].append(row['avg_quality'] if row['avg_quality'] else 0.0)
+                chart_data['job_count_data'].append(row['job_count'])
             
             return chart_data
             
@@ -554,8 +554,8 @@ class ChartDataService:
             }
             
             for row in results:
-                chart_data['labels'].append(row[0])
-                chart_data['datasets'][0]['data'].append(row[1] if row[1] else 0.0)
+                chart_data['labels'].append(row['date'])
+                chart_data['datasets'][0]['data'].append(row['avg_time'] if row['avg_time'] else 0.0)
             
             return chart_data
             
@@ -578,7 +578,7 @@ class ChartDataService:
                     AVG(m.processing_efficiency_score) as avg_efficiency,
                     COUNT(*) as job_count
                 FROM aasx_processing_metrics m
-                JOIN aasx_processing p ON m.job_id = p.id
+                JOIN aasx_processing p ON m.job_id = p.job_id
                 WHERE m.processing_efficiency_score IS NOT NULL
                 AND p.processing_status = 'completed'
                 AND m.timestamp >= datetime('now', '-{} days')
@@ -609,8 +609,8 @@ class ChartDataService:
             }
             
             for row in results:
-                chart_data['labels'].append(row[0])
-                chart_data['datasets'][0]['data'].append(row[1] if row[1] else 0.0)
+                chart_data['labels'].append(row['date'])
+                chart_data['datasets'][0]['data'].append(row['avg_efficiency'] if row['avg_efficiency'] else 0.0)
             
             return chart_data
             

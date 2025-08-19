@@ -13,12 +13,18 @@ import TwinRegistryPerformance from './registry-management/performance.js';
 import TwinRegistryRealtime from './registry-management/realtime.js';
 import TwinRegistryUIUpdater from './registry-management/ui-updater.js';
 import TwinRegistryChartUpdater from './registry-management/chart-updater.js';
+import TwinRegistryInstances from './registry-management/instances.js';
+import TwinRegistryLifecycle from './registry-management/lifecycle.js';
+import TwinRegistryRelationships from './registry-management/relationships.js';
+import TwinRegistryAnalytics from './registry-management/analytics.js';
+import TwinRegistryConfiguration from './registry-management/configuration.js';
+import TwinRegistryTwinManagement from './registry-management/twin-management.js';
 
-// Import new modular managers
-import LifecycleManager from './modules/lifecycle/index.js';
-import RelationshipManager from './modules/relationships/index.js';
-import InstanceManager from './modules/instances/index.js';
-import ConfigurationManager from './modules/configuration/index.js';
+// Import new modular managers (BACKUP - not currently used)
+// import LifecycleManager from './modules/lifecycle/index.js';
+// import RelationshipManager from './modules/relationships/index.js';
+// import InstanceManager from './modules/instances/index.js';
+// import ConfigurationManager from './modules/configuration/index.js';
 
 // Global instances
 let twinRegistryCore = null;
@@ -27,12 +33,18 @@ let twinRegistryPerformance = null;
 let twinRegistryRealtime = null;
 let twinRegistryUIUpdater = null;
 let twinRegistryChartUpdater = null;
+let twinRegistryInstances = null;
+let twinRegistryLifecycle = null;
+let twinRegistryRelationships = null;
+let twinRegistryAnalytics = null;
+let twinRegistryConfiguration = null;
+let twinRegistryTwinManagement = null;
 
-// New modular manager instances
-let lifecycleManager = null;
-let relationshipManager = null;
-let instanceManager = null;
-let configurationManager = null;
+// New modular manager instances (BACKUP - not currently used)
+// let lifecycleManager = null;
+// let relationshipManager = null;
+// let instanceManager = null;
+// let configurationManager = null;
 
 // Module initialization state
 let isInitialized = false;
@@ -109,26 +121,50 @@ export async function initTwinRegistryModule() {
         twinRegistryChartUpdater = new TwinRegistryChartUpdater();
         await twinRegistryChartUpdater.init();
         
-        // Initialize new modular managers
-        console.log('🔄 Initializing modular twin registry managers...');
+        // Initialize Instances Management
+        twinRegistryInstances = new TwinRegistryInstances();
+        await twinRegistryInstances.init();
         
-        // Initialize Lifecycle Manager
-        lifecycleManager = new LifecycleManager('/api/twin-registry');
-        await lifecycleManager.init();
+        // Initialize Lifecycle Management
+        twinRegistryLifecycle = new TwinRegistryLifecycle();
+        await twinRegistryLifecycle.init();
         
-        // Initialize Relationship Manager
-        relationshipManager = new RelationshipManager('/api/twin-registry');
-        await relationshipManager.init();
+        // Initialize Relationships Management
+        twinRegistryRelationships = new TwinRegistryRelationships();
+        await twinRegistryRelationships.init();
         
-        // Initialize Instance Manager
-        instanceManager = new InstanceManager('/api/twin-registry');
-        await instanceManager.init();
+        // Initialize Analytics Dashboard
+        twinRegistryAnalytics = new TwinRegistryAnalytics();
+        await twinRegistryAnalytics.init();
         
-        // Initialize Configuration Manager
-        configurationManager = new ConfigurationManager('/api/twin-registry');
-        await configurationManager.init();
+        // Initialize Configuration Management
+        twinRegistryConfiguration = new TwinRegistryConfiguration();
+        await twinRegistryConfiguration.init();
         
-        console.log('✅ Twin Registry Module initialized with central auth integration');
+        // Initialize Twin Management
+        twinRegistryTwinManagement = new TwinRegistryTwinManagement();
+        await twinRegistryTwinManagement.init();
+        
+        // Initialize new modular managers (BACKUP - not currently used)
+        // console.log('🔄 Initializing modular twin registry managers...');
+        
+        // // Initialize Lifecycle Manager
+        // lifecycleManager = new LifecycleManager('/api/twin-registry');
+        // await lifecycleManager.init();
+        
+        // // Initialize Relationship Manager
+        // relationshipManager = new RelationshipManager('/api/twin-registry');
+        // await relationshipManager.init();
+        
+        // // Initialize Instance Manager
+        // instanceManager = new InstanceManager('/api/twin-registry');
+        // await instanceManager.init();
+        
+        // // Initialize Configuration Manager
+        // configurationManager = new ConfigurationManager('/api/twin-registry');
+        // await configurationManager.init();
+        
+        console.log('✅ Twin Registry Module initialized with working registry-management modules');
         
         // Make instances available globally
         window.twinRegistryCore = twinRegistryCore;
@@ -137,12 +173,23 @@ export async function initTwinRegistryModule() {
         window.twinRegistryRealtime = twinRegistryRealtime;
         window.twinRegistryUIUpdater = twinRegistryUIUpdater;
         window.twinRegistryChartUpdater = twinRegistryChartUpdater;
+        window.twinRegistryInstances = twinRegistryInstances;
+        window.twinRegistryLifecycle = twinRegistryLifecycle;
+        window.twinRegistryRelationships = twinRegistryRelationships;
+        window.twinRegistryAnalytics = twinRegistryAnalytics;
         
-        // Make modular managers available globally
-        window.lifecycleManager = lifecycleManager;
-        window.relationshipManager = relationshipManager;
-        window.instanceManager = instanceManager;
-        window.configurationManager = configurationManager;
+        // Setup tab switching to load data for each tab
+        setupTabSwitching();
+        
+        // Make remaining instances available globally
+        window.twinRegistryConfiguration = twinRegistryConfiguration;
+        window.twinRegistryTwinManagement = twinRegistryTwinManagement;
+        
+        // Make modular managers available globally (BACKUP - not currently used)
+        // window.lifecycleManager = lifecycleManager;
+        // window.relationshipManager = relationshipManager;
+        // window.instanceManager = instanceManager;
+        // window.configurationManager = configurationManager;
         
         // Make initialization function available globally for post-login orchestrator
         window.initializeTwinRegistryIfNeeded = async () => {
@@ -155,30 +202,30 @@ export async function initTwinRegistryModule() {
         
         isInitialized = true;
         
-        // Set up global functions for HTML onclick handlers
-        window.startTwin = (twinId, user = 'system') => lifecycleManager.startTwin(twinId, user);
-        window.stopTwin = (twinId, user = 'system') => lifecycleManager.stopTwin(twinId, user);
-        window.syncTwin = (twinId, syncData = {}, user = 'system') => lifecycleManager.syncTwin(twinId, syncData, user);
-        window.restartTwin = (twinId, user = 'system') => lifecycleManager.restartTwin(twinId, user);
+        // Set up global functions for HTML onclick handlers using working modules
+        window.startTwin = (twinId, user = 'system') => twinRegistryLifecycle?.startTwin?.(twinId, user);
+        window.stopTwin = (twinId, user = 'system') => twinRegistryLifecycle?.stopTwin?.(twinId, user);
+        window.syncTwin = (twinId, syncData = {}, user = 'system') => twinRegistryLifecycle?.syncTwin?.(twinId, syncData, user);
+        window.restartTwin = (twinId, user = 'system') => twinRegistryLifecycle?.restartTwin?.(twinId, user);
         
         window.createRelationship = (sourceTwinId, targetTwinId, relationshipType, relationshipData = {}) => 
-            relationshipManager.createRelationship(sourceTwinId, targetTwinId, relationshipType, relationshipData);
-        window.deleteRelationship = (relationshipId) => relationshipManager.deleteRelationship(relationshipId);
+            twinRegistryRelationships?.createRelationship?.(sourceTwinId, targetTwinId, relationshipType, relationshipData);
+        window.deleteRelationship = (relationshipId) => twinRegistryRelationships?.deleteRelationship?.(relationshipId);
         
         // Instance management functions
-        window.createInstance = () => instanceManager.createInstance();
-        window.createSnapshot = () => instanceManager.createSnapshot();
-        window.createBackup = () => instanceManager.createBackup();
-        window.compareInstances = () => instanceManager.compareInstances();
-        window.activateInstance = (instanceId) => instanceManager.activateInstance(instanceId);
-        window.restoreInstance = (instanceId) => instanceManager.restoreInstance(instanceId);
-        window.deleteInstance = (instanceId) => instanceManager.deleteInstance(instanceId);
-        window.viewInstanceDetails = (instanceId) => instanceManager.viewInstanceDetails(instanceId);
+        window.createInstance = () => twinRegistryInstances?.createInstance?.();
+        window.createSnapshot = () => twinRegistryInstances?.createSnapshot?.();
+        window.createBackup = () => twinRegistryInstances?.createBackup?.();
+        window.compareInstances = () => twinRegistryInstances?.compareInstances?.();
+        window.activateInstance = (instanceId) => twinRegistryInstances?.activateInstance?.(instanceId);
+        window.restoreInstance = (instanceId) => twinRegistryInstances?.restoreInstance?.(instanceId);
+        window.deleteInstance = (instanceId) => twinRegistryInstances?.deleteInstance?.(instanceId);
+        window.viewInstanceDetails = (instanceId) => twinRegistryInstances?.viewInstanceDetails?.(instanceId);
         
-        // Configuration functions
-        window.saveAllConfigurations = () => configurationManager.saveAllConfigurations();
-        window.resetToDefaults = () => configurationManager.resetToDefaults();
-        window.refreshConfiguration = () => configurationManager.refreshConfiguration();
+        // Configuration functions (using new configuration module)
+        window.twinRegistrySaveAllConfigurations = () => twinRegistryConfiguration?.saveConfiguration?.();
+        window.twinRegistryResetToDefaults = () => twinRegistryConfiguration?.resetConfiguration?.();
+        window.twinRegistryRefreshConfiguration = () => twinRegistryConfiguration?.loadConfiguration?.();
         
         // Add window resize listener for chart resizing
         window.addEventListener('resize', () => {
@@ -198,8 +245,12 @@ export async function initTwinRegistryModule() {
                 twinRegistryRealtime,
                 twinRegistryUIUpdater,
                 twinRegistryChartUpdater,
-                lifecycleManager,
-                relationshipManager
+                twinRegistryInstances,
+                twinRegistryLifecycle,
+                twinRegistryRelationships,
+                twinRegistryAnalytics,
+                twinRegistryConfiguration,
+                twinRegistryTwinManagement
             }
         }));
         
@@ -375,34 +426,14 @@ export async function refreshTwinRegistryData() {
     console.log('🔄 Refreshing Twin Registry data...');
     
     try {
-        // Refresh existing modules
-        if (twinRegistryCore) {
-            await twinRegistryCore.refreshData();
-        }
-        
+        // Refresh UI updater which handles all tab data
         if (twinRegistryUIUpdater) {
-            await twinRegistryUIUpdater.refreshData();
+            await twinRegistryUIUpdater.refreshAllData();
         }
         
+        // Refresh charts
         if (twinRegistryChartUpdater) {
             await twinRegistryChartUpdater.refreshCharts();
-        }
-        
-        // Refresh new modular managers
-        if (lifecycleManager) {
-            // Refresh lifecycle status for all twins
-            const twins = await twinRegistryCore.getAllTwins();
-            for (const twin of twins) {
-                await lifecycleManager.getTwinStatus(twin.twin_id);
-            }
-        }
-        
-        if (relationshipManager) {
-            // Refresh relationships for all twins
-            const twins = await twinRegistryCore.getAllTwins();
-            for (const twin of twins) {
-                await relationshipManager.getTwinRelationships(twin.twin_id);
-            }
         }
         
         console.log('✅ Twin Registry data refreshed');
@@ -411,6 +442,87 @@ export async function refreshTwinRegistryData() {
         console.error('❌ Error refreshing Twin Registry data:', error);
         throw error;
     }
+}
+
+/**
+ * Setup Tab Switching to Load Data for Each Tab
+ */
+function setupTabSwitching() {
+    console.log('🔧 Setting up tab switching for data loading...');
+    
+    // Get all tab buttons
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', async (event) => {
+            const targetId = event.target.getAttribute('data-bs-target');
+            console.log(`🔄 Tab switched to: ${targetId}`);
+            
+            try {
+                // Load data based on which tab is active
+                switch (targetId) {
+                    case '#twin_registry_monitoring':
+                        console.log('🏥 Loading Health Monitoring data...');
+                        if (window.twinRegistryHealth) {
+                            await window.twinRegistryHealth.loadHealthData();
+                            await window.twinRegistryHealth.updateHealthUI();
+                        }
+                        break;
+                        
+                    case '#twin_registry_performance':
+                        console.log('📊 Loading Performance data...');
+                        if (window.twinRegistryPerformance) {
+                            await window.twinRegistryPerformance.loadPerformanceData();
+                            await window.twinRegistryPerformance.updatePerformanceUI();
+                        }
+                        break;
+                        
+                    case '#twin_registry_analytics':
+                        console.log('📈 Loading Analytics data...');
+                        if (window.twinRegistryAnalytics) {
+                            await window.twinRegistryAnalytics.loadAnalyticsData();
+                            await window.twinRegistryAnalytics.updateAnalyticsUI();
+                        }
+                        break;
+                        
+                    case '#twin_registry_lifecycle':
+                        console.log('🔄 Loading Lifecycle data...');
+                        if (window.twinRegistryLifecycle) {
+                            await window.twinRegistryLifecycle.loadLifecycleData();
+                            await window.twinRegistryLifecycle.updateLifecycleUI();
+                        }
+                        break;
+                        
+                    case '#twin_registry_instances':
+                        console.log('🔧 Loading Instances data...');
+                        if (window.twinRegistryInstances) {
+                            await window.twinRegistryInstances.loadInstancesData();
+                            await window.twinRegistryInstances.updateInstancesUI();
+                        }
+                        break;
+                        
+                    case '#twin_registry_configuration':
+                        console.log('⚙️ Loading Configuration data...');
+                        if (window.twinRegistryConfiguration) {
+                            await window.twinRegistryConfiguration.loadConfigurationData();
+                            await window.twinRegistryConfiguration.updateConfigurationUI();
+                        }
+                        break;
+                        
+                    case '#twin_registry_management':
+                        console.log('📋 Management tab active - data already loaded');
+                        break;
+                        
+                    default:
+                        console.log(`⚠️ Unknown tab: ${targetId}`);
+                }
+            } catch (error) {
+                console.error(`❌ Error loading data for tab ${targetId}:`, error);
+            }
+        });
+    });
+    
+    console.log('✅ Tab switching setup complete');
 }
 
 // Auto-initialize when DOM is ready

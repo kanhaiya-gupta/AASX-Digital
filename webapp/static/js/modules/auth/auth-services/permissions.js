@@ -98,6 +98,16 @@ export default class Permissions {
             system: {
                 view_logs: ['admin', 'super_admin'],
                 view_metrics: ['admin', 'super_admin'],
+            },
+            
+            // Knowledge Graph permissions
+            kg_neo4j: {
+                view: ['viewer', 'user', 'manager', 'admin', 'super_admin'],
+                view_relationships: ['user', 'manager', 'admin', 'super_admin'],
+                edit: ['manager', 'admin', 'super_admin'],
+                export: ['manager', 'admin', 'super_admin'],
+                admin: ['admin', 'super_admin']
+            },
                 manage_config: ['super_admin'],
                 backup_restore: ['super_admin']
             }

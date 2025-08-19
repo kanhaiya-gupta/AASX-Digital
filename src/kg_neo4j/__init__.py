@@ -1,95 +1,105 @@
 """
-Backend Knowledge Graph Neo4j Package
-Provides Neo4j integration for the AASX Knowledge Graph system
+Knowledge Graph (KG) Neo4j Module
+
+A comprehensive Knowledge Graph module with Neo4j integration for AASX data modeling.
+Provides world-class graph operations, analytics, and visualization capabilities.
+
+Architecture:
+- Core Services: Heavy lifting business logic
+- Operational Services: Workflow management
+- Neo4j Operations: Direct Neo4j database operations
+- Data Models: Pydantic models for data validation
+- Repositories: Data access layer with async support
+- Utilities: Helper functions and Docker management
 """
 
-from fastapi import APIRouter, HTTPException
-from .neo4j_manager import neo4j_manager
-from typing import Dict, Any
-import logging
+# Core Services (Heavy Lifting Business Logic)
+from .core.kg_graph_service import KGGraphService
+from .core.kg_metrics_service import KGMetricsService
+from .core.kg_neo4j_integration_service import KGNeo4jIntegrationService
 
-logger = logging.getLogger(__name__)
+# Operational Services (Workflow Management)
+from .services.kg_graph_operations_service import KGGraphOperationsService
+from .services.kg_analytics_service import KGAnalyticsService
 
-router = APIRouter()
+# Data Models
+from .models.kg_graph_registry import KGGraphRegistry, KGGraphRegistryQuery
+from .models.kg_graph_metrics import KGGraphMetrics, KGGraphMetricsQuery
 
-@router.get("/api/status")
-async def get_neo4j_status() -> Dict[str, Any]:
-    """Get Docker Neo4j connection status"""
-    try:
-        return neo4j_manager.check_docker_connection()
-    except Exception as e:
-        logger.error(f"Error checking Neo4j status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# Data Access Layer
+from .repositories.kg_graph_registry_repository import KGGraphRegistryRepository
+from .repositories.kg_graph_metrics_repository import KGGraphMetricsRepository
 
-@router.get("/api/docker-status")
-async def get_docker_status() -> Dict[str, Any]:
-    """Get Docker container status"""
-    try:
-        return neo4j_manager.check_docker_status()
-    except Exception as e:
-        logger.error(f"Error checking Docker status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# Neo4j Operations (Direct Access)
+from .neo4j import Neo4jManager, AASXGraphAnalyzer, CypherQueries
 
-@router.post("/api/docker/start")
-async def start_docker_neo4j() -> Dict[str, Any]:
-    """Start Docker Neo4j container"""
-    try:
-        return neo4j_manager.start_docker_neo4j()
-    except Exception as e:
-        logger.error(f"Error starting Docker Neo4j: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# Utility Functions
+from .utils import (
+    # Helper Functions
+    generate_graph_id,
+    validate_graph_config,
+    sanitize_graph_name,
+    format_timestamp,
+    calculate_health_score,
+    parse_graph_query,
+    validate_neo4j_connection_config,
+    calculate_performance_metrics,
+    generate_export_filename,
+    
+    # Docker Management
+    check_docker_status,
+    start_neo4j,
+    stop_neo4j,
+    restart_neo4j,
+    remove_neo4j,
+    show_logs,
+    check_browser,
+    run_command
+)
 
-@router.post("/api/docker/stop")
-async def stop_docker_neo4j() -> Dict[str, Any]:
-    """Stop Docker Neo4j container"""
-    try:
-        return neo4j_manager.stop_docker_neo4j()
-    except Exception as e:
-        logger.error(f"Error stopping Docker Neo4j: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Local Neo4j Desktop routes
-@router.get("/api/local/status")
-async def get_local_neo4j_status() -> Dict[str, Any]:
-    """Get local Neo4j Desktop status"""
-    try:
-        return neo4j_manager.get_local_neo4j_info()
-    except Exception as e:
-        logger.error(f"Error checking local Neo4j status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/api/local/desktop-status")
-async def get_local_desktop_status() -> Dict[str, Any]:
-    """Get local Neo4j Desktop application status"""
-    try:
-        return neo4j_manager.check_local_neo4j_desktop()
-    except Exception as e:
-        logger.error(f"Error checking local desktop status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/api/local/connection-status")
-async def get_local_connection_status() -> Dict[str, Any]:
-    """Get local Neo4j connection status"""
-    try:
-        return neo4j_manager.check_local_neo4j_connection()
-    except Exception as e:
-        logger.error(f"Error checking local connection status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/api/local/launch")
-async def launch_local_neo4j_desktop() -> Dict[str, Any]:
-    """Launch local Neo4j Desktop application"""
-    try:
-        return neo4j_manager.launch_local_neo4j_desktop()
-    except Exception as e:
-        logger.error(f"Error launching local Neo4j Desktop: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/api/local/info")
-async def get_local_neo4j_info() -> Dict[str, Any]:
-    """Get comprehensive local Neo4j Desktop information"""
-    try:
-        return neo4j_manager.get_local_neo4j_info()
-    except Exception as e:
-        logger.error(f"Error getting local Neo4j info: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) 
+__all__ = [
+    # Core Services
+    'KGGraphService',
+    'KGMetricsService', 
+    'KGNeo4jIntegrationService',
+    
+    # Operational Services
+    'KGGraphOperationsService',
+    'KGAnalyticsService',
+    
+    # Data Models
+    'KGGraphRegistry',
+    'KGGraphRegistryQuery',
+    'KGGraphMetrics',
+    'KGGraphMetricsQuery',
+    
+    # Data Access Layer
+    'KGGraphRegistryRepository',
+    'KGGraphMetricsRepository',
+    
+    # Neo4j Operations
+    'Neo4jManager',
+    'AASXGraphAnalyzer',
+    'CypherQueries',
+    
+    # Utility Functions
+    'generate_graph_id',
+    'validate_graph_config',
+    'sanitize_graph_name',
+    'format_timestamp',
+    'calculate_health_score',
+    'parse_graph_query',
+    'validate_neo4j_connection_config',
+    'calculate_performance_metrics',
+    'generate_export_filename',
+    
+    # Docker Management
+    'check_docker_status',
+    'start_neo4j',
+    'stop_neo4j',
+    'restart_neo4j',
+    'remove_neo4j',
+    'show_logs',
+    'check_browser',
+    'run_command'
+] 

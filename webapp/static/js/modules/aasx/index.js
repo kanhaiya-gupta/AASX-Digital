@@ -28,7 +28,12 @@ console.log('📦 AASX index.js: Importing Analytics modules for Phase 5.2...');
 import './analytics/analytics-api.js';
 import './analytics/dashboard-stats.js';
 import './analytics/analytics-charts.js';
-console.log('✅ AASX index.js: Analytics modules imported');
+console.log('✅ Analytics modules imported');
+
+// Import System modules for Phase 6
+console.log('📦 AASX index.js: Importing System modules for Phase 6...');
+import './system/system-tab-manager.js';
+console.log('✅ System modules imported');
 
 // Global instances
 let dataManager = null;
@@ -64,6 +69,9 @@ export async function initAASXModule() {
     try {
         // Initialize alert system first
         initAlertSystem();
+        
+        // Initialize Bootstrap tabs for main navigation
+        await initializeBootstrapTabs();
         
         // Initialize Data Manager
         dataManager = new DataManager();
@@ -106,6 +114,13 @@ export async function initAASXModule() {
         
         console.log('✅ Analytics modules initialized for Phase 5.2');
         
+        // Initialize System Tab Manager for Phase 6
+        console.log('🔧 Initializing System Tab Manager for Phase 6...');
+        const systemTabManager = new window.SystemTabManager();
+        await systemTabManager.init();
+        window.systemTabManager = systemTabManager;
+        console.log('✅ System Tab Manager initialized for Phase 6');
+        
         // Initialize ETL Configuration Manager (lazy load when needed)
         // This will be initialized when the ETL configuration form is accessed
         console.log('ℹ️ ETL Configuration Manager will be initialized when needed');
@@ -121,7 +136,8 @@ export async function initAASXModule() {
             projectCreator: projectCreator,
             fileUploadManager: fileUploadManager,
             dashboardStats: dashboardStats,
-            analyticsCharts: analyticsCharts
+            analyticsCharts: analyticsCharts,
+            systemTabManager: systemTabManager
         };
         
         isInitialized = true;
@@ -143,6 +159,58 @@ export async function initAASXModule() {
     } finally {
         // Always clear the initialization in progress flag
         window.aasxInitializationInProgress = false;
+    }
+}
+
+/**
+ * Initialize Bootstrap tabs for AASX main navigation
+ */
+async function initializeBootstrapTabs() {
+    try {
+        console.log('🔧 AASX: Initializing Bootstrap tabs for main navigation...');
+        
+        // Wait for Bootstrap to be fully loaded
+        while (typeof bootstrap === 'undefined') {
+            console.log('⏳ AASX: Waiting for Bootstrap to load...');
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Get all AASX main navigation tab buttons
+        const tabButtons = document.querySelectorAll('.aasx-tab-navigation [data-bs-toggle="tab"]');
+        console.log(`🔧 AASX: Found ${tabButtons.length} main navigation tab buttons`);
+        
+        // Initialize each tab with proper error handling
+        tabButtons.forEach((tabButton, index) => {
+            try {
+                // Check if tab is already initialized
+                if (tabButton._tab) {
+                    console.log(`✅ AASX: Tab ${index + 1} already initialized: ${tabButton.id}`);
+                    return;
+                }
+                
+                // Create Bootstrap Tab instance using the correct API
+                const tab = new bootstrap.Tab(tabButton);
+                
+                // Store reference to prevent double initialization
+                tabButton._tab = tab;
+                
+                console.log(`✅ AASX: Tab ${index + 1} initialized: ${tabButton.id}`);
+                
+                // Add click event listener for debugging
+                tabButton.addEventListener('click', (e) => {
+                    console.log(`🖱️ AASX: Main navigation tab clicked: ${tabButton.id} -> ${tabButton.getAttribute('data-bs-target')}`);
+                });
+                
+            } catch (error) {
+                console.error(`❌ AASX: Failed to initialize tab ${index + 1}:`, error);
+            }
+        });
+        
+        console.log('✅ AASX: Bootstrap tabs initialization complete');
+        
+    } catch (error) {
+        console.error('❌ AASX: Bootstrap tabs initialization failed:', error);
+        // Don't throw error, continue with other initialization
     }
 }
 
@@ -245,6 +313,11 @@ export function cleanupAASXModule() {
         analyticsCharts = null;
     }
     
+    if (window.systemTabManager) {
+        window.systemTabManager.destroy();
+        window.systemTabManager = null;
+    }
+    
     isInitialized = false;
     window.aasxInitializationInProgress = false;
     console.log('🧹 AASX module cleaned up');
@@ -257,7 +330,8 @@ export function isAASXModuleReady() {
     return dataManager && aasxETLPipeline &&
            dataManager.isInitialized && aasxETLPipeline.isInitialized &&
            dashboardStats && analyticsCharts &&
-           dashboardStats.isInitialized && analyticsCharts.isInitialized;
+           dashboardStats.isInitialized && analyticsCharts.isInitialized &&
+           window.systemTabManager && window.systemTabManager.isInitialized;
 }
 
 /**
@@ -274,6 +348,11 @@ export async function refreshAASXData() {
     
     if (analyticsCharts) {
         await analyticsCharts.refreshAnalytics();
+    }
+    
+    if (window.systemTabManager && window.systemTabManager.isInitialized) {
+        // System tab manager doesn't need refresh, but we can add it here if needed
+        console.log('ℹ️ System Tab Manager is ready');
     }
 }
 

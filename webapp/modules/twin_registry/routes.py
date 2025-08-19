@@ -13,8 +13,6 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import os
-from pathlib import Path
-import json
 import logging
 
 # Import our modular services
@@ -25,13 +23,8 @@ from .services.twin_analytics_service import TwinAnalyticsService
 from .services.user_specific_service import TwinRegistryUserSpecificService
 from .services.organization_service import TwinRegistryOrganizationService
 
-# Import shared services (following AASX pattern)
-from src.shared.services.digital_twin_service import DigitalTwinService
-from src.federated_learning.core.federated_learning_service import FederatedLearningService
-from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.shared.database.base_manager import BaseDatabaseManager
-from src.shared.repositories.file_repository import FileRepository
-from src.shared.repositories.project_repository import ProjectRepository
+# Import configuration service
+from src.twin_registry.core.configuration_service import configuration_service
 
 # Import authentication decorators and context
 from webapp.core.decorators.auth_decorators import require_auth, get_current_user
@@ -47,23 +40,22 @@ logger = logging.getLogger(__name__)
 current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 templates = Jinja2Templates(directory=os.path.join(current_dir, "templates"))
 
-# Initialize shared services (following AASX pattern)
-data_dir = Path("data")
-db_path = data_dir / "aasx_database.db"
-connection_manager = DatabaseConnectionManager(db_path)
-db_manager = BaseDatabaseManager(connection_manager)
-
-# Create shared service instances
-file_repo = FileRepository(db_manager)
-project_repo = ProjectRepository(db_manager)
-digital_twin_service = DigitalTwinService(db_manager, file_repo, project_repo)
-federated_learning_service = FederatedLearningService(digital_twin_service)
-
 # Initialize twin registry services
-twin_registry_service = TwinRegistryService(db_manager)
-twin_operations_service = TwinOperationsService(digital_twin_service)
-twin_monitoring_service = TwinMonitoringService(digital_twin_service)
-twin_analytics_service = TwinAnalyticsService(digital_twin_service)
+# Note: These services need to be updated for new table structure
+# For now, initialize without parameters until services are updated
+try:
+    twin_registry_service = TwinRegistryService()
+    twin_operations_service = TwinOperationsService()
+    twin_monitoring_service = TwinMonitoringService()
+    twin_analytics_service = TwinAnalyticsService()
+    logger.info("✅ Twin registry services initialized successfully")
+except Exception as e:
+    logger.warning(f"⚠️ Some twin registry services failed to initialize: {e}")
+    # Initialize with None for now - these will be updated for new tables
+    twin_registry_service = None
+    twin_operations_service = None
+    twin_monitoring_service = None
+    twin_analytics_service = None
 
 # Note: User-specific and organization services will be initialized per-request
 # to ensure proper user context integration
@@ -93,10 +85,6 @@ class TwinSyncRequest(BaseModel):
     sync_type: str
     force: bool = False
 
-class BulkOperationRequest(BaseModel):
-    twin_ids: List[str]
-    user: str = "system"
-
 # New models for core services
 class RelationshipCreate(BaseModel):
     source_twin_id: str
@@ -115,6 +103,21 @@ class LifecycleEventCreate(BaseModel):
     event_type: str
     event_data: Optional[Dict[str, Any]] = None
     triggered_by: Optional[str] = None
+
+# Missing request models for bulk operations and configuration
+# Note: Bulk start/stop operations are handled by AASX-ETL integration
+
+class ConfigurationResetRequest(BaseModel):
+    reset_type: str = "all"  # "all", "registry", "monitoring", "analytics"
+    user: str = "system"
+
+class ConfigurationImportRequest(BaseModel):
+    config_data: Dict[str, Any]
+    import_type: str = "merge"  # "merge", "replace", "validate_only"
+
+class ConfigurationValidateRequest(BaseModel):
+    config_data: Dict[str, Any]
+    validation_level: str = "strict"  # "strict", "normal", "loose"
 
 # ============================================================================
 # Dashboard Routes
@@ -172,6 +175,7 @@ async def twin_registry_dashboard(
 @router.get("/twins")
 @require_auth("read", allow_independent=True)
 async def get_twins(
+    request: Request,
     page: int = 1,
     page_size: int = 10,
     twin_type: str = "",
@@ -181,35 +185,23 @@ async def get_twins(
 ):
     """
     Get twins accessible to the current user with pagination and filtering.
-    Uses modular twin registry service with user-specific filtering.
+    Uses the integrated twin registry core service.
     """
     try:
-        # Initialize user-specific service for filtering
-        user_specific_service = TwinRegistryUserSpecificService(user_context)
+        # Use the integrated core service directly
+        result = await twin_registry_service.get_all_twins(
+            page=page,
+            page_size=page_size,
+            filters={
+                "twin_type": twin_type if twin_type else None,
+                "status": status if status else None,
+                "project_id": project_id
+            }
+        )
         
-        # Get user-specific twins
-        user_twins = user_specific_service.get_user_twins()
-        
-        # Apply additional filtering if needed
-        if twin_type:
-            user_twins = [t for t in user_twins if t.get('twin_type') == twin_type]
-        if status:
-            user_twins = [t for t in user_twins if t.get('status') == status]
-        
-        # Apply pagination
-        start_idx = (page - 1) * page_size
-        end_idx = start_idx + page_size
-        paginated_twins = user_twins[start_idx:end_idx]
-        
-        return {
-            "data": paginated_twins,
-            "total_count": len(user_twins),
-            "page": page,
-            "page_size": page_size,
-            "total_pages": (len(user_twins) + page_size - 1) // page_size
-        }
+        return result
     except Exception as e:
-        logger.error(f"Error getting user twins: {e}")
+        logger.error(f"Error getting twins: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/twins/search")
@@ -255,128 +247,21 @@ async def get_twin_by_id(twin_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/twins")
-@require_auth("write", allow_independent=True)
-async def create_twin(
-    twin_data: Dict[str, Any],
-    user_context: UserContext = Depends(get_current_user)
-):
-    """Create a new twin"""
-    try:
-        # Add user context to twin data
-        twin_data['created_by'] = getattr(user_context, 'user_id', 'unknown')
-        if not getattr(user_context, 'is_independent', False):
-            twin_data['organization_id'] = getattr(user_context, 'organization_id', None)
-        
-        result = await twin_registry_service.create_twin(twin_data)
-        return result
-    except Exception as e:
-        logger.error(f"Error creating twin: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/twins/{twin_id}")
-@require_auth("write", allow_independent=True)
-async def update_twin(
-    twin_id: str, 
-    update_data: Dict[str, Any],
-    user_context: UserContext = Depends(get_current_user)
-):
-    """Update an existing twin"""
-    try:
-        # Check if user can access this twin
-        user_specific_service = TwinRegistryUserSpecificService(user_context)
-        if not user_specific_service.can_access_twin(twin_id):
-            raise HTTPException(status_code=403, detail="Access denied to this twin")
-        
-        result = await twin_registry_service.update_twin(twin_id, update_data)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error updating twin {twin_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/twins/{twin_id}")
-@require_auth("manage", allow_independent=True)
-async def delete_twin(
-    twin_id: str,
-    user_context: UserContext = Depends(get_current_user)
-):
-    """Delete a twin"""
-    try:
-        # Check if user can access this twin
-        user_specific_service = TwinRegistryUserSpecificService(user_context)
-        if not user_specific_service.can_access_twin(twin_id):
-            raise HTTPException(status_code=403, detail="Access denied to this twin")
-        
-        success = await twin_registry_service.delete_twin(twin_id)
-        if not success:
-            raise HTTPException(status_code=404, detail="Twin not found or could not be deleted")
-        return {"success": True, "message": f"Twin {twin_id} deleted successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error deleting twin {twin_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
-# Twin Operations Endpoints
+# Bulk Operations Endpoints
 # ============================================================================
 
-@router.post("/twins/{twin_id}/start")
-async def start_twin(twin_id: str, user: str = "system"):
-    """Start a twin operation"""
-    try:
-        result = await twin_operations_service.start_twin(twin_id, user)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/twins/{twin_id}/stop")
-async def stop_twin(twin_id: str, user: str = "system"):
-    """Stop a twin operation"""
-    try:
-        result = await twin_operations_service.stop_twin(twin_id, user)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/twins/{twin_id}/restart")
-async def restart_twin(twin_id: str, user: str = "system"):
-    """Restart a twin"""
-    try:
-        # Stop the twin first
-        stop_result = await twin_registry_service.stop_twin(twin_id, user)
-        if not stop_result.get("success"):
-            return stop_result
-        
-        # Start the twin
-        start_result = await twin_registry_service.start_twin(twin_id, user)
-        return start_result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Note: Twin start/stop/restart operations are handled by AASX-ETL integration
+# The twin-registry only provides monitoring, analytics, and configuration
 
 # ============================================================================
 # Lifecycle Management Endpoints (New Core Services)
 # ============================================================================
 
-@router.post("/twins/{twin_id}/lifecycle/start")
-async def start_twin_lifecycle(twin_id: str, user: str = "system"):
-    """Start a twin using core lifecycle service"""
-    try:
-        result = await twin_registry_service.start_twin(twin_id, user)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/twins/{twin_id}/lifecycle/stop")
-async def stop_twin_lifecycle(twin_id: str, user: str = "system"):
-    """Stop a twin using core lifecycle service"""
-    try:
-        result = await twin_registry_service.stop_twin(twin_id, user)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Note: Twin start/stop operations are handled by AASX-ETL integration
+# The twin-registry only provides monitoring and status information
 
 @router.post("/twins/{twin_id}/lifecycle/sync")
 async def sync_twin_lifecycle(twin_id: str, sync_request: TwinSyncRequest, user: str = "system"):
@@ -454,7 +339,8 @@ async def get_relationships(source_twin_id: str = None, target_twin_id: str = No
         elif target_twin_id:
             result = await twin_registry_service.get_twin_relationships(target_twin_id)
         else:
-            raise HTTPException(status_code=400, detail="Must specify source_twin_id or target_twin_id")
+            # Get all relationships using core service
+            result = await twin_registry_service.get_all_relationships()
         
         return result
     except Exception as e:
@@ -548,41 +434,314 @@ async def get_instance_by_id(instance_id: str):
 async def get_configuration():
     """Get system configuration"""
     try:
-        # Return default configuration for now
+        # Get configuration from service
+        config = configuration_service.get_configuration()
         return {
-            "system": {
-                "auto_sync": True,
-                "sync_interval": 300,
-                "max_instances_per_twin": 10,
-                "enable_monitoring": True,
-                "monitoring_interval": 60
-            },
-            "registry": {
-                "max_twins": 1000,
-                "enable_relationships": True,
-                "enable_lifecycle_tracking": True,
-                "enable_performance_monitoring": True
-            },
-            "ui": {
-                "refresh_interval": 30,
-                "show_advanced_options": False,
-                "enable_real_time_updates": True
-            }
+            "success": True,
+            "configuration": config,
+            "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
+        logger.error(f"Failed to get configuration: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/configuration")
-async def save_configuration(config_data: Dict[str, Any]):
+async def save_configuration(
+    config_data: Dict[str, Any],
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
     """Save system configuration"""
     try:
-        # For now, just return success
+        # Update configuration using service
+        user_id = user_context.user_id if user_context else "system"
+        result = configuration_service.update_configuration(config_data, user_id)
+        
+        if result["success"]:
+            return {
+                "success": True,
+                "message": result["message"],
+                "config_id": result["config_id"],
+                "timestamp": result["timestamp"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save configuration: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/configuration/reset")
+@require_auth("manage", allow_independent=True)
+async def reset_configuration(
+    request: Request,
+    request_data: ConfigurationResetRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Reset system configuration"""
+    try:
+        # Reset configuration using service
+        user_id = user_context.user_id if user_context else "system"
+        result = configuration_service.reset_configuration(request_data.reset_type, user_id)
+        
+        if result["success"]:
+            return {
+                "success": True,
+                "message": result["message"],
+                "config_id": result["config_id"],
+                "timestamp": result["timestamp"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to reset configuration: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/configuration/export")
+@require_auth("read", allow_independent=True)
+async def export_configuration(
+    request: Request,
+    format: str = "json",
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Export system configuration"""
+    try:
+        # Export configuration using service
+        result = configuration_service.export_configuration(format)
+        
+        if result["success"]:
+            return {
+                "success": True,
+                "format": result["format"],
+                "config": result["data"],
+                "config_id": result["config_id"],
+                "timestamp": result["timestamp"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to export configuration: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/configuration/import")
+@require_auth("manage", allow_independent=True)
+async def import_configuration(
+    request: Request,
+    request_data: ConfigurationImportRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Import system configuration"""
+    try:
+        # Import configuration using service
+        user_id = user_context.user_id if user_context else "system"
+        
+        # Convert config_data to string format
+        if request_data.import_type == "yaml":
+            import yaml
+            config_string = yaml.dump(request_data.config_data, default_flow_style=False)
+            format_type = "yaml"
+        else:
+            import json
+            config_string = json.dumps(request_data.config_data)
+            format_type = "json"
+        
+        result = configuration_service.import_configuration(config_string, format_type, user_id)
+        
+        if result["success"]:
+            return {
+                "success": True,
+                "message": result["message"],
+                "config_id": result["config_id"],
+                "timestamp": result["timestamp"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to import configuration: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/configuration/validate")
+@require_auth("read", allow_independent=True)
+async def validate_configuration(
+    request: Request,
+    request_data: ConfigurationValidateRequest,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Validate system configuration"""
+    try:
+        # Validate configuration using service
+        result = configuration_service.validate_configuration()
+        
+        return {
+            "valid": result.is_valid,
+            "validation_level": request_data.validation_level,
+            "errors": result.errors,
+            "warnings": result.warnings,
+            "timestamp": result.timestamp,
+            "config_id": result.config_id
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to validate configuration: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/configuration/summary")
+@require_auth("read", allow_independent=True)
+async def get_configuration_summary(
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get configuration summary for dashboard"""
+    try:
+        summary = configuration_service.get_configuration_summary()
         return {
             "success": True,
-            "message": "Configuration saved successfully",
-            "timestamp": datetime.utcnow().isoformat()
+            "summary": summary,
+            "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
+        logger.error(f"Failed to get configuration summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/configuration/history")
+@require_auth("read", allow_independent=True)
+async def get_configuration_history(
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get configuration history"""
+    try:
+        history = configuration_service.get_configuration_history()
+        return {
+            "success": True,
+            "history": [entry.dict() for entry in history],
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Failed to get configuration history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/configuration/rollback/{config_id}")
+@require_auth("manage", allow_independent=True)
+async def rollback_configuration(
+    config_id: str,
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Rollback to specific configuration version"""
+    try:
+        user_id = user_context.user_id if user_context else "system"
+        result = configuration_service.rollback_to_version(config_id, user_id)
+        
+        if result["success"]:
+            return {
+                "success": True,
+                "message": result["message"],
+                "config_id": result["config_id"],
+                "timestamp": result["timestamp"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to rollback configuration: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/configuration/environment/{environment}")
+@require_auth("manage", allow_independent=True)
+async def apply_environment_overrides(
+    environment: str,
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Apply environment-specific configuration overrides"""
+    try:
+        user_id = user_context.user_id if user_context else "system"
+        result = configuration_service.apply_environment_overrides(environment, user_id)
+        
+        if result["success"]:
+            return {
+                "success": True,
+                "message": result["message"],
+                "config_id": result["config_id"],
+                "timestamp": result["timestamp"]
+            }
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to apply environment overrides: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/configuration/setting/{path:path}")
+@require_auth("read", allow_independent=True)
+async def get_configuration_setting(
+    path: str,
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get specific configuration setting using dot notation"""
+    try:
+        value = configuration_service.get_setting(path)
+        if value is not None:
+            return {
+                "success": True,
+                "path": path,
+                "value": value,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=404, detail=f"Setting '{path}' not found")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get configuration setting '{path}': {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/configuration/setting/{path:path}")
+@require_auth("manage", allow_independent=True)
+async def set_configuration_setting(
+    path: str,
+    value: Any,
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Set specific configuration setting using dot notation"""
+    try:
+        user_id = user_context.user_id if user_context else "system"
+        success = configuration_service.set_setting(path, value, user_id)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Setting '{path}' updated successfully",
+                "path": path,
+                "value": value,
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            raise HTTPException(status_code=400, detail=f"Failed to update setting '{path}'")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to set configuration setting '{path}': {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
@@ -674,6 +833,73 @@ async def get_system_health():
         raise HTTPException(status_code=500, detail=str(e))
 
 # ============================================================================
+# Real-time Monitoring Endpoints
+# ============================================================================
+
+@router.get("/monitoring/active-sessions")
+@require_auth("read", allow_independent=True)
+async def get_active_monitoring_sessions(
+    request: Request,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get active monitoring sessions"""
+    try:
+        # For now, return mock data
+        return {
+            "active_sessions": [
+                {
+                    "session_id": "session_001",
+                    "twin_id": "test_registry_001",
+                    "started_at": datetime.now().isoformat(),
+                    "status": "active",
+                    "metrics_count": 15
+                }
+            ],
+            "total_sessions": 1
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/monitoring/start-session")
+@require_auth("write", allow_independent=True)
+async def start_monitoring_session(
+    request: Request,
+    twin_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Start a monitoring session for a twin"""
+    try:
+        # For now, return mock data
+        return {
+            "success": True,
+            "session_id": f"session_{twin_id}_{int(datetime.now().timestamp())}",
+            "twin_id": twin_id,
+            "started_at": datetime.now().isoformat(),
+            "status": "active"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/monitoring/stop-session")
+@require_auth("write", allow_independent=True)
+async def stop_monitoring_session(
+    request: Request,
+    session_id: str,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Stop a monitoring session"""
+    try:
+        # For now, return mock data
+        return {
+            "success": True,
+            "session_id": session_id,
+            "stopped_at": datetime.now().isoformat(),
+            "status": "stopped"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
 # Health Check Endpoints (for frontend compatibility)
 # ============================================================================
 
@@ -706,9 +932,9 @@ async def get_database_health_check():
         # Check database connection
         db_status = "healthy"
         try:
-            # Test database connection
-            all_twins = twin_registry_service.twin_repo.get_all()
-            twin_count = len(all_twins)
+            # Test database connection using new service method
+            all_twins = await twin_registry_service.get_all_twins(page=1, page_size=1000, filters={})
+            twin_count = all_twins.get("statistics", {}).get("total_twins", 0)
         except Exception as db_error:
             db_status = "error"
             twin_count = 0
@@ -960,6 +1186,174 @@ async def export_data(
     try:
         result = await twin_analytics_service.export_data(data_type, filters, format)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ============================================================================
+# Data Export Endpoints
+# ============================================================================
+
+@router.get("/export/twins")
+@require_auth("read", allow_independent=True)
+async def export_twins(
+    request: Request,
+    format: str = "json",
+    twin_type: str = None,
+    status: str = None,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Export twins data"""
+    try:
+        # Get twins data
+        twins_data = await twin_registry_service.get_all_twins(filters={})
+        
+        # Apply filters if specified
+        if twin_type:
+            twins_data = [t for t in twins_data if t.get("twin_type") == twin_type]
+        if status:
+            twins_data = [t for t in twins_data if t.get("status") == status]
+        
+        if format.lower() == "csv":
+            import csv
+            import io
+            
+            output = io.StringIO()
+            if twins_data:
+                writer = csv.DictWriter(output, fieldnames=twins_data[0].keys())
+                writer.writeheader()
+                writer.writerows(twins_data)
+            
+            return {"data": output.getvalue(), "format": "csv", "count": len(twins_data)}
+        else:
+            return {"data": twins_data, "format": "json", "count": len(twins_data)}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/export/metrics")
+@require_auth("read", allow_independent=True)
+async def export_metrics(
+    request: Request,
+    format: str = "json",
+    registry_id: str = None,
+    time_range: str = "30d",
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Export metrics data"""
+    try:
+        # Get metrics data
+        if registry_id:
+            metrics_data = await twin_registry_service.get_twin_metrics(registry_id, time_range)
+        else:
+            metrics_data = await twin_registry_service.get_all_metrics(time_range)
+        
+        if format.lower() == "csv":
+            import csv
+            import io
+            
+            output = io.StringIO()
+            if metrics_data:
+                writer = csv.DictWriter(output, fieldnames=metrics_data[0].keys())
+                writer.writeheader()
+                writer.writerows(metrics_data)
+            
+            return {"data": output.getvalue(), "format": "csv", "count": len(metrics_data)}
+        else:
+            return {"data": metrics_data, "format": "json", "count": len(metrics_data)}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/metrics")
+@require_auth("read", allow_independent=True)
+async def get_metrics(
+    request: Request,
+    registry_id: str = None,
+    time_range: str = "30d",
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Get metrics data"""
+    try:
+        # Get metrics data
+        if registry_id:
+            metrics_data = await twin_registry_service.get_twin_metrics(registry_id, time_range)
+        else:
+            metrics_data = await twin_registry_service.get_all_metrics(time_range)
+        
+        return {
+            "success": True,
+            "data": metrics_data,
+            "total_count": len(metrics_data)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/export/relationships")
+@require_auth("read", allow_independent=True)
+async def export_relationships(
+    request: Request,
+    format: str = "json",
+    source_twin_id: str = None,
+    target_twin_id: str = None,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Export relationships data"""
+    try:
+        # Get relationships data
+        if source_twin_id:
+            relationships_data = await twin_registry_service.get_twin_relationships(source_twin_id)
+        elif target_twin_id:
+            relationships_data = await twin_registry_service.get_twin_relationships(target_twin_id)
+        else:
+            relationships_data = await twin_registry_service.get_all_relationships()
+        
+        if format.lower() == "csv":
+            import csv
+            import io
+            
+            output = io.StringIO()
+            if relationships_data:
+                writer = csv.DictWriter(output, fieldnames=relationships_data[0].keys())
+                writer.writeheader()
+                writer.writerows(relationships_data)
+            
+            return {"data": output.getvalue(), "format": "csv", "count": len(relationships_data)}
+        else:
+            return {"data": relationships_data, "format": "json", "count": len(relationships_data)}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/export/instances")
+@require_auth("read", allow_independent=True)
+async def export_instances(
+    request: Request,
+    format: str = "json",
+    twin_id: str = None,
+    user_context: UserContext = Depends(get_current_user)
+):
+    """Export instances data"""
+    try:
+        # Get instances data
+        if twin_id:
+            instances_data = await twin_registry_service.get_twin_instances(twin_id)
+        else:
+            instances_data = await twin_registry_service.get_all_instances()
+        
+        if format.lower() == "csv":
+            import csv
+            import io
+            
+            output = io.StringIO()
+            if instances_data:
+                writer = csv.DictWriter(output, fieldnames=instances_data[0].keys())
+                writer.writeheader()
+                writer.writerows(instances_data)
+            
+            return {"data": output.getvalue(), "format": "csv", "count": len(instances_data)}
+        else:
+            return {"data": instances_data, "format": "json", "count": len(instances_data)}
+            
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

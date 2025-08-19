@@ -11,11 +11,11 @@
                 <p class="tr-header-subtitle">Configure registry settings and system preferences</p>
             </div>
             <div class="tr-header-actions">
-                <button class="tr-btn tr-btn-success" onclick="saveAllConfigurations()">
+                <button class="tr-btn tr-btn-success" onclick="twinRegistrySaveAllConfigurations()">
                     <i class="fas fa-save"></i>
                     Save All
                 </button>
-                <button class="tr-btn tr-btn-outline" onclick="resetToDefaults()">
+                <button class="tr-btn tr-btn-outline" onclick="twinRegistryResetToDefaults()">
                     <i class="fas fa-undo"></i>
                     Reset
                 </button>
@@ -25,30 +25,179 @@
 
     <!-- Configuration Tabs -->
     <div class="tr-configuration-tabs">
-        <ul class="nav nav-tabs" id="configTabs" role="tablist">
+        <ul class="nav nav-tabs" id="twin_registry_configTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="registry-tab" data-bs-toggle="tab" data-bs-target="#registry" type="button" role="tab">
+                <button class="nav-link active" id="twin_registry_overview-tab" onclick="handleConfigurationTabClick('#twin_registry_overview')" type="button" role="tab">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="twin_registry_registry-tab" onclick="handleConfigurationTabClick('#twin_registry_registry')" type="button" role="tab">
                     <i class="fas fa-database"></i>
                     Registry Settings
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                <button class="nav-link" id="twin_registry_monitoring-tab" onclick="handleConfigurationTabClick('#twin_registry_monitoring')" type="button" role="tab">
+                    <i class="fas fa-chart-line"></i>
+                    Monitoring
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="twin_registry_security-tab" onclick="handleConfigurationTabClick('#twin_registry_security')" type="button" role="tab">
                     <i class="fas fa-shield-alt"></i>
                     Security
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="integration-tab" data-bs-toggle="tab" data-bs-target="#integration" type="button" role="tab">
+                <button class="nav-link" id="twin_registry_integration-tab" onclick="handleConfigurationTabClick('#twin_registry_integration')" type="button" role="tab">
                     <i class="fas fa-plug"></i>
                     Integration
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="twin_registry_ui-tab" onclick="handleConfigurationTabClick('#twin_registry_ui')" type="button" role="tab">
+                    <i class="fas fa-desktop"></i>
+                    UI Settings
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="twin_registry_performance-tab" onclick="handleConfigurationTabClick('#twin_registry_performance')" type="button" role="tab">
+                    <i class="fas fa-rocket"></i>
+                    Performance
+                </button>
+            </li>
         </ul>
 
-        <div class="tab-content mt-3" id="configTabContent">
+                    <div class="tab-content mt-3" id="twin_registry_configTabContent">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="twin_registry_overview" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="tr-chart-card bg-gradient-primary text-white">
+                            <div class="tr-card-header">
+                                <h5><i class="fas fa-cogs me-2"></i>System Configuration Overview</h5>
+                                <p class="mb-0">Manage all aspects of the Twin Registry system configuration</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Summary Cards -->
+                <div class="row mb-4" id="twin_registry_configSummary">
+                    <div class="col-md-3">
+                        <div class="tr-chart-card bg-primary text-white">
+                            <div class="tr-card-body text-center">
+                                <i class="fas fa-code-branch fa-2x mb-2"></i>
+                                <h6>Version</h6>
+                                <h4>1.0.0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="tr-chart-card bg-success text-white">
+                            <div class="tr-card-body text-center">
+                                <i class="fas fa-server fa-2x mb-2"></i>
+                                <h6>Environment</h6>
+                                <h4>Development</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="tr-chart-card bg-info text-white">
+                            <div class="tr-card-body text-center">
+                                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                                <h6>Security Level</h6>
+                                <h4>Internal</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="tr-chart-card bg-warning text-white">
+                            <div class="tr-card-body text-center">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <h6>Last Updated</h6>
+                                <h6>Just Now</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="tr-chart-card">
+                            <div class="tr-card-header">
+                                <h6><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+                            </div>
+                            <div class="tr-card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <button class="tr-btn tr-btn-outline-primary w-100 mb-2" onclick="window.configurationManager?.validateConfiguration()">
+                                            <i class="fas fa-check-circle me-2"></i>Validate Config
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="tr-btn tr-btn-outline-success w-100 mb-2" onclick="window.configurationManager?.exportConfiguration()">
+                                            <i class="fas fa-download me-2"></i>Export Config
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="tr-btn tr-btn-outline-info w-100 mb-2" onclick="window.configurationManager?.showConfigurationHistory()">
+                                            <i class="fas fa-history me-2"></i>View History
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="tr-btn tr-btn-outline-warning w-100 mb-2" onclick="window.configurationManager?.resetToDefaults()">
+                                            <i class="fas fa-undo me-2"></i>Reset Defaults
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment Management -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="tr-chart-card">
+                            <div class="tr-card-header">
+                                <h6><i class="fas fa-server me-2"></i>Environment Management</h6>
+                            </div>
+                            <div class="tr-card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="twin_registry_environmentSelector" class="form-label">Current Environment</label>
+                                        <select class="form-select" id="twin_registry_environmentSelector">
+                                            <option value="current">Current (Development)</option>
+                                            <option value="development">Development</option>
+                                            <option value="testing">Testing</option>
+                                            <option value="staging">Staging</option>
+                                            <option value="production">Production</option>
+                                        </select>
+                                        <small class="text-muted">Apply environment-specific configuration overrides</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="twin_registry_enableRealTimeMonitoring" class="form-label">Real-time Monitoring</label>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="twin_registry_enableRealTimeMonitoring" checked>
+                                            <label class="form-check-label" for="twin_registry_enableRealTimeMonitoring">
+                                                Enable real-time configuration monitoring
+                                            </label>
+                                        </div>
+                                        <small class="text-muted">Automatically refresh configuration every 30 seconds</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Registry Settings Tab -->
-            <div class="tab-pane fade show active" id="registry" role="tabpanel">
+            <div class="tab-pane fade" id="twin_registry_registry" role="tabpanel">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="tr-chart-card">
@@ -57,12 +206,12 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="registryName" class="form-label">Registry Name</label>
-                                    <input type="text" class="form-control" id="registryName" value="Digital Twin Registry">
+                                    <label for="twin_registry_registryName" class="form-label">Registry Name</label>
+                                    <input type="text" class="form-control" id="twin_registry_registryName" value="Digital Twin Registry">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="defaultTwinType" class="form-label">Default Twin Type</label>
-                                    <select class="form-select" id="defaultTwinType">
+                                    <label for="twin_registry_defaultTwinType" class="form-label">Default Twin Type</label>
+                                    <select class="form-select" id="twin_registry_defaultTwinType">
                                         <option value="generic">Generic</option>
                                         <option value="industrial">Industrial</option>
                                         <option value="manufacturing">Manufacturing</option>
@@ -71,14 +220,14 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="maxTwinsPerProject" class="form-label">Max Twins per Project</label>
-                                    <input type="number" class="form-control" id="maxTwinsPerProject" value="100" min="1" max="1000">
+                                    <label for="twin_registry_maxTwinsPerProject" class="form-label">Max Twins per Project</label>
+                                    <input type="number" class="form-control" id="twin_registry_maxTwinsPerProject" value="100" min="1" max="1000">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="autoStartMonitoring" class="form-label">Auto-start Monitoring</label>
+                                    <label for="twin_registry_autoStartMonitoring" class="form-label">Auto-start Monitoring</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="autoStartMonitoring" checked>
-                                        <label class="form-check-label" for="autoStartMonitoring">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_autoStartMonitoring" checked>
+                                        <label class="form-check-label" for="twin_registry_autoStartMonitoring">
                                             Enable automatic monitoring on page load
                                         </label>
                                     </div>
@@ -93,8 +242,8 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="dataRetentionPeriod" class="form-label">Data Retention Period</label>
-                                    <select class="form-select" id="dataRetentionPeriod">
+                                    <label for="twin_registry_dataRetentionPeriod" class="form-label">Data Retention Period</label>
+                                    <select class="form-select" id="twin_registry_dataRetentionPeriod">
                                         <option value="7">7 days</option>
                                         <option value="30" selected>30 days</option>
                                         <option value="90">90 days</option>
@@ -103,27 +252,27 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="backupFrequency" class="form-label">Backup Frequency</label>
-                                    <select class="form-select" id="backupFrequency">
+                                    <label for="twin_registry_backupFrequency" class="form-label">Backup Frequency</label>
+                                    <select class="form-select" id="twin_registry_backupFrequency">
                                         <option value="daily">Daily</option>
                                         <option value="weekly" selected>Weekly</option>
                                         <option value="monthly">Monthly</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableDataCompression" class="form-label">Data Compression</label>
+                                    <label for="twin_registry_enableDataCompression" class="form-label">Data Compression</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableDataCompression" checked>
-                                        <label class="form-check-label" for="enableDataCompression">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableDataCompression" checked>
+                                        <label class="form-check-label" for="twin_registry_enableDataCompression">
                                             Enable data compression for storage
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableDataEncryption" class="form-label">Data Encryption</label>
+                                    <label for="twin_registry_enableDataEncryption" class="form-label">Data Encryption</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableDataEncryption">
-                                        <label class="form-check-label" for="enableDataEncryption">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableDataEncryption">
+                                        <label class="form-check-label" for="twin_registry_enableDataEncryption">
                                             Enable data encryption at rest
                                         </label>
                                     </div>
@@ -135,7 +284,7 @@
             </div>
 
             <!-- Monitoring Tab -->
-            <div class="tab-pane fade" id="monitoring" role="tabpanel">
+                            <div class="tab-pane fade" id="twin_registry_monitoring" role="tabpanel">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="tr-chart-card">
@@ -144,30 +293,30 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="refreshInterval" class="form-label">Auto-refresh Interval (seconds)</label>
-                                    <input type="number" class="form-control" id="refreshInterval" value="10" min="5" max="300">
+                                    <label for="twin_registry_refreshInterval" class="form-label">Auto-refresh Interval (seconds)</label>
+                                    <input type="number" class="form-control" id="twin_registry_refreshInterval" value="10" min="5" max="300">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableWebSocket" class="form-label">WebSocket Connection</label>
+                                    <label for="twin_registry_enableWebSocket" class="form-label">WebSocket Connection</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableWebSocket" checked>
-                                        <label class="form-check-label" for="enableWebSocket">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableWebSocket" checked>
+                                        <label class="form-check-label" for="twin_registry_enableWebSocket">
                                             Enable real-time WebSocket updates
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableBrowserNotifications" class="form-label">Browser Notifications</label>
+                                    <label for="twin_registry_enableBrowserNotifications" class="form-label">Browser Notifications</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableBrowserNotifications">
-                                        <label class="form-check-label" for="enableBrowserNotifications">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableBrowserNotifications">
+                                        <label class="form-check-label" for="twin_registry_enableBrowserNotifications">
                                             Enable browser notifications for alerts
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="maxConcurrentMonitors" class="form-label">Max Concurrent Monitors</label>
-                                    <input type="number" class="form-control" id="maxConcurrentMonitors" value="50" min="1" max="200">
+                                    <label for="twin_registry_maxConcurrentMonitors" class="form-label">Max Concurrent Monitors</label>
+                                    <input type="number" class="form-control" id="twin_registry_maxConcurrentMonitors" value="50" min="1" max="200">
                                 </div>
                             </div>
                         </div>
@@ -179,27 +328,27 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="healthThreshold" class="form-label">Health Score Threshold</label>
-                                    <input type="number" class="form-control" id="healthThreshold" value="60" min="0" max="100">
+                                    <label for="twin_registry_healthThreshold" class="form-label">Health Score Threshold</label>
+                                    <input type="number" class="form-control" id="twin_registry_healthThreshold" value="60" min="0" max="100">
                                     <small class="text-muted">Alert when health score falls below this value</small>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="performanceThreshold" class="form-label">Performance Threshold (ms)</label>
-                                    <input type="number" class="form-control" id="performanceThreshold" value="5000" min="100" max="30000">
+                                    <label for="twin_registry_performanceThreshold" class="form-label">Performance Threshold (ms)</label>
+                                    <input type="number" class="form-control" id="twin_registry_performanceThreshold" value="5000" min="100" max="30000">
                                     <small class="text-muted">Alert when response time exceeds this value</small>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableEmailAlerts" class="form-label">Email Alerts</label>
+                                    <label for="twin_registry_enableEmailAlerts" class="form-label">Email Alerts</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableEmailAlerts">
-                                        <label class="form-check-label" for="enableEmailAlerts">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableEmailAlerts">
+                                        <label class="form-check-label" for="twin_registry_enableEmailAlerts">
                                             Send email notifications for critical alerts
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="alertRetentionDays" class="form-label">Alert Retention (days)</label>
-                                    <input type="number" class="form-control" id="alertRetentionDays" value="30" min="1" max="365">
+                                    <label for="twin_registry_alertRetentionDays" class="form-label">Alert Retention (days)</label>
+                                    <input type="number" class="form-control" id="twin_registry_alertRetentionDays" value="30" min="1" max="365">
                                 </div>
                             </div>
                         </div>
@@ -208,7 +357,7 @@
             </div>
 
             <!-- Security Tab -->
-            <div class="tab-pane fade" id="security" role="tabpanel">
+            <div class="tab-pane fade" id="twin_registry_security" role="tabpanel">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="tr-chart-card">
@@ -217,27 +366,27 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="enableAuthentication" class="form-label">Enable Authentication</label>
+                                    <label for="twin_registry_enableAuthentication" class="form-label">Enable Authentication</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableAuthentication">
-                                        <label class="form-check-label" for="enableAuthentication">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableAuthentication">
+                                        <label class="form-check-label" for="twin_registry_enableAuthentication">
                                             Require user authentication
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="sessionTimeout" class="form-label">Session Timeout (minutes)</label>
-                                    <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="480">
+                                    <label for="twin_registry_sessionTimeout" class="form-label">Session Timeout (minutes)</label>
+                                    <input type="number" class="form-control" id="twin_registry_sessionTimeout" value="30" min="5" max="480">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="maxLoginAttempts" class="form-label">Max Login Attempts</label>
-                                    <input type="number" class="form-control" id="maxLoginAttempts" value="5" min="1" max="10">
+                                    <label for="twin_registry_maxLoginAttempts" class="form-label">Max Login Attempts</label>
+                                    <input type="number" class="form-control" id="twin_registry_maxLoginAttempts" value="5" min="1" max="10">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableTwoFactor" class="form-label">Two-Factor Authentication</label>
+                                    <label for="twin_registry_enableTwoFactor" class="form-label">Two-Factor Authentication</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableTwoFactor">
-                                        <label class="form-check-label" for="enableTwoFactor">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableTwoFactor">
+                                        <label class="form-check-label" for="twin_registry_enableTwoFactor">
                                             Enable 2FA for enhanced security
                                         </label>
                                     </div>
@@ -252,33 +401,33 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="enableRoleBasedAccess" class="form-label">Role-Based Access Control</label>
+                                    <label for="twin_registry_enableRoleBasedAccess" class="form-label">Role-Based Access Control</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableRoleBasedAccess">
-                                        <label class="form-check-label" for="enableRoleBasedAccess">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableRoleBasedAccess">
+                                        <label class="form-check-label" for="twin_registry_enableRoleBasedAccess">
                                             Enable RBAC for fine-grained permissions
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableAuditLogging" class="form-label">Audit Logging</label>
+                                    <label for="twin_registry_enableAuditLogging" class="form-label">Audit Logging</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableAuditLogging" checked>
-                                        <label class="form-check-label" for="enableAuditLogging">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableAuditLogging" checked>
+                                        <label class="form-check-label" for="twin_registry_enableAuditLogging">
                                             Log all user actions for audit purposes
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="ipWhitelist" class="form-label">IP Whitelist</label>
-                                    <textarea class="form-control" id="ipWhitelist" rows="3" placeholder="Enter IP addresses (one per line)"></textarea>
+                                    <label for="twin_registry_ipWhitelist" class="form-label">IP Whitelist</label>
+                                    <textarea class="form-control" id="twin_registry_ipWhitelist" rows="3" placeholder="Enter IP addresses (one per line)"></textarea>
                                     <small class="text-muted">Leave empty to allow all IPs</small>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableCORS" class="form-label">CORS Support</label>
+                                    <label for="twin_registry_enableCORS" class="form-label">CORS Support</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableCORS">
-                                        <label class="form-check-label" for="enableCORS">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableCORS">
+                                        <label class="form-check-label" for="twin_registry_enableCORS">
                                             Enable Cross-Origin Resource Sharing
                                         </label>
                                     </div>
@@ -290,7 +439,7 @@
             </div>
 
             <!-- Integration Tab -->
-            <div class="tab-pane fade" id="integration" role="tabpanel">
+            <div class="tab-pane fade" id="twin_registry_integration" role="tabpanel">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="tr-chart-card">
@@ -299,23 +448,23 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="enableAASXIntegration" class="form-label">Enable AASX Integration</label>
+                                    <label for="twin_registry_enableAASXIntegration" class="form-label">Enable AASX Integration</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableAASXIntegration" checked>
-                                        <label class="form-check-label" for="enableAASXIntegration">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableAASXIntegration" checked>
+                                        <label class="form-check-label" for="twin_registry_enableAASXIntegration">
                                             Automatically create twins from AASX files
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="aasxSyncInterval" class="form-label">AASX Sync Interval (minutes)</label>
-                                    <input type="number" class="form-control" id="aasxSyncInterval" value="15" min="1" max="1440">
+                                    <label for="twin_registry_aasxSyncInterval" class="form-label">AASX Sync Interval (minutes)</label>
+                                    <input type="number" class="form-control" id="twin_registry_aasxSyncInterval" value="15" min="1" max="1440">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableAASXValidation" class="form-label">AASX Validation</label>
+                                    <label for="twin_registry_enableAASXValidation" class="form-label">AASX Validation</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableAASXValidation" checked>
-                                        <label class="form-check-label" for="enableAASXValidation">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableAASXValidation" checked>
+                                        <label class="form-check-label" for="twin_registry_enableAASXValidation">
                                             Validate AASX files before processing
                                         </label>
                                     </div>
@@ -330,26 +479,194 @@
                             </div>
                             <div class="tr-card-body">
                                 <div class="mb-3">
-                                    <label for="enableExternalSync" class="form-label">External System Sync</label>
+                                    <label for="twin_registry_enableExternalSync" class="form-label">External System Sync</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableExternalSync">
-                                        <label class="form-check-label" for="enableExternalSync">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableExternalSync">
+                                        <label class="form-check-label" for="twin_registry_enableExternalSync">
                                             Enable synchronization with external systems
                                         </label>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="externalSyncTimeout" class="form-label">Sync Timeout (seconds)</label>
-                                    <input type="number" class="form-control" id="externalSyncTimeout" value="30" min="5" max="300">
+                                    <label for="twin_registry_externalSyncTimeout" class="form-label">Sync Timeout (seconds)</label>
+                                    <input type="number" class="form-control" id="twin_registry_externalSyncTimeout" value="30" min="5" max="300">
                                 </div>
                                 <div class="mb-3">
-                                    <label for="enableRetryOnFailure" class="form-label">Retry on Failure</label>
+                                    <label for="twin_registry_enableRetryOnFailure" class="form-label">Retry on Failure</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="enableRetryOnFailure" checked>
-                                        <label class="form-check-label" for="enableRetryOnFailure">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_enableRetryOnFailure" checked>
+                                        <label class="form-check-label" for="twin_registry_enableRetryOnFailure">
                                             Automatically retry failed sync operations
                                         </label>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Tab -->
+            <div class="tab-pane fade" id="twin_registry_performance" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tr-chart-card">
+                            <div class="tr-card-header">
+                                <h6>Caching & Optimization</h6>
+                            </div>
+                            <div class="tr-card-body">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_performance_enable_caching" checked>
+                                        <label class="form-check-label" for="twin_registry_performance_enable_caching">
+                                            Enable Caching
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Cache frequently accessed data</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="twin_registry_performance_cache_ttl_seconds" class="form-label">Cache TTL (seconds)</label>
+                                    <input type="number" class="form-control" id="twin_registry_performance_cache_ttl_seconds" value="3600" min="60" max="86400">
+                                    <small class="text-muted">How long to keep data in cache</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="twin_registry_performance_max_cache_size_mb" class="form-label">Max Cache Size (MB)</label>
+                                    <input type="number" class="form-control" id="twin_registry_performance_max_cache_size_mb" value="512" min="64" max="2048">
+                                    <small class="text-muted">Maximum memory for caching</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_performance_enable_query_optimization" checked>
+                                        <label class="form-check-label" for="twin_registry_performance_enable_query_optimization">
+                                            Enable Query Optimization
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Optimize database queries for performance</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="tr-chart-card">
+                            <div class="tr-card-header">
+                                <h6>Resource Management</h6>
+                            </div>
+                            <div class="tr-card-body">
+                                <div class="mb-3">
+                                    <label for="twin_registry_performance_max_database_connections" class="form-label">Max Database Connections</label>
+                                    <input type="number" class="form-control" id="twin_registry_performance_max_database_connections" value="50" min="5" max="200">
+                                    <small class="text-muted">Maximum concurrent database connections</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="twin_registry_performance_background_worker_threads" class="form-label">Background Workers</label>
+                                    <input type="number" class="form-control" id="twin_registry_performance_background_worker_threads" value="4" min="1" max="16">
+                                    <small class="text-muted">Number of background processing threads</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_performance_enable_async_operations" checked>
+                                        <label class="form-check-label" for="twin_registry_performance_enable_async_operations">
+                                            Enable Async Operations
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Process operations asynchronously</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_performance_enable_batch_processing" checked>
+                                        <label class="form-check-label" for="twin_registry_performance_enable_batch_processing">
+                                            Enable Batch Processing
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Process multiple operations in batches</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UI Settings Tab -->
+            <div class="tab-pane fade" id="twin_registry_ui" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="tr-chart-card">
+                            <div class="tr-card-header">
+                                <h6>Interface Settings</h6>
+                            </div>
+                            <div class="tr-card-body">
+                                <div class="mb-3">
+                                    <label for="twin_registry_ui_refresh_interval_seconds" class="form-label">Refresh Interval (seconds)</label>
+                                    <input type="number" class="form-control" id="twin_registry_ui_refresh_interval_seconds" value="30" min="5" max="300">
+                                    <small class="text-muted">How often to refresh data automatically</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_ui_show_advanced_options" checked>
+                                        <label class="form-check-label" for="twin_registry_ui_show_advanced_options">
+                                            Show Advanced Options
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Display advanced configuration options</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_ui_enable_real_time_updates" checked>
+                                        <label class="form-check-label" for="twin_registry_ui_enable_real_time_updates">
+                                            Enable Real-time Updates
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Update interface in real-time</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_ui_enable_dark_mode">
+                                        <label class="form-check-label" for="twin_registry_ui_enable_dark_mode">
+                                            Enable Dark Mode
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Switch between light and dark themes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="tr-chart-card">
+                            <div class="tr-card-header">
+                                <h6>User Experience</h6>
+                            </div>
+                            <div class="tr-card-body">
+                                <div class="mb-3">
+                                    <label for="twin_registry_ui_max_table_rows_per_page" class="form-label">Max Table Rows per Page</label>
+                                    <input type="number" class="form-control" id="twin_registry_ui_max_table_rows_per_page" value="50" min="10" max="200">
+                                    <small class="text-muted">Number of rows to display in tables</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_ui_enable_infinite_scroll" checked>
+                                        <label class="form-check-label" for="twin_registry_ui_enable_infinite_scroll">
+                                            Enable Infinite Scroll
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Load more data as user scrolls</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_ui_enable_keyboard_shortcuts" checked>
+                                        <label class="form-check-label" for="twin_registry_ui_enable_keyboard_shortcuts">
+                                            Enable Keyboard Shortcuts
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Allow keyboard navigation and shortcuts</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twin_registry_ui_enable_tooltips" checked>
+                                        <label class="form-check-label" for="twin_registry_ui_enable_tooltips">
+                                            Enable Tooltips
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Show helpful tooltips on hover</small>
                                 </div>
                             </div>
                         </div>
@@ -361,7 +678,7 @@
 </div>
 
 <!-- Configuration Save Modal -->
-<div class="modal fade" id="configSaveModal" tabindex="-1">
+        <div class="modal fade" id="twin_registry_configSaveModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -376,7 +693,7 @@
                     <i class="fas fa-info-circle"></i>
                     Configuration changes will be applied immediately. Some changes may require a restart to take effect.
                 </div>
-                <div id="configSaveProgress" class="progress-container">
+                <div id="twin_registry_configSaveProgress" class="progress-container">
                     <div class="progress">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"></div>
                     </div>
@@ -385,7 +702,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="tr-btn tr-btn-primary" onclick="confirmSaveConfiguration()">Save Changes</button>
+                <button type="button" class="tr-btn tr-btn-primary" onclick="twinRegistryConfirmSaveConfiguration()">Save Changes</button>
             </div>
         </div>
     </div>

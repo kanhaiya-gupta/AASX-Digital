@@ -120,15 +120,15 @@ class KGNeo4jUserSpecificService:
         if not self.user_context.permissions:
             return False
         
-        required_permissions = ['admin', 'system_admin']
+        required_permissions = ['admin', 'knowledge_graph']
         return any(perm in self.user_context.permissions for perm in required_permissions)
     
     def can_access_system_status(self) -> bool:
-        """Check if user can access system status information"""
+        """Check if user can access system status"""
         if not self.user_context.permissions:
             return False
         
-        required_permissions = ['read', 'admin']
+        required_permissions = ['read', 'knowledge_graph']
         return any(perm in self.user_context.permissions for perm in required_permissions)
     
     def get_user_projects(self) -> List[Dict[str, Any]]:
@@ -215,4 +215,36 @@ class KGNeo4jUserSpecificService:
         # This would typically check use case access permissions
         # For now, allow access if user has read permissions
         return 'read' in self.user_context.permissions
+    
+    def can_create_graphs(self) -> bool:
+        """Check if user can create knowledge graphs"""
+        if not self.user_context.permissions:
+            return False
+        
+        required_permissions = ['create', 'knowledge_graph']
+        return any(perm in self.user_context.permissions for perm in required_permissions)
+    
+    def can_access_graphs(self) -> bool:
+        """Check if user can access knowledge graphs"""
+        if not self.user_context.permissions:
+            return False
+        
+        required_permissions = ['read', 'knowledge_graph']
+        return any(perm in self.user_context.permissions for perm in required_permissions)
+    
+    def can_update_graphs(self) -> bool:
+        """Check if user can update knowledge graphs"""
+        if not self.user_context.permissions:
+            return False
+        
+        required_permissions = ['update', 'knowledge_graph']
+        return any(perm in self.user_context.permissions for perm in required_permissions)
+    
+    def can_delete_graphs(self) -> bool:
+        """Check if user can delete knowledge graphs"""
+        if not self.user_context.permissions:
+            return False
+        
+        required_permissions = ['delete', 'knowledge_graph']
+        return any(perm in self.user_context.permissions for perm in required_permissions)
 
