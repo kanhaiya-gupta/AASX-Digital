@@ -16,11 +16,11 @@ import json
 import uuid
 
 # Import centralized database system (same as other modules)
-from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.shared.database.base_manager import BaseDatabaseManager
-from src.shared.repositories.user_repository import UserRepository
-from src.shared.repositories.organization_repository import OrganizationRepository
-from src.shared.models.user import User as SharedUser
+from src.engine.database.connection_manager import DatabaseConnectionManager
+from src.engine.database.base_manager import BaseDatabaseManager
+from src.engine.repositories.user_repository import UserRepository
+from src.engine.repositories.organization_repository import OrganizationRepository
+from src.engine.models.user import User as EngineUser
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,8 @@ class AuthDatabase:
             self.algorithm = "HS256"
             self.access_token_expire_minutes = 30
             
-            # Create MFA-related tables if they don't exist
-            self._create_mfa_tables()
+            # Tables are now managed by the engine schema system
+            # No need to create tables here - they're handled centrally
             
             logger.info("✓ Auth Database initialized with centralized system")
             
@@ -62,22 +62,9 @@ class AuthDatabase:
             logger.error(f"Error initializing Auth Database: {e}")
             raise
 
-    def _create_mfa_tables(self):
-        """Create MFA-related tables"""
-        try:
-            # Create mfa_backup_codes table
-            mfa_backup_codes_sql = """
-            CREATE TABLE IF NOT EXISTS mfa_backup_codes (
-                code_id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                backup_code TEXT NOT NULL,
-                is_used BOOLEAN DEFAULT FALSE,
-                created_at TEXT NOT NULL,
-                used_at TEXT,
-                FOREIGN KEY (user_id) REFERENCES users(user_id)
-            )
-            """
-            self.db_manager.execute_query(mfa_backup_codes_sql)
+    # Tables are now managed by the engine schema system
+    # No need to create tables here - they're handled centrally
+
             
             # Create user_verification_codes table
             user_verification_codes_sql = """

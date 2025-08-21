@@ -46,7 +46,7 @@ src/engine/
 │   └── decorators.py              # Common decorators
 ├── database/                       # Database abstraction layer
 │   ├── __init__.py
-│   ├── base_connection_manager.py # Abstract database interface
+│   ├── connection_manager.py      # Abstract database interface
 │   ├── connection_pool.py         # Connection pool management
 │   ├── sqlite_manager.py          # SQLite implementation
 │   ├── postgres_manager.py        # PostgreSQL implementation
