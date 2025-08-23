@@ -10,11 +10,13 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
 from dataclasses import asdict
 
+from src.engine.database.connection_manager import ConnectionManager
 from src.kg_neo4j.repositories.kg_graph_registry_repository import KGGraphRegistryRepository
 from src.kg_neo4j.repositories.kg_graph_metrics_repository import KGGraphMetricsRepository
+from src.kg_neo4j.repositories.kg_neo4j_ml_repository import KGNeo4jMLRepository
 from src.kg_neo4j.models.kg_graph_registry import KGGraphRegistry, KGGraphRegistryQuery
 from src.kg_neo4j.models.kg_graph_metrics import KGGraphMetrics, KGGraphMetricsQuery
-from src.shared.database.async_base_manager import AsyncBaseDatabaseManager
+from src.kg_neo4j.models.kg_neo4j_ml_registry import KGNeo4jMLRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +24,13 @@ logger = logging.getLogger(__name__)
 class KGGraphService:
     """Main business logic service for Knowledge Graph operations."""
     
-    def __init__(self, async_db_manager: AsyncBaseDatabaseManager):
-        """Initialize the Knowledge Graph service with async database manager."""
-        self.registry_repo = KGGraphRegistryRepository(async_db_manager)
-        self.metrics_repo = KGGraphMetricsRepository(async_db_manager)
-        self.db_manager = async_db_manager
-        logger.info("Knowledge Graph Service initialized with async support")
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the Knowledge Graph service with connection manager."""
+        self.connection_manager = connection_manager
+        self.registry_repo = KGGraphRegistryRepository(connection_manager)
+        self.metrics_repo = KGGraphMetricsRepository(connection_manager)
+        self.ml_repo = KGNeo4jMLRepository(connection_manager)
+        logger.info("Knowledge Graph Service initialized with pure async support")
     
     async def initialize(self) -> None:
         """Initialize the service and repositories."""
@@ -63,13 +66,13 @@ class KGGraphService:
                 registry_name=f"{graph_name}_registry",
                 user_id=user_id,
                 org_id=org_id,
-                created_at=timestamp.isoformat(),
-                updated_at=timestamp.isoformat(),
+                created_at=timestamp,
+                updated_at=timestamp,
                 **kwargs
             )
             
             # Save to database
-            created_registry = await self.registry_repo.create_registry(registry)
+            created_registry = await self.registry_repo.create(registry)
             
             # Create initial metrics entry
             await self._create_initial_metrics(graph_id)
@@ -84,7 +87,8 @@ class KGGraphService:
     async def get_graph_by_file_id(self, file_id: str) -> Optional[KGGraphRegistry]:
         """Get knowledge graph by file ID."""
         try:
-            return await self.registry_repo.get_by_file_id(file_id)
+            graphs = await self.registry_repo.get_by_file_id(file_id)
+            return graphs[0] if graphs else None
         except Exception as e:
             logger.error(f"Error getting graph by file_id {file_id}: {e}")
             return None
@@ -92,7 +96,7 @@ class KGGraphService:
     async def get_graph_by_id(self, graph_id: str) -> Optional[KGGraphRegistry]:
         """Get knowledge graph by graph ID."""
         try:
-            return await self.registry_repo.get_by_graph_id(graph_id)
+            return await self.registry_repo.get_by_id(graph_id)
         except Exception as e:
             logger.error(f"Error getting graph by graph_id {graph_id}: {e}")
             return None
@@ -116,15 +120,30 @@ class KGGraphService:
                 logger.warning(f"No valid status updates for graph {graph_id}")
                 return False
             
-            # Update registry
-            success = await self.registry_repo.update_registry(graph_id, valid_updates)
+            # Get current graph and update it
+            graph = await self.get_graph_by_id(graph_id)
+            if not graph:
+                logger.error(f"Graph {graph_id} not found for status update")
+                return False
             
-            if success:
+            # Update the graph object
+            for key, value in valid_updates.items():
+                if hasattr(graph, key):
+                    setattr(graph, key, value)
+            
+            # Update timestamp
+            graph.updated_at = datetime.now(timezone.utc)
+            
+            # Save updated graph
+            updated_graph = await self.registry_repo.update(graph)
+            
+            if updated_graph:
                 # Create metrics entry for status change
                 await self._create_status_change_metrics(graph_id, status_updates)
                 logger.info(f"✅ Updated graph {graph_id} status: {valid_updates}")
+                return True
             
-            return success
+            return False
             
         except Exception as e:
             logger.error(f"❌ Failed to update graph {graph_id} status: {e}")
@@ -140,17 +159,18 @@ class KGGraphService:
                 return False
             
             # Update the link
-            success = await self.registry_repo.update_registry(
-                graph_id, 
-                {"twin_registry_id": twin_id, "updated_at": datetime.now(timezone.utc).isoformat()}
-            )
+            graph.twin_registry_id = twin_id
+            graph.updated_at = datetime.now(timezone.utc)
             
-            if success:
+            updated_graph = await self.registry_repo.update(graph)
+            
+            if updated_graph:
                 logger.info(f"✅ Linked graph {graph_id} to twin {twin_id}")
                 # Create metrics for the linking operation
                 await self._create_operation_metrics(graph_id, "twin_linking", {"twin_id": twin_id})
+                return True
             
-            return success
+            return False
             
         except Exception as e:
             logger.error(f"❌ Failed to link graph {graph_id} to twin {twin_id}: {e}")
@@ -169,14 +189,14 @@ class KGGraphService:
             # Create metrics entry
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 user_interaction_count=1,
                 query_execution_count=1,
                 operation_type=operation_type,
                 operation_data=operation_data
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             logger.info(f"✅ Recorded operation {operation_type} for graph {graph_id}")
             return True
             
@@ -188,16 +208,16 @@ class KGGraphService:
         """Get comprehensive performance summary for a graph."""
         try:
             # Get latest metrics
-            latest_metrics = await self.metrics_repo.get_latest_metrics_by_graph_id(graph_id)
+            latest_metrics = await self.metrics_repo.get_latest_metrics(graph_id)
             
             # Get performance trends
-            performance_trends = await self.metrics_repo.get_performance_metrics_by_graph_id(graph_id, 30)
+            performance_trends = await self.metrics_repo.get_performance_metrics(graph_id, 30)
             
             # Get user activity
-            user_activity = await self.metrics_repo.get_user_activity_metrics_by_graph_id(graph_id, 30)
+            user_activity = await self.metrics_repo.get_user_activity_metrics(graph_id, 30)
             
             # Get data quality metrics
-            data_quality = await self.metrics_repo.get_data_quality_metrics_by_graph_id(graph_id, 30)
+            data_quality = await self.metrics_repo.get_health_metrics(graph_id, 30)
             
             return {
                 "graph_id": graph_id,
@@ -205,7 +225,7 @@ class KGGraphService:
                 "performance_trends": performance_trends,
                 "user_activity": user_activity,
                 "data_quality": data_quality,
-                "summary_generated_at": datetime.now(timezone.utc).isoformat()
+                "summary_generated_at": datetime.now(timezone.utc)
             }
             
         except Exception as e:
@@ -272,7 +292,7 @@ class KGGraphService:
             # Update export status
             await self.update_graph_status(graph_id, {
                 "neo4j_export_status": "in_progress",
-                "last_neo4j_sync_at": datetime.now(timezone.utc).isoformat()
+                "last_neo4j_sync_at": datetime.now(timezone.utc)
             })
             
             # TODO: Implement actual Neo4j export logic
@@ -281,7 +301,7 @@ class KGGraphService:
             # Update export status to completed
             await self.update_graph_status(graph_id, {
                 "neo4j_export_status": "completed",
-                "next_neo4j_sync_at": datetime.now(timezone.utc).isoformat()
+                "next_neo4j_sync_at": datetime.now(timezone.utc)
             })
             
             logger.info(f"✅ Successfully exported graph {graph_id} to Neo4j")
@@ -334,8 +354,8 @@ class KGGraphService:
                 graph_type="analytical",
                 graph_category="ai_generated",
                 graph_priority=graph.graph_priority,
-                created_at=datetime.now(timezone.utc).isoformat(),
-                updated_at=datetime.now(timezone.utc).isoformat(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
                 registry_metadata={
                     "source_graph_id": graph_id,
                     "ai_analysis_type": ai_analysis_data.get("analysis_type", "unknown"),
@@ -345,7 +365,7 @@ class KGGraphService:
                 },
                 custom_attributes={
                     "ai_model_version": ai_analysis_data.get("model_version", "unknown"),
-                    "analysis_timestamp": ai_analysis_data.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                    "analysis_timestamp": ai_analysis_data.get("timestamp", datetime.now(timezone.utc)),
                     "data_sources": ai_analysis_data.get("data_sources", []),
                     "processing_parameters": ai_analysis_data.get("parameters", {})
                 },
@@ -358,7 +378,7 @@ class KGGraphService:
             )
             
             # Save AI insights graph
-            created_ai_graph = await self.registry_repo.create_registry(ai_registry)
+            created_ai_graph = await self.registry_repo.create(ai_registry)
             
             # Create metrics for AI insights
             await self._create_ai_insights_metrics(ai_graph_id, insights)
@@ -419,15 +439,13 @@ class KGGraphService:
             # Update main graph with merged insights
             await self.update_graph_status(graph_id, {
                 "registry_metadata": merged_metadata,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
                 "integration_status": "enhanced_with_ai"
             })
             
             # Mark AI graph as merged
             await self.update_graph_status(ai_graph_id, {
                 "integration_status": "merged",
-                "lifecycle_phase": "completed",
-                "updated_at": datetime.now(timezone.utc).isoformat()
+                "lifecycle_phase": "completed"
             })
             
             logger.info(f"✅ Successfully merged AI insights {ai_graph_id} with main graph {graph_id}")
@@ -444,7 +462,7 @@ class KGGraphService:
         try:
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 health_score=100,
                 response_time_ms=0.0,
                 uptime_percentage=100.0,
@@ -458,7 +476,7 @@ class KGGraphService:
                 data_accuracy_score=1.0
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             logger.info(f"✅ Created initial metrics for graph {graph_id}")
             
         except Exception as e:
@@ -473,7 +491,7 @@ class KGGraphService:
         try:
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 health_score=100,
                 user_interaction_count=1,
                 query_execution_count=1,
@@ -496,7 +514,7 @@ class KGGraphService:
         try:
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 health_score=100,
                 user_interaction_count=1,
                 query_execution_count=1,
@@ -504,7 +522,7 @@ class KGGraphService:
                 operation_data=operation_data
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             
         except Exception as e:
             logger.error(f"❌ Failed to create operation metrics for graph {graph_id}: {e}")
@@ -528,8 +546,20 @@ class KGGraphService:
                 config_updates["tags"] = import_options["tags"]
             
             if config_updates:
-                await self.registry_repo.update_registry(graph_id, config_updates)
-                logger.info(f"✅ Processed import options for graph {graph_id}")
+                # Get current graph and update it
+                graph = await self.get_graph_by_id(graph_id)
+                if graph:
+                    # Update the graph object
+                    for key, value in config_updates.items():
+                        if hasattr(graph, key):
+                            setattr(graph, key, value)
+                    
+                    # Update timestamp
+                    graph.updated_at = datetime.now(timezone.utc)
+                    
+                    # Save updated graph
+                    await self.registry_repo.update(graph)
+                    logger.info(f"✅ Processed import options for graph {graph_id}")
             
         except Exception as e:
             logger.error(f"❌ Failed to process import options for graph {graph_id}: {e}")
@@ -650,7 +680,7 @@ class KGGraphService:
         try:
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 health_score=100,
                 response_time_ms=0.0,
                 uptime_percentage=100.0,
@@ -672,7 +702,7 @@ class KGGraphService:
                 data_accuracy_score=1.0
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             logger.info(f"✅ Created AI insights metrics for graph {graph_id}")
             
         except Exception as e:
@@ -682,13 +712,19 @@ class KGGraphService:
         """Link AI graph to its source graph."""
         try:
             # Update AI graph relationships
-            await self.registry_repo.update_registry(ai_graph_id, {
-                "relationships": {
+            ai_graph = await self.get_graph_by_id(ai_graph_id)
+            if ai_graph:
+                if not ai_graph.relationships:
+                    ai_graph.relationships = []
+                
+                ai_graph.relationships.append({
                     "source_graph": source_graph_id,
                     "link_type": "ai_insights",
-                    "link_timestamp": datetime.now(timezone.utc).isoformat()
-                }
-            })
+                    "link_timestamp": datetime.now(timezone.utc)
+                })
+                
+                ai_graph.updated_at = datetime.now(timezone.utc)
+                await self.registry_repo.update(ai_graph)
             
             # Update source graph to reference AI graph
             source_graph = await self.get_graph_by_id(source_graph_id)
@@ -698,9 +734,9 @@ class KGGraphService:
                     relationships["ai_insights_graphs"] = []
                 relationships["ai_insights_graphs"].append(ai_graph_id)
                 
-                await self.registry_repo.update_registry(source_graph_id, {
-                    "relationships": relationships
-                })
+                source_graph.relationships = relationships
+                source_graph.updated_at = datetime.now(timezone.utc)
+                await self.registry_repo.update(source_graph)
             
             logger.info(f"✅ Linked AI graph {ai_graph_id} to source graph {source_graph_id}")
             
@@ -717,7 +753,7 @@ class KGGraphService:
                 merged["ai_insights"] = []
             
             ai_insight = {
-                "timestamp": ai_metadata.get("analysis_timestamp", datetime.now(timezone.utc).isoformat()),
+                "timestamp": ai_metadata.get("analysis_timestamp", datetime.now(timezone.utc)),
                 "analysis_type": ai_metadata.get("ai_analysis_type", "unknown"),
                 "confidence_score": ai_metadata.get("confidence_score", 0.0),
                 "insights_count": ai_metadata.get("insights_count", 0),
@@ -730,7 +766,7 @@ class KGGraphService:
             merged["total_ai_insights"] = len(merged["ai_insights"])
             
             # Update last AI enhancement timestamp
-            merged["last_ai_enhancement"] = datetime.now(timezone.utc).isoformat()
+            merged["last_ai_enhancement"] = datetime.now(timezone.utc)
             
             logger.debug(f"Merged AI metadata with {len(merged.get('ai_insights', []))} insights")
             return merged

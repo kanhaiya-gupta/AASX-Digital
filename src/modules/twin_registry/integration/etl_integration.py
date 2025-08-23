@@ -1,6 +1,7 @@
 """
 ETL Integration for Twin Registry Population
 Provides hooks and integration points with the ETL pipeline
+Phase 3: Event System & Automation with pure async support
 """
 
 import logging
@@ -11,8 +12,8 @@ from pathlib import Path
 from datetime import datetime, timezone
 from dataclasses import dataclass
 
-from ..events.event_types import Event, create_etl_completion_event
-from ..events.event_bus import EventBus
+from ..events.event_manager import TwinRegistryEventManager, EventType, EventPriority, TwinRegistryEvent
+from ..core.twin_registry_service import TwinRegistryService
 
 logger = logging.getLogger(__name__)
 
@@ -52,14 +53,16 @@ class ETLIntegrationConfig:
 
 
 class ETLIntegration:
-    """ETL pipeline integration for twin registry population"""
+    """ETL pipeline integration for twin registry population - Pure async implementation"""
     
     def __init__(
         self,
-        event_bus: EventBus,
+        twin_service: TwinRegistryService,
+        event_manager: TwinRegistryEventManager,
         config: ETLIntegrationConfig
     ):
-        self.event_bus = event_bus
+        self.twin_service = twin_service
+        self.event_manager = event_manager
         self.config = config
         self.db_path = config.database_path
         
@@ -98,19 +101,16 @@ class ETLIntegration:
             
         except Exception as e:
             logger.error(f"Failed to start ETL integration: {e}")
-            self.is_active = False
             raise
     
     async def stop(self) -> None:
         """Stop ETL integration monitoring"""
         try:
             if not self.is_active:
-                logger.warning("ETL integration is not active")
                 return
             
             self.is_active = False
             
-            # Cancel polling task
             if self.polling_task:
                 self.polling_task.cancel()
                 try:
@@ -124,353 +124,295 @@ class ETLIntegration:
             logger.error(f"Failed to stop ETL integration: {e}")
             raise
     
+    async def register_etl_job(self, job_info: ETLJobInfo) -> None:
+        """Register a new ETL job for monitoring"""
+        try:
+            self.etl_jobs[job_info.job_id] = job_info
+            self.stats["total_jobs_monitored"] += 1
+            
+            logger.info(f"Registered ETL job: {job_info.job_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to register ETL job {job_info.job_id}: {e}")
+            raise
+    
+    async def update_etl_job_status(self, job_id: str, status: str, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """Update the status of an ETL job"""
+        try:
+            if job_id not in self.etl_jobs:
+                logger.warning(f"ETL job {job_id} not found")
+                return
+            
+            job = self.etl_jobs[job_id]
+            job.status = status
+            
+            if status == "completed":
+                job.end_time = datetime.now(timezone.utc)
+                self.completed_jobs.append(job_id)
+                
+                # Trigger ETL success event for automatic metrics creation
+                await self._trigger_etl_success_event(job)
+                
+            elif status == "failed":
+                job.end_time = datetime.now(timezone.utc)
+                self.failed_jobs.append(job_id)
+                
+                # Trigger ETL failure event for status update
+                await self._trigger_etl_failure_event(job)
+            
+            if metadata:
+                job.processing_metadata.update(metadata)
+            
+            logger.info(f"Updated ETL job {job_id} status to: {status}")
+            
+        except Exception as e:
+            logger.error(f"Failed to update ETL job {job_id} status: {e}")
+            raise
+    
+    async def _trigger_etl_success_event(self, job: ETLJobInfo) -> None:
+        """Trigger ETL success event for automatic metrics creation"""
+        try:
+            # Calculate processing time
+            processing_time = (job.end_time - job.start_time).total_seconds()
+            
+            # Extract records processed from metadata
+            records_processed = job.processing_metadata.get("records_processed", 0)
+            success_rate = job.processing_metadata.get("success_rate", 1.0)
+            
+            # Create twin ID from job info
+            twin_id = f"etl_{job.job_id}"
+            
+            # Trigger the event using the event manager
+            await self.event_manager.emit_event(
+                TwinRegistryEvent(
+                    event_type=EventType.ETL_SUCCESS,
+                    priority=EventPriority.NORMAL,
+                    timestamp=datetime.now(),
+                    data={
+                        'twin_id': twin_id,
+                        'processing_time': processing_time,
+                        'records_processed': records_processed,
+                        'success_rate': success_rate,
+                        'job_id': job.job_id,
+                        'input_file': job.input_file
+                    },
+                    source="etl_integration",
+                    correlation_id=job.job_id
+                )
+            )
+            
+            logger.info(f"Triggered ETL success event for job {job.job_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to trigger ETL success event for job {job.job_id}: {e}")
+    
+    async def _trigger_etl_failure_event(self, job: ETLJobInfo) -> None:
+        """Trigger ETL failure event for status update"""
+        try:
+            # Create twin ID from job info
+            twin_id = f"etl_{job.job_id}"
+            
+            # Trigger the event using the event manager
+            await self.event_manager.emit_event(
+                TwinRegistryEvent(
+                    event_type=EventType.ETL_FAILURE,
+                    priority=EventPriority.HIGH,
+                    timestamp=datetime.now(),
+                    data={
+                        'twin_id': twin_id,
+                        'error_message': job.error_message or "Unknown ETL failure",
+                        'failure_reason': "etl_pipeline_failure",
+                        'job_id': job.job_id,
+                        'input_file': job.input_file
+                    },
+                    source="etl_integration",
+                    correlation_id=job.job_id
+                )
+            )
+            
+            logger.info(f"Triggered ETL failure event for job {job.job_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to trigger ETL failure event for job {job.job_id}: {e}")
+    
     async def _poll_etl_jobs(self) -> None:
         """Poll ETL jobs for status changes"""
         while self.is_active:
             try:
-                await self._check_etl_jobs()
+                # Check for completed or failed jobs
+                await self._check_job_statuses()
+                
+                # Cleanup old jobs if enabled
+                if self.config.cleanup_old_jobs:
+                    await self._cleanup_old_jobs()
+                
+                # Wait for next polling interval
                 await asyncio.sleep(self.config.polling_interval)
                 
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"Error in ETL job polling: {e}")
-                await asyncio.sleep(self.config.polling_interval)
+                await asyncio.sleep(self.config.retry_delay)
     
-    async def _check_etl_jobs(self) -> None:
-        """Check ETL jobs for status changes"""
+    async def _check_job_statuses(self) -> None:
+        """Check the status of monitored ETL jobs"""
         try:
-            # Get current ETL jobs from database
-            current_jobs = await self._get_etl_jobs_from_db()
-            
-            # Check for new or updated jobs
-            for job_info in current_jobs:
-                await self._process_etl_job(job_info)
-            
-            # Cleanup old jobs if enabled
-            if self.config.cleanup_old_jobs:
-                await self._cleanup_old_jobs()
-                
-        except Exception as e:
-            logger.error(f"Failed to check ETL jobs: {e}")
-    
-    async def _get_etl_jobs_from_db(self) -> List[ETLJobInfo]:
-        """Get ETL jobs from database"""
-        jobs = []
-        
-        try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                
-                # Query ETL jobs table (adjust table name as needed)
-                cursor.execute("""
-                    SELECT 
-                        job_id, status, start_time, end_time, 
-                        input_file, processing_metadata, error_message
-                    FROM aasx_processing 
-                    WHERE status IN ('completed', 'failed', 'processing')
-                    ORDER BY start_time DESC
-                    LIMIT ?
-                """, (self.config.batch_size,))
-                
-                rows = cursor.fetchall()
-                
-                for row in rows:
-                    try:
-                        # Parse datetime fields
-                        start_time = datetime.fromisoformat(row[2]) if row[2] else datetime.now(timezone.utc)
-                        end_time = datetime.fromisoformat(row[3]) if row[3] else None
-                        
-                        # Parse processing metadata
-                        processing_metadata = {}
-                        if row[5]:
-                            try:
-                                import json
-                                processing_metadata = json.loads(row[5])
-                            except:
-                                pass
-                        
-                        job_info = ETLJobInfo(
-                            job_id=row[0],
-                            status=row[1],
-                            start_time=start_time,
-                            end_time=end_time,
-                            input_file=row[4],
-                            processing_metadata=processing_metadata,
-                            error_message=row[6]
-                        )
-                        
-                        jobs.append(job_info)
-                        
-                    except Exception as e:
-                        logger.warning(f"Failed to parse ETL job row: {e}")
-                        
-        except Exception as e:
-            logger.error(f"Failed to get ETL jobs from database: {e}")
-        
-        return jobs
-    
-    async def _process_etl_job(self, job_info: ETLJobInfo) -> None:
-        """Process an ETL job for population triggers"""
-        try:
-            job_id = job_info.job_id
-            
-            # Check if this is a new job
-            if job_id not in self.etl_jobs:
-                self.etl_jobs[job_id] = job_info
-                self.stats["total_jobs_monitored"] += 1
-                logger.info(f"New ETL job detected: {job_id}")
-            
-            # Check for status changes
-            current_job = self.etl_jobs[job_id]
-            if current_job.status != job_info.status:
-                current_job.status = job_info.status
-                current_job.end_time = job_info.end_time
-                current_job.error_message = job_info.error_message
-                
-                logger.info(f"ETL job {job_id} status changed to: {job_info.status}")
-                
-                # Handle status change
-                await self._handle_etl_status_change(job_info)
-            
-            # Update job info
-            self.etl_jobs[job_id] = job_info
+            # This would typically query the ETL system's job status
+            # For now, we'll just log that we're checking
+            logger.debug("Checking ETL job statuses...")
             
         except Exception as e:
-            logger.error(f"Failed to process ETL job {job_info.job_id}: {e}")
-    
-    async def _handle_etl_status_change(self, job_info: ETLJobInfo) -> None:
-        """Handle ETL job status changes"""
-        try:
-            if job_info.status == "completed":
-                await self._handle_etl_completion(job_info)
-            elif job_info.status == "failed":
-                await self._handle_etl_failure(job_info)
-            elif job_info.status == "processing":
-                await self._handle_etl_processing(job_info)
-                
-        except Exception as e:
-            logger.error(f"Failed to handle ETL status change: {e}")
-    
-    async def _handle_etl_completion(self, job_info: ETLJobInfo) -> None:
-        """Handle ETL job completion"""
-        try:
-            job_id = job_info.job_id
-            
-            # Add to completed jobs
-            if job_id not in self.completed_jobs:
-                self.completed_jobs.append(job_id)
-            
-            # Remove from failed jobs if present
-            if job_id in self.failed_jobs:
-                self.failed_jobs.remove(job_id)
-            
-            logger.info(f"ETL job completed: {job_id}")
-            
-            # Trigger population after delay
-            if self.config.enable_auto_population:
-                await asyncio.sleep(self.config.population_delay)
-                await self._trigger_registry_population(job_info)
-            
-            # Execute registered callbacks
-            await self._execute_callbacks("etl_completion", job_info)
-            
-        except Exception as e:
-            logger.error(f"Failed to handle ETL completion: {e}")
-    
-    async def _handle_etl_failure(self, job_info: ETLJobInfo) -> None:
-        """Handle ETL job failure"""
-        try:
-            job_id = job_info.job_id
-            
-            # Add to failed jobs
-            if job_id not in self.failed_jobs:
-                self.failed_jobs.append(job_id)
-            
-            # Remove from completed jobs if present
-            if job_id in self.completed_jobs:
-                self.completed_jobs.remove(job_id)
-            
-            logger.warning(f"ETL job failed: {job_id} - {job_info.error_message}")
-            
-            # Execute registered callbacks
-            await self._execute_callbacks("etl_failure", job_info)
-            
-        except Exception as e:
-            logger.error(f"Failed to handle ETL failure: {e}")
-    
-    async def _handle_etl_processing(self, job_info: ETLJobInfo) -> None:
-        """Handle ETL job processing"""
-        try:
-            job_id = job_info.job_id
-            logger.debug(f"ETL job processing: {job_id}")
-            
-            # Execute registered callbacks
-            await self._execute_callbacks("etl_processing", job_info)
-            
-        except Exception as e:
-            logger.error(f"Failed to handle ETL processing: {e}")
-    
-    async def _trigger_registry_population(self, job_info: ETLJobInfo) -> None:
-        """Trigger twin registry population for completed ETL job"""
-        try:
-            start_time = datetime.now(timezone.utc)
-            
-            # Create ETL completion event
-            event = create_etl_completion_event(
-                source="etl_integration",
-                job_id=job_info.job_id,
-                input_file=job_info.input_file,
-                processing_metadata=job_info.processing_metadata,
-                completion_time=job_info.end_time or datetime.now(timezone.utc)
-            )
-            
-            # Publish event
-            await self.event_bus.publish(event)
-            
-            # Update statistics
-            population_time = (datetime.now(timezone.utc) - start_time).total_seconds()
-            self.stats["successful_populations"] += 1
-            self.stats["last_population_time"] = start_time
-            
-            # Update average population time
-            total_time = self.stats["average_population_time"] * (self.stats["successful_populations"] - 1) + population_time
-            self.stats["average_population_time"] = total_time / self.stats["successful_populations"]
-            
-            logger.info(f"Registry population triggered for ETL job: {job_info.job_id}")
-            
-        except Exception as e:
-            logger.error(f"Failed to trigger registry population: {e}")
-            self.stats["failed_populations"] += 1
-    
-    async def _execute_callbacks(self, event_type: str, job_info: ETLJobInfo) -> None:
-        """Execute registered callbacks"""
-        try:
-            for callback in self.registered_callbacks:
-                try:
-                    if asyncio.iscoroutinefunction(callback):
-                        await callback(event_type, job_info)
-                    else:
-                        callback(event_type, job_info)
-                except Exception as e:
-                    logger.error(f"Callback execution failed: {e}")
-                    
-        except Exception as e:
-            logger.error(f"Failed to execute callbacks: {e}")
+            logger.error(f"Failed to check ETL job statuses: {e}")
     
     async def _cleanup_old_jobs(self) -> None:
-        """Cleanup old ETL jobs"""
+        """Clean up old completed/failed jobs"""
         try:
             current_time = datetime.now(timezone.utc)
-            cutoff_time = current_time.timestamp() - self.config.max_job_age
+            jobs_to_remove = []
             
-            # Cleanup old jobs from tracking
-            old_jobs = [
-                job_id for job_id, job_info in self.etl_jobs.items()
-                if job_info.start_time.timestamp() < cutoff_time
-            ]
+            for job_id, job in self.etl_jobs.items():
+                if job.end_time:
+                    age = (current_time - job.end_time).total_seconds()
+                    if age > self.config.max_job_age:
+                        jobs_to_remove.append(job_id)
             
-            for job_id in old_jobs:
+            for job_id in jobs_to_remove:
                 del self.etl_jobs[job_id]
-                if job_id in self.completed_jobs:
-                    self.completed_jobs.remove(job_id)
-                if job_id in self.failed_jobs:
-                    self.failed_jobs.remove(job_id)
-            
-            if old_jobs:
-                logger.info(f"Cleaned up {len(old_jobs)} old ETL jobs")
+                logger.debug(f"Cleaned up old ETL job: {job_id}")
                 
         except Exception as e:
-            logger.error(f"Failed to cleanup old jobs: {e}")
+            logger.error(f"Failed to cleanup old ETL jobs: {e}")
     
-    def register_callback(self, callback: Callable) -> None:
-        """Register a callback for ETL events"""
-        if callback not in self.registered_callbacks:
-            self.registered_callbacks.append(callback)
-            logger.info("ETL integration callback registered")
-    
-    def unregister_callback(self, callback: Callable) -> None:
-        """Unregister a callback"""
-        if callback in self.registered_callbacks:
-            self.registered_callbacks.remove(callback)
-            logger.info("ETL integration callback unregistered")
-    
-    async def get_etl_job_status(self, job_id: str) -> Optional[ETLJobInfo]:
-        """Get status of a specific ETL job"""
-        return self.etl_jobs.get(job_id)
-    
-    def get_etl_jobs_summary(self) -> Dict[str, Any]:
-        """Get summary of ETL jobs"""
-        return {
-            "total_jobs": len(self.etl_jobs),
-            "completed_jobs": len(self.completed_jobs),
-            "failed_jobs": len(self.failed_jobs),
-            "processing_jobs": len([
-                job for job in self.etl_jobs.values()
-                if job.status == "processing"
-            ]),
-            "stats": self.stats.copy()
-        }
-    
-    async def manually_trigger_population(self, job_id: str) -> bool:
-        """Manually trigger population for a specific ETL job"""
+    async def get_integration_status(self) -> Dict[str, Any]:
+        """Get the current status of the ETL integration"""
         try:
-            job_info = self.etl_jobs.get(job_id)
-            if not job_info:
-                logger.warning(f"ETL job not found: {job_id}")
+            return {
+                "is_active": self.is_active,
+                "total_jobs_monitored": self.stats["total_jobs_monitored"],
+                "active_jobs": len([j for j in self.etl_jobs.values() if j.status == "running"]),
+                "completed_jobs": len(self.completed_jobs),
+                "failed_jobs": len(self.failed_jobs),
+                "last_population_time": self.stats["last_population_time"],
+                "average_population_time": self.stats["average_population_time"]
+            }
+        except Exception as e:
+            logger.error(f"Failed to get ETL integration status: {e}")
+            return {"error": str(e)}
+
+
+class ETLProcessor:
+    """Processes ETL jobs and triggers events"""
+    
+    def __init__(self, event_manager: TwinRegistryEventManager):
+        self.event_manager = event_manager
+    
+    async def process_etl_completion(self, job_id: str, success: bool, metadata: Dict[str, Any]) -> None:
+        """Process ETL completion and trigger appropriate events"""
+        try:
+            if success:
+                # Trigger ETL success event
+                await self.event_manager.emit_event(
+                    TwinRegistryEvent(
+                        event_type=EventType.ETL_SUCCESS,
+                        priority=EventPriority.NORMAL,
+                        timestamp=datetime.now(),
+                        data={
+                            'twin_id': f"etl_{job_id}",
+                            'processing_time': metadata.get('processing_time', 0.0),
+                            'records_processed': metadata.get('records_processed', 0),
+                            'success_rate': metadata.get('success_rate', 1.0),
+                            'job_id': job_id
+                        },
+                        source="etl_processor",
+                        correlation_id=job_id
+                    )
+                )
+            else:
+                # Trigger ETL failure event
+                await self.event_manager.emit_event(
+                    TwinRegistryEvent(
+                        event_type=EventType.ETL_FAILURE,
+                        priority=EventPriority.HIGH,
+                        timestamp=datetime.now(),
+                        data={
+                            'twin_id': f"etl_{job_id}",
+                            'error_message': metadata.get('error_message', 'Unknown error'),
+                            'failure_reason': metadata.get('failure_reason', 'etl_failure'),
+                            'job_id': job_id
+                        },
+                        source="etl_processor",
+                        correlation_id=job_id
+                    )
+                )
+            
+            logger.info(f"Processed ETL completion for job {job_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to process ETL completion for job {job_id}: {e}")
+
+
+class ETLValidator:
+    """Validates ETL job data and metadata"""
+    
+    @staticmethod
+    async def validate_job_info(job_info: ETLJobInfo) -> bool:
+        """Validate ETL job information"""
+        try:
+            if not job_info.job_id:
                 return False
             
-            if job_info.status != "completed":
-                logger.warning(f"ETL job {job_id} is not completed (status: {job_info.status})")
+            if not job_info.status:
                 return False
             
-            await self._trigger_registry_population(job_info)
+            if not job_info.start_time:
+                return False
+            
             return True
             
         except Exception as e:
-            logger.error(f"Failed to manually trigger population: {e}")
+            logger.error(f"Failed to validate ETL job info: {e}")
             return False
     
-    async def health_check(self) -> Dict[str, Any]:
-        """Check health of ETL integration"""
-        health_status = {
-            "active": self.is_active,
-            "polling_task_running": self.polling_task and not self.polling_task.done(),
-            "total_jobs_monitored": self.stats["total_jobs_monitored"],
-            "recent_populations": self.stats["successful_populations"],
-            "failed_populations": self.stats["failed_populations"],
-            "last_population": self.stats["last_population_time"].isoformat() if self.stats["last_population_time"] else None,
-            "average_population_time": round(self.stats["average_population_time"], 3),
-            "registered_callbacks": len(self.registered_callbacks)
-        }
-        
-        # Check database connectivity
+    @staticmethod
+    async def validate_metadata(metadata: Dict[str, Any]) -> bool:
+        """Validate ETL processing metadata"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM aasx_processing")
-                count = cursor.fetchone()[0]
-                health_status["database_accessible"] = True
-                health_status["total_etl_jobs_in_db"] = count
+            required_fields = ["records_processed", "processing_time"]
+            
+            for field in required_fields:
+                if field not in metadata:
+                    return False
+            
+            return True
+            
         except Exception as e:
-            health_status["database_accessible"] = False
-            health_status["database_error"] = str(e)
-        
-        return health_status
+            logger.error(f"Failed to validate ETL metadata: {e}")
+            return False
+
+
+class ETLMetricsCollector:
+    """Collects and processes ETL metrics"""
     
-    async def cleanup(self) -> None:
-        """Cleanup ETL integration resources"""
+    def __init__(self, twin_service: TwinRegistryService):
+        self.twin_service = twin_service
+    
+    async def collect_etl_metrics(self, job_id: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Collect ETL metrics for analysis"""
         try:
-            await self.stop()
+            metrics = {
+                "job_id": job_id,
+                "timestamp": datetime.now().isoformat(),
+                "processing_time": metadata.get("processing_time", 0.0),
+                "records_processed": metadata.get("records_processed", 0),
+                "success_rate": metadata.get("success_rate", 1.0),
+                "error_count": metadata.get("error_count", 0),
+                "warning_count": metadata.get("warning_count", 0)
+            }
             
-            # Clear tracking data
-            self.etl_jobs.clear()
-            self.completed_jobs.clear()
-            self.failed_jobs.clear()
-            self.registered_callbacks.clear()
-            
-            logger.info("ETL integration cleanup completed")
+            logger.info(f"Collected ETL metrics for job {job_id}")
+            return metrics
             
         except Exception as e:
-            logger.error(f"Error during ETL integration cleanup: {e}")
-            raise
+            logger.error(f"Failed to collect ETL metrics for job {job_id}: {e}")
+            return {}

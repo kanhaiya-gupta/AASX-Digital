@@ -10,10 +10,10 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timezone, timedelta
 import json
 
+from src.engine.database.connection_manager import ConnectionManager
 from src.kg_neo4j.core.kg_metrics_service import KGMetricsService
 from src.kg_neo4j.core.kg_neo4j_integration_service import KGNeo4jIntegrationService
 from src.kg_neo4j.models.kg_graph_metrics import KGGraphMetrics
-from src.shared.database.async_base_manager import AsyncBaseDatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 class KGAnalyticsService:
     """Analytics service for Knowledge Graph operations."""
     
-    def __init__(self, async_db_manager: AsyncBaseDatabaseManager):
-        """Initialize the analytics service with async database manager."""
-        self.metrics_service = KGMetricsService(async_db_manager)
-        self.neo4j_service = KGNeo4jIntegrationService(async_db_manager)
-        self.db_manager = async_db_manager
-        logger.info("Knowledge Graph Analytics Service initialized with async support")
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the analytics service with connection manager."""
+        self.connection_manager = connection_manager
+        self.metrics_service = KGMetricsService(connection_manager)
+        self.neo4j_service = KGNeo4jIntegrationService(connection_manager)
+        logger.info("Knowledge Graph Analytics Service initialized with pure async support")
     
     async def initialize(self) -> None:
         """Initialize the analytics service."""
@@ -77,7 +77,7 @@ class KGAnalyticsService:
             analytics_result = {
                 "graph_id": graph_id,
                 "analysis_period": analysis_period,
-                "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
+                "analysis_timestamp": datetime.now(timezone.utc),
                 "performance_summary": performance_summary,
                 "response_time_trends": response_time_trends,
                 "health_score_trends": health_score_trends,

@@ -10,9 +10,9 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timezone, timedelta
 from dataclasses import asdict
 
+from src.engine.database.connection_manager import ConnectionManager
 from src.kg_neo4j.repositories.kg_graph_metrics_repository import KGGraphMetricsRepository
 from src.kg_neo4j.models.kg_graph_metrics import KGGraphMetrics, KGGraphMetricsQuery, KGGraphMetricsSummary
-from src.shared.database.async_base_manager import AsyncBaseDatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 class KGMetricsService:
     """Business logic service for Knowledge Graph metrics operations."""
     
-    def __init__(self, async_db_manager: AsyncBaseDatabaseManager):
-        """Initialize the metrics service with async database manager."""
-        self.metrics_repo = KGGraphMetricsRepository(async_db_manager)
-        self.db_manager = async_db_manager
-        logger.info("Knowledge Graph Metrics Service initialized with async support")
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the metrics service with connection manager."""
+        self.connection_manager = connection_manager
+        self.metrics_repo = KGGraphMetricsRepository(connection_manager)
+        logger.info("Knowledge Graph Metrics Service initialized with pure async support")
     
     async def initialize(self) -> None:
         """Initialize the metrics service."""
@@ -47,7 +47,7 @@ class KGMetricsService:
             # Create metrics entry with system data
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 health_score=system_metrics.get('health_score', 100),
                 response_time_ms=system_metrics.get('response_time_ms', 0.0),
                 uptime_percentage=system_metrics.get('uptime_percentage', 100.0),
@@ -62,7 +62,7 @@ class KGMetricsService:
                 neo4j_disk_usage_mb=system_metrics.get('neo4j_disk_usage_mb', 0.0)
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             logger.info(f"✅ Recorded system metrics for graph {graph_id}")
             return True
             
@@ -79,12 +79,12 @@ class KGMetricsService:
         """Record user interaction metrics."""
         try:
             # Get current metrics to increment counters
-            current_metrics = await self.metrics_repo.get_latest_metrics_by_graph_id(graph_id)
+            current_metrics = await self.metrics_repo.get_latest_metrics(graph_id)
             
             # Create new metrics entry
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 health_score=current_metrics.health_score if current_metrics else 100,
                 user_interaction_count=1,
                 query_execution_count=1 if interaction_type == 'query' else 0,
@@ -93,11 +93,11 @@ class KGMetricsService:
                 user_activity={
                     'interaction_type': interaction_type,
                     'interaction_data': interaction_data,
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': datetime.now(timezone.utc)
                 }
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             logger.info(f"✅ Recorded user interaction {interaction_type} for graph {graph_id}")
             return True
             
@@ -114,7 +114,7 @@ class KGMetricsService:
         try:
             metrics = KGGraphMetrics(
                 graph_id=graph_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(timezone.utc),
                 graph_traversal_speed_ms=performance_data.get('traversal_speed_ms', 0.0),
                 graph_query_complexity_score=performance_data.get('query_complexity_score', 0.0),
                 graph_visualization_performance=performance_data.get('visualization_performance', 0.0),
@@ -125,11 +125,11 @@ class KGMetricsService:
                     'query_complexity': performance_data.get('query_complexity_score', 0.0),
                     'visualization_performance': performance_data.get('visualization_performance', 0.0),
                     'analysis_accuracy': performance_data.get('analysis_accuracy', 0.0),
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': datetime.now(timezone.utc)
                 }
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             logger.info(f"✅ Recorded performance metrics for graph {graph_id}")
             return True
             
@@ -150,18 +150,18 @@ class KGMetricsService:
             end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=days)
             
-            # Get metrics in date range
-            metrics = await self.metrics_repo.get_by_timestamp_range(start_date, end_date, 1000)
+            # Get metrics in date range for this graph
+            metrics = await self.metrics_repo.get_by_timestamp_range(graph_id, start_date, end_date)
             
-            # Filter by graph_id
-            graph_metrics = [m for m in metrics if m.graph_id == graph_id]
+            # No need to filter since repository already filters by graph_id
+            graph_metrics = metrics
             
             if not graph_metrics:
                 return {
                     "graph_id": graph_id,
                     "period_days": days,
                     "message": "No metrics available for the specified period",
-                    "summary_generated_at": datetime.now(timezone.utc).isoformat()
+                    "summary_generated_at": datetime.now(timezone.utc)
                 }
             
             # Calculate comprehensive summary
@@ -175,7 +175,7 @@ class KGMetricsService:
                 "period_days": days,
                 "summary": summary,
                 "insights": insights,
-                "summary_generated_at": datetime.now(timezone.utc).isoformat()
+                "summary_generated_at": datetime.now(timezone.utc)
             }
             
         except Exception as e:
@@ -193,8 +193,8 @@ class KGMetricsService:
             end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=days)
             
-            metrics = await self.metrics_repo.get_by_timestamp_range(start_date, end_date, 1000)
-            graph_metrics = [m for m in metrics if m.graph_id == graph_id]
+            metrics = await self.metrics_repo.get_by_timestamp_range(graph_id, start_date, end_date)
+            graph_metrics = metrics
             
             if not graph_metrics:
                 return {"error": "No metrics available for the specified period"}
@@ -211,7 +211,7 @@ class KGMetricsService:
                 "period_days": days,
                 "trend_data": trend_data,
                 "trend_analysis": trend_analysis,
-                "generated_at": datetime.now(timezone.utc).isoformat()
+                "generated_at": datetime.now(timezone.utc)
             }
             
         except Exception as e:
@@ -228,8 +228,8 @@ class KGMetricsService:
             end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=days)
             
-            metrics = await self.metrics_repo.get_by_timestamp_range(start_date, end_date, 1000)
-            graph_metrics = [m for m in metrics if m.graph_id == graph_id]
+            metrics = await self.metrics_repo.get_by_timestamp_range(graph_id, start_date, end_date)
+            graph_metrics = metrics
             
             if not graph_metrics:
                 return {"error": "No health metrics available for the specified period"}
@@ -241,7 +241,7 @@ class KGMetricsService:
                     health_data.append({
                         'timestamp': metric.timestamp,
                         'health_score': metric.health_score,
-                        'date': datetime.fromisoformat(metric.timestamp).date().isoformat()
+                        'date': metric.timestamp.date().isoformat()
                     })
             
             # Sort by timestamp
@@ -255,7 +255,7 @@ class KGMetricsService:
                 "period_days": days,
                 "health_data": health_data,
                 "trend_analysis": trend_analysis,
-                "generated_at": datetime.now(timezone.utc).isoformat()
+                "generated_at": datetime.now(timezone.utc)
             }
             
         except Exception as e:
@@ -267,9 +267,9 @@ class KGMetricsService:
     async def cleanup_old_metrics(self, days_to_keep: int = 90) -> int:
         """Clean up old metrics data to prevent database bloat."""
         try:
-            cleaned_count = await self.metrics_repo.cleanup_old_metrics(days_to_keep)
-            logger.info(f"✅ Cleaned up {cleaned_count} old metrics entries")
-            return cleaned_count
+            await self.metrics_repo.cleanup()
+            logger.info(f"✅ Cleaned up old metrics entries")
+            return 0  # Repository cleanup doesn't return count
             
         except Exception as e:
             logger.error(f"❌ Failed to cleanup old metrics: {e}")
@@ -279,7 +279,7 @@ class KGMetricsService:
         """Get information about metrics storage usage."""
         try:
             # Get total metrics count
-            total_metrics = await self.metrics_repo.count()
+            total_metrics = await self.metrics_repo.get_total_count()
             
             # Get oldest and newest timestamps
             oldest_metric = await self._get_oldest_metric()
@@ -290,7 +290,7 @@ class KGMetricsService:
                 "oldest_metric_timestamp": oldest_metric.timestamp if oldest_metric else None,
                 "newest_metric_timestamp": newest_metric.timestamp if newest_metric else None,
                 "estimated_storage_mb": total_metrics * 0.001,  # Rough estimate
-                "generated_at": datetime.now(timezone.utc).isoformat()
+                "generated_at": datetime.now(timezone.utc)
             }
             
         except Exception as e:

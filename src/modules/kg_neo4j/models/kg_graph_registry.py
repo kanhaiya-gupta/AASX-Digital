@@ -5,7 +5,7 @@ Updated to match our comprehensive database schema with all fields.
 Supports both extraction and generation workflows with full graph lifecycle management.
 """
 
-from src.shared.models.base_model import BaseModel
+from src.engine.models.base_model import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 import uuid
@@ -28,7 +28,7 @@ class KGGraphRegistry(BaseModel):
     
     # Workflow Classification
     registry_type: str              # extraction, generation, hybrid
-    workflow_source: str            # aasx_file, structured_data, both
+    workflow_source: str            # aasx_file, structured_data, ai_rag, both
     
     # Module Integration References
     aasx_integration_id: Optional[str] = None
@@ -78,6 +78,7 @@ class KGGraphRegistry(BaseModel):
     # User Management & Ownership
     user_id: str
     org_id: str
+    dept_id: Optional[str] = None
     owner_team: Optional[str] = None
     steward_user_id: Optional[str] = None
     
@@ -117,8 +118,8 @@ class KGGraphRegistry(BaseModel):
         
         super().__init__(**data)
     
-    def update_health_score(self, new_score: int):
-        """Update the overall health score"""
+    async def update_health_score(self, new_score: int) -> None:
+        """Update the overall health score asynchronously"""
         self.overall_health_score = max(0, min(100, new_score))
         self.updated_at = datetime.now(timezone.utc)
         
@@ -132,21 +133,21 @@ class KGGraphRegistry(BaseModel):
         else:
             self.health_status = "offline"
     
-    def update_neo4j_status(self, import_status: str, export_status: str = None):
-        """Update Neo4j synchronization status"""
+    async def update_neo4j_status(self, import_status: str, export_status: str = None) -> None:
+        """Update Neo4j synchronization status asynchronously"""
         self.neo4j_import_status = import_status
         if export_status:
             self.neo4j_export_status = export_status
         self.updated_at = datetime.now(timezone.utc)
     
-    def increment_sync_error(self, error_message: str):
-        """Increment sync error count and update error message"""
+    async def increment_sync_error(self, error_message: str) -> None:
+        """Increment sync error count and update error message asynchronously"""
         self.neo4j_sync_error_count += 1
         self.neo4j_sync_error_message = error_message
         self.updated_at = datetime.now(timezone.utc)
     
-    def update_graph_metrics(self, nodes: int, relationships: int):
-        """Update graph data metrics"""
+    async def update_graph_metrics(self, nodes: int, relationships: int) -> None:
+        """Update graph data metrics asynchronously"""
         self.total_nodes = nodes
         self.total_relationships = relationships
         
@@ -162,6 +163,75 @@ class KGGraphRegistry(BaseModel):
             self.graph_complexity = "very_complex"
         
         self.updated_at = datetime.now(timezone.utc)
+    
+    @classmethod
+    async def create_from_aasx_file(
+        cls,
+        file_id: str,
+        graph_name: str,
+        user_id: str,
+        org_id: str,
+        dept_id: Optional[str] = None,
+        **kwargs
+    ) -> "KGGraphRegistry":
+        """Create a new graph registry entry from AASX file asynchronously"""
+        return cls(
+            file_id=file_id,
+            graph_name=graph_name,
+            registry_name=f"{graph_name}_registry",
+            registry_type="extraction",
+            workflow_source="aasx_file",
+            user_id=user_id,
+            org_id=org_id,
+            dept_id=dept_id,
+            **kwargs
+        )
+    
+    @classmethod
+    async def create_from_structured_data(
+        cls,
+        graph_name: str,
+        user_id: str,
+        org_id: str,
+        dept_id: Optional[str] = None,
+        **kwargs
+    ) -> "KGGraphRegistry":
+        """Create a new graph registry entry from structured data asynchronously"""
+        return cls(
+            file_id="",  # No file for structured data
+            graph_name=graph_name,
+            registry_name=f"{graph_name}_registry",
+            registry_type="generation",
+            workflow_source="structured_data",
+            user_id=user_id,
+            org_id=org_id,
+            dept_id=dept_id,
+            **kwargs
+        )
+    
+    @classmethod
+    async def create_from_ai_rag(
+        cls,
+        graph_name: str,
+        ai_rag_id: str,
+        user_id: str,
+        org_id: str,
+        dept_id: Optional[str] = None,
+        **kwargs
+    ) -> "KGGraphRegistry":
+        """Create a new graph registry entry from AI RAG system asynchronously"""
+        return cls(
+            file_id="",  # No file for AI RAG
+            graph_name=graph_name,
+            registry_name=f"{graph_name}_registry",
+            registry_type="generation",
+            workflow_source="ai_rag",
+            ai_rag_integration_id=ai_rag_id,  # Link to AI RAG system
+            user_id=user_id,
+            org_id=org_id,
+            dept_id=dept_id,
+            **kwargs
+        )
 
 
 # Query and Summary models for API responses

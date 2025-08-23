@@ -129,14 +129,7 @@ src/twin_registry/
 │   ├── twin_relationship_service.py # Relationship management
 │   ├── twin_instance_service.py  # Instance management
 │   └── twin_sync_service.py      # Sync management
-├── populator/                     # Population logic
-│   ├── __init__.py
-│   ├── twin_registry_populator.py # Main population orchestrator
-│   ├── phase1_upload_populator.py # File upload → Basic registry
-│   ├── phase2_etl_populator.py   # ETL → Enhanced registry
-│   ├── population_coordinator.py  # Phase coordination
-│   ├── population_triggers.py    # Event triggers
-│   └── population_validator.py   # Data validation
+# Population logic removed - all population is automatic via events
 ├── events/                        # Event system
 │   ├── __init__.py
 │   ├── event_bus.py              # Event bus implementation
@@ -145,18 +138,17 @@ src/twin_registry/
 │   └── event_logger.py           # Event logging
 ├── config/                        # Configuration
 │   ├── __init__.py
-│   ├── population_config.py      # Config management
 │   ├── validation_rules.py       # Validation rules
-│   └── population_templates.py   # Population templates
+│   └── event_config.py           # Event system configuration
 ├── integration/                   # External integrations
 │   ├── __init__.py
 │   ├── etl_integration.py        # ETL pipeline hooks
 │   ├── file_upload_integration.py # File upload hooks
 │   └── ai_rag_integration.py     # AI/RAG integration
 └── utils/                         # Utilities
-    ├── population_helpers.py     # Helper functions
     ├── quality_calculator.py     # Quality scoring
-    └── metadata_extractor.py     # Metadata extraction
+    ├── metadata_extractor.py     # Metadata extraction
+    └── event_helpers.py          # Event system helpers
 ```
 
 ## 🔄 Two-Phase Population System
@@ -218,14 +210,10 @@ integration = get_file_upload_integration()
 # Population happens automatically
 ```
 
-### Manual Population
+### Automatic Population Only
 ```python
-# Manual population trigger
-from src.twin_registry.populator import TwinRegistryPopulator
-
-populator = TwinRegistryPopulator()
-populator.populate_from_file_upload(file_data)
-populator.populate_from_etl(etl_data)
+# All population is automatic through the event system
+# No manual population methods available
 ```
 
 ## 📋 API Endpoints
@@ -233,8 +221,7 @@ populator.populate_from_etl(etl_data)
 ### File Upload Routes
 - `POST /files/upload` - Upload file with automatic twin registry population
 - `POST /files/upload-from-url` - Upload from URL with automatic population
-- `POST /files/{file_id}/populate-twin-registry` - Manual population trigger
-- `POST /files/populate-all-twin-registries` - Bulk population (admin)
+- **Note**: All population is automatic - no manual triggers available
 
 ### Status and Health
 - `GET /twin-registry/integration-status` - Integration status
@@ -261,16 +248,16 @@ python scripts/test_upload_twin_registry_integration.py
 
 ## 🔧 Configuration
 
-### Population Configuration
+### Event System Configuration
 ```yaml
-# config/population_config.yaml
-population:
-  phase1:
+# config/event_config.yaml
+events:
+  file_upload:
     enabled: true
     validation_rules: ["file_required", "user_required"]
     quality_threshold: 0.7
   
-  phase2:
+  etl_completion:
     enabled: true
     validation_rules: ["etl_required", "output_required"]
     quality_threshold: 0.8
@@ -346,11 +333,11 @@ rules:
 
 ### Database Migration
 ```bash
-# Run Phase 1 migration
-python scripts/migrate_twin_registry_phase1_simple.py
+# Run event system migration
+python scripts/migrate_twin_registry_events.py
 
 # Verify migration
-python scripts/test_twin_registry_phase1.py
+python scripts/test_twin_registry_events.py
 ```
 
 ### Schema Updates

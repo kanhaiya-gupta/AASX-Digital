@@ -1,118 +1,259 @@
 """
-Base Exporter for Certificate Manager
+Base Exporter Interface for Certificate Manager
 
-Abstract base class for certificate exporters with common functionality.
+Defines the contract for all certificate exporters.
+All exporters generate data only (no UI rendering) and use async patterns.
 """
 
+import asyncio
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, BinaryIO
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
-import json
 import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
-class ExportError(Exception):
-    """Exception raised for export-related errors."""
-    pass
+class ExportFormat(Enum):
+    """Supported export formats"""
+    JSON = "json"
+    XML = "xml"
+    HTML = "html"
+    PDF = "pdf"
+    MARKDOWN = "markdown"
+    CSV = "csv"
+    YAML = "yaml"
+
+
+class ExportOptions:
+    """Configuration options for certificate exports"""
+    
+    def __init__(
+        self,
+        include_metadata: bool = True,
+        include_metrics: bool = True,
+        include_versions: bool = False,
+        include_lineage: bool = False,
+        include_audit_trail: bool = False,
+        compression_level: int = 0,
+        encryption_enabled: bool = False,
+        digital_signature: bool = True,
+        qr_code: bool = True,
+        watermark: bool = False,
+        custom_styling: Optional[Dict[str, Any]] = None
+    ):
+        self.include_metadata = include_metadata
+        self.include_metrics = include_metrics
+        self.include_versions = include_versions
+        self.include_lineage = include_lineage
+        self.include_audit_trail = include_audit_trail
+        self.compression_level = compression_level
+        self.encryption_enabled = encryption_enabled
+        self.digital_signature = digital_signature
+        self.qr_code = qr_code
+        self.watermark = watermark
+        self.custom_styling = custom_styling or {}
 
 
 class BaseExporter(ABC):
-    """Base class for certificate exporters."""
+    """
+    Abstract base class for all certificate exporters
     
-    def __init__(self, format_name: str):
-        self.format_name = format_name
-        self.logger = logging.getLogger(f"{__name__}.{format_name}")
+    All exporters must implement these methods to provide
+    consistent export functionality across different formats.
+    """
     
-    @abstractmethod
-    async def export(self, certificate_id: str, version: str, 
-                    template_id: str = 'default', 
-                    custom_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Export certificate to specific format."""
-        pass
-    
-    @abstractmethod
-    def get_mime_type(self) -> str:
-        """Get MIME type for the export format."""
-        pass
-    
-    @abstractmethod
-    def get_file_extension(self) -> str:
-        """Get file extension for the export format."""
-        pass
-    
-    async def _get_certificate_data(self, certificate_id: str, version: str) -> Dict[str, Any]:
-        """Get certificate and version data for export."""
-        try:
-            from src.certificate_manager.core.certificate_manager import CertificateManager
-            
-            cm = CertificateManager()
-            certificate = cm.get_certificate(certificate_id)
-            version_data = cm.get_certificate_version(certificate_id, version)
-            
-            if not certificate:
-                raise ExportError(f"Certificate {certificate_id} not found")
-            
-            if not version_data:
-                raise ExportError(f"Version {version} not found for certificate {certificate_id}")
-            
-            return {
-                'certificate': certificate.to_dict(),
-                'version': version_data.to_dict(),
-                'sections': version_data.sections,
-                'summary_data': version_data.summary_data,
-                'reference_links': version_data.reference_links
-            }
-            
-        except Exception as e:
-            raise ExportError(f"Failed to get certificate data: {str(e)}")
-    
-    def _generate_filename(self, certificate_id: str, version: str) -> str:
-        """Generate filename for export."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"certificate_{certificate_id}_v{version}_{timestamp}.{self.get_file_extension()}"
-    
-    def _add_export_metadata(self, export_data: Dict[str, Any], 
-                            certificate_id: str, version: str, 
-                            template_id: str) -> Dict[str, Any]:
-        """Add metadata to export data."""
-        export_data.update({
-            'export_metadata': {
-                'format': self.format_name,
-                'certificate_id': certificate_id,
-                'version': version,
-                'template_id': template_id,
-                'generated_at': datetime.now().isoformat(),
-                'mime_type': self.get_mime_type(),
-                'file_extension': self.get_file_extension()
-            }
-        })
-        return export_data
-    
-    def _validate_export_data(self, export_data: Dict[str, Any]) -> bool:
-        """Validate export data structure."""
-        required_fields = ['content', 'file_size', 'mime_type', 'file_extension']
+    def __init__(self, export_format: ExportFormat):
+        """Initialize the base exporter"""
+        self.export_format = export_format
+        self.supported_formats = [export_format]
+        self.export_locks: Dict[str, asyncio.Lock] = {}
         
+        logger.info(f"Initialized {self.__class__.__name__} for {export_format.value}")
+    
+    @abstractmethod
+    async def export_certificate(
+        self,
+        certificate_data: Dict[str, Any],
+        options: ExportOptions,
+        output_path: Optional[Path] = None
+    ) -> Dict[str, Any]:
+        """
+        Export certificate data to the specified format
+        
+        Args:
+            certificate_data: Complete certificate data dictionary
+            options: Export configuration options
+            output_path: Optional path to save the exported file
+            
+        Returns:
+            Dictionary containing export metadata and data
+        """
+        pass
+    
+    @abstractmethod
+    async def validate_export_data(
+        self,
+        certificate_data: Dict[str, Any],
+        options: ExportOptions
+    ) -> bool:
+        """
+        Validate that the certificate data can be exported
+        
+        Args:
+            certificate_data: Certificate data to validate
+            options: Export options to validate against
+            
+        Returns:
+            True if data is valid for export, False otherwise
+        """
+        pass
+    
+    @abstractmethod
+    async def get_export_metadata(
+        self,
+        certificate_data: Dict[str, Any],
+        options: ExportOptions
+    ) -> Dict[str, Any]:
+        """
+        Get metadata about the export operation
+        
+        Args:
+            certificate_data: Certificate data being exported
+            options: Export options being used
+            
+        Returns:
+            Dictionary containing export metadata
+        """
+        pass
+    
+    async def _acquire_export_lock(self, certificate_id: str) -> asyncio.Lock:
+        """Acquire a lock for concurrent export operations"""
+        if certificate_id not in self.export_locks:
+            self.export_locks[certificate_id] = asyncio.Lock()
+        return self.export_locks[certificate_id]
+    
+    async def _release_export_lock(self, certificate_id: str) -> None:
+        """Release the export lock for a certificate"""
+        if certificate_id in self.export_locks:
+            del self.export_locks[certificate_id]
+    
+    async def _prepare_certificate_data(
+        self,
+        certificate_data: Dict[str, Any],
+        options: ExportOptions
+    ) -> Dict[str, Any]:
+        """
+        Prepare certificate data for export based on options
+        
+        This method filters and structures the data according to
+        the export options before passing to specific exporters.
+        """
+        prepared_data = {
+            "certificate_id": certificate_data.get("certificate_id"),
+            "export_timestamp": asyncio.get_event_loop().time(),
+            "export_format": self.export_format.value,
+            "export_options": options.__dict__
+        }
+        
+        # Include metadata if requested
+        if options.include_metadata:
+            prepared_data["metadata"] = {
+                "certificate_name": certificate_data.get("certificate_name"),
+                "status": certificate_data.get("status"),
+                "created_at": certificate_data.get("created_at"),
+                "updated_at": certificate_data.get("updated_at"),
+                "completion_percentage": certificate_data.get("completion_percentage"),
+                "overall_quality_score": certificate_data.get("overall_quality_score"),
+                "compliance_status": certificate_data.get("compliance_status"),
+                "security_score": certificate_data.get("security_score")
+            }
+        
+        # Include metrics if requested
+        if options.include_metrics:
+            prepared_data["metrics"] = certificate_data.get("metrics", {})
+        
+        # Include versions if requested
+        if options.include_versions:
+            prepared_data["versions"] = certificate_data.get("versions", [])
+        
+        # Include lineage if requested
+        if options.include_lineage:
+            prepared_data["lineage"] = certificate_data.get("lineage", {})
+        
+        # Include audit trail if requested
+        if options.include_audit_trail:
+            prepared_data["audit_trail"] = certificate_data.get("audit_trail", [])
+        
+        # Include core certificate data
+        prepared_data["certificate_data"] = certificate_data
+        
+        return prepared_data
+    
+    async def _validate_required_fields(
+        self,
+        certificate_data: Dict[str, Any]
+    ) -> List[str]:
+        """
+        Validate that required fields are present in certificate data
+        
+        Returns:
+            List of missing required field names
+        """
+        required_fields = [
+            "certificate_id",
+            "certificate_name",
+            "status",
+            "created_at"
+        ]
+        
+        missing_fields = []
         for field in required_fields:
-            if field not in export_data:
-                raise ExportError(f"Missing required field: {field}")
+            if field not in certificate_data or certificate_data[field] is None:
+                missing_fields.append(field)
         
-        if not isinstance(export_data['content'], (str, bytes)):
-            raise ExportError("Content must be string or bytes")
-        
-        if not isinstance(export_data['file_size'], int):
-            raise ExportError("File size must be integer")
-        
-        return True
+        return missing_fields
     
-    async def _compress_content(self, content: str) -> str:
-        """Compress content if needed."""
-        # Simple compression for now - can be enhanced later
-        return content
+    async def _generate_export_filename(
+        self,
+        certificate_id: str,
+        extension: str
+    ) -> str:
+        """Generate a filename for the exported certificate"""
+        timestamp = asyncio.get_event_loop().time()
+        return f"certificate_{certificate_id}_{timestamp}.{extension}"
     
-    def _should_compress(self, content: str) -> bool:
-        """Determine if content should be compressed."""
-        # Compress if content is larger than 1MB
-        return len(content.encode('utf-8')) > 1024 * 1024 
+    async def _log_export_operation(
+        self,
+        certificate_id: str,
+        options: ExportOptions,
+        success: bool,
+        error_message: Optional[str] = None
+    ) -> None:
+        """Log export operation details"""
+        log_data = {
+            "certificate_id": certificate_id,
+            "export_format": self.export_format.value,
+            "options": options.__dict__,
+            "success": success,
+            "timestamp": asyncio.get_event_loop().time()
+        }
+        
+        if error_message:
+            log_data["error"] = error_message
+        
+        if success:
+            logger.info(f"Export completed successfully: {log_data}")
+        else:
+            logger.error(f"Export failed: {log_data}")
+    
+    async def health_check(self) -> Dict[str, Any]:
+        """Check the health status of the exporter"""
+        return {
+            "exporter_type": self.__class__.__name__,
+            "export_format": self.export_format.value,
+            "supported_formats": [fmt.value for fmt in self.supported_formats],
+            "active_locks": len(self.export_locks),
+            "status": "healthy"
+        } 

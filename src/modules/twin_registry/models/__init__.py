@@ -1,36 +1,36 @@
 """
-Twin Registry Models
+Twin Registry Models Package
 
-Comprehensive models for twin registry management and monitoring.
+Provides Pydantic models for the Twin Registry module with pure async support.
+All models extend from src.engine.models.base_model.BaseModel for consistency.
+Pure async implementation for modern architecture.
 """
 
-from .twin_registry import TwinRegistry, TwinRegistryQuery, TwinRegistrySummary, TwinRegistryMetadata
-from .twin_registry_metrics import TwinRegistryMetrics, MetricsQuery, MetricsSummary
-from .twin_lifecycle import TwinLifecycleEvent
-from .twin_instance import TwinInstance
-from .twin_relationship import TwinRelationship
-from .twin_sync import TwinSyncHistory, TwinSyncStatus, TwinSyncConfiguration, TwinSyncOperation
+from .twin_registry import (
+    TwinRegistry, 
+    TwinRegistryQuery, 
+    TwinRegistrySummary,
+    create_twin_registry
+)
+from .twin_registry_metrics import (
+    TwinRegistryMetrics,
+    MetricsQuery,
+    MetricsSummary,
+    create_metrics
+)
 
 __all__ = [
-    # Main registry models
-    "TwinRegistry",
-    "TwinRegistryQuery", 
-    "TwinRegistrySummary",
-    "TwinRegistryMetadata",  # Backward compatibility
+    # Main Models
+    'TwinRegistry',
+    'TwinRegistryMetrics',
     
-    # Metrics models
-    "TwinRegistryMetrics",
-    "MetricsQuery",
-    "MetricsSummary",
+    # Query & Summary Models
+    'TwinRegistryQuery',
+    'TwinRegistrySummary',
+    'MetricsQuery',
+    'MetricsSummary',
     
-    # Existing models
-    "TwinLifecycleEvent",
-    "TwinInstance",
-    "TwinRelationship",
-    
-    # Sync models
-    "TwinSyncHistory",
-    "TwinSyncStatus", 
-    "TwinSyncConfiguration",
-    "TwinSyncOperation",
+    # Factory Functions
+    'create_twin_registry',
+    'create_metrics'
 ] 

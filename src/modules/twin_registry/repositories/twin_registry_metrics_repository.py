@@ -9,9 +9,8 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 
-from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.shared.repositories.base_repository import BaseRepository
-from src.twin_registry.models.twin_registry_metrics import (
+from src.engine.database.connection_manager import ConnectionManager
+from ..models.twin_registry_metrics import (
     TwinRegistryMetrics,
     MetricsQuery,
     MetricsSummary
@@ -20,14 +19,14 @@ from src.twin_registry.models.twin_registry_metrics import (
 logger = logging.getLogger(__name__)
 
 
-class TwinRegistryMetricsRepository(BaseRepository):
-    """Repository for managing twin registry metrics data."""
+class TwinRegistryMetricsRepository:
+    """Repository for managing twin registry metrics data with new comprehensive schema."""
     
-    def __init__(self, db_manager: DatabaseConnectionManager):
-        """Initialize the metrics repository."""
-        super().__init__(db_manager, TwinRegistryMetrics)
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the metrics repository with engine connection manager."""
+        self.connection_manager = connection_manager
         self.table_name = "twin_registry_metrics"
-        logger.info("Twin Registry Metrics Repository initialized")
+        logger.info("Twin Registry Metrics Repository initialized with new schema and engine")
     
     def _get_table_name(self) -> str:
         """Get the table name for this repository."""
@@ -36,10 +35,13 @@ class TwinRegistryMetricsRepository(BaseRepository):
     def _get_columns(self) -> List[str]:
         """Get the column names for this repository."""
         return [
-            "metric_id", "registry_id", "timestamp", "health_score", "response_time_ms",
-            "throughput_ops_per_sec", "error_rate", "availability_percent", "resource_usage",
-            "performance_indicators", "quality_metrics", "compliance_metrics", "security_metrics",
-            "business_metrics", "custom_metrics", "alerts", "recommendations", "created_at", "updated_at"
+            "metric_id", "registry_id", "timestamp", "health_score", "uptime_percentage",
+            "twin_sync_speed_sec", "relationship_update_speed_sec", "lifecycle_transition_speed_sec",
+            "twin_registry_efficiency", "twin_management_performance", "twin_category_performance_stats",
+            "resource_utilization_trends", "user_activity", "twin_operation_patterns",
+            "compliance_status", "security_events", "twin_registry_analytics", "category_effectiveness",
+            "workflow_performance", "twin_size_performance_efficiency", "performance_trends",
+            "quality_trends", "usage_trends", "time_based_analytics", "created_at", "updated_at"
         ]
     
     def _get_primary_key_column(self) -> str:
@@ -55,43 +57,52 @@ class TwinRegistryMetricsRepository(BaseRepository):
             logger.error(f"Failed to initialize Metrics Repository: {e}")
             raise
     
-    def create_metrics(self, metrics: TwinRegistryMetrics) -> TwinRegistryMetrics:
+    async def create_metrics(self, metrics: TwinRegistryMetrics) -> TwinRegistryMetrics:
         """Create new metrics entry."""
         try:
             sql = """
             INSERT INTO twin_registry_metrics (
-                registry_id, timestamp, health_score, response_time_ms, throughput_ops_per_sec,
-                error_rate, availability_percent, resource_usage, performance_indicators,
-                quality_metrics, compliance_metrics, security_metrics, business_metrics,
-                custom_metrics, alerts, recommendations, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                registry_id, timestamp, health_score, uptime_percentage, twin_sync_speed_sec,
+                relationship_update_speed_sec, lifecycle_transition_speed_sec, twin_registry_efficiency,
+                twin_management_performance, twin_category_performance_stats, resource_utilization_trends,
+                user_activity, twin_operation_patterns, compliance_status, security_events,
+                twin_registry_analytics, category_effectiveness, workflow_performance,
+                twin_size_performance_efficiency, performance_trends, quality_trends, usage_trends,
+                time_based_analytics, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
             params = (
                 metrics.registry_id,
-                metrics.timestamp.isoformat(),
+                metrics.timestamp,
                 metrics.health_score,
-                metrics.response_time_ms,
-                metrics.throughput_ops_per_sec,
-                metrics.error_rate,
-                metrics.availability_percent,
-                self._serialize_json(metrics.resource_usage),
-                self._serialize_json(metrics.performance_indicators),
-                self._serialize_json(metrics.quality_metrics),
-                self._serialize_json(metrics.compliance_metrics),
-                self._serialize_json(metrics.security_metrics),
-                self._serialize_json(metrics.business_metrics),
-                self._serialize_json(metrics.custom_metrics),
-                self._serialize_json(metrics.alerts),
-                self._serialize_json(metrics.recommendations),
-                datetime.now(timezone.utc).isoformat(),
-                datetime.now(timezone.utc).isoformat()
+                metrics.uptime_percentage,
+                metrics.twin_sync_speed_sec,
+                metrics.relationship_update_speed_sec,
+                metrics.lifecycle_transition_speed_sec,
+                metrics.twin_registry_efficiency,
+                metrics.twin_management_performance,
+                metrics.twin_category_performance_stats,
+                metrics.resource_utilization_trends,
+                metrics.user_activity,
+                metrics.twin_operation_patterns,
+                metrics.compliance_status,
+                metrics.security_events,
+                metrics.twin_registry_analytics,
+                metrics.category_effectiveness,
+                metrics.workflow_performance,
+                metrics.twin_size_performance_efficiency,
+                metrics.performance_trends,
+                metrics.quality_trends,
+                metrics.usage_trends,
+                metrics.time_based_analytics,
+                metrics.created_at,
+                metrics.updated_at
             )
             
-            # Use the connection manager's context manager for database operations
-            with self.db_manager.connection_manager.get_cursor() as cursor:
-                cursor.execute(sql, params)
-                # Commit is handled automatically by the context manager
+            async with self.connection_manager.get_connection() as conn:
+                cursor = await conn.execute(sql, params)
+                await conn.commit()
                 
                 # Get the auto-generated metric_id
                 metrics.metric_id = cursor.lastrowid
@@ -135,14 +146,14 @@ class TwinRegistryMetricsRepository(BaseRepository):
             logger.error(f"Failed to get metrics for registry {registry_id}: {e}")
             raise
     
-    def get_latest_by_registry_id(self, registry_id: str) -> Optional[TwinRegistryMetrics]:
+    async def get_latest_by_registry_id(self, registry_id: str) -> Optional[TwinRegistryMetrics]:
         """Get the latest metrics for a specific registry."""
         try:
             sql = "SELECT * FROM twin_registry_metrics WHERE registry_id = ? ORDER BY timestamp DESC LIMIT 1"
             
-            with self.db_manager.connection_manager.get_cursor() as cursor:
-                cursor.execute(sql, (registry_id,))
-                row = cursor.fetchone()
+            async with self.connection_manager.get_connection() as conn:
+                cursor = await conn.execute(sql, (registry_id,))
+                row = await cursor.fetchone()
             
             if row:
                 return self._row_to_metrics(row)
@@ -152,7 +163,7 @@ class TwinRegistryMetricsRepository(BaseRepository):
             logger.error(f"Failed to get latest metrics for registry {registry_id}: {e}")
             raise
     
-    def query_metrics(self, query: MetricsQuery) -> List[TwinRegistryMetrics]:
+    async def query_metrics(self, query: MetricsQuery) -> List[TwinRegistryMetrics]:
         """Query metrics with filters."""
         try:
             sql = "SELECT * FROM twin_registry_metrics WHERE 1=1"
@@ -180,9 +191,9 @@ class TwinRegistryMetricsRepository(BaseRepository):
             
             sql += " ORDER BY timestamp DESC"
             
-            with self.db_manager.connection_manager.get_cursor() as cursor:
-                cursor.execute(sql, params)
-                rows = cursor.fetchall()
+            async with self.connection_manager.get_connection() as conn:
+                cursor = await conn.execute(sql, params)
+                rows = await cursor.fetchall()
             
             return [self._row_to_metrics(row) for row in rows]
             
@@ -190,7 +201,7 @@ class TwinRegistryMetricsRepository(BaseRepository):
             logger.error(f"Failed to query metrics: {e}")
             raise
     
-    def update_metrics(self, metrics: TwinRegistryMetrics) -> TwinRegistryMetrics:
+    async def update_metrics(self, metrics: TwinRegistryMetrics) -> TwinRegistryMetrics:
         """Update existing metrics entry."""
         try:
             sql = """
@@ -223,9 +234,9 @@ class TwinRegistryMetricsRepository(BaseRepository):
                 metrics.metric_id
             )
             
-            with self.db_manager.connection_manager.get_cursor() as cursor:
-                cursor.execute(sql, params)
-                # Commit is handled automatically by the context manager
+            async with self.connection_manager.get_connection() as conn:
+                await conn.execute(sql, params)
+                await conn.commit()
             
             logger.info(f"Updated metrics entry: {metrics.metric_id}")
             return metrics
@@ -234,14 +245,14 @@ class TwinRegistryMetricsRepository(BaseRepository):
             logger.error(f"Failed to update metrics: {e}")
             raise
     
-    def delete_metrics(self, metric_id: int) -> bool:
+    async def delete_metrics(self, metric_id: int) -> bool:
         """Delete metrics by ID."""
         try:
             sql = "DELETE FROM twin_registry_metrics WHERE metric_id = ?"
             
-            with self.db_manager.connection_manager.get_cursor() as cursor:
-                cursor.execute(sql, (metric_id,))
-                # Commit is handled automatically by the context manager
+            async with self.connection_manager.get_connection() as conn:
+                cursor = await conn.execute(sql, (metric_id,))
+                await conn.commit()
                 
                 deleted = cursor.rowcount > 0
             if deleted:
@@ -252,40 +263,40 @@ class TwinRegistryMetricsRepository(BaseRepository):
             logger.error(f"Failed to delete metrics {metric_id}: {e}")
             raise
     
-    def get_summary(self) -> MetricsSummary:
+    async def get_summary(self) -> MetricsSummary:
         """Get metrics summary statistics."""
         try:
-            with self.db_manager.connection_manager.get_cursor() as cursor:
+            async with self.connection_manager.get_connection() as conn:
                 # Total metrics
-                cursor.execute("SELECT COUNT(*) FROM twin_registry_metrics")
-                total = cursor.fetchone()[0]
+                cursor = await conn.execute("SELECT COUNT(*) FROM twin_registry_metrics")
+                total = (await cursor.fetchone())[0]
                 
                 # Average health score
-                cursor.execute("SELECT AVG(health_score) FROM twin_registry_metrics WHERE health_score IS NOT NULL")
-                avg_health = cursor.fetchone()[0] or 0.0
+                cursor = await conn.execute("SELECT AVG(health_score) FROM twin_registry_metrics WHERE health_score IS NOT NULL")
+                avg_health = (await cursor.fetchone())[0] or 0.0
                 
                 # Average response time
-                cursor.execute("SELECT AVG(response_time_ms) FROM twin_registry_metrics WHERE response_time_ms IS NOT NULL")
-                avg_response = cursor.fetchone()[0] or 0.0
+                cursor = await conn.execute("SELECT AVG(uptime_percentage) FROM twin_registry_metrics WHERE uptime_percentage IS NOT NULL")
+                avg_response = (await cursor.fetchone())[0] or 0.0
                 
                 # By registry
-                cursor.execute("SELECT registry_id, COUNT(*) FROM twin_registry_metrics GROUP BY registry_id")
-                by_registry = {row[0]: row[1] for row in cursor.fetchall()}
+                cursor = await conn.execute("SELECT registry_id, COUNT(*) FROM twin_registry_metrics GROUP BY registry_id")
+                by_registry = {row[0]: row[1] for row in await cursor.fetchall()}
                 
                 # By timestamp (group by hour)
-                cursor.execute("""
+                cursor = await conn.execute("""
                     SELECT strftime('%Y-%m-%d %H:00:00', timestamp) as hour, COUNT(*) 
                     FROM twin_registry_metrics 
                     GROUP BY hour 
                     ORDER BY hour DESC 
                     LIMIT 24
                 """)
-                by_timestamp = {row[0]: row[1] for row in cursor.fetchall()}
+                by_timestamp = {row[0]: row[1] for row in await cursor.fetchall()}
             
             return MetricsSummary(
                 total_metrics=total,
                 average_health_score=float(avg_health),
-                average_response_time=float(avg_response),
+                average_uptime_percentage=float(avg_response),
                 metrics_by_registry=by_registry,
                 metrics_by_timestamp=by_timestamp
             )
@@ -294,14 +305,14 @@ class TwinRegistryMetricsRepository(BaseRepository):
             logger.error(f"Failed to get metrics summary: {e}")
             raise
     
-    def cleanup_old_metrics(self, days_to_keep: int = 30) -> int:
+    async def cleanup_old_metrics(self, days_to_keep: int = 30) -> int:
         """Clean up old metrics data."""
         try:
             sql = "DELETE FROM twin_registry_metrics WHERE timestamp < datetime('now', '-{} days')".format(days_to_keep)
             
-            with self.db_manager.connection_manager.get_cursor() as cursor:
-                cursor.execute(sql)
-                # Commit is handled automatically by the context manager
+            async with self.connection_manager.get_connection() as conn:
+                cursor = await conn.execute(sql)
+                await conn.commit()
                 
                 deleted_count = cursor.rowcount
             logger.info(f"Cleaned up {deleted_count} old metrics entries (older than {days_to_keep} days)")
@@ -319,21 +330,26 @@ class TwinRegistryMetricsRepository(BaseRepository):
                 registry_id=row['registry_id'],
                 timestamp=self._parse_datetime(row['timestamp']),
                 health_score=row['health_score'],
-                response_time_ms=row['response_time_ms'],
                 uptime_percentage=row['uptime_percentage'],
-                error_rate=row['error_rate'],
-                cpu_usage_percent=row['cpu_usage_percent'],
-                memory_usage_percent=row['memory_usage_percent'],
-                network_throughput_mbps=row['network_throughput_mbps'],
-                storage_usage_percent=row['storage_usage_percent'],
-                transaction_count=row['transaction_count'],
-                data_volume_mb=row['data_volume_mb'],
-                user_interaction_count=row['user_interaction_count'],
-                lifecycle_events=self._deserialize_json(row['lifecycle_events']),
-                performance_trends=self._deserialize_json(row['performance_trends']),
+                twin_sync_speed_sec=row['twin_sync_speed_sec'],
+                relationship_update_speed_sec=row['relationship_update_speed_sec'],
+                lifecycle_transition_speed_sec=row['lifecycle_transition_speed_sec'],
+                twin_registry_efficiency=row['twin_registry_efficiency'],
+                twin_management_performance=self._deserialize_json(row['twin_management_performance']),
+                twin_category_performance_stats=self._deserialize_json(row['twin_category_performance_stats']),
+                resource_utilization_trends=self._deserialize_json(row['resource_utilization_trends']),
                 user_activity=self._deserialize_json(row['user_activity']),
+                twin_operation_patterns=self._deserialize_json(row['twin_operation_patterns']),
                 compliance_status=self._deserialize_json(row['compliance_status']),
-                security_events=self._deserialize_json(row['security_events'])
+                security_events=self._deserialize_json(row['security_events']),
+                twin_registry_analytics=self._deserialize_json(row['twin_registry_analytics']),
+                category_effectiveness=self._deserialize_json(row['category_effectiveness']),
+                workflow_performance=self._deserialize_json(row['workflow_performance']),
+                twin_size_performance_efficiency=self._deserialize_json(row['twin_size_performance_efficiency']),
+                performance_trends=self._deserialize_json(row['performance_trends']),
+                quality_trends=self._deserialize_json(row['quality_trends']),
+                usage_trends=self._deserialize_json(row['usage_trends']),
+                time_based_analytics=self._deserialize_json(row['time_based_analytics'])
             )
         except Exception as e:
             logger.error(f"Failed to convert row to TwinRegistryMetrics: {e}")

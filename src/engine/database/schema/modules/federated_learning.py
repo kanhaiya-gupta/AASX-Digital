@@ -28,9 +28,9 @@ class FederatedLearningSchema(BaseSchema):
     """
     Enterprise-Grade Federated Learning Schema Module
 
-    Manages the following tables:
-    - federated_learning_registry: Main registry for federation sessions, models, and metadata
-    - federated_learning_metrics: Performance metrics, contribution tracking, and analytics
+    Manages the following tables with enterprise functionality integrated:
+    - federated_learning_registry: Main registry for federation sessions, models, metadata, compliance, security, and performance analytics
+    - federated_learning_metrics: Performance metrics, contribution tracking, analytics, and enterprise metrics
     """
 
     def __init__(self, connection_manager, schema_name: str = "federated_learning"):
@@ -42,7 +42,7 @@ class FederatedLearningSchema(BaseSchema):
 
     def get_module_description(self) -> str:
         """Get human-readable description of this module."""
-        return "Federated Learning module for collaborative machine learning across organizations with privacy preservation and metadata tracking"
+        return "Federated Learning module for collaborative machine learning across organizations with privacy preservation, enterprise compliance, security, and performance analytics integrated into main tables"
 
     def get_table_names(self) -> List[str]:
         """Get list of table names managed by this module."""
@@ -366,6 +366,35 @@ class FederatedLearningSchema(BaseSchema):
                 reliability_score REAL DEFAULT 0.0, -- 0.0-1.0 reliability rating
                 compliance_score REAL DEFAULT 0.0, -- 0.0-1.0 compliance rating
                 
+                -- Enterprise Compliance Tracking (Merged from enterprise table)
+                compliance_framework TEXT DEFAULT 'GDPR', -- Compliance framework (GDPR, HIPAA, etc.)
+                compliance_status TEXT DEFAULT 'compliant', -- Current compliance status
+                last_audit_date TEXT, -- Last audit date
+                next_audit_date TEXT, -- Next scheduled audit date
+                audit_details TEXT DEFAULT '{}', -- JSON audit details
+                risk_level TEXT DEFAULT 'low', -- Risk assessment level
+                
+                -- Enterprise Security Metrics (Merged from enterprise table)
+                security_score REAL DEFAULT 100.0, -- Overall security score
+                threat_detection_score REAL DEFAULT 100.0, -- Threat detection effectiveness
+                encryption_strength TEXT DEFAULT 'AES-256', -- Encryption strength used
+                authentication_method TEXT DEFAULT 'multi_factor', -- Authentication method
+                access_control_score REAL DEFAULT 100.0, -- Access control effectiveness
+                data_protection_score REAL DEFAULT 100.0, -- Data protection score
+                incident_response_time INTEGER DEFAULT 0, -- Incident response time in minutes
+                security_audit_score REAL DEFAULT 100.0, -- Security audit score
+                last_security_scan TEXT, -- Last security scan timestamp
+                security_details TEXT DEFAULT '{}', -- JSON security details
+                
+                -- Enterprise Performance Analytics (Merged from enterprise table)
+                efficiency_score REAL DEFAULT 100.0, -- Federation efficiency score
+                scalability_score REAL DEFAULT 100.0, -- Scalability assessment
+                optimization_potential REAL DEFAULT 100.0, -- Optimization potential score
+                bottleneck_identification TEXT DEFAULT 'none', -- Identified bottlenecks
+                performance_trend TEXT DEFAULT 'stable', -- Performance trend direction
+                last_optimization_date TEXT, -- Last optimization performed
+                optimization_suggestions TEXT DEFAULT '{}', -- JSON optimization suggestions
+                
                 -- Security & Access Control
                 security_level TEXT NOT NULL DEFAULT 'standard' -- public, internal, confidential, secret, top_secret
                     CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')),
@@ -377,6 +406,7 @@ class FederatedLearningSchema(BaseSchema):
                 -- User Management & Ownership
                 user_id TEXT NOT NULL, -- Current user who owns/accesses this registry
                 org_id TEXT NOT NULL, -- Organization this registry belongs to
+                dept_id TEXT, -- Department for complete traceability
                 owner_team TEXT, -- Team responsible for this federation
                 steward_user_id TEXT, -- Data steward for this federation
                 
@@ -401,7 +431,8 @@ class FederatedLearningSchema(BaseSchema):
                 -- Constraints
                 FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
                 FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
-                FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL
+                FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
             )
         """
 
@@ -413,6 +444,7 @@ class FederatedLearningSchema(BaseSchema):
         index_queries = [
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_user_id ON federated_learning_registry (user_id)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_org_id ON federated_learning_registry (org_id)",
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_dept_id ON federated_learning_registry (dept_id)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_category ON federated_learning_registry (federation_category)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_type ON federated_learning_registry (federation_type)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_priority ON federated_learning_registry (federation_priority)",
@@ -498,6 +530,15 @@ class FederatedLearningSchema(BaseSchema):
                 compliance_status TEXT DEFAULT '{}', -- JSON: {"compliance_score": 0.95, "audit_status": "passed", "last_audit": "2024-01-15T00:00:00Z"}
                 privacy_events TEXT DEFAULT '{}', -- JSON: {"events": [...], "threat_level": "low", "last_privacy_scan": "2024-01-15T00:00:00Z"}
                 
+                -- Enterprise Metrics (Merged from enterprise table)
+                enterprise_health_score INTEGER DEFAULT 100, -- Enterprise-level health score
+                federation_efficiency_score INTEGER DEFAULT 100, -- Federation efficiency rating
+                privacy_preservation_score INTEGER DEFAULT 100, -- Privacy preservation effectiveness
+                model_quality_score INTEGER DEFAULT 100, -- Model quality assessment
+                collaboration_effectiveness INTEGER DEFAULT 100, -- Collaboration effectiveness
+                risk_assessment_score INTEGER DEFAULT 100, -- Risk assessment score
+                compliance_adherence INTEGER DEFAULT 100, -- Compliance adherence level
+                
                 -- Federation-Specific Metrics (Framework Capabilities - JSON)
                 federation_analytics TEXT DEFAULT '{}', -- JSON: {"participation_quality": 0.94, "aggregation_quality": 0.92, "privacy_quality": 0.96}
                 category_effectiveness TEXT DEFAULT '{}', -- JSON: {"category_comparison": {...}, "best_performing": "collaborative_learning", "optimization_suggestions": [...]}
@@ -542,78 +583,10 @@ class FederatedLearningSchema(BaseSchema):
     # Enterprise-Grade Helper Methods
 
     async def _create_enterprise_metadata_tables(self) -> bool:
-        """Create enterprise metadata tables for Federated Learning processing."""
-        try:
-            # Create enterprise Federated Learning metrics table
-            enterprise_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_federated_learning_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    metric_type TEXT NOT NULL,
-                    metric_value REAL,
-                    metric_timestamp TEXT NOT NULL,
-                    metadata TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise compliance tracking table
-            compliance_tracking_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_federated_learning_compliance_tracking (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    compliance_type TEXT NOT NULL,
-                    compliance_status TEXT NOT NULL,
-                    compliance_score REAL,
-                    last_audit_date TEXT,
-                    next_audit_date TEXT,
-                    audit_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise security metrics table
-            security_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_federated_learning_security_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    security_event_type TEXT NOT NULL,
-                    security_level TEXT NOT NULL,
-                    threat_assessment TEXT,
-                    security_score REAL,
-                    last_security_scan TEXT,
-                    security_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise performance analytics table
-            performance_analytics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_federated_learning_performance_analytics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    performance_metric TEXT NOT NULL,
-                    performance_value REAL,
-                    performance_trend TEXT,
-                    optimization_suggestions TEXT DEFAULT '{}',
-                    last_optimization_date TEXT
-                )
-            """
-            
-            tables = [
-                ("enterprise_federated_learning_metrics", enterprise_metrics_query),
-                ("enterprise_federated_learning_compliance_tracking", compliance_tracking_query),
-                ("enterprise_federated_learning_security_metrics", security_metrics_query),
-                ("enterprise_federated_learning_performance_analytics", performance_analytics_query)
-            ]
-            
-            for table_name, query in tables:
-                if not await self.create_table(table_name, query):
-                    logger.error(f"Failed to create enterprise metadata table: {table_name}")
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create enterprise metadata tables: {e}")
-            return False
+        """Enterprise metadata tables are now merged into main tables."""
+        # Enterprise columns have been merged into federated_learning_registry and federated_learning_metrics
+        # No separate enterprise tables needed
+        return True
 
     async def _create_enterprise_tables(self) -> bool:
         """Create all enterprise Federated Learning tables."""

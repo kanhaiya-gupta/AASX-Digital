@@ -1,24 +1,17 @@
 """
 Twin Registry Repositories
 
-Data access layer for twin registry management and monitoring.
+Pure async data access layer for twin registry operations.
+Phase 2: Service Layer Modernization with pure async support.
 """
 
 from .twin_registry_repository import TwinRegistryRepository
 from .twin_registry_metrics_repository import TwinRegistryMetricsRepository
-from .twin_lifecycle_repository import TwinLifecycleRepository
-from .twin_instance_repository import TwinInstanceRepository
-from .twin_relationship_repository import TwinRelationshipRepository
-from .twin_sync_repository import TwinSyncRepository
 
 __all__ = [
-    # Main registry repositories
     "TwinRegistryRepository",
-    "TwinRegistryMetricsRepository",
-    
-    # Existing repositories
-    "TwinLifecycleRepository",
-    "TwinInstanceRepository",
-    "TwinRelationshipRepository",
-    "TwinSyncRepository",
-] 
+    "TwinRegistryMetricsRepository"
+]
+
+__version__ = "3.1.0"
+__description__ = "Pure async Twin Registry repositories with comprehensive schema support" 

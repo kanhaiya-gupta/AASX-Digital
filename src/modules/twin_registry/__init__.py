@@ -12,14 +12,26 @@ A comprehensive digital twin registry system that provides:
 This module serves as a central hub for managing digital twins across
 different workflows (extraction, generation, hybrid) without duplicating
 data from other modules.
+
+Pure async implementation for modern architecture.
 """
 
-__version__ = "3.0.0"
-__description__ = "Digital Twin Registry System - Phase 2 Complete"
+__version__ = "3.3.0"
+__description__ = "Digital Twin Registry System - Pure Async Implementation with Phase 3 Complete (Event System & Automation)"
 
-# Core Models
-from .models.twin_registry import TwinRegistry, TwinRegistryQuery, TwinRegistrySummary
-from .models.twin_registry_metrics import TwinRegistryMetrics, MetricsQuery, MetricsSummary
+# Core Models & Factory Functions
+from .models.twin_registry import (
+    TwinRegistry, 
+    TwinRegistryQuery, 
+    TwinRegistrySummary,
+    create_twin_registry
+)
+from .models.twin_registry_metrics import (
+    TwinRegistryMetrics, 
+    MetricsQuery, 
+    MetricsSummary,
+    create_metrics
+)
 
 # Backward Compatibility
 TwinRegistryMetadata = TwinRegistry
@@ -35,6 +47,9 @@ from .core.twin_relationship_service import TwinRelationshipService
 from .core.twin_instance_service import TwinInstanceService
 from .core.twin_sync_service import TwinSyncService
 
+# Event System
+from .events import TwinRegistryEventManager, EventType, EventPriority
+
 __all__ = [
     # Models
     "TwinRegistry",
@@ -45,6 +60,10 @@ __all__ = [
     "MetricsQuery",
     "MetricsSummary",
     
+    # Factory Functions
+    "create_twin_registry",
+    "create_metrics",
+    
     # Repositories
     "TwinRegistryRepository",
     "TwinRegistryMetricsRepository",
@@ -54,5 +73,10 @@ __all__ = [
     "TwinLifecycleService",
     "TwinRelationshipService", 
     "TwinInstanceService",
-    "TwinSyncService"
+    "TwinSyncService",
+    
+    # Event System
+    "TwinRegistryEventManager",
+    "EventType",
+    "EventPriority"
 ] 

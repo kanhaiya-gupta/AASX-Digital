@@ -177,6 +177,14 @@ class SecurityUtils:
         }
         
         return password.lower() in common_passwords
+    
+    @staticmethod
+    def generate_secure_token(length: int = 32) -> str:
+        """Generate a secure random token"""
+        if length < 8:
+            raise ValueError("Token length must be at least 8 characters")
+        
+        return secrets.token_urlsafe(length)
 
 
 class PasswordManager:

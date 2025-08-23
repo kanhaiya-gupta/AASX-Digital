@@ -1,0 +1,459 @@
+/**
+ * Knowledge Graph Module Shared CSS
+ * Common styles used across all tabs
+ * World-class shared components with uniform color scheme
+ * Matches AASX and Twin Registry design patterns
+ */
+
+/* ========================================
+ * SECTION HEADERS
+ * ======================================== */
+
+.kg-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(30, 60, 114, 0.1);
+    box-shadow: 0 4px 20px rgba(30, 60, 114, 0.08);
+}
+
+.kg-section-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.kg-section-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.5rem;
+    box-shadow: 0 6px 20px rgba(30, 60, 114, 0.3);
+}
+
+.kg-section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1e3c72;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.kg-section-description {
+    font-size: 1rem;
+    color: #6c757d;
+    margin: 0;
+    line-height: 1.5;
+    max-width: 600px;
+}
+
+.kg-section-actions {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+/* ========================================
+ * CARDS
+ * ======================================== */
+
+.kg-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.kg-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(30, 60, 114, 0.15);
+}
+
+.kg-card-premium {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid rgba(30, 60, 114, 0.1);
+    box-shadow: 0 6px 25px rgba(30, 60, 114, 0.1);
+}
+
+.kg-card-premium:hover {
+    border-color: rgba(30, 60, 114, 0.2);
+    box-shadow: 0 10px 35px rgba(30, 60, 114, 0.2);
+}
+
+.kg-card-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(30, 60, 114, 0.1);
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.02) 0%, rgba(30, 60, 114, 0.05) 100%);
+    position: relative;
+}
+
+.kg-card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.kg-card-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.kg-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e3c72;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.kg-card-title i {
+    color: #2a5298;
+    font-size: 1.1rem;
+}
+
+.kg-card-subtitle {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0.25rem 0 0 0;
+}
+
+.kg-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.kg-card-body {
+    padding: 1.5rem;
+}
+
+.kg-card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(30, 60, 114, 0.1);
+    background: rgba(30, 60, 114, 0.02);
+}
+
+/* ========================================
+ * BUTTONS
+ * ======================================== */
+
+.kg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.kg-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+}
+
+.kg-btn-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #ffffff;
+    border-color: #1e3c72;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+}
+
+.kg-btn-primary:hover {
+    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+    box-shadow: 0 6px 25px rgba(30, 60, 114, 0.4);
+}
+
+.kg-btn-secondary {
+    background: #6c757d;
+    color: #ffffff;
+    border-color: #6c757d;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.kg-btn-secondary:hover {
+    background: #5a6268;
+    box-shadow: 0 6px 25px rgba(108, 117, 125, 0.4);
+}
+
+.kg-btn-outline {
+    background: transparent;
+    color: #1e3c72;
+    border-color: #1e3c72;
+}
+
+.kg-btn-outline:hover {
+    background: #1e3c72;
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(30, 60, 114, 0.3);
+}
+
+.kg-btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: #ffffff;
+    border-color: #28a745;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.kg-btn-success:hover {
+    background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+    box-shadow: 0 6px 25px rgba(40, 167, 69, 0.4);
+}
+
+.kg-btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+    border-color: #ffc107;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.kg-btn-warning:hover {
+    background: linear-gradient(135deg, #e0a800 0%, #ffc107 100%);
+    box-shadow: 0 6px 25px rgba(255, 193, 7, 0.4);
+}
+
+.kg-btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: #ffffff;
+    border-color: #dc3545;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.kg-btn-danger:hover {
+    background: linear-gradient(135deg, #c82333 0%, #dc3545 100%);
+    box-shadow: 0 6px 25px rgba(220, 53, 69, 0.4);
+}
+
+.kg-btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: #ffffff;
+    border-color: #17a2b8;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.kg-btn-info:hover {
+    background: linear-gradient(135deg, #138496 0%, #17a2b8 100%);
+    box-shadow: 0 6px 25px rgba(23, 162, 184, 0.4);
+}
+
+/* Button Sizes */
+.kg-btn.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    min-width: 100px;
+}
+
+.kg-btn.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    min-width: 140px;
+}
+
+/* ========================================
+ * BADGES
+ * ======================================== */
+
+.kg-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kg-badge-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #ffffff;
+}
+
+.kg-badge-secondary {
+    background: #6c757d;
+    color: #ffffff;
+}
+
+.kg-badge-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: #ffffff;
+}
+
+.kg-badge-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+}
+
+.kg-badge-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: #ffffff;
+}
+
+.kg-badge-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: #ffffff;
+}
+
+/* ========================================
+ * FORMS
+ * ======================================== */
+
+.kg-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.kg-form-label {
+    display: block;
+    font-weight: 600;
+    color: #1e3c72;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.kg-form-input,
+.kg-form-select,
+.kg-form-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.kg-form-input:hover,
+.kg-form-select:hover,
+.kg-form-textarea:hover {
+    border-color: #1e3c72;
+    transform: translateY(-1px);
+}
+
+.kg-form-input:focus,
+.kg-form-select:focus,
+.kg-form-textarea:focus {
+    outline: none;
+    border-color: #1e3c72;
+    box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    transform: translateY(-1px);
+}
+
+.kg-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.kg-form-help {
+    display: block;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+/* ========================================
+ * EMPTY STATE
+ * ======================================== */
+
+.kg-empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.kg-empty-icon {
+    font-size: 4rem;
+    color: #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.kg-empty-state h4,
+.kg-empty-state h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.kg-empty-state p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* ========================================
+ * RESPONSIVE DESIGN
+ * ======================================== */
+
+@media (max-width: 991.98px) {
+    .kg-section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .kg-section-actions {
+        justify-content: center;
+    }
+    
+    .kg-card-header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .kg-section-header {
+        padding: 1rem;
+    }
+    
+    .kg-section-title {
+        font-size: 1.5rem;
+    }
+    
+    .kg-section-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    .kg-section-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .kg-btn {
+        justify-content: center;
+    }
+}
+
+
+
+

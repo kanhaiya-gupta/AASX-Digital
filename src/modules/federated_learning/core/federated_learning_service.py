@@ -12,35 +12,40 @@ from datetime import datetime
 import json
 import logging
 
-from src.shared.services.digital_twin_service import DigitalTwinService
-from src.shared.models.digital_twin import DigitalTwin
+from src.engine.services.core_system import RegistryService, MetricsService
+from src.engine.models.base_model import BaseModel
 
 logger = logging.getLogger(__name__)
 
 class FederatedLearningService:
     """Core federated learning service - moved from shared"""
     
-    def __init__(self, twin_service: DigitalTwinService):
-        self.twin_service = twin_service
+    def __init__(self, connection_manager, registry_service: RegistryService, metrics_service: MetricsService):
+        self.connection_manager = connection_manager
+        self.registry_service = registry_service
+        self.metrics_service = metrics_service
         self.logger = logger
     
     # Standard Federated Learning Methods
     
-    def register_federated_node(self, twin_id: str, node_id: str) -> bool:
+    async def register_federated_node(self, twin_id: str, node_id: str) -> bool:
         """Register a twin as a federated learning node."""
         try:
-            twin = self.twin_service.get_by_id(twin_id)
+            # Get twin from database using ConnectionManager
+            twin_query = "SELECT * FROM twin_registry WHERE twin_id = ?"
+            twin = await self.connection_manager.fetch_one(twin_query, (twin_id,))
+            
             if not twin:
                 self._raise_business_error(f"Digital twin {twin_id} not found")
             
             # Validate twin is ready for federated learning
-            if twin.status != "active":
+            if twin.get('status') != "active":
                 self._raise_business_error(f"Twin {twin_id} must be active to participate in federated learning")
             
-            if twin.health_score < 70:
+            if twin.get('health_score', 0) < 70:
                 self._raise_business_error(f"Twin {twin_id} health score too low for federated learning")
             
-            # Update federated node information
+            # Update federated node information in twin_registry
             update_data = {
                 "federated_node_id": node_id,
                 "federated_participation_status": "active",
@@ -49,7 +54,12 @@ class FederatedLearningService:
                 "federated_round_number": 0
             }
             
-            success = self.twin_service.update(twin_id, update_data)
+            # Build update query
+            set_clauses = ", ".join([f"{key} = ?" for key in update_data.keys()])
+            update_query = f"UPDATE twin_registry SET {set_clauses} WHERE twin_id = ?"
+            update_values = list(update_data.values()) + [twin_id]
+            
+            success = await self.connection_manager.execute_query(update_query, tuple(update_values))
             if success:
                 self.logger.info(f"Registered twin {twin_id} as federated node {node_id}")
             
@@ -66,7 +76,7 @@ class FederatedLearningService:
             if status not in valid_statuses:
                 self._raise_business_error(f"Invalid federated status. Must be one of: {valid_statuses}")
             
-            twin = self.twin_service.get_by_id(twin_id)
+            twin = self.registry_service.get_by_id(twin_id)
             if not twin:
                 self._raise_business_error(f"Digital twin {twin_id} not found")
             
@@ -75,7 +85,7 @@ class FederatedLearningService:
                 "federated_last_sync": self._get_current_timestamp()
             }
             
-            success = self.twin_service.update(twin_id, update_data)
+            success = self.registry_service.update(twin_id, update_data)
             if success:
                 self.logger.info(f"Updated twin {twin_id} federated participation to {status}")
             
@@ -85,20 +95,26 @@ class FederatedLearningService:
             self.logger.error(f"Error updating federated participation: {str(e)}")
             return False
     
-    def get_federated_ready_twins(self, privacy_level: str = "public") -> List[DigitalTwin]:
+    async def get_federated_ready_twins(self, privacy_level: str = "public") -> List[Dict[str, Any]]:
         """Get twins ready for federated learning."""
         try:
-            all_twins = self.twin_service.get_all()
+            # Query twins from database using ConnectionManager
+            query = """
+                SELECT * FROM twin_registry 
+                WHERE status = 'active' 
+                AND federated_participation_status = 'active'
+                AND health_score >= 70
+                AND data_privacy_level = ?
+                AND extracted_data_path IS NOT NULL
+                AND physics_context IS NOT NULL
+            """
             
-            ready_twins = [
-                twin for twin in all_twins
-                if twin.status == "active"
-                and twin.federated_participation_status == "active"
-                and twin.health_score >= 70
-                and twin.data_privacy_level == privacy_level
-                and twin.extracted_data_path
-                and twin.physics_context
-            ]
+            all_twins = await self.connection_manager.fetch_all(query, (privacy_level,))
+            
+            ready_twins = []
+            for twin in all_twins:
+                if twin.get('extracted_data_path') and twin.get('physics_context'):
+                    ready_twins.append(twin)
             
             self.logger.info(f"Found {len(ready_twins)} twins ready for federated learning (privacy: {privacy_level})")
             return ready_twins
@@ -110,7 +126,7 @@ class FederatedLearningService:
     def calculate_federated_contribution(self, twin_id: str) -> int:
         """Calculate twin's contribution score for federated learning."""
         try:
-            twin = self.twin_service.get_by_id(twin_id)
+            twin = self.registry_service.get_by_id(twin_id)
             if not twin:
                 self._raise_business_error(f"Digital twin {twin_id} not found")
             
@@ -136,7 +152,7 @@ class FederatedLearningService:
             
             # Update the contribution score
             update_data = {"federated_contribution_score": contribution_score}
-            self.twin_service.update(twin_id, update_data)
+            self.registry_service.update(twin_id, update_data)
             
             self.logger.info(f"Calculated federated contribution score for twin {twin_id}: {contribution_score}")
             return contribution_score
@@ -148,7 +164,7 @@ class FederatedLearningService:
     def perform_federated_health_check(self, twin_id: str) -> Dict[str, Any]:
         """Perform federated-specific health checks."""
         try:
-            twin = self.twin_service.get_by_id(twin_id)
+            twin = self.registry_service.get_by_id(twin_id)
             if not twin:
                 return {"status": "error", "message": "Twin not found"}
             
@@ -169,7 +185,7 @@ class FederatedLearningService:
                 "federated_health_status": federated_health_status,
                 "federated_last_sync": self._get_current_timestamp()
             }
-            self.twin_service.update(twin_id, update_data)
+            self.registry_service.update(twin_id, update_data)
             
             return {
                 "twin_id": twin_id,
@@ -194,7 +210,7 @@ class FederatedLearningService:
             # Get participating twins
             participating_twins = []
             for twin_id in twin_ids:
-                twin = self.twin_service.get_by_id(twin_id)
+                twin = self.registry_service.get_by_id(twin_id)
                 if twin and twin.federated_participation_status == "active":
                     participating_twins.append(twin)
             
@@ -216,7 +232,7 @@ class FederatedLearningService:
                     "federated_round_number": twin.federated_round_number + 1,
                     "federated_last_sync": self._get_current_timestamp()
                 }
-                self.twin_service.update(twin.twin_id, update_data)
+                self.registry_service.update(twin.twin_id, update_data)
             
             self.logger.info(f"Completed federated averaging step with {len(participating_twins)} twins")
             
@@ -235,7 +251,7 @@ class FederatedLearningService:
     def update_federated_model_version(self, twin_id: str, version: str) -> bool:
         """Update federated model version."""
         try:
-            twin = self.twin_service.get_by_id(twin_id)
+            twin = self.registry_service.get_by_id(twin_id)
             if not twin:
                 self._raise_business_error(f"Digital twin {twin_id} not found")
             
@@ -244,7 +260,7 @@ class FederatedLearningService:
                 "federated_last_sync": self._get_current_timestamp()
             }
             
-            success = self.twin_service.update(twin_id, update_data)
+            success = self.registry_service.update(twin_id, update_data)
             if success:
                 self.logger.info(f"Updated federated model version for twin {twin_id}: {version}")
             
@@ -256,7 +272,7 @@ class FederatedLearningService:
     
     # Helper Methods
     
-    def _check_federated_participation(self, twin: DigitalTwin) -> Dict[str, Any]:
+    def _check_federated_participation(self, twin: BaseModel) -> Dict[str, Any]:
         """Check federated participation status."""
         return {
             "status": "pass" if twin.federated_participation_status == "active" else "fail",
@@ -264,7 +280,7 @@ class FederatedLearningService:
             "score": 100 if twin.federated_participation_status == "active" else 0
         }
     
-    def _check_data_quality_for_federated(self, twin: DigitalTwin) -> Dict[str, Any]:
+    def _check_data_quality_for_federated(self, twin: BaseModel) -> Dict[str, Any]:
         """Check data quality for federated learning."""
         score = 0
         message = "Data quality check"
@@ -283,7 +299,7 @@ class FederatedLearningService:
             "score": score
         }
     
-    def _check_privacy_compliance(self, twin: DigitalTwin) -> Dict[str, Any]:
+    def _check_privacy_compliance(self, twin: BaseModel) -> Dict[str, Any]:
         """Check privacy compliance for federated learning."""
         score = 0
         message = "Privacy compliance check"
@@ -302,7 +318,7 @@ class FederatedLearningService:
             "score": score
         }
     
-    def _check_model_synchronization(self, twin: DigitalTwin) -> Dict[str, Any]:
+    def _check_model_synchronization(self, twin: BaseModel) -> Dict[str, Any]:
         """Check model synchronization status."""
         if not twin.federated_model_version:
             return {
@@ -338,7 +354,7 @@ class FederatedLearningService:
         else:
             return "critical"
     
-    def _train_local_model(self, twin: DigitalTwin) -> Dict[str, Any]:
+    def _train_local_model(self, twin: BaseModel) -> Dict[str, Any]:
         """Simulate local model training on twin data."""
         # This is a simplified simulation - in real implementation, this would train actual models
         return {

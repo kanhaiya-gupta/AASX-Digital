@@ -10,11 +10,11 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
 import json
 
+from src.engine.database.connection_manager import ConnectionManager
 from src.kg_neo4j.core.kg_graph_service import KGGraphService
 from src.kg_neo4j.core.kg_neo4j_integration_service import KGNeo4jIntegrationService
 from src.kg_neo4j.models.kg_graph_registry import KGGraphRegistry
 from src.kg_neo4j.models.kg_graph_metrics import KGGraphMetrics
-from src.shared.database.async_base_manager import AsyncBaseDatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +22,12 @@ logger = logging.getLogger(__name__)
 class KGGraphOperationsService:
     """Operational service for Knowledge Graph operations."""
     
-    def __init__(self, async_db_manager: AsyncBaseDatabaseManager):
-        """Initialize the operations service with async database manager."""
-        self.graph_service = KGGraphService(async_db_manager)
-        self.neo4j_service = KGNeo4jIntegrationService(async_db_manager)
-        self.db_manager = async_db_manager
-        logger.info("Knowledge Graph Operations Service initialized with async support")
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the operations service with connection manager."""
+        self.connection_manager = connection_manager
+        self.graph_service = KGGraphService(connection_manager)
+        self.neo4j_service = KGNeo4jIntegrationService(connection_manager)
+        logger.info("Knowledge Graph Operations Service initialized with pure async support")
     
     async def initialize(self) -> None:
         """Initialize the operations service."""

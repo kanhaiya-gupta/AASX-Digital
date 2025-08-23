@@ -227,3 +227,5 @@ This world-class implementation provides:
 - **Future Ready**: Extensible architecture for future requirements
 
 The AAS Data Modeling Engine now has a models layer that rivals the best enterprise software in the industry, providing a solid foundation for building world-class applications.
+
+

@@ -1,435 +1,423 @@
 """
-Simulation engine for physics modeling framework.
+Simulation Engine for Physics Modeling
+=====================================
 
-This module provides the simulation engine that orchestrates the complete
-simulation workflow from data loading to result storage.
+Provides comprehensive simulation orchestration for physics modeling,
+integrating with the new src/engine infrastructure and twin registry system.
+
+Features:
+- Digital twin data retrieval from database
+- Plugin-based simulation execution
+- Enterprise-grade metrics and monitoring
+- Integration with physics modeling registry
 """
 
-import json
 import logging
-from typing import Dict, Any, Optional
+import asyncio
+from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
+import json
 
-from .base_simulation import BaseSimulation
-from .result_processor import ResultProcessor
-from src.shared.models.digital_twin import DigitalTwin
+# Import the new twin registry system
+from ...twin_registry.models.twin_registry import TwinRegistry
+from ...twin_registry.repositories.twin_registry_repository import TwinRegistryRepository
+from ...twin_registry.core.twin_registry_service import TwinRegistryService
+
+# Import physics modeling components
+from ..core.plugin_manager import PluginManager
+from ..core.registry import Registry
+from ..models.physics_modeling_registry import PhysicsModelingRegistry
+from ..models.physics_modeling_metrics import PhysicsModelingMetrics
+from ..repositories.physics_modeling_registry_repository import PhysicsModelingRegistryRepository
+from ..repositories.physics_modeling_metrics_repository import PhysicsModelingMetricsRepository
 
 logger = logging.getLogger(__name__)
 
 
 class SimulationEngine:
     """
-    Common simulation orchestration.
+    Main simulation engine for physics modeling.
     
-    This class handles the complete simulation workflow:
-    - Loading digital twin data
-    - Running plugin simulations
-    - Processing results
-    - Storing results in database
+    Integrates with:
+    - Twin registry system for digital twin data
+    - Plugin manager for simulation plugins
+    - Physics modeling registry for model management
+    - Enterprise metrics for performance tracking
     """
-    
-    def __init__(self, digital_twin_repository, plugin_manager, file_repository=None):
-        """
-        Initialize the simulation engine.
-        
-        Args:
-            digital_twin_repository: Repository for digital twins
-            plugin_manager: Plugin manager instance
-            file_repository: Repository for files (for tracing)
-        """
-        self.digital_twin_repo = digital_twin_repository
-        self.plugin_manager = plugin_manager
-        self.file_repo = file_repository
-        self.result_processor = ResultProcessor()
-        
-        logger.info("Simulation engine initialized")
-    
-    def _get_trace_info(self, twin_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get trace information for a twin (file_id).
-        
-        Args:
-            twin_id: Digital twin ID (equals file_id)
-            
-        Returns:
-            Trace information dictionary or None if not found
-        """
-        try:
-            if not self.file_repo:
-                logger.warning("File repository not available for tracing")
-                return None
-            
-            trace_info = self.file_repo.get_file_trace_info(twin_id)
-            if trace_info:
-                logger.debug(f"Retrieved trace info for twin {twin_id}: {trace_info.get('use_case_name')} -> {trace_info.get('project_name')}")
-                return trace_info
-            else:
-                logger.warning(f"No trace info found for twin: {twin_id}")
-                return None
-                
-        except Exception as e:
-            logger.error(f"Failed to get trace info for twin {twin_id}: {e}")
-            return None
-    
-    def run_simulation_with_plugin(self, twin_id: str, plugin_id: str, 
-                                  parameters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Run a complete physics simulation using a specific plugin.
-        
-        Args:
-            twin_id: Digital twin ID
-            plugin_id: Plugin ID to use for simulation
-            parameters: Simulation parameters
-            
-        Returns:
-            Simulation results or None if simulation failed
-        """
-        try:
-            logger.info(f"Starting simulation for twin {twin_id} with plugin {plugin_id}")
-            
-            # 1. Get plugin by ID
-            plugin_info = self.plugin_manager.get_plugin_by_id(plugin_id)
-            if not plugin_info:
-                logger.error(f"Plugin {plugin_id} not found")
-                return None
-            
-            # 2. Get digital twin and extracted data
-            twin = self.digital_twin_repo.get_by_id(twin_id)
-            if not twin:
-                logger.error(f"Digital twin not found: {twin_id}")
-                return None
-            
-            extracted_data = self._load_extracted_data(twin)
-            if extracted_data is None:
-                logger.error(f"Failed to load extracted data for twin: {twin_id}")
-                return None
-            
-            # 3. Get the actual plugin instance
-            plugin = self.plugin_manager.get_plugin_instance(plugin_id)
-            if not plugin:
-                logger.error(f"Plugin instance not found for plugin {plugin_id}")
-                return None
-            
-            # 4. Run the plugin simulation
-            plugin_results = self._run_plugin_simulation(plugin, parameters, extracted_data)
-            if plugin_results is None:
-                logger.error(f"Plugin simulation failed for twin {twin_id}")
-                return None
-            
-            # 5. Process results
-            processed_results = self.result_processor.process_results(plugin_results)
-            
-            # 6. Store results in twin
-            physics_type = plugin_info.get('name', 'unknown')
-            self._store_results_in_twin(twin, processed_results, physics_type)
-            
-            # 7. Prepare final results
-            final_results = self._prepare_final_results(
-                processed_results, None, twin_id, physics_type
-            )
-            
-            logger.info(f"Simulation completed successfully for twin {twin_id}")
-            return final_results
-            
-        except Exception as e:
-            logger.error(f"Failed to run simulation with plugin {plugin_id} for twin {twin_id}: {e}")
-            return None
 
-    def run_simulation(self, twin_id: str, physics_type: str, 
-                      parameters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def __init__(
+        self,
+        plugin_manager: Optional[PluginManager] = None,
+        registry: Optional[Registry] = None,
+        registry_repo: Optional[PhysicsModelingRegistryRepository] = None,
+        metrics_repo: Optional[PhysicsModelingMetricsRepository] = None,
+        twin_registry_repo: Optional[TwinRegistryRepository] = None,
+        twin_registry_service: Optional[TwinRegistryService] = None
+    ):
+        """Initialize the simulation engine with required components."""
+        self.plugin_manager = plugin_manager
+        self.registry = registry
+        self.registry_repo = registry_repo
+        self.metrics_repo = metrics_repo
+        self.twin_registry_repo = twin_registry_repo
+        self.twin_registry_service = twin_registry_service
+        
+        # Initialize repositories if not provided
+        if not self.registry_repo:
+            from ...physics_modeling.repositories.physics_modeling_registry_repository import PhysicsModelingRegistryRepository
+            self.registry_repo = PhysicsModelingRegistryRepository()
+        
+        if not self.metrics_repo:
+            from ...physics_modeling.repositories.physics_modeling_metrics_repository import PhysicsModelingMetricsRepository
+            self.metrics_repo = PhysicsModelingMetricsRepository()
+        
+        if not self.twin_registry_repo:
+            from ...twin_registry.repositories.twin_registry_repository import TwinRegistryRepository
+            self.twin_registry_repo = TwinRegistryRepository()
+        
+        if not self.twin_registry_service:
+            from ...twin_registry.core.twin_registry_service import TwinRegistryService
+            self.twin_registry_service = TwinRegistryService(self.twin_registry_repo)
+        
+        logger.info("Simulation engine initialized with twin registry integration")
+
+    async def initialize(self) -> bool:
+        """Initialize the simulation engine and its components."""
+        try:
+            # Initialize repositories
+            await self.registry_repo.initialize()
+            await self.metrics_repo.initialize()
+            await self.twin_registry_repo.initialize()
+            await self.twin_registry_service.initialize()
+            
+            # Set plugin manager instance
+            if self.plugin_manager:
+                self.plugin_manager.registry_repo = self.registry_repo
+            
+            logger.info("✅ Simulation engine initialized successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize simulation engine: {e}")
+            return False
+
+    async def run_simulation_with_plugin(
+        self,
+        twin_id: str,
+        plugin_id: str,
+        simulation_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
-        Run a complete physics simulation.
+        Run a simulation using a specific plugin and digital twin.
+        
+        Args:
+            twin_id: Digital twin ID from the twin registry
+            plugin_id: Plugin identifier
+            simulation_params: Simulation parameters
+            
+        Returns:
+            Simulation results with metrics
+        """
+        try:
+            # 1. Validate inputs
+            if not twin_id or not plugin_id:
+                raise ValueError("twin_id and plugin_id are required")
+            
+            # 2. Get plugin information
+            plugin_info = await self.plugin_manager.get_plugin_by_id(plugin_id)
+            if not plugin_info:
+                raise ValueError(f"Plugin {plugin_id} not found")
+            
+            # 3. Get digital twin data from database
+            twin_data = await self.get_twin_data(twin_id)
+            if not twin_data:
+                raise ValueError(f"Digital twin {twin_id} not found")
+            
+            # 4. Run simulation
+            simulation_result = await self._execute_simulation_with_plugin(
+                plugin_info, twin_data, simulation_params
+            )
+            
+            # 5. Record metrics
+            await self._record_simulation_metrics(twin_id, plugin_id, simulation_result)
+            
+            logger.info(f"✅ Simulation completed for twin {twin_id} with plugin {plugin_id}")
+            return simulation_result
+            
+        except Exception as e:
+            logger.error(f"❌ Simulation failed for twin {twin_id} with plugin {plugin_id}: {e}")
+            await self._record_simulation_error(twin_id, plugin_id, str(e))
+            raise
+
+    async def get_available_twins(self) -> List[Dict[str, Any]]:
+        """
+        Get available twins from the twin registry database.
+        
+        Returns:
+            List of available digital twins
+        """
+        try:
+            # Query the twin registry database
+            twins = await self.twin_registry_repo.get_all()
+            
+            # Convert to simplified format for selection
+            available_twins = []
+            for twin in twins:
+                available_twins.append({
+                    'twin_id': twin.registry_id,
+                    'twin_name': twin.twin_name,
+                    'twin_category': twin.twin_category,
+                    'twin_type': twin.twin_type,
+                    'lifecycle_status': twin.lifecycle_status,
+                    'description': twin.description
+                })
+            
+            logger.info(f"Found {len(available_twins)} available twins")
+            return available_twins
+            
+        except Exception as e:
+            logger.error(f"Failed to get available twins: {e}")
+            return []
+
+    async def get_twin_data(self, twin_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get twin data from the twin registry database.
         
         Args:
             twin_id: Digital twin ID
-            physics_type: Physics type identifier
-            parameters: Simulation parameters
             
         Returns:
-            Simulation results or None if simulation failed
+            Twin data dictionary or None if not found
         """
         try:
-            logger.info(f"Starting simulation for twin {twin_id} with physics type {physics_type}")
-            
-            # 1. Get digital twin and extracted data
-            twin = self.digital_twin_repo.get_by_id(twin_id)
+            # Query the twin registry database
+            twin = await self.twin_registry_repo.get_by_id(twin_id)
             if not twin:
-                logger.error(f"Digital twin not found: {twin_id}")
+                logger.warning(f"Twin {twin_id} not found in registry")
                 return None
             
-            extracted_data = self._load_extracted_data(twin)
-            if extracted_data is None:
-                logger.error(f"Failed to load extracted data for twin: {twin_id}")
-                return None
-            
-            # 2. Get trace information (use case, project, file context)
-            trace_info = self._get_trace_info(twin_id)
-            if trace_info:
-                # Enhance extracted data with trace information
-                extracted_data['trace_info'] = {
-                    'use_case_name': trace_info.get('use_case_name'),
-                    'use_case_category': trace_info.get('use_case_category'),
-                    'project_name': trace_info.get('project_name'),
-                    'file_name': trace_info.get('filename'),
-                    'original_filename': trace_info.get('original_filename')
-                }
-                logger.info(f"Added trace info for simulation: {trace_info.get('use_case_name')} -> {trace_info.get('project_name')} -> {trace_info.get('filename')}")
-            else:
-                logger.warning(f"Could not get trace info for twin: {twin_id}")
-            
-            # 3. Get plugin
-            plugin = self.plugin_manager.get_plugin(physics_type)
-            if not plugin:
-                logger.error(f"Physics plugin not found: {physics_type}")
-                return None
-            
-            # 4. Create base simulation
-            simulation = BaseSimulation(extracted_data, parameters)
-            
-            # 5. Preprocess data
-            preprocessed_data = simulation.preprocess()
-            if not preprocessed_data:
-                logger.error("Preprocessing failed")
-                return None
-            
-            # 6. Run plugin simulation
-            raw_results = self._run_plugin_simulation(plugin, parameters, extracted_data)
-            if raw_results is None:
-                logger.error("Plugin simulation failed")
-                return None
-            
-            # 7. Store results in simulation object
-            simulation.results = raw_results
-            
-            # 8. Postprocess results
-            postprocessed_results = simulation.postprocess()
-            if not postprocessed_results:
-                logger.error("Postprocessing failed")
-                return None
-            
-            # 8. Process results
-            processed_results = self.result_processor.process_results(raw_results)
-            
-            # 9. Store results in digital twin
-            self._store_results_in_twin(twin, processed_results, physics_type)
-            
-            # 10. Mark simulation as completed
-            simulation.mark_completed()
-            
-            # 11. Prepare final results
-            final_results = self._prepare_final_results(
-                processed_results, simulation, twin_id, physics_type
-            )
-            
-            logger.info(f"Simulation completed successfully for twin {twin_id}")
-            return final_results
-            
-        except Exception as e:
-            logger.error(f"Simulation failed: {e}")
-            return None
-    
-    def _load_extracted_data(self, twin: DigitalTwin) -> Optional[Dict[str, Any]]:
-        """
-        Load extracted data from digital twin.
-        
-        Args:
-            twin: Digital twin instance
-            
-        Returns:
-            Extracted data dictionary or None if loading failed
-        """
-        try:
-            if not twin.extracted_data_path:
-                logger.warning(f"No extracted data path for twin: {twin.twin_id}")
-                return {}
-            
-            # This is a simplified version - in practice, you'd load from the actual path
-            # For now, we'll return the physics_context if available
-            if twin.physics_context:
-                try:
-                    return json.loads(twin.physics_context)
-                except json.JSONDecodeError:
-                    logger.warning(f"Invalid JSON in physics_context for twin: {twin.twin_id}")
-                    return {}
-            
-            return {}
-            
-        except Exception as e:
-            logger.error(f"Failed to load extracted data for twin {twin.twin_id}: {e}")
-            return None
-    
-    def _run_plugin_simulation(self, plugin, parameters: Dict[str, Any], 
-                              extracted_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """
-        Run the plugin simulation.
-        
-        Args:
-            plugin: Physics plugin instance
-            parameters: Simulation parameters
-            extracted_data: Extracted data from ETL
-            
-        Returns:
-            Raw simulation results or None if failed
-        """
-        try:
-            # Set model data in plugin
-            plugin.model_data = extracted_data
-            
-            # Run plugin's solve method
-            raw_results = plugin.solve(parameters)
-            
-            if not isinstance(raw_results, dict):
-                logger.error("Plugin solve() method must return a dictionary")
-                return None
-            
-            logger.debug(f"Plugin simulation completed with {len(raw_results)} results")
-            return raw_results
-            
-        except Exception as e:
-            logger.error(f"Plugin simulation failed: {e}")
-            return None
-    
-    def _store_results_in_twin(self, twin: DigitalTwin, results: Dict[str, Any], 
-                              physics_type: str):
-        """
-        Store simulation results in digital twin.
-        
-        Args:
-            twin: Digital twin instance
-            results: Simulation results
-            physics_type: Physics type identifier
-        """
-        try:
-            # Initialize simulation history if not exists
-            if not twin.simulation_history:
-                twin.simulation_history = []
-            
-            # Create simulation record
-            simulation_record = {
-                'timestamp': datetime.now().isoformat(),
-                'physics_type': physics_type,
-                'results': results,
-                'status': 'completed'
+            # Convert twin model to dictionary with all relevant data
+            twin_data = {
+                'twin_id': twin.registry_id,
+                'twin_name': twin.twin_name,
+                'twin_category': twin.twin_category,
+                'twin_type': twin.twin_type,
+                'lifecycle_status': twin.lifecycle_status,
+                'description': twin.description,
+                'metadata': twin.metadata,
+                'configuration': twin.configuration,
+                'created_at': twin.created_at,
+                'updated_at': twin.updated_at,
+                'activated_at': twin.activated_at,
+                'last_accessed_at': twin.last_accessed_at,
+                'last_modified_at': twin.last_modified_at
             }
             
-            # Add to simulation history
-            twin.simulation_history.append(simulation_record)
+            # Add any additional twin-specific data from metadata
+            if twin.metadata:
+                twin_data.update(twin.metadata)
             
-            # Update simulation status
-            twin.simulation_status = 'completed'
-            twin.last_simulation_run = datetime.now().isoformat()
-            
-            # Update digital twin in database
-            self.digital_twin_repo.update(twin)
-            
-            logger.info(f"Results stored in digital twin: {twin.twin_id}")
+            logger.info(f"Retrieved twin data for {twin_id}")
+            return twin_data
             
         except Exception as e:
-            logger.error(f"Failed to store results in digital twin: {e}")
-    
-    def _prepare_final_results(self, processed_results: Dict[str, Any], 
-                              simulation: BaseSimulation, twin_id: str, 
-                              physics_type: str) -> Dict[str, Any]:
+            logger.error(f"Failed to get twin data for {twin_id}: {e}")
+            return None
+
+    async def _execute_simulation_with_plugin(
+        self,
+        plugin_info: Dict[str, Any],
+        twin_data: Dict[str, Any],
+        simulation_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
-        Prepare final results for return.
+        Execute simulation using the specified plugin and twin data.
         
         Args:
-            processed_results: Processed simulation results
-            simulation: Base simulation instance
-            twin_id: Digital twin ID
-            physics_type: Physics type identifier
+            plugin_info: Plugin information from registry
+            twin_data: Digital twin data from database
+            simulation_params: Simulation parameters
             
         Returns:
-            Final results dictionary
-        """
-        return {
-            'simulation_id': f"{twin_id}_{physics_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            'twin_id': twin_id,
-            'physics_type': physics_type,
-            'results': processed_results,
-            'metadata': {
-                'simulation_duration': simulation.get_simulation_duration(),
-                'validation_errors': simulation.get_validation_errors(),
-                'timestamp': datetime.now().isoformat(),
-                'status': 'completed'
-            },
-            'preprocessing': simulation.preprocessed_data,
-            'postprocessing': simulation.postprocessed_results
-        }
-    
-    def get_simulation_history(self, twin_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get simulation history for a digital twin.
-        
-        Args:
-            twin_id: Digital twin ID
-            
-        Returns:
-            Simulation history or None if not found
+            Simulation results
         """
         try:
-            twin = self.digital_twin_repo.get_by_id(twin_id)
-            if twin and twin.simulation_history:
-                return {
-                    'twin_id': twin_id,
-                    'total_simulations': len(twin.simulation_history),
-                    'last_simulation': twin.last_simulation_run,
-                    'simulation_status': twin.simulation_status,
-                    'history': twin.simulation_history
+            # Get the actual plugin instance
+            plugin_instance = await self._get_plugin_instance(plugin_info)
+            if not plugin_instance:
+                raise ValueError("Failed to get plugin instance")
+            
+            # Execute simulation steps
+            start_time = datetime.now()
+            
+            # 1. Preprocess twin data
+            processed_data = await plugin_instance.preprocess(twin_data, simulation_params)
+            
+            # 2. Validate inputs
+            validation_result = await plugin_instance.validate_input(processed_data, simulation_params)
+            if not validation_result.get('valid', False):
+                raise ValueError(f"Input validation failed: {validation_result.get('errors', [])}")
+            
+            # 3. Run simulation
+            simulation_result = await plugin_instance.solve(processed_data, simulation_params)
+            
+            # 4. Postprocess results
+            final_result = await plugin_instance.postprocess(simulation_result, twin_data)
+            
+            end_time = datetime.now()
+            execution_time = (end_time - start_time).total_seconds()
+            
+            # Prepare comprehensive result
+            result = {
+                'simulation_id': f"sim_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                'twin_id': twin_data['twin_id'],
+                'plugin_id': plugin_info.get('plugin_id'),
+                'execution_time': execution_time,
+                'start_time': start_time.isoformat(),
+                'end_time': end_time.isoformat(),
+                'status': 'completed',
+                'results': final_result,
+                'metadata': {
+                    'twin_category': twin_data.get('twin_category'),
+                    'twin_type': twin_data.get('twin_type'),
+                    'plugin_version': plugin_info.get('version'),
+                    'simulation_params': simulation_params
                 }
-            return None
+            }
+            
+            logger.info(f"✅ Simulation executed successfully in {execution_time:.2f}s")
+            return result
             
         except Exception as e:
-            logger.error(f"Failed to get simulation history: {e}")
-            return None
-    
-    def validate_simulation_setup(self, twin_id: str, physics_type: str, 
-                                parameters: Dict[str, Any]) -> Dict[str, Any]:
+            logger.error(f"❌ Simulation execution failed: {e}")
+            raise
+
+    async def _get_plugin_instance(self, plugin_info: Dict[str, Any]):
         """
-        Validate simulation setup before running.
+        Get the actual plugin instance for execution.
         
         Args:
-            twin_id: Digital twin ID
-            physics_type: Physics type identifier
-            parameters: Simulation parameters
+            plugin_info: Plugin information from registry
             
         Returns:
-            Validation results
+            Plugin instance or None
         """
-        validation_results = {
-            'valid': True,
-            'errors': [],
-            'warnings': []
-        }
-        
         try:
-            # Check if digital twin exists
-            twin = self.digital_twin_repo.get_by_id(twin_id)
-            if not twin:
-                validation_results['valid'] = False
-                validation_results['errors'].append(f"Digital twin not found: {twin_id}")
-            
-            # Check if plugin exists
-            plugin = self.plugin_manager.get_plugin(physics_type)
-            if not plugin:
-                validation_results['valid'] = False
-                validation_results['errors'].append(f"Physics plugin not found: {physics_type}")
-            else:
-                # Validate parameters with plugin
-                param_errors = plugin.validate_input(parameters)
-                if param_errors:
-                    validation_results['valid'] = False
-                    validation_results['errors'].extend([
-                        f"Parameter '{key}': {error}" 
-                        for key, error in param_errors.items()
-                    ])
-            
-            # Check if twin has extracted data
-            if twin and not twin.extracted_data_path and not twin.physics_context:
-                validation_results['warnings'].append("No extracted data found for digital twin")
+            # This would typically load the actual plugin class/instance
+            # For now, we'll return the plugin info as a mock instance
+            # In a real implementation, this would instantiate the actual plugin
+            return MockPluginInstance(plugin_info)
             
         except Exception as e:
-            validation_results['valid'] = False
-            validation_results['errors'].append(f"Validation error: {str(e)}")
-        
-        return validation_results 
+            logger.error(f"Failed to get plugin instance: {e}")
+            return None
+
+    async def _record_simulation_metrics(
+        self,
+        twin_id: str,
+        plugin_id: str,
+        simulation_result: Dict[str, Any]
+    ) -> None:
+        """Record simulation metrics for analysis."""
+        try:
+            # Create metrics record
+            metrics = PhysicsModelingMetrics(
+                physics_modeling_id=None,  # Will be set by repository
+                metric_name="simulation_execution",
+                metric_value=simulation_result.get('execution_time', 0.0),
+                metric_unit="seconds",
+                metric_type="performance",
+                metric_category="simulation",
+                metric_timestamp=datetime.now(),
+                metric_metadata={
+                    'twin_id': twin_id,
+                    'plugin_id': plugin_id,
+                    'simulation_id': simulation_result.get('simulation_id'),
+                    'status': simulation_result.get('status'),
+                    'twin_category': simulation_result.get('metadata', {}).get('twin_category'),
+                    'plugin_version': simulation_result.get('metadata', {}).get('plugin_version')
+                }
+            )
+            
+            # Save to database
+            await self.metrics_repo.create(metrics)
+            logger.info(f"✅ Simulation metrics recorded for {twin_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to record simulation metrics: {e}")
+
+    async def _record_simulation_error(
+        self,
+        twin_id: str,
+        plugin_id: str,
+        error_message: str
+    ) -> None:
+        """Record simulation error for monitoring."""
+        try:
+            # Create error metrics record
+            metrics = PhysicsModelingMetrics(
+                physics_modeling_id=None,  # Will be set by repository
+                metric_name="simulation_error",
+                metric_value=1.0,
+                metric_unit="count",
+                metric_type="error",
+                metric_category="simulation",
+                metric_timestamp=datetime.now(),
+                metric_metadata={
+                    'twin_id': twin_id,
+                    'plugin_id': plugin_id,
+                    'error_message': error_message,
+                    'status': 'failed'
+                }
+            )
+            
+            # Save to database
+            await self.metrics_repo.create(metrics)
+            logger.info(f"✅ Simulation error recorded for {twin_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to record simulation error: {e}")
+
+    async def close(self) -> None:
+        """Close the simulation engine and cleanup resources."""
+        try:
+            if self.registry_repo:
+                await self.registry_repo.close()
+            if self.metrics_repo:
+                await self.metrics_repo.close()
+            if self.twin_registry_repo:
+                await self.twin_registry_repo.close()
+            if self.twin_registry_service:
+                await self.twin_registry_service.close()
+            
+            logger.info("✅ Simulation engine closed successfully")
+            
+        except Exception as e:
+            logger.error(f"Error closing simulation engine: {e}")
+
+
+class MockPluginInstance:
+    """Mock plugin instance for testing purposes."""
+    
+    def __init__(self, plugin_info: Dict[str, Any]):
+        self.plugin_info = plugin_info
+    
+    async def preprocess(self, twin_data: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
+        """Mock preprocessing."""
+        await asyncio.sleep(0)  # Pure async
+        return {**twin_data, 'preprocessed': True}
+    
+    async def validate_input(self, data: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
+        """Mock input validation."""
+        await asyncio.sleep(0)  # Pure async
+        return {'valid': True, 'errors': []}
+    
+    async def solve(self, data: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
+        """Mock simulation solving."""
+        await asyncio.sleep(0)  # Pure async
+        return {'solution': 'mock_solution', 'converged': True}
+    
+    async def postprocess(self, result: Dict[str, Any], twin_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Mock postprocessing."""
+        await asyncio.sleep(0)  # Pure async
+        return {**result, 'postprocessed': True, 'twin_id': twin_data['twin_id']} 

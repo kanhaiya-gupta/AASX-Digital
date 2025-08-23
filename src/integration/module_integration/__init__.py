@@ -14,6 +14,7 @@ from .module_connector import ModuleConnectorService
 from .module_orchestrator import ModuleOrchestratorService
 from .module_health_monitor import ModuleHealthMonitorService
 from .module_data_sync import ModuleDataSyncService
+from .certificate_manager_integration import CertificateManagerIntegration, IntegrationStatus, IntegrationType, CertificateOperation, IntegrationRequest, IntegrationResponse
 
 __version__ = "1.0.0"
 __author__ = "AAS Data Modeling Team"
@@ -23,5 +24,11 @@ __all__ = [
     "ModuleConnectorService", 
     "ModuleOrchestratorService",
     "ModuleHealthMonitorService",
-    "ModuleDataSyncService"
+    "ModuleDataSyncService",
+    "CertificateManagerIntegration",
+    "IntegrationStatus",
+    "IntegrationType", 
+    "CertificateOperation",
+    "IntegrationRequest",
+    "IntegrationResponse"
 ]

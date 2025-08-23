@@ -10,8 +10,8 @@ import logging
 import json
 from pathlib import Path
 
-from src.shared.services.digital_twin_service import DigitalTwinService
-from src.shared.database.base_manager import BaseDatabaseManager
+from src.engine.services.core_system import RegistryService, MetricsService
+from src.engine.database.connection_manager import ConnectionManager
 from ..data_processing.feature_extractor import FeatureExtractor
 from ..data_processing.training_data_preparer import TrainingDataPreparer
 
@@ -20,27 +20,30 @@ logger = logging.getLogger(__name__)
 class LocalTrainer:
     """Local model training for individual twins"""
     
-    def __init__(self, db_manager: BaseDatabaseManager, digital_twin_service: DigitalTwinService):
-        self.db_manager = db_manager
-        self.digital_twin_service = digital_twin_service
+    def __init__(self, connection_manager: ConnectionManager, registry_service: RegistryService, metrics_service: MetricsService):
+        self.connection_manager = connection_manager
+        self.registry_service = registry_service
+        self.metrics_service = metrics_service
         self.feature_extractor = FeatureExtractor()
         self.data_preparer = TrainingDataPreparer()
     
-    def load_twin_data(self, twin_id: str) -> Dict[str, Any]:
+    async def load_twin_data(self, twin_id: str) -> Dict[str, Any]:
         """Load twin-specific training data"""
         try:
             logger.info(f"Loading training data for twin {twin_id}")
             
-            # Get twin information from database
-            twin = self.digital_twin_service.get_by_id(twin_id)
+            # Get twin information from database using ConnectionManager
+            twin_query = "SELECT * FROM twin_registry WHERE twin_id = ?"
+            twin = await self.connection_manager.fetch_one(twin_query, (twin_id,))
+            
             if not twin:
                 raise ValueError(f"Twin {twin_id} not found")
             
             # Load AASX data from extracted_data_path
-            if not twin.extracted_data_path:
+            if not twin.get('extracted_data_path'):
                 raise ValueError(f"Twin {twin_id} has no extracted data path")
             
-            data_path = Path(twin.extracted_data_path)
+            data_path = Path(twin['extracted_data_path'])
             if not data_path.exists():
                 raise ValueError(f"Extracted data path does not exist: {data_path}")
             
@@ -48,19 +51,19 @@ class LocalTrainer:
             training_data = {}
             
             # Load JSON data
-            json_file = data_path / f"{twin.name}.json"
+            json_file = data_path / f"{twin['name']}.json"
             if json_file.exists():
                 with open(json_file, 'r') as f:
                     training_data['json'] = json.load(f)
             
             # Load Graph data
-            graph_file = data_path / f"{twin.name}_graph.json"
+            graph_file = data_path / f"{twin['name']}_graph.json"
             if graph_file.exists():
                 with open(graph_file, 'r') as f:
                     training_data['graph'] = json.load(f)
             
             # Load RDF data
-            rdf_file = data_path / f"{twin.name}.ttl"
+            rdf_file = data_path / f"{twin['name']}.ttl"
             if rdf_file.exists():
                 with open(rdf_file, 'r') as f:
                     training_data['rdf'] = f.read()
@@ -75,24 +78,24 @@ class LocalTrainer:
             
             return {
                 'twin_id': twin_id,
-                'twin_name': twin.name,
+                'twin_name': twin['name'],
                 'raw_data': training_data,
                 'features': features,
                 'prepared_data': prepared_data,
-                'physics_context': twin.physics_context
+                'physics_context': twin.get('physics_context')
             }
             
         except Exception as e:
             logger.error(f"Error loading twin data for {twin_id}: {str(e)}")
             raise
     
-    def train_local_model(self, global_model: Dict[str, Any], twin_id: str) -> Dict[str, Any]:
+    async def train_local_model(self, global_model: Dict[str, Any], twin_id: str) -> Dict[str, Any]:
         """Train local model and return updates"""
         try:
             logger.info(f"Training local model for twin {twin_id}")
             
             # Load twin data
-            twin_data = self.load_twin_data(twin_id)
+            twin_data = await self.load_twin_data(twin_id)
             
             # Initialize local model (use global model as starting point)
             local_model = global_model.copy() if global_model else self._initialize_model()

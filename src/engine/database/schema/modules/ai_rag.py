@@ -34,6 +34,7 @@ class AIRagSchema(BaseSchema):
     - embeddings: Vector embeddings and storage
     - retrieval_sessions: RAG query sessions
     - generation_logs: AI generation logs
+    - ai_rag_graph_metadata: Graph generation metadata and tracing
     """
 
     def __init__(self, connection_manager, schema_name: str = "ai_rag"):
@@ -45,11 +46,11 @@ class AIRagSchema(BaseSchema):
 
     def get_module_description(self) -> str:
         """Get human-readable description of this module."""
-        return "AI RAG document processing, embeddings, and retrieval tables"
+        return "AI RAG document processing, embeddings, retrieval tables, and graph metadata management"
 
     def get_table_names(self) -> List[str]:
         """Get list of table names managed by this module."""
-        return ["ai_rag_registry", "ai_rag_metrics", "documents", "embeddings", "retrieval_sessions", "generation_logs"]
+        return ["ai_rag_registry", "ai_rag_metrics", "documents", "embeddings", "retrieval_sessions", "generation_logs", "ai_rag_graph_metadata"]
 
     async def initialize(self) -> bool:
         """Initialize the AI RAG schema with enterprise-grade features."""
@@ -268,6 +269,7 @@ class AIRagSchema(BaseSchema):
             success &= await self._create_embeddings_table()
             success &= await self._create_retrieval_sessions_table()
             success &= await self._create_generation_logs_table()
+            success &= await self._create_ai_rag_graph_metadata_table()
             
             return success
             
@@ -370,6 +372,7 @@ class AIRagSchema(BaseSchema):
                 -- User Management & Ownership (Framework Access Control)
                 user_id TEXT NOT NULL,
                 org_id TEXT NOT NULL,
+                dept_id TEXT, -- Department for complete traceability
                 owner_team TEXT,
                 steward_user_id TEXT,
                 
@@ -395,6 +398,7 @@ class AIRagSchema(BaseSchema):
                 FOREIGN KEY (file_id) REFERENCES files (file_id) ON DELETE CASCADE,
                 FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
                 FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL,
                 FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing (job_id) ON DELETE SET NULL,
                 FOREIGN KEY (twin_registry_id) REFERENCES twin_registry (registry_id) ON DELETE SET NULL,
                 FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry (graph_id) ON DELETE SET NULL
@@ -410,6 +414,7 @@ class AIRagSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_ai_rag_registry_file_id ON ai_rag_registry (file_id)",
             "CREATE INDEX IF NOT EXISTS idx_ai_rag_registry_user_id ON ai_rag_registry (user_id)",
             "CREATE INDEX IF NOT EXISTS idx_ai_rag_registry_org_id ON ai_rag_registry (org_id)",
+            "CREATE INDEX IF NOT EXISTS idx_ai_rag_registry_dept_id ON ai_rag_registry (dept_id)",
             "CREATE INDEX IF NOT EXISTS idx_ai_rag_registry_category ON ai_rag_registry (rag_category)",
             "CREATE INDEX IF NOT EXISTS idx_ai_rag_registry_type ON ai_rag_registry (rag_type)",
             "CREATE INDEX IF NOT EXISTS idx_ai_rag_registry_status ON ai_rag_registry (integration_status)",
@@ -587,6 +592,94 @@ class AIRagSchema(BaseSchema):
         """
         return await self.create_table("generation_logs", query)
 
+    async def _create_ai_rag_graph_metadata_table(self) -> bool:
+        """Create the AI RAG graph metadata table for graph generation tracking."""
+        query = """
+            CREATE TABLE IF NOT EXISTS ai_rag_graph_metadata (
+                graph_id TEXT PRIMARY KEY,
+                registry_id TEXT NOT NULL,
+                
+                -- Graph Properties
+                graph_name TEXT NOT NULL,
+                graph_type TEXT NOT NULL CHECK (graph_type IN ('entity_relationship', 'knowledge_graph', 'dependency_graph')),
+                graph_category TEXT NOT NULL CHECK (graph_category IN ('technical', 'business', 'operational')),
+                graph_version TEXT NOT NULL DEFAULT '1.0.0',
+                
+                -- Graph Structure Summary
+                node_count INTEGER DEFAULT 0,
+                edge_count INTEGER DEFAULT 0,
+                graph_density REAL DEFAULT 0.0,
+                graph_diameter INTEGER DEFAULT 0,
+                
+                -- Source Information
+                source_documents TEXT DEFAULT '[]', -- JSON array of document IDs
+                source_entities TEXT DEFAULT '[]',  -- JSON array of extracted entities
+                source_relationships TEXT DEFAULT '[]', -- JSON array of discovered relationships
+                
+                -- Processing Information
+                processing_status TEXT DEFAULT 'processing' CHECK (processing_status IN ('processing', 'completed', 'failed')),
+                processing_start_time TEXT,
+                processing_end_time TEXT,
+                processing_duration_ms INTEGER,
+                
+                -- Quality Metrics
+                quality_score REAL DEFAULT 0.0 CHECK (quality_score >= 0.0 AND quality_score <= 1.0),
+                validation_status TEXT DEFAULT 'pending' CHECK (validation_status IN ('pending', 'validated', 'failed')),
+                validation_errors TEXT DEFAULT '[]', -- JSON array of validation errors
+                
+                -- File Storage References
+                output_directory TEXT NOT NULL,
+                graph_files TEXT DEFAULT '[]', -- JSON array of generated graph files with paths
+                file_formats TEXT DEFAULT '[]', -- JSON array of available export formats
+                
+                -- Integration References
+                kg_neo4j_graph_id TEXT,
+                aasx_integration_id TEXT,
+                twin_registry_id TEXT,
+                
+                -- Tracing & Audit
+                created_by TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_by TEXT,
+                updated_at TEXT,
+                dept_id TEXT,
+                org_id TEXT,
+                
+                -- Performance Metrics
+                generation_time_ms INTEGER,
+                memory_usage_mb REAL,
+                cpu_usage_percent REAL,
+                
+                FOREIGN KEY (registry_id) REFERENCES ai_rag_registry (registry_id) ON DELETE CASCADE,
+                FOREIGN KEY (created_by) REFERENCES users (user_id) ON DELETE CASCADE
+            )
+        """
+        return await self.create_table("ai_rag_graph_metadata", query)
+
+    async def _create_ai_rag_graph_metadata_indexes(self) -> bool:
+        """Create indexes for the AI RAG graph metadata table."""
+        try:
+            index_queries = [
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_registry_id ON ai_rag_graph_metadata (registry_id)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_graph_type ON ai_rag_graph_metadata (graph_type)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_graph_category ON ai_rag_graph_metadata (graph_category)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_processing_status ON ai_rag_graph_metadata (processing_status)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_quality_score ON ai_rag_graph_metadata (quality_score)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_validation_status ON ai_rag_graph_metadata (validation_status)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_created_at ON ai_rag_graph_metadata (created_at)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_created_by ON ai_rag_graph_metadata (created_by)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_dept_id ON ai_rag_graph_metadata (dept_id)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_org_id ON ai_rag_graph_metadata (org_id)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_integration ON ai_rag_graph_metadata (kg_neo4j_graph_id, aasx_integration_id, twin_registry_id)",
+                "CREATE INDEX IF NOT EXISTS idx_ai_rag_graph_metadata_performance ON ai_rag_graph_metadata (generation_time_ms, memory_usage_mb, cpu_usage_percent)"
+            ]
+            
+            return await self.create_indexes("ai_rag_graph_metadata", index_queries)
+            
+        except Exception as e:
+            logger.error(f"Failed to create AI RAG graph metadata indexes: {e}")
+            return False
+
     # Enterprise-Grade Helper Methods
 
     async def _create_enterprise_metadata_tables(self) -> bool:
@@ -683,6 +776,9 @@ class AIRagSchema(BaseSchema):
                 return False
             
             if not await self._create_generation_logs_table():
+                return False
+            
+            if not await self._create_ai_rag_graph_metadata_table():
                 return False
             
             return True

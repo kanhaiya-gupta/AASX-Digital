@@ -1,864 +1,548 @@
 """
-Certificate Manager Core
+Certificate Manager - Main Orchestration Service
 
-Main certificate management system for creating, updating, and managing
-digital certificates for AASX Digital Twin Analytics.
+This is the core orchestrator that coordinates all certificate operations
+including creation, updates, real-time monitoring, and lifecycle management.
+Uses async patterns throughout for non-blocking operations.
 """
 
-import sys
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
-from datetime import datetime
+import asyncio
 import logging
+from datetime import datetime, timedelta
+from typing import List, Optional, Dict, Any, Tuple
+from uuid import uuid4
 
-# Add the src directory to the Python path
-src_root = Path(__file__).parent.parent.parent
-if str(src_root) not in sys.path:
-    sys.path.insert(0, str(src_root))
+from ..models.certificates_registry import (
+    CertificateRegistry,
+    ModuleStatus,
+    CertificateStatus,
+    QualityLevel,
+    ComplianceStatus,
+    SecurityLevel
+)
+from ..models.certificates_versions import CertificateVersion, VersionType
+from ..models.certificates_metrics import CertificateMetrics, MetricCategory
+from ..services.certificates_registry_service import CertificatesRegistryService
+from ..services.certificates_versions_service import CertificatesVersionsService
+from ..services.certificates_metrics_service import CertificatesMetricsService
+from ..repositories.certificates_registry_repository import CertificatesRegistryRepository
+from ..repositories.certificates_versions_repository import CertificatesVersionsRepository
+from ..repositories.certificates_metrics_repository import CertificatesMetricsRepository
 
-from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.shared.repositories.base_repository import BaseRepository
-from src.shared.repositories.file_repository import FileRepository
-from src.shared.repositories.use_case_repository import UseCaseRepository
-from src.shared.repositories.project_repository import ProjectRepository
-
-from ..models.certificate import Certificate, CertificateStatus, CertificateVisibility, RetentionPolicy
-from ..models.certificate_version import CertificateVersion
-from ..models.certificate_event import CertificateEvent, EventType, EventStatus
-from ..models.certificate_export import CertificateExport, ExportFormat, ExportStatus
-
-# Set up logging
 logger = logging.getLogger(__name__)
 
 
 class CertificateManager:
-    """Main certificate management system."""
+    """
+    Main certificate orchestration service
     
-    def __init__(self, db_path: Optional[str] = None):
-        """Initialize the Certificate Manager."""
-        self.db_path = db_path or "certificates.db"
-        self.db_manager = DatabaseConnectionManager(Path(self.db_path))
-        
-        # Initialize repositories
-        self.certificate_repo = CertificateRepository(self.db_manager)
-        self.version_repo = CertificateVersionRepository(self.db_manager)
-        self.event_repo = CertificateEventRepository(self.db_manager)
-        self.export_repo = CertificateExportRepository(self.db_manager)
-        
-        # External repositories for data integration
-        self.file_repo = FileRepository(self.db_manager)
-        self.use_case_repo = UseCaseRepository(self.db_manager)
-        self.project_repo = ProjectRepository(self.db_manager)
-        
-        # Initialize database tables
-        self._initialize_database()
-        
-        logger.info("Certificate Manager initialized successfully")
+    Coordinates all certificate operations including:
+    - Certificate lifecycle management
+    - Real-time updates and monitoring
+    - Module integration and data collection
+    - Progress tracking and validation
+    - Business intelligence generation
+    """
     
-    def _initialize_database(self) -> None:
-        """Initialize database tables."""
+    def __init__(self, db_session):
+        """Initialize the certificate manager with all required services"""
         try:
-            # Create tables if they don't exist
-            self.certificate_repo.create_table()
-            self.version_repo.create_table()
-            self.event_repo.create_table()
-            self.export_repo.create_table()
+            # Initialize repositories
+            self.registry_repo = CertificatesRegistryRepository(db_session)
+            self.versions_repo = CertificatesVersionsRepository(db_session)
+            self.metrics_repo = CertificatesMetricsRepository(db_session)
             
-            logger.info("Certificate Manager database tables initialized")
+            # Initialize services
+            self.registry_service = CertificatesRegistryService(self.registry_repo)
+            self.versions_service = CertificatesVersionsService(db_session)
+            self.metrics_service = CertificatesMetricsService(db_session)
+            
+            # Track active certificates
+            self.active_certificates: Dict[str, CertificateRegistry] = {}
+            self.certificate_locks: Dict[str, asyncio.Lock] = {}
+            
+            logger.info("Certificate Manager initialized successfully")
+            
         except Exception as e:
-            logger.error(f"Failed to initialize database: {e}")
+            logger.error(f"Failed to initialize Certificate Manager: {e}")
             raise
     
-    def create_certificate(self, twin_id: str, **kwargs) -> Certificate:
-        """Create a new certificate for a digital twin."""
+    async def create_certificate(
+        self,
+        file_id: str,
+        user_id: str,
+        org_id: str,
+        dept_id: str,
+        certificate_name: str,
+        project_id: Optional[str] = None,
+        twin_id: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> Optional[CertificateRegistry]:
+        """
+        Create a new certificate with initial setup
+        
+        This is the main entry point for certificate creation.
+        Sets up initial state and prepares for real-time updates.
+        """
         try:
-            # Get twin information from existing repositories
-            twin_info = self._get_twin_info(twin_id)
+            logger.info(f"Creating certificate for file: {file_id}")
             
-            # Convert string enum values to proper enum objects
-            processed_kwargs = {}
-            for key, value in kwargs.items():
-                if key == 'status' and isinstance(value, str):
-                    processed_kwargs[key] = CertificateStatus(value)
-                elif key == 'visibility' and isinstance(value, str):
-                    processed_kwargs[key] = CertificateVisibility(value)
-                elif key == 'retention_policy' and isinstance(value, str):
-                    processed_kwargs[key] = RetentionPolicy(value)
-                else:
-                    processed_kwargs[key] = value
-            
-            # Create certificate with twin information
-            certificate_data = {
-                'twin_id': twin_id,
-                'twin_name': twin_info.get('twin_name', 'Unknown Twin'),
-                'project_name': twin_info.get('project_name', 'Unknown Project'),
-                'use_case_name': twin_info.get('use_case_name', 'Unknown Use Case'),
-                'file_name': twin_info.get('file_name', 'Unknown File'),
-                'uploaded_at': twin_info.get('uploaded_at', datetime.now()),
-                **processed_kwargs
-            }
-            
-            certificate = Certificate(**certificate_data)
-            
-            # Save to database
-            self.certificate_repo.create(certificate)
-            
-            # Create initial version
-            initial_version = CertificateVersion(
-                certificate_id=certificate.certificate_id,
-                version="1.0.0"
+            # Create certificate using registry service
+            certificate = await self.registry_service.create_certificate(
+                file_id=file_id,
+                user_id=user_id,
+                org_id=org_id,
+                dept_id=dept_id,
+                certificate_name=certificate_name,
+                project_id=project_id,
+                twin_id=twin_id,
+                description=description
             )
-            self.version_repo.create(initial_version)
             
-            # Create certificate creation event
-            creation_event = CertificateEvent(
-                certificate_id=certificate.certificate_id,
-                event_type=EventType.CERTIFICATE_CREATED,
-                module_name="certificate_manager",
-                data_snapshot={
-                    'twin_id': twin_id,
-                    'twin_info': {
-                        'twin_name': twin_info.get('twin_name'),
-                        'project_name': twin_info.get('project_name'),
-                        'use_case_name': twin_info.get('use_case_name'),
-                        'file_name': twin_info.get('file_name'),
-                        'uploaded_at': twin_info.get('uploaded_at').isoformat() if isinstance(twin_info.get('uploaded_at'), datetime) else str(twin_info.get('uploaded_at'))
-                    },
-                    'certificate_data': {
-                        'twin_id': twin_id,
-                        'twin_name': certificate_data.get('twin_name'),
-                        'project_name': certificate_data.get('project_name'),
-                        'use_case_name': certificate_data.get('use_case_name'),
-                        'file_name': certificate_data.get('file_name'),
-                        'uploaded_at': certificate_data.get('uploaded_at').isoformat() if isinstance(certificate_data.get('uploaded_at'), datetime) else str(certificate_data.get('uploaded_at'))
-                    }
-                }
-            )
-            self.event_repo.create(creation_event)
-            
-            logger.info(f"Created certificate {certificate.certificate_id} for twin {twin_id}")
-            return certificate
-            
-        except Exception as e:
-            logger.error(f"Failed to create certificate for twin {twin_id}: {e}")
-            raise
-    
-    def get_certificate(self, certificate_id: str) -> Optional[Certificate]:
-        """Get a certificate by ID."""
-        try:
-            return self.certificate_repo.get_by_id(certificate_id)
-        except Exception as e:
-            logger.error(f"Failed to get certificate {certificate_id}: {e}")
-            return None
-    
-    def update_certificate(self, certificate_id: str, **kwargs) -> Optional[Certificate]:
-        """Update a certificate."""
-        try:
-            certificate = self.get_certificate(certificate_id)
             if not certificate:
+                logger.error(f"Failed to create certificate for file: {file_id}")
                 return None
             
-            # Update fields
-            for key, value in kwargs.items():
-                if hasattr(certificate, key):
-                    setattr(certificate, key, value)
+            # Initialize certificate tracking
+            await self._initialize_certificate_tracking(certificate)
             
-            # Update timestamp
-            certificate.updated_at = datetime.now()
+            # Create initial metrics
+            await self._create_initial_metrics(certificate)
             
-            # Save to database
-            self.certificate_repo.update(certificate)
+            # Add to active certificates
+            self.active_certificates[certificate.certificate_id] = certificate
+            self.certificate_locks[certificate.certificate_id] = asyncio.Lock()
             
-            # Create update event
-            update_event = CertificateEvent(
-                certificate_id=certificate_id,
-                event_type=EventType.CERTIFICATE_UPDATED,
-                module_name="certificate_manager",
-                data_snapshot={'updates': kwargs}
-            )
-            self.event_repo.create(update_event)
-            
-            logger.info(f"Updated certificate {certificate_id}")
+            logger.info(f"Certificate created successfully: {certificate.certificate_id}")
             return certificate
             
         except Exception as e:
-            logger.error(f"Failed to update certificate {certificate_id}: {e}")
+            logger.error(f"Error creating certificate: {e}")
             return None
     
-    def delete_certificate(self, certificate_id: str) -> bool:
-        """Delete a certificate and all associated data."""
+    async def _initialize_certificate_tracking(self, certificate: CertificateRegistry) -> None:
+        """Initialize certificate tracking and monitoring"""
         try:
-            # Delete associated data first
-            self.version_repo.delete_by_certificate_id(certificate_id)
-            self.event_repo.delete_by_certificate_id(certificate_id)
-            self.export_repo.delete_by_certificate_id(certificate_id)
-            
-            # Delete certificate
-            success = self.certificate_repo.delete(certificate_id)
-            
-            if success:
-                logger.info(f"Deleted certificate {certificate_id}")
-            
-            return success
-            
-        except Exception as e:
-            logger.error(f"Failed to delete certificate {certificate_id}: {e}")
-            return False
-    
-    def list_certificates(self, **filters) -> List[Certificate]:
-        """List certificates with optional filters."""
-        try:
-            return self.certificate_repo.list_all(**filters)
-        except Exception as e:
-            logger.error(f"Failed to list certificates: {e}")
-            return []
-    
-    def get_certificate_version(self, certificate_id: str, version: str = "latest") -> Optional[CertificateVersion]:
-        """Get a specific version of a certificate."""
-        try:
-            if version == "latest":
-                return self.version_repo.get_latest_version(certificate_id)
-            else:
-                return self.version_repo.get_by_version(certificate_id, version)
-        except Exception as e:
-            logger.error(f"Failed to get certificate version {certificate_id}:{version}: {e}")
-            return None
-    
-    def create_new_version(self, certificate_id: str, increment_type: str = "patch") -> Optional[CertificateVersion]:
-        """Create a new version of a certificate."""
-        try:
-            current_version = self.get_certificate_version(certificate_id)
-            if not current_version:
-                return None
-            
-            new_version_number = current_version.increment_version(increment_type)
-            
-            new_version = CertificateVersion(
-                certificate_id=certificate_id,
-                version=new_version_number,
-                sections=current_version.sections.copy()  # Copy current sections
+            # Set initial module statuses to PENDING
+            await self.registry_service.update_module_status(
+                certificate.certificate_id,
+                "aasx_module",
+                ModuleStatus.PENDING
             )
             
-            self.version_repo.create(new_version)
+            # Initialize other module statuses
+            module_names = [
+                "twin_registry", "ai_rag", "kg_neo4j", 
+                "physics_modeling", "federated_learning", "data_governance"
+            ]
             
-            # Update certificate current version
-            self.update_certificate(certificate_id, current_version=new_version_number)
+            for module_name in module_names:
+                await self.registry_service.update_module_status(
+                    certificate.certificate_id,
+                    module_name,
+                    ModuleStatus.PENDING
+                )
             
-            # Create version event
-            version_event = CertificateEvent(
-                certificate_id=certificate_id,
-                event_type=EventType.VERSION_CREATED,
-                module_name="certificate_manager",
-                data_snapshot={
-                    'old_version': current_version.version,
-                    'new_version': new_version_number,
-                    'increment_type': increment_type
-                }
-            )
-            self.event_repo.create(version_event)
-            
-            logger.info(f"Created new version {new_version_number} for certificate {certificate_id}")
-            return new_version
+            logger.info(f"Initialized tracking for certificate: {certificate.certificate_id}")
             
         except Exception as e:
-            logger.error(f"Failed to create new version for certificate {certificate_id}: {e}")
-            return None
+            logger.error(f"Error initializing certificate tracking: {e}")
     
-    def add_section_data(self, certificate_id: str, section_name: str, section_data: Dict[str, Any], version: str = "latest") -> bool:
-        """Add or update section data in a certificate version."""
+    async def _create_initial_metrics(self, certificate: CertificateRegistry) -> None:
+        """Create initial metrics for the certificate"""
         try:
-            cert_version = self.get_certificate_version(certificate_id, version)
-            if not cert_version:
+            # Create initial performance metrics
+            await self.metrics_service.create_metrics(
+                certificate_id=certificate.certificate_id,
+                metric_category=MetricCategory.PERFORMANCE,
+                metric_name="certificate_creation_time",
+                metric_value=0.0,
+                metric_unit="seconds"
+            )
+            
+            # Create initial quality metrics
+            await self.metrics_service.create_metrics(
+                certificate_id=certificate.certificate_id,
+                metric_category=MetricCategory.QUALITY,
+                metric_name="initial_quality_score",
+                metric_value=0.0,
+                metric_unit="percentage"
+            )
+            
+            logger.info(f"Created initial metrics for certificate: {certificate.certificate_id}")
+            
+        except Exception as e:
+            logger.error(f"Error creating initial metrics: {e}")
+    
+    async def update_certificate_progress(
+        self,
+        certificate_id: str,
+        module_name: str,
+        progress_data: Dict[str, Any]
+    ) -> bool:
+        """
+        Update certificate progress for a specific module
+        
+        This is called when modules complete processing and want to
+        update the certificate with their results.
+        """
+        try:
+            if certificate_id not in self.active_certificates:
+                logger.error(f"Certificate not found: {certificate_id}")
                 return False
             
-            cert_version.add_section(section_name, section_data)
-            self.version_repo.update(cert_version)
-            
-            # Create module event
-            module_event = CertificateEvent(
-                certificate_id=certificate_id,
-                event_type=self._get_module_event_type(section_name),
-                module_name=section_name,
-                data_snapshot={'section_data': section_data}
-            )
-            self.event_repo.create(module_event)
-            
-            logger.info(f"Added section {section_name} to certificate {certificate_id}")
-            return True
-            
+            # Acquire lock for this certificate
+            async with self.certificate_locks[certificate_id]:
+                # Update module status
+                await self._update_module_status(certificate_id, module_name, progress_data)
+                
+                # Update module summary
+                await self._update_module_summary(certificate_id, module_name, progress_data)
+                
+                # Update overall progress
+                await self._update_overall_progress(certificate_id)
+                
+                # Check if certificate is complete
+                await self._check_certificate_completion(certificate_id)
+                
+                # Update metrics
+                await self._update_certificate_metrics(certificate_id, module_name, progress_data)
+                
+                logger.info(f"Updated progress for certificate {certificate_id}, module {module_name}")
+                return True
+                
         except Exception as e:
-            logger.error(f"Failed to add section {section_name} to certificate {certificate_id}: {e}")
+            logger.error(f"Error updating certificate progress: {e}")
             return False
     
-    def get_certificate_events(self, certificate_id: str, event_type: Optional[EventType] = None) -> List[CertificateEvent]:
-        """Get events for a certificate."""
+    async def _update_module_status(
+        self, 
+        certificate_id: str, 
+        module_name: str, 
+        progress_data: Dict[str, Any]
+    ) -> None:
+        """Update module status based on progress data"""
         try:
-            return self.event_repo.get_by_certificate_id(certificate_id, event_type)
-        except Exception as e:
-            logger.error(f"Failed to get events for certificate {certificate_id}: {e}")
-            return []
-    
-    def create_export(self, certificate_id: str, format: ExportFormat, version: str = "latest") -> Optional[CertificateExport]:
-        """Create an export for a certificate."""
-        try:
-            # Check if certificate exists and can be exported
-            certificate = self.get_certificate(certificate_id)
-            if not certificate or not certificate.can_be_exported():
-                return None
+            # Determine status from progress data
+            if progress_data.get("status") == "completed":
+                status = ModuleStatus.ACTIVE
+            elif progress_data.get("status") == "failed":
+                status = ModuleStatus.ERROR
+            elif progress_data.get("status") == "in_progress":
+                status = ModuleStatus.MAINTENANCE
+            else:
+                status = ModuleStatus.PENDING
             
-            # Create export record
-            export = CertificateExport(
-                certificate_id=certificate_id,
-                version=version,
-                format=format
+            # Update module status
+            await self.registry_service.update_module_status(
+                certificate_id, module_name, status
             )
             
-            self.export_repo.create(export)
+        except Exception as e:
+            logger.error(f"Error updating module status: {e}")
+    
+    async def _update_module_summary(
+        self, 
+        certificate_id: str, 
+        module_name: str, 
+        progress_data: Dict[str, Any]
+    ) -> None:
+        """Update module summary with new data"""
+        try:
+            # Create module summary from progress data
+            from ..models.certificates_registry import ModuleSummary
             
-            logger.info(f"Created export {format.value} for certificate {certificate_id}")
-            return export
+            summary = ModuleSummary(
+                module_name=module_name,
+                processing_time=progress_data.get("processing_time", 0.0),
+                data_quality_score=progress_data.get("quality_score", 0.0),
+                records_processed=progress_data.get("records_processed", 0),
+                errors_count=progress_data.get("errors_count", 0),
+                warnings_count=progress_data.get("warnings_count", 0),
+                last_updated=datetime.utcnow()
+            )
+            
+            # Add summary to certificate
+            await self.registry_service.add_module_summary(
+                certificate_id, module_name, summary
+            )
             
         except Exception as e:
-            logger.error(f"Failed to create export for certificate {certificate_id}: {e}")
-            return None
+            logger.error(f"Error updating module summary: {e}")
     
-    def get_certificate_stats(self, certificate_id: str) -> Dict[str, Any]:
-        """Get statistics for a certificate."""
+    async def _update_overall_progress(self, certificate_id: str) -> None:
+        """Update overall certificate progress"""
         try:
-            certificate = self.get_certificate(certificate_id)
+            # Get current certificate
+            certificate = await self.registry_service.get_certificate(certificate_id)
+            if not certificate:
+                return
+            
+            # Update health metrics
+            await certificate.update_health_metrics()
+            
+            # Save updated certificate
+            await self.registry_service.update_certificate(certificate)
+            
+        except Exception as e:
+            logger.error(f"Error updating overall progress: {e}")
+    
+    async def _check_certificate_completion(self, certificate_id: str) -> None:
+        """Check if certificate is complete and handle completion"""
+        try:
+            # Get current certificate
+            certificate = await self.registry_service.get_certificate(certificate_id)
+            if not certificate:
+                return
+            
+            # Check if all modules are completed
+            if certificate.module_status.health_score >= 100.0:
+                # Mark certificate as complete
+                await self.registry_service.mark_certificate_complete(certificate_id)
+                
+                # Create completion version
+                await self._create_completion_version(certificate)
+                
+                # Generate final business intelligence
+                await self._generate_final_business_intelligence(certificate_id)
+                
+                logger.info(f"Certificate {certificate_id} marked as complete")
+                
+        except Exception as e:
+            logger.error(f"Error checking certificate completion: {e}")
+    
+    async def _create_completion_version(self, certificate: CertificateRegistry) -> None:
+        """Create final version when certificate is complete"""
+        try:
+            # Create completion version
+            version = await self.versions_service.create_version(
+                certificate_id=certificate.certificate_id,
+                version_number="1.0.0",
+                version_type=VersionType.MAJOR,
+                change_description="Certificate completion - all modules processed",
+                change_impact="HIGH",
+                change_category="COMPLETION",
+                user_id=certificate.created_by
+            )
+            
+            logger.info(f"Created completion version: {version.version_id}")
+            
+        except Exception as e:
+            logger.error(f"Error creating completion version: {e}")
+    
+    async def _generate_final_business_intelligence(self, certificate_id: str) -> None:
+        """Generate final business intelligence for completed certificate"""
+        try:
+            # Get final metrics
+            metrics = await self.metrics_service.get_certificate_metrics(
+                certificate_id, limit=100
+            )
+            
+            # Generate business intelligence summary
+            bi_summary = await self._analyze_certificate_data(certificate_id, metrics)
+            
+            # Store business intelligence
+            await self._store_business_intelligence(certificate_id, bi_summary)
+            
+            logger.info(f"Generated business intelligence for certificate: {certificate_id}")
+            
+        except Exception as e:
+            logger.error(f"Error generating business intelligence: {e}")
+    
+    async def _analyze_certificate_data(
+        self, 
+        certificate_id: str, 
+        metrics: List[CertificateMetrics]
+    ) -> Dict[str, Any]:
+        """Analyze certificate data to generate business intelligence"""
+        try:
+            # Get certificate details
+            certificate = await self.registry_service.get_certificate(certificate_id)
             if not certificate:
                 return {}
             
-            events = self.get_certificate_events(certificate_id)
-            versions = self.version_repo.get_all_versions(certificate_id)
-            exports = self.export_repo.get_by_certificate_id(certificate_id)
+            # Analyze performance metrics
+            performance_metrics = [m for m in metrics if m.metric_category == MetricCategory.PERFORMANCE]
+            avg_processing_time = sum(m.metric_value for m in performance_metrics) / len(performance_metrics) if performance_metrics else 0
             
-            return {
-                'certificate': certificate.to_dict(),
-                'events_count': len(events),
-                'versions_count': len(versions),
-                'exports_count': len(exports),
-                'health_score': certificate.calculate_health_score(),
-                'last_updated': certificate.updated_at.isoformat(),
-                'is_public': certificate.is_publicly_accessible(),
-                'can_export': certificate.can_be_exported()
+            # Analyze quality metrics
+            quality_metrics = [m for m in metrics if m.metric_category == MetricCategory.QUALITY]
+            avg_quality_score = sum(m.metric_value for m in quality_metrics) / len(quality_metrics) if quality_metrics else 0
+            
+            # Generate insights
+            insights = {
+                "certificate_id": certificate_id,
+                "total_processing_time": avg_processing_time,
+                "overall_quality_score": avg_quality_score,
+                "modules_completed": certificate.module_status.active_modules,
+                "completion_percentage": certificate.module_status.health_score,
+                "generated_at": datetime.utcnow().isoformat()
             }
             
+            return insights
+            
         except Exception as e:
-            logger.error(f"Failed to get stats for certificate {certificate_id}: {e}")
+            logger.error(f"Error analyzing certificate data: {e}")
             return {}
     
-    def _get_twin_info(self, twin_id: str) -> Dict[str, Any]:
-        """Get twin information from existing repositories."""
+    async def _store_business_intelligence(
+        self, 
+        certificate_id: str, 
+        bi_summary: Dict[str, Any]
+    ) -> None:
+        """Store business intelligence summary"""
         try:
-            # Try to get file information first (Phase 2 will have this)
-            try:
-                file_info = self.file_repo.get_file_trace_info(twin_id)
+            # Store as metrics
+            await self.metrics_service.create_metrics(
+                certificate_id=certificate_id,
+                metric_category=MetricCategory.BUSINESS,
+                metric_name="business_intelligence_score",
+                metric_value=bi_summary.get("overall_quality_score", 0.0),
+                metric_unit="percentage"
+            )
+            
+        except Exception as e:
+            logger.error(f"Error storing business intelligence: {e}")
+    
+    async def _update_certificate_metrics(
+        self, 
+        certificate_id: str, 
+        module_name: str, 
+        progress_data: Dict[str, Any]
+    ) -> None:
+        """Update certificate metrics with new data"""
+        try:
+            # Update performance metrics
+            if "processing_time" in progress_data:
+                await self.metrics_service.create_metrics(
+                    certificate_id=certificate_id,
+                    metric_category=MetricCategory.PERFORMANCE,
+                    metric_name=f"{module_name}_processing_time",
+                    metric_value=progress_data["processing_time"],
+                    metric_unit="seconds"
+                )
+            
+            # Update quality metrics
+            if "quality_score" in progress_data:
+                await self.metrics_service.create_metrics(
+                    certificate_id=certificate_id,
+                    metric_category=MetricCategory.QUALITY,
+                    metric_name=f"{module_name}_quality_score",
+                    metric_value=progress_data["quality_score"],
+                    metric_unit="percentage"
+                )
                 
-                if file_info:
-                    return {
-                        'twin_name': f"DT - {file_info.get('use_case_name', 'Unknown')} - {file_info.get('project_name', 'Unknown')} - {file_info.get('file_name', 'Unknown')}",
-                        'project_name': file_info.get('project_name', 'Unknown Project'),
-                        'use_case_name': file_info.get('use_case_name', 'Unknown Use Case'),
-                        'file_name': file_info.get('file_name', 'Unknown File'),
-                        'uploaded_at': datetime.now()  # We'll get this from file info in Phase 2
-                    }
-            except Exception as file_error:
-                # In Phase 1, the files table might not exist yet
-                logger.debug(f"File repository not available for {twin_id}: {file_error}")
+        except Exception as e:
+            logger.error(f"Error updating certificate metrics: {e}")
+    
+    async def get_certificate_status(self, certificate_id: str) -> Optional[Dict[str, Any]]:
+        """Get comprehensive certificate status"""
+        try:
+            if certificate_id not in self.active_certificates:
+                return None
             
-            # Fallback to basic info for Phase 1
-            return {
-                'twin_name': f"DT - Phase1 - Test - {twin_id}",
-                'project_name': 'Phase 1 Test Project',
-                'use_case_name': 'Phase 1 Test Use Case',
-                'file_name': twin_id,
-                'uploaded_at': datetime.now()
+            # Get certificate details
+            certificate = await self.registry_service.get_certificate(certificate_id)
+            if not certificate:
+                return None
+            
+            # Get latest metrics
+            metrics = await self.metrics_service.get_certificate_metrics(
+                certificate_id, limit=10
+            )
+            
+            # Build status response
+            status = {
+                "certificate_id": certificate_id,
+                "status": certificate.certificate_status.value,
+                "completion_percentage": certificate.module_status.health_score,
+                "module_status": {
+                    "aasx_module": certificate.module_status.aasx_module.value,
+                    "twin_registry": certificate.module_status.twin_registry.value,
+                    "ai_rag": certificate.module_status.ai_rag.value,
+                    "kg_neo4j": certificate.module_status.kg_neo4j.value,
+                    "physics_modeling": certificate.module_status.physics_modeling.value,
+                    "federated_learning": certificate.module_status.federated_learning.value,
+                    "data_governance": certificate.module_status.data_governance.value
+                },
+                "quality_score": certificate.quality_assessment.overall_quality_score,
+                "compliance_status": certificate.compliance_tracking.compliance_status.value,
+                "security_score": certificate.security_metrics.security_score,
+                "last_updated": certificate.updated_at.isoformat() if certificate.updated_at else None,
+                "metrics_count": len(metrics)
             }
             
+            return status
+            
         except Exception as e:
-            logger.error(f"Failed to get twin info for {twin_id}: {e}")
-            return {
-                'twin_name': f"DT - Phase1 - Test - {twin_id}",
-                'project_name': 'Phase 1 Test Project',
-                'use_case_name': 'Phase 1 Test Use Case',
-                'file_name': twin_id,
-                'uploaded_at': datetime.now()
+            logger.error(f"Error getting certificate status: {e}")
+            return None
+    
+    async def get_all_certificates_status(self) -> List[Dict[str, Any]]:
+        """Get status of all active certificates"""
+        try:
+            statuses = []
+            
+            for certificate_id in self.active_certificates:
+                status = await self.get_certificate_status(certificate_id)
+                if status:
+                    statuses.append(status)
+            
+            return statuses
+            
+        except Exception as e:
+            logger.error(f"Error getting all certificates status: {e}")
+            return []
+    
+    async def cleanup_completed_certificates(self) -> int:
+        """Clean up completed certificates from active tracking"""
+        try:
+            completed_count = 0
+            
+            for certificate_id in list(self.active_certificates.keys()):
+                certificate = self.active_certificates[certificate_id]
+                
+                if certificate.certificate_status == CertificateStatus.READY:
+                    # Remove from active tracking
+                    del self.active_certificates[certificate_id]
+                    del self.certificate_locks[certificate_id]
+                    completed_count += 1
+            
+            logger.info(f"Cleaned up {completed_count} completed certificates")
+            return completed_count
+            
+        except Exception as e:
+            logger.error(f"Error cleaning up completed certificates: {e}")
+            return 0
+    
+    async def health_check(self) -> Dict[str, Any]:
+        """Perform health check of the certificate manager"""
+        try:
+            health_status = {
+                "status": "healthy",
+                "active_certificates": len(self.active_certificates),
+                "total_locks": len(self.certificate_locks),
+                "services": {
+                    "registry_service": "healthy",
+                    "versions_service": "healthy",
+                    "metrics_service": "healthy"
+                },
+                "timestamp": datetime.utcnow().isoformat()
             }
-    
-    def _get_module_event_type(self, section_name: str) -> EventType:
-        """Get the appropriate event type for a module section."""
-        event_type_map = {
-            'etl': EventType.ETL_COMPLETED,
-            'ai_rag': EventType.AI_RAG_COMPLETED,
-            'knowledge_graph': EventType.KNOWLEDGE_GRAPH_UPDATED,
-            'federated_learning': EventType.FEDERATED_LEARNING_UPDATED,
-            'physics_modeling': EventType.PHYSICS_MODELING_COMPLETED
-        }
-        
-        return event_type_map.get(section_name, EventType.CERTIFICATE_UPDATED)
-    
-    def __str__(self) -> str:
-        """String representation."""
-        return f"CertificateManager(db_path='{self.db_path}')"
-    
-    def __repr__(self) -> str:
-        """Detailed string representation."""
-        return f"CertificateManager(db_path='{self.db_path}')"
-
-
-# Repository classes for database operations
-class CertificateRepository(BaseRepository[Certificate]):
-    """Repository for certificate operations."""
-    
-    def __init__(self, db_manager: DatabaseConnectionManager):
-        super().__init__(db_manager, Certificate)
-    
-    def _get_table_name(self) -> str:
-        """Get the table name for certificates."""
-        return "certificates"
-    
-    def _get_columns(self) -> List[str]:
-        """Get the list of column names for certificates table."""
-        return [
-            "certificate_id", "twin_id", "twin_name", "project_name", "use_case_name",
-            "file_name", "uploaded_at", "created_at", "updated_at", "status",
-            "current_version", "visibility", "access_level", "template_id",
-            "retention_policy", "signature", "signature_timestamp", "metadata"
-        ]
-    
-    def _get_primary_key_column(self) -> str:
-        """Get the primary key column name."""
-        return "certificate_id"
-    
-    def create(self, model: Certificate) -> Certificate:
-        """Create a new certificate record with JSON serialization."""
-        try:
-            model.validate()
-            data = model.to_dict()
             
-            # Convert datetime to string for database storage
-            for field in ['created_at', 'updated_at', 'uploaded_at', 'signature_timestamp']:
-                if field in data and isinstance(data[field], datetime):
-                    data[field] = data[field].isoformat()
+            # Check service health
+            try:
+                await self.registry_service.health_check()
+            except Exception:
+                health_status["services"]["registry_service"] = "unhealthy"
+                health_status["status"] = "degraded"
             
-            # Serialize dictionary fields to JSON strings
-            if 'metadata' in data and isinstance(data['metadata'], dict):
-                import json
-                data['metadata'] = json.dumps(data['metadata'])
-            
-            columns = self._get_columns()
-            placeholders = ', '.join(['?' for _ in columns])
-            column_names = ', '.join(columns)
-            
-            query = f"""
-                INSERT INTO {self.table_name} ({column_names})
-                VALUES ({placeholders})
-            """
-            
-            values = tuple(data[col] for col in columns)
-            self.db_manager.execute_update(query, values)
-            
-            logger.info(f"Created {self.table_name} record: {model.certificate_id}")
-            return model
+            return health_status
             
         except Exception as e:
-            logger.error(f"Failed to create {self.table_name} record: {e}")
-            raise
-    
-    def create_table(self) -> None:
-        """Create the certificates table."""
-        query = """
-        CREATE TABLE IF NOT EXISTS certificates (
-            certificate_id TEXT PRIMARY KEY,
-            twin_id TEXT NOT NULL,
-            twin_name TEXT NOT NULL,
-            project_name TEXT NOT NULL,
-            use_case_name TEXT NOT NULL,
-            file_name TEXT NOT NULL,
-            uploaded_at TIMESTAMP NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT NOT NULL DEFAULT 'pending',
-            current_version TEXT NOT NULL DEFAULT '1.0.0',
-            visibility TEXT NOT NULL DEFAULT 'private',
-            access_level TEXT DEFAULT 'project_members',
-            template_id TEXT DEFAULT 'default',
-            retention_policy TEXT DEFAULT 'keep_all',
-            signature TEXT,
-            signature_timestamp TIMESTAMP,
-            metadata TEXT
-        )
-        """
-        self.db_manager.execute_query(query)
-    
-    def list_all(self, **filters) -> List[Certificate]:
-        """List all certificates with optional filters."""
-        query = "SELECT * FROM certificates WHERE 1=1"
-        params = []
-        
-        for key, value in filters.items():
-            if hasattr(Certificate, key):
-                query += f" AND {key} = ?"
-                params.append(value)
-        
-        query += " ORDER BY created_at DESC"
-        
-        results = self.db_manager.execute_query(query, params)
-        return [Certificate.from_dict(dict(row)) for row in results]
-    
-    def update(self, model: Certificate) -> Certificate:
-        """Update a certificate record."""
-        try:
-            model.validate()
-            data = model.to_dict()
-            
-            # Convert datetime to string for database storage
-            for field in ['created_at', 'updated_at', 'uploaded_at', 'signature_timestamp']:
-                if field in data and isinstance(data[field], datetime):
-                    data[field] = data[field].isoformat()
-            
-            # Serialize dictionary fields to JSON strings
-            if 'metadata' in data and isinstance(data['metadata'], dict):
-                import json
-                data['metadata'] = json.dumps(data['metadata'])
-            
-            # Remove id field as it's the primary key
-            data.pop('id', None)
-            
-            columns = self._get_columns()
-            set_clause = ', '.join([f"{col} = ?" for col in columns if col != 'certificate_id'])
-            
-            query = f"""
-                UPDATE {self.table_name}
-                SET {set_clause}
-                WHERE certificate_id = ?
-            """
-            
-            values = tuple(data[col] for col in columns if col != 'certificate_id') + (model.certificate_id,)
-            self.db_manager.execute_update(query, values)
-            
-            logger.info(f"Updated {self.table_name} record: {model.certificate_id}")
-            return model
-            
-        except Exception as e:
-            logger.error(f"Failed to update {self.table_name} record: {e}")
-            raise
-    
-    def delete(self, certificate_id: str) -> bool:
-        """Delete a certificate record."""
-        query = "DELETE FROM certificates WHERE certificate_id = ?"
-        return self.db_manager.execute_update(query, (certificate_id,)) > 0
-
-
-class CertificateVersionRepository(BaseRepository[CertificateVersion]):
-    """Repository for certificate version operations."""
-    
-    def __init__(self, db_manager: DatabaseConnectionManager):
-        super().__init__(db_manager, CertificateVersion)
-    
-    def _get_table_name(self) -> str:
-        """Get the table name for certificate versions."""
-        return "certificate_versions"
-    
-    def _get_columns(self) -> List[str]:
-        """Get the list of column names for certificate_versions table."""
-        return [
-            "certificate_id", "version", "content_hash", "sections",
-            "summary_data", "reference_links", "export_cache", "signature_metadata",
-            "created_at", "created_by"
-        ]
-    
-    def create(self, model: CertificateVersion) -> CertificateVersion:
-        """Create a new certificate version record with JSON serialization."""
-        try:
-            model.validate()
-            data = model.to_dict()
-            
-            # Remove fields that don't exist in the database
-            data.pop('id', None)  # Remove id field as it's auto-increment
-            data.pop('sections_count', None)  # Remove computed fields
-            data.pop('content_size', None)
-            data.pop('is_empty', None)
-            
-            # Convert datetime to string for database storage
-            if 'created_at' in data and isinstance(data['created_at'], datetime):
-                data['created_at'] = data['created_at'].isoformat()
-            
-            # Serialize dictionary fields to JSON strings
-            import json
-            for field in ['sections', 'summary_data', 'reference_links', 'export_cache', 'signature_metadata']:
-                if field in data:
-                    if isinstance(data[field], dict):
-                        data[field] = json.dumps(data[field])
-                    elif data[field] is None:
-                        data[field] = None
-                    else:
-                        # Keep the value as is if it's already a string or other type
-                        pass
-            
-            columns = self._get_columns()
-            placeholders = ', '.join(['?' for _ in columns])
-            column_names = ', '.join(columns)
-            
-            query = f"""
-                INSERT INTO {self.table_name} ({column_names})
-                VALUES ({placeholders})
-            """
-            
-            values = tuple(data[col] for col in columns)
-            self.db_manager.execute_update(query, values)
-            
-            logger.info(f"Created {self.table_name} record: {model.certificate_id} v{model.version}")
-            return model
-            
-        except Exception as e:
-            logger.error(f"Failed to create {self.table_name} record: {e}")
-            raise
-    
-    def create_table(self) -> None:
-        """Create the certificate_versions table."""
-        query = """
-        CREATE TABLE IF NOT EXISTS certificate_versions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            certificate_id TEXT NOT NULL,
-            version TEXT NOT NULL,
-            content_hash TEXT NOT NULL,
-            sections TEXT,
-            summary_data TEXT,
-            reference_links TEXT,
-            export_cache TEXT,
-            signature_metadata TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            created_by TEXT DEFAULT 'system',
-            FOREIGN KEY (certificate_id) REFERENCES certificates(certificate_id),
-            UNIQUE(certificate_id, version)
-        )
-        """
-        self.db_manager.execute_query(query)
-    
-    def get_latest_version(self, certificate_id: str) -> Optional[CertificateVersion]:
-        """Get the latest version of a certificate."""
-        query = """
-        SELECT * FROM certificate_versions 
-        WHERE certificate_id = ? 
-        ORDER BY created_at DESC 
-        LIMIT 1
-        """
-        result = self.db_manager.execute_query(query, [certificate_id])
-        if result:
-            return CertificateVersion.from_dict(dict(result[0]))
-        return None
-    
-    def get_by_version(self, certificate_id: str, version: str) -> Optional[CertificateVersion]:
-        """Get a specific version of a certificate."""
-        query = "SELECT * FROM certificate_versions WHERE certificate_id = ? AND version = ?"
-        result = self.db_manager.execute_query(query, [certificate_id, version])
-        if result:
-            return CertificateVersion.from_dict(dict(result[0]))
-        return None
-    
-    def get_all_versions(self, certificate_id: str) -> List[CertificateVersion]:
-        """Get all versions of a certificate."""
-        query = "SELECT * FROM certificate_versions WHERE certificate_id = ? ORDER BY created_at DESC"
-        results = self.db_manager.execute_query(query, [certificate_id])
-        return [CertificateVersion.from_dict(dict(row)) for row in results]
-    
-    def delete_by_certificate_id(self, certificate_id: str) -> bool:
-        """Delete all versions of a certificate."""
-        query = "DELETE FROM certificate_versions WHERE certificate_id = ?"
-        return self.db_manager.execute_update(query, (certificate_id,)) > 0
-
-    def update(self, model: CertificateVersion) -> CertificateVersion:
-        """Update a certificate version record."""
-        try:
-            model.validate()
-            data = model.to_dict()
-            
-            # Remove fields that don't exist in the database
-            data.pop('id', None)  # Remove id field as it's auto-increment
-            data.pop('sections_count', None)  # Remove computed fields
-            data.pop('content_size', None)
-            data.pop('is_empty', None)
-            
-            # Convert datetime to string for database storage
-            if 'created_at' in data and isinstance(data['created_at'], datetime):
-                data['created_at'] = data['created_at'].isoformat()
-            
-            # Serialize dictionary fields to JSON strings
-            import json
-            for field in ['sections', 'summary_data', 'reference_links', 'export_cache', 'signature_metadata']:
-                if field in data:
-                    if isinstance(data[field], dict):
-                        data[field] = json.dumps(data[field])
-                    elif data[field] is None:
-                        data[field] = None
-                    else:
-                        # Keep the value as is if it's already a string or other type
-                        pass
-            
-            columns = self._get_columns()
-            set_clause = ', '.join([f"{col} = ?" for col in columns if col not in ['certificate_id', 'version']])
-            
-            query = f"""
-                UPDATE {self.table_name}
-                SET {set_clause}
-                WHERE certificate_id = ? AND version = ?
-            """
-            
-            values = tuple(data[col] for col in columns if col not in ['certificate_id', 'version']) + (model.certificate_id, model.version)
-            self.db_manager.execute_update(query, values)
-            
-            logger.info(f"Updated {self.table_name} record: {model.certificate_id} v{model.version}")
-            return model
-            
-        except Exception as e:
-            logger.error(f"Failed to update {self.table_name} record: {e}")
-            raise
-
-
-class CertificateEventRepository(BaseRepository[CertificateEvent]):
-    """Repository for certificate event operations."""
-    
-    def __init__(self, db_manager: DatabaseConnectionManager):
-        super().__init__(db_manager, CertificateEvent)
-    
-    def _get_table_name(self) -> str:
-        """Get the table name for certificate events."""
-        return "certificate_events"
-    
-    def _get_columns(self) -> List[str]:
-        """Get the list of column names for certificate_events table."""
-        return [
-            "certificate_id", "event_id", "event_type", "module_name",
-            "event_hash", "data_snapshot", "status", "processed_at", "created_at"
-        ]
-    
-    def create(self, model: CertificateEvent) -> CertificateEvent:
-        """Create a new certificate event record with JSON serialization."""
-        try:
-            model.validate()
-            data = model.to_dict()
-            
-            # Remove fields that don't exist in the database
-            data.pop('id', None)  # Remove id field as it's auto-increment
-            
-            # Convert datetime to string for database storage
-            if 'created_at' in data and isinstance(data['created_at'], datetime):
-                data['created_at'] = data['created_at'].isoformat()
-            if 'processed_at' in data and isinstance(data['processed_at'], datetime):
-                data['processed_at'] = data['processed_at'].isoformat()
-            
-            # Serialize dictionary fields to JSON strings
-            import json
-            if 'data_snapshot' in data and isinstance(data['data_snapshot'], dict):
-                data['data_snapshot'] = json.dumps(data['data_snapshot'])
-            elif 'data_snapshot' in data and data['data_snapshot'] is None:
-                data['data_snapshot'] = None
-            
-            columns = self._get_columns()
-            placeholders = ', '.join(['?' for _ in columns])
-            column_names = ', '.join(columns)
-            
-            query = f"""
-                INSERT INTO {self.table_name} ({column_names})
-                VALUES ({placeholders})
-            """
-            
-            values = tuple(data[col] for col in columns)
-            self.db_manager.execute_update(query, values)
-            
-            logger.info(f"Created {self.table_name} record: {model.event_id}")
-            return model
-            
-        except Exception as e:
-            logger.error(f"Failed to create {self.table_name} record: {e}")
-            raise
-    
-    def create_table(self) -> None:
-        """Create the certificate_events table."""
-        query = """
-        CREATE TABLE IF NOT EXISTS certificate_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            certificate_id TEXT NOT NULL,
-            event_id TEXT NOT NULL,
-            event_type TEXT NOT NULL,
-            module_name TEXT NOT NULL,
-            event_hash TEXT NOT NULL,
-            data_snapshot TEXT,
-            status TEXT DEFAULT 'pending',
-            processed_at TIMESTAMP,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (certificate_id) REFERENCES certificates(certificate_id)
-        )
-        """
-        self.db_manager.execute_query(query)
-    
-    def get_by_certificate_id(self, certificate_id: str, event_type: Optional[EventType] = None) -> List[CertificateEvent]:
-        """Get all events for a certificate."""
-        query = "SELECT * FROM certificate_events WHERE certificate_id = ?"
-        params = [certificate_id]
-        
-        if event_type:
-            query += " AND event_type = ?"
-            params.append(event_type.value)
-        
-        query += " ORDER BY created_at DESC"
-        
-        results = self.db_manager.execute_query(query, params)
-        return [CertificateEvent.from_dict(dict(row)) for row in results]
-    
-    def delete_by_certificate_id(self, certificate_id: str) -> bool:
-        """Delete all events for a certificate."""
-        query = "DELETE FROM certificate_events WHERE certificate_id = ?"
-        return self.db_manager.execute_update(query, (certificate_id,)) > 0
-
-
-class CertificateExportRepository(BaseRepository[CertificateExport]):
-    """Repository for certificate export operations."""
-    
-    def __init__(self, db_manager: DatabaseConnectionManager):
-        super().__init__(db_manager, CertificateExport)
-    
-    def _get_table_name(self) -> str:
-        """Get the table name for certificate exports."""
-        return "certificate_exports"
-    
-    def _get_columns(self) -> List[str]:
-        """Get the list of column names for certificate_exports table."""
-        return [
-            "certificate_id", "version", "format", "file_path", "file_hash",
-            "file_size", "generated_at", "expires_at", "status", "metadata"
-        ]
-    
-    def create_table(self) -> None:
-        """Create the certificate_exports table."""
-        query = """
-        CREATE TABLE IF NOT EXISTS certificate_exports (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            certificate_id TEXT NOT NULL,
-            version TEXT NOT NULL,
-            format TEXT NOT NULL,
-            file_path TEXT,
-            file_hash TEXT,
-            file_size INTEGER,
-            generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            expires_at TIMESTAMP,
-            status TEXT DEFAULT 'pending',
-            metadata TEXT,
-            FOREIGN KEY (certificate_id) REFERENCES certificates(certificate_id),
-            UNIQUE(certificate_id, version, format)
-        )
-        """
-        self.db_manager.execute_query(query)
-    
-    def get_by_certificate_id(self, certificate_id: str) -> List[CertificateExport]:
-        """Get all exports for a certificate."""
-        query = "SELECT * FROM certificate_exports WHERE certificate_id = ? ORDER BY generated_at DESC"
-        results = self.db_manager.execute_query(query, [certificate_id])
-        return [CertificateExport.from_dict(dict(row)) for row in results]
-    
-    def delete_by_certificate_id(self, certificate_id: str) -> bool:
-        """Delete all exports for a certificate."""
-        query = "DELETE FROM certificate_exports WHERE certificate_id = ?"
-        return self.db_manager.execute_update(query, (certificate_id,)) > 0 
+            logger.error(f"Health check failed: {e}")
+            return {
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            } 

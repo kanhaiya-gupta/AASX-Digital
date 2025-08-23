@@ -2,7 +2,7 @@
 Plugin manager for physics modeling framework.
 
 This module handles the discovery, loading, and management of physics plugins.
-It integrates with the existing use_cases table for plugin registration.
+It integrates with the new src/engine infrastructure and PhysicsModelingRegistry.
 """
 
 import os
@@ -10,43 +10,65 @@ import sys
 import importlib
 import inspect
 import logging
+import asyncio
 from typing import Dict, List, Any, Optional, Type
 from pathlib import Path
+from datetime import datetime
 
 from .dynamic_types import PhysicsPlugin, DynamicPhysicsType
-from src.shared.models.use_case import UseCase
+from ..models.physics_modeling_registry import PhysicsModelingRegistry
+from ..repositories.physics_modeling_registry_repository import PhysicsModelingRegistryRepository
 
 logger = logging.getLogger(__name__)
 
 
 class PluginManager:
     """
-    Manages plugin discovery, loading, and lifecycle.
+    Manages plugin discovery, loading, and lifecycle with modern engine integration.
     
     This class handles:
     - Discovering plugins in the plugins directory
     - Loading and instantiating plugins
-    - Registering plugins in the existing use_cases table
-    - Providing access to available plugins
+    - Registering plugins in the new PhysicsModelingRegistry
+    - Providing access to available plugins with enterprise features
     """
     
-    def __init__(self, use_case_repository):
+    def __init__(self, registry_repository: Optional[PhysicsModelingRegistryRepository] = None):
         """
-        Initialize the plugin manager.
+        Initialize the plugin manager with modern engine integration.
         
         Args:
-            use_case_repository: Repository for use cases (existing database)
+            registry_repository: Repository for physics modeling registry (optional, will create if not provided)
         """
-        self.use_case_repo = use_case_repository
+        self.registry_repo = registry_repository or PhysicsModelingRegistryRepository()
         self.plugins: Dict[str, PhysicsPlugin] = {}
         self.plugin_info: Dict[str, Dict[str, Any]] = {}
         self.plugins_dir = Path(__file__).parent.parent / "plugins"
         
-        logger.info(f"Plugin manager initialized with plugins directory: {self.plugins_dir}")
+        logger.info(f"✅ Modern Plugin Manager initialized with plugins directory: {self.plugins_dir}")
     
-    def discover_and_register_plugins(self, use_case_name: str = None, project_name: str = None) -> List[str]:
+    async def initialize(self) -> bool:
+        """Initialize the plugin manager asynchronously."""
+        try:
+            await asyncio.sleep(0)  # Ensure async context
+            logger.info("Initializing Plugin Manager with engine infrastructure")
+            
+            # Initialize the registry repository
+            await self.registry_repo.initialize()
+            
+            # Discover and register available plugins
+            await self.discover_and_register_plugins()
+            
+            logger.info("✅ Plugin Manager initialization completed")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize Plugin Manager: {e}")
+            return False
+    
+    async def discover_and_register_plugins(self, use_case_name: str = None, project_name: str = None) -> List[str]:
         """
-        Discover and register plugins globally (available to all use cases).
+        Discover and register plugins globally with modern engine integration.
         
         Args:
             use_case_name: Name of existing use case (optional, for backward compatibility)
@@ -56,13 +78,15 @@ class PluginManager:
             List of discovered plugin IDs
         """
         try:
-            discovered_plugins = self.discover_plugins()
+            await asyncio.sleep(0)  # Ensure async context
+            
+            discovered_plugins = await self.discover_plugins()
             registered_plugins = []
             loaded_plugin_ids = set()  # Track loaded plugin IDs to avoid duplicates
             
             for plugin_path in discovered_plugins:
                 try:
-                    plugin = self.load_plugin(plugin_path)
+                    plugin = await self.load_plugin(plugin_path)
                     if plugin:
                         physics_type = plugin.get_physics_type()
                         plugin_id = self._generate_plugin_id(physics_type.name)
@@ -74,8 +98,8 @@ class PluginManager:
                         
                         loaded_plugin_ids.add(plugin_id)
                         
-                        # Register plugin globally (available to all use cases)
-                        if self.register_plugin_globally(plugin):
+                        # Register plugin globally with new engine infrastructure
+                        if await self.register_plugin_globally(plugin):
                             registered_plugins.append(plugin_id)
                             logger.info(f"Successfully registered plugin globally: {plugin_id}")
                         else:
@@ -84,84 +108,84 @@ class PluginManager:
                 except Exception as e:
                     logger.error(f"Failed to load plugin {plugin_path}: {e}")
             
-            logger.info(f"Discovered and registered {len(registered_plugins)} plugins globally")
+            logger.info(f"✅ Discovered and registered {len(registered_plugins)} plugins globally")
             return registered_plugins
             
         except Exception as e:
             logger.error(f"Error during plugin discovery: {e}")
             return []
     
-    def get_plugins_for_twin(self, twin_id: str) -> List[Dict[str, Any]]:
+    async def get_plugins_for_twin(self, twin_id: str) -> List[Dict[str, Any]]:
         """
-        Get available plugins for a specific digital twin by tracing from twin_id.
+        Get available plugins for a specific digital twin with modern engine integration.
         
         Args:
             twin_id: Digital twin ID (same as file_id)
             
         Returns:
-            List of available plugins for this twin's use case/project
+            List of available plugins with enterprise features
         """
         try:
-            # Import here to avoid circular imports
-            from src.shared.repositories.file_repository import FileRepository
-            from src.shared.database.base_manager import BaseDatabaseManager
-            from src.shared.database.connection_manager import DatabaseConnectionManager
+            await asyncio.sleep(0)  # Ensure async context
             
-            # Get file repository to trace twin_id
-            db_path = Path("data/aasx_database.db")
-            connection_manager = DatabaseConnectionManager(db_path)
-            db_manager = BaseDatabaseManager(connection_manager)
-            file_repo = FileRepository(db_manager)
+            # Get plugins from the new registry
+            available_plugins = await self.registry_repo.get_by_twin_id(twin_id)
             
-            # Trace from twin_id to get use case and project
-            trace_info = file_repo.get_file_trace_info(twin_id)
-            if not trace_info:
-                logger.warning(f"Could not trace twin_id {twin_id} to use case/project")
-                return []
+            # Enhance with plugin information
+            enhanced_plugins = []
+            for plugin_record in available_plugins:
+                plugin_info = {
+                    'plugin_id': plugin_record.registry_id,
+                    'name': plugin_record.model_name,
+                    'physics_type': plugin_record.physics_type,
+                    'version': plugin_record.model_version,
+                    'status': plugin_record.status,
+                    'compliance_score': plugin_record.compliance_score,
+                    'security_score': plugin_record.security_score,
+                    'performance_score': plugin_record.performance_score,
+                    'created_at': plugin_record.created_at,
+                    'updated_at': plugin_record.updated_at
+                }
+                enhanced_plugins.append(plugin_info)
             
-            use_case_name = trace_info.get("use_case_name")
-            project_name = trace_info.get("project_name")
-            
-            if not use_case_name:
-                logger.warning(f"No use case found for twin_id {twin_id}")
-                return []
-            
-            # Get plugins registered for this use case
-            return self.get_plugins_for_use_case(use_case_name)
+            logger.info(f"✅ Retrieved {len(enhanced_plugins)} plugins for twin {twin_id}")
+            return enhanced_plugins
             
         except Exception as e:
             logger.error(f"Failed to get plugins for twin {twin_id}: {e}")
             return []
     
-    def discover_plugins(self) -> List[str]:
+    async def discover_plugins(self) -> List[Path]:
         """
-        Discover available plugin files.
+        Discover available plugins in the plugins directory.
         
         Returns:
             List of plugin file paths
         """
-        plugin_files = []
-        
-        if not self.plugins_dir.exists():
-            logger.warning(f"Plugins directory does not exist: {self.plugins_dir}")
-            return plugin_files
-        
-        # Walk through plugins directory
-        for category_dir in self.plugins_dir.iterdir():
-            if category_dir.is_dir() and not category_dir.name.startswith('_'):
-                # Skip templates directory - those are just templates, not actual plugins
-                if category_dir.name == "templates":
-                    logger.info("Skipping templates directory - templates are not loaded as plugins")
-                    continue
-                    
-                for plugin_file in category_dir.glob("*.py"):
-                    if not plugin_file.name.startswith('_') and plugin_file.name != "__init__.py":
-                        plugin_files.append(str(plugin_file))
-        
-        logger.info(f"Discovered {len(plugin_files)} plugin files")
-        return plugin_files
+        try:
+            await asyncio.sleep(0)  # Ensure async context
+            
+            discovered_plugins = []
+            
+            if not self.plugins_dir.exists():
+                logger.warning(f"Plugins directory does not exist: {self.plugins_dir}")
+                return discovered_plugins
+            
+            # Search for Python files in plugins subdirectories
+            for plugin_type_dir in self.plugins_dir.iterdir():
+                if plugin_type_dir.is_dir() and not plugin_type_dir.name.startswith('_'):
+                    for plugin_file in plugin_type_dir.glob("*.py"):
+                        if not plugin_file.name.startswith('_') and plugin_file.name != "__init__.py":
+                            discovered_plugins.append(plugin_file)
+            
+            logger.info(f"✅ Discovered {len(discovered_plugins)} plugin files")
+            return discovered_plugins
+            
+        except Exception as e:
+            logger.error(f"Failed to discover plugins: {e}")
+            return []
     
-    def load_plugin(self, plugin_path: str) -> Optional[PhysicsPlugin]:
+    async def load_plugin(self, plugin_path: Path) -> Optional[PhysicsPlugin]:
         """
         Load a plugin from a file path.
         
@@ -169,24 +193,21 @@ class PluginManager:
             plugin_path: Path to the plugin file
             
         Returns:
-            Plugin instance or None if loading failed
+            Loaded plugin instance or None if loading failed
         """
         try:
-            # Convert file path to module path
-            plugin_file = Path(plugin_path)
-            # Calculate relative path from src directory
-            src_root = self.plugins_dir.parent.parent  # src directory
-            relative_path = plugin_file.relative_to(src_root)
-            module_path = str(relative_path).replace(os.sep, '.').replace('.py', '')
+            await asyncio.sleep(0)  # Ensure async context
             
-            # Add src to sys.path if not already there
-            if str(src_root) not in sys.path:
-                sys.path.insert(0, str(src_root))
+            # Import the plugin module
+            module_name = f"src.modules.physics_modeling.plugins.{plugin_path.parent.name}.{plugin_path.stem}"
             
-            # Import the module
-            module = importlib.import_module(module_path)
+            try:
+                module = importlib.import_module(module_name)
+            except ImportError as e:
+                logger.error(f"Failed to import plugin module {module_name}: {e}")
+                return None
             
-            # Find PhysicsPlugin subclasses
+            # Find plugin classes in the module
             plugin_classes = []
             for name, obj in inspect.getmembers(module):
                 if (inspect.isclass(obj) and 
@@ -195,36 +216,21 @@ class PluginManager:
                     plugin_classes.append(obj)
             
             if not plugin_classes:
-                logger.warning(f"No PhysicsPlugin classes found in {plugin_path}")
+                logger.warning(f"No plugin classes found in {plugin_path}")
                 return None
             
-            if len(plugin_classes) > 1:
-                logger.warning(f"Multiple PhysicsPlugin classes found in {plugin_path}, using first one")
-            
-            # Instantiate the plugin
+            # Return the first plugin class found
             plugin_class = plugin_classes[0]
-            plugin = plugin_class()
-            
-            # Validate the plugin
-            if not self._validate_plugin(plugin):
-                logger.error(f"Plugin validation failed for {plugin_path}")
-                return None
-            
-            logger.info(f"Successfully loaded plugin: {plugin.get_physics_type().type_id}")
-            return plugin
+            logger.info(f"✅ Successfully loaded plugin: {plugin_class.__name__}")
+            return plugin_class()
             
         except Exception as e:
-            logger.error(f"Failed to load plugin {plugin_path}: {e}")
+            logger.error(f"Failed to load plugin from {plugin_path}: {e}")
             return None
     
-    def _generate_plugin_id(self, plugin_name: str) -> str:
-        """Generate deterministic plugin ID from plugin name only."""
-        import hashlib
-        return hashlib.md5(plugin_name.encode()).hexdigest()[:16]
-    
-    def register_plugin_globally(self, plugin: PhysicsPlugin) -> bool:
+    async def register_plugin_globally(self, plugin: PhysicsPlugin) -> bool:
         """
-        Register a plugin globally (available to all use cases).
+        Register a plugin globally in the new PhysicsModelingRegistry.
         
         Args:
             plugin: Plugin instance to register
@@ -233,288 +239,187 @@ class PluginManager:
             True if registration successful, False otherwise
         """
         try:
+            await asyncio.sleep(0)  # Ensure async context
+            
             physics_type = plugin.get_physics_type()
             
-            # Generate deterministic plugin ID from plugin name only
-            plugin_id = self._generate_plugin_id(physics_type.name)
+            # Create plugin record for the new registry
+            plugin_record = PhysicsModelingRegistry(
+                model_name=physics_type.name,
+                physics_type=physics_type.name,
+                model_version=physics_type.version,
+                description=physics_type.description,
+                model_parameters=physics_type.parameters,
+                status="active",
+                compliance_score=100.0,  # Default compliance score
+                security_score=100.0,   # Default security score
+                performance_score=100.0, # Default performance score
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
             
-            # Check if plugin already exists globally
-            if plugin_id in self.plugin_info:
-                logger.info(f"Plugin {plugin_id} already registered globally")
+            # Save to the new registry
+            saved_record = await self.registry_repo.create(plugin_record)
+            
+            if saved_record:
+                # Store plugin instance locally
+                plugin_id = self._generate_plugin_id(physics_type.name)
+                self.plugins[plugin_id] = plugin
+                self.plugin_info[plugin_id] = {
+                    'name': physics_type.name,
+                    'version': physics_type.version,
+                    'description': physics_type.description,
+                    'parameters': physics_type.parameters,
+                    'registry_id': saved_record.registry_id
+                }
+                
+                logger.info(f"✅ Successfully registered plugin {plugin_id} in new registry")
                 return True
-            
-            # Add to global plugins and info
-            self.plugins[plugin_id] = plugin
-            self.plugin_info[plugin_id] = self._get_plugin_info(plugin)
-            
-            logger.info(f"Successfully registered plugin globally: {plugin_id}")
-            return True
-            
+            else:
+                logger.error(f"Failed to save plugin {physics_type.name} to registry")
+                return False
+                
         except Exception as e:
             logger.error(f"Failed to register plugin globally: {e}")
             return False
     
-    def get_plugin(self, plugin_id: str) -> Optional[PhysicsPlugin]:
+    def _generate_plugin_id(self, plugin_name: str) -> str:
         """
-        Get a plugin by ID.
+        Generate a unique plugin ID.
+        
+        Args:
+            plugin_name: Name of the plugin
+            
+        Returns:
+            Unique plugin ID
+        """
+        # Generate a simple ID based on plugin name
+        return f"plugin_{plugin_name.lower().replace(' ', '_')}"
+    
+    async def get_plugin_by_id(self, plugin_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get plugin information by ID.
         
         Args:
             plugin_id: Plugin ID
             
         Returns:
-            Plugin instance or None if not found
-        """
-        return self.plugins.get(plugin_id)
-    
-    def get_all_plugins(self) -> Dict[str, PhysicsPlugin]:
-        """
-        Get all loaded plugins.
-        
-        Returns:
-            Dictionary of plugin_id -> plugin instance
-        """
-        return self.plugins.copy()
-    
-    def get_all_plugins_info(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Get information about all plugins.
-        
-        Returns:
-            Dictionary of plugin_id -> plugin info
-        """
-        return self.plugin_info.copy()
-    
-    def get_plugins_by_category(self, category: str) -> Dict[str, PhysicsPlugin]:
-        """
-        Get plugins by category.
-        
-        Args:
-            category: Plugin category (e.g., 'thermal', 'structural')
-            
-        Returns:
-            Dictionary of plugin_id -> plugin instance for the category
-        """
-        return {
-            plugin_id: plugin 
-            for plugin_id, plugin in self.plugins.items()
-            if plugin.get_physics_type().category == category
-        }
-    
-    def get_plugins_by_base_type(self, base_physics_type: str) -> Dict[str, PhysicsPlugin]:
-        """
-        Get all plugin variants for a base physics type.
-        
-        Args:
-            base_physics_type: Base physics type name (e.g., 'Thermal Analysis')
-            
-        Returns:
-            Dictionary of plugin_id -> plugin instance for the base type
-        """
-        return {
-            plugin_id: plugin 
-            for plugin_id, plugin in self.plugins.items()
-            if plugin.get_physics_type().name == base_physics_type
-        }
-    
-    def get_plugins_for_use_case(self, use_case_name: str) -> List[Dict[str, Any]]:
-        """
-        Get all plugins available for a specific use case.
-        Since plugins are registered globally, all plugins are available to all use cases.
-        
-        Args:
-            use_case_name: Name of the use case
-            
-        Returns:
-            List of plugin information for the use case
-        """
-        plugins = []
-        
-        # Since plugins are registered globally, return all available plugins
-        for plugin_id, plugin_info in self.plugin_info.items():
-            plugins.append({
-                'plugin_id': plugin_id,
-                'use_case_name': use_case_name,
-                'name': plugin_info.get('name'),
-                'project': 'global',  # All plugins are globally available
-                'version': plugin_info.get('version'),
-                'category': plugin_info.get('category'),
-                'description': f"Global plugin available for {use_case_name} - {plugin_info.get('name')}"
-            })
-        
-        return plugins
-    
-    def get_plugin_by_id(self, plugin_id: str) -> Optional[Dict[str, Any]]:
-        """
-        Get plugin information by plugin ID from global registry.
-        
-        Args:
-            plugin_id: The plugin ID to search for
-            
-        Returns:
-            Plugin information or None if not found
-        """
-        if plugin_id in self.plugin_info:
-            plugin_info = self.plugin_info[plugin_id]
-            return {
-                'plugin_id': plugin_id,
-                'use_case_name': 'global',  # Available to all use cases
-                'name': plugin_info.get('name'),
-                'project': 'global',
-                'version': plugin_info.get('version'),
-                'category': plugin_info.get('category'),
-                'description': plugin_info.get('description'),
-                'parameters': plugin_info.get('parameters', []),
-                'equations': plugin_info.get('equations', []),
-                'solver_capabilities': plugin_info.get('solver_capabilities', [])
-            }
-        return None
-    
-    def get_plugin_instance(self, plugin_id: str) -> Optional[PhysicsPlugin]:
-        """
-        Get the actual plugin instance by plugin ID.
-        
-        Args:
-            plugin_id: The plugin ID to search for
-            
-        Returns:
-            Plugin instance or None if not found
-        """
-        if plugin_id in self.plugins:
-            return self.plugins[plugin_id]
-        return None
-    
-    def reload_plugin(self, plugin_id: str) -> bool:
-        """
-        Reload a specific plugin.
-        
-        Args:
-            plugin_id: Plugin ID to reload
-            
-        Returns:
-            True if reload successful, False otherwise
+            Plugin information dictionary or None if not found
         """
         try:
-            # Remove existing plugin
-            if plugin_id in self.plugins:
-                del self.plugins[plugin_id]
-                del self.plugin_info[plugin_id]
+            await asyncio.sleep(0)  # Ensure async context
             
-            # Find and reload the plugin
-            plugin_files = self.discover_plugins()
-            for plugin_path in plugin_files:
-                plugin = self.load_plugin(plugin_path)
-                if plugin and plugin.get_physics_type().type_id == plugin_id:
-                    self.plugins[plugin_id] = plugin
-                    self.plugin_info[plugin_id] = self._get_plugin_info(plugin)
-                    logger.info(f"Successfully reloaded plugin: {plugin_id}")
-                    return True
+            if plugin_id in self.plugin_info:
+                return self.plugin_info[plugin_id]
             
-            logger.warning(f"Plugin {plugin_id} not found for reload")
-            return False
+            # Try to find in registry
+            plugin_record = await self.registry_repo.get_by_id(plugin_id)
+            if plugin_record:
+                return {
+                    'plugin_id': plugin_record.registry_id,
+                    'name': plugin_record.model_name,
+                    'physics_type': plugin_record.physics_type,
+                    'version': plugin_record.model_version,
+                    'status': plugin_record.status,
+                    'compliance_score': plugin_record.compliance_score,
+                    'security_score': plugin_record.security_score,
+                    'performance_score': plugin_record.performance_score
+                }
+            
+            return None
             
         except Exception as e:
-            logger.error(f"Failed to reload plugin {plugin_id}: {e}")
-            return False
+            logger.error(f"Failed to get plugin by ID {plugin_id}: {e}")
+            return None
     
-    def _validate_plugin(self, plugin: PhysicsPlugin) -> bool:
+    async def get_all_plugins(self) -> List[Dict[str, Any]]:
         """
-        Validate a plugin instance.
+        Get all registered plugins with enterprise features.
         
-        Args:
-            plugin: Plugin to validate
-            
         Returns:
-            True if valid, False otherwise
+            List of all plugin information
         """
         try:
-            # Check if plugin implements required methods
-            if not hasattr(plugin, 'get_physics_type') or not callable(plugin.get_physics_type):
-                logger.error("Plugin must implement get_physics_type() method")
-                return False
+            await asyncio.sleep(0)  # Ensure async context
             
-            if not hasattr(plugin, 'solve') or not callable(plugin.solve):
-                logger.error("Plugin must implement solve() method")
-                return False
+            # Get all plugins from registry
+            all_plugins = await self.registry_repo.get_all()
             
-            # Get physics type and validate it
-            physics_type = plugin.get_physics_type()
-            if not isinstance(physics_type, DynamicPhysicsType):
-                logger.error("get_physics_type() must return a DynamicPhysicsType")
-                return False
+            # Enhance with local plugin information
+            enhanced_plugins = []
+            for plugin_record in all_plugins:
+                plugin_info = {
+                    'plugin_id': plugin_record.registry_id,
+                    'name': plugin_record.model_name,
+                    'physics_type': plugin_record.physics_type,
+                    'version': plugin_record.model_version,
+                    'status': plugin_record.status,
+                    'compliance_score': plugin_record.compliance_score,
+                    'security_score': plugin_record.security_score,
+                    'performance_score': plugin_record.performance_score,
+                    'created_at': plugin_record.created_at,
+                    'updated_at': plugin_record.updated_at
+                }
+                enhanced_plugins.append(plugin_info)
             
-            # Validate required fields
-            if not physics_type.type_id or not physics_type.name or not physics_type.category:
-                logger.error("Physics type must have type_id, name, and category")
-                return False
-            
-            return True
+            return enhanced_plugins
             
         except Exception as e:
-            logger.error(f"Plugin validation error: {e}")
-            return False
+            logger.error(f"Failed to get all plugins: {e}")
+            return []
     
-    def _get_plugin_info(self, plugin: PhysicsPlugin) -> Dict[str, Any]:
+    async def update_plugin_status(self, plugin_id: str, status: str) -> bool:
         """
-        Get information about a plugin.
+        Update plugin status in the registry.
         
         Args:
-            plugin: Plugin instance
+            plugin_id: Plugin ID
+            status: New status
             
         Returns:
-            Plugin information dictionary
+            True if update successful, False otherwise
         """
         try:
-            physics_type = plugin.get_physics_type()
-            return {
-                'plugin_id': physics_type.type_id,
-                'name': physics_type.name,
-                'category': physics_type.category,
-                'description': physics_type.description,
-                'version': physics_type.version,
-                'class_name': plugin.__class__.__name__,
-                'module_name': plugin.__class__.__module__,
-                'parameters': [param.__dict__ for param in physics_type.parameters],
-                'equations': [eq.__dict__ for eq in physics_type.equations],
-                'solver_capabilities': [cap.__dict__ for cap in physics_type.solver_capabilities],
-                'dependencies': physics_type.dependencies,
-                'metadata': physics_type.metadata
-            }
+            await asyncio.sleep(0)  # Ensure async context
+            
+            plugin_record = await self.registry_repo.get_by_id(plugin_id)
+            if not plugin_record:
+                logger.error(f"Plugin {plugin_id} not found in registry")
+                return False
+            
+            # Update status
+            plugin_record.status = status
+            plugin_record.updated_at = datetime.utcnow()
+            
+            # Save updated record
+            updated_record = await self.registry_repo.update(plugin_record)
+            
+            if updated_record:
+                logger.info(f"✅ Successfully updated plugin {plugin_id} status to {status}")
+                return True
+            else:
+                logger.error(f"Failed to update plugin {plugin_id} status")
+                return False
+                
         except Exception as e:
-            logger.error(f"Failed to get plugin info: {e}")
-            return {}
+            logger.error(f"Failed to update plugin status: {e}")
+            return False
     
-    def _serialize_parameter(self, param) -> Dict[str, Any]:
-        """Convert PhysicsParameter to JSON-serializable dict."""
-        return {
-            'name': param.name,
-            'parameter_type': param.parameter_type.value,  # Convert enum to string
-            'description': param.description,
-            'default_value': param.default_value,
-            'unit': param.unit,
-            'unit_system': param.unit_system.value,  # Convert enum to string
-            'min_value': param.min_value,
-            'max_value': param.max_value,
-            'required': param.required,
-            'metadata': param.metadata
-        }
-    
-    def _serialize_equation(self, eq) -> Dict[str, Any]:
-        """Convert PhysicsEquation to JSON-serializable dict."""
-        return {
-            'name': eq.name,
-            'equation': eq.equation,
-            'description': eq.description,
-            'variables': eq.variables,
-            'units': eq.units
-        }
-    
-    def _serialize_capability(self, cap) -> Dict[str, Any]:
-        """Convert SolverCapability to JSON-serializable dict."""
-        return {
-            'name': cap.name,
-            'description': cap.description,
-            'problem_types': cap.problem_types,
-            'supported_physics': cap.supported_physics,
-            'accuracy_level': cap.accuracy_level,
-            'performance_rating': cap.performance_rating
-        } 
+    async def close(self):
+        """Close the plugin manager and cleanup resources."""
+        try:
+            await asyncio.sleep(0)  # Ensure async context
+            logger.info("Closing Plugin Manager")
+            
+            # Close registry repository
+            if hasattr(self.registry_repo, 'close'):
+                await self.registry_repo.close()
+            
+            # Clear local plugin storage
+            self.plugins.clear()
+            self.plugin_info.clear()
+            
+            logger.info("✅ Plugin Manager closed successfully")
+            
+        except Exception as e:
+            logger.error(f"Error closing Plugin Manager: {e}") 

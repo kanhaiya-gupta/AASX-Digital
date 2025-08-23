@@ -390,6 +390,7 @@ class KgNeo4jSchema(BaseSchema):
                 -- User Management & Ownership
                 user_id TEXT NOT NULL,                             -- Current user who owns/accesses this graph
                 org_id TEXT NOT NULL,                              -- Organization this graph belongs to
+                dept_id TEXT,                                      -- Department for complete traceability
                 owner_team TEXT,                                   -- Team responsible for this graph
                 steward_user_id TEXT,                              -- Data steward for this graph
                 
@@ -415,6 +416,7 @@ class KgNeo4jSchema(BaseSchema):
                 FOREIGN KEY (file_id) REFERENCES files (file_id) ON DELETE CASCADE,
                 FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
                 FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL,
                 FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
                 FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(twin_id) ON DELETE SET NULL
             )
@@ -429,6 +431,7 @@ class KgNeo4jSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_file_id ON kg_graph_registry (file_id)",
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_user_id ON kg_graph_registry (user_id)",
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_org_id ON kg_graph_registry (org_id)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_dept_id ON kg_graph_registry (dept_id)",
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_category ON kg_graph_registry (graph_category)",
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_type ON kg_graph_registry (graph_type)",
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_priority ON kg_graph_registry (graph_priority)",

@@ -367,6 +367,7 @@ class TwinRegistrySchema(BaseSchema):
                 -- User Management & Ownership
                 user_id TEXT NOT NULL,                           -- Current user who owns/accesses this registry
                 org_id TEXT NOT NULL,                            -- Organization this registry belongs to
+                dept_id TEXT,                                    -- Department for complete traceability
                 owner_team TEXT,                                 -- Team responsible for this twin
                 steward_user_id TEXT,                            -- Data steward for this twin
                 
@@ -389,7 +390,8 @@ class TwinRegistrySchema(BaseSchema):
                 instances TEXT DEFAULT '[]',                      -- Array of instance objects
                 
                 -- Constraints
-                FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL
+                FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
             )
         """
 
@@ -402,6 +404,7 @@ class TwinRegistrySchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_twin_id ON twin_registry (twin_id)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_user_id ON twin_registry (user_id)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_org_id ON twin_registry (org_id)",
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_dept_id ON twin_registry (dept_id)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_category ON twin_registry (twin_category)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_type ON twin_registry (twin_type)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_priority ON twin_registry (twin_priority)",

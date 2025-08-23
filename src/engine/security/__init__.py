@@ -15,6 +15,27 @@ from .authentication import (
     MultiFactorAuthenticator
 )
 
+from .mfa_service import (
+    MFAService,
+    TOTPService,
+    QRCodeService,
+    BackupCodeService,
+    MFASecret,
+    BackupCode,
+    MFASetupResult
+)
+
+from .oauth_service import (
+    OAuthService,
+    GoogleOAuthProvider,
+    FacebookOAuthProvider,
+    AppleOAuthProvider,
+    OAuthProvider,
+    OAuthUserInfo,
+    OAuthToken,
+    OAuthResult
+)
+
 from .authorization import (
     AuthorizationManager,
     AsyncAuthorizationManager,
@@ -70,6 +91,25 @@ __all__ = [
     'OAuthAuthenticator',
     'LDAPAuthenticator',
     'MultiFactorAuthenticator',
+    
+    # MFA Services
+    'MFAService',
+    'TOTPService',
+    'QRCodeService', 
+    'BackupCodeService',
+    'MFASecret',
+    'BackupCode',
+    'MFASetupResult',
+    
+    # OAuth Services
+    'OAuthService',
+    'GoogleOAuthProvider',
+    'FacebookOAuthProvider',
+    'AppleOAuthProvider',
+    'OAuthProvider',
+    'OAuthUserInfo',
+    'OAuthToken',
+    'OAuthResult',
     
     # Authorization
     'AuthorizationManager',

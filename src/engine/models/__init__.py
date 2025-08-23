@@ -30,10 +30,6 @@ from .auth import (
     User, CustomRole, RoleAssignment, UserMetrics
 )
 
-from .data_governance import (
-    DataLineage, DataQualityMetrics, ChangeRequest, DataVersion, GovernancePolicy
-)
-
 # Enums and Constants
 from .enums import (
     # System Enums
@@ -92,7 +88,6 @@ __all__ = [
     'CoreSystemRegistry', 'CoreSystemMetrics',
     'Organization', 'UseCase', 'Project', 'File', 'ProjectUseCaseLink',
     'User', 'CustomRole', 'RoleAssignment', 'UserMetrics',
-    'DataLineage', 'DataQualityMetrics', 'ChangeRequest', 'DataVersion', 'GovernancePolicy',
     
     # Enums and Constants
     'SystemCategory', 'SystemType', 'SystemPriority', 'RegistryType', 'WorkflowSource',

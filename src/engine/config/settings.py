@@ -177,6 +177,20 @@ class ApplicationSettings:
     locale: str = "en_US"
     encoding: str = "utf-8"
     
+    # Webapp-specific settings (for app_factory compatibility)
+    app_name: str = "AASX Digital Twin Analytics Framework"
+    app_version: str = "1.0.0"
+    app_env: str = "development"
+    
+    # Module-specific settings
+    aasx_enabled: bool = True
+    ai_rag_enabled: bool = True
+    twin_registry_enabled: bool = True
+    certificate_manager_enabled: bool = True
+    kg_neo4j_enabled: bool = True
+    federated_learning_enabled: bool = True
+    physics_modeling_enabled: bool = True
+    
     # Component settings
     database: DatabaseSettings = field(default_factory=DatabaseSettings)
     security: SecuritySettings = field(default_factory=SecuritySettings)
@@ -539,3 +553,6 @@ def get_environment() -> Environment:
 
 # Import sys for environment detection
 import sys
+
+# Simple settings instance for app_factory compatibility
+settings = get_settings()

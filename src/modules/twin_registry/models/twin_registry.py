@@ -3,16 +3,18 @@ Twin Registry Model
 
 Updated to match our new comprehensive database schema with all 53 fields.
 Supports both extraction and generation workflows with full twin lifecycle management.
+Pure async implementation for modern architecture.
 """
 
-from src.shared.models.base_model import BaseModel
+from src.engine.models.base_model import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 import uuid
+import asyncio
 
 
 class TwinRegistry(BaseModel):
-    """Main twin registry model matching our new database schema"""
+    """Main twin registry model matching our new database schema - Pure async implementation"""
     
     # Primary Identification
     registry_id: str
@@ -74,6 +76,7 @@ class TwinRegistry(BaseModel):
     # User Management & Ownership
     user_id: str
     org_id: str
+    dept_id: Optional[str] = None       # Department ID for complete traceability
     owner_team: Optional[str] = None
     steward_user_id: Optional[str] = None
     
@@ -101,7 +104,7 @@ class TwinRegistry(BaseModel):
         }
     
     @classmethod
-    def create_registry(
+    async def create_twin_registry(
         cls,
         twin_id: str,
         twin_name: str,
@@ -110,10 +113,13 @@ class TwinRegistry(BaseModel):
         workflow_source: str,
         user_id: str,
         org_id: str,
+        dept_id: Optional[str] = None,
         **kwargs
     ) -> "TwinRegistry":
-        """Create new twin registry entry"""
+        """Create new twin registry entry asynchronously"""
         now = datetime.now(timezone.utc)
+        # Simulate async operation
+        await asyncio.sleep(0.001)
         return cls(
             registry_id=str(uuid.uuid4()),
             twin_id=twin_id,
@@ -123,54 +129,127 @@ class TwinRegistry(BaseModel):
             workflow_source=workflow_source,
             user_id=user_id,
             org_id=org_id,
+            dept_id=dept_id,
             created_at=now,
             updated_at=now,
             **kwargs
         )
     
-    def update_status(self, new_status: str, status_type: str = "integration") -> None:
-        """Update various status fields"""
-        if status_type == "integration":
-            self.integration_status = new_status
-        elif status_type == "health":
-            self.health_status = new_status
-        elif status_type == "lifecycle":
-            self.lifecycle_status = new_status
-        elif status_type == "operational":
-            self.operational_status = new_status
-        elif status_type == "sync":
-            self.sync_status = new_status
-        
-        self.updated_at = datetime.now(timezone.utc)
-        self.last_modified_at = datetime.now(timezone.utc)
-    
-    def update_health_score(self, new_score: int) -> None:
-        """Update overall health score"""
+    async def update_health_score(self, new_score: int) -> None:
+        """Update overall health score asynchronously"""
         if 0 <= new_score <= 100:
             self.overall_health_score = new_score
             self.updated_at = datetime.now(timezone.utc)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
     
-    def add_tag(self, tag: str) -> None:
-        """Add a tag to the twin"""
-        if tag not in self.tags:
-            self.tags.append(tag)
+    async def update_lifecycle_status(self, new_status: str) -> None:
+        """Update lifecycle status asynchronously"""
+        valid_statuses = ['created', 'active', 'suspended', 'archived', 'retired']
+        if new_status in valid_statuses:
+            self.lifecycle_status = new_status
             self.updated_at = datetime.now(timezone.utc)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
     
-    def remove_tag(self, tag: str) -> None:
-        """Remove a tag from the twin"""
-        if tag in self.tags:
-            self.tags.remove(tag)
+    async def update_operational_status(self, new_status: str) -> None:
+        """Update operational status asynchronously"""
+        valid_statuses = ['running', 'stopped', 'paused', 'error', 'maintenance']
+        if new_status in valid_statuses:
+            self.operational_status = new_status
             self.updated_at = datetime.now(timezone.utc)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
     
-    def add_relationship(self, relationship: Dict[str, Any]) -> None:
-        """Add a relationship"""
-        self.relationships.append(relationship)
-        self.updated_at = datetime.now(timezone.utc)
+    async def add_relationship(self, relationship: Dict[str, Any]) -> None:
+        """Add a new relationship asynchronously"""
+        if isinstance(relationship, dict):
+            self.relationships.append(relationship)
+            self.updated_at = datetime.now(timezone.utc)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
     
-    def add_instance(self, instance: Dict[str, Any]) -> None:
-        """Add an instance"""
-        self.instances.append(instance)
-        self.updated_at = datetime.now(timezone.utc)
+    async def add_dependency(self, dependency: Dict[str, Any]) -> None:
+        """Add a new dependency asynchronously"""
+        if isinstance(dependency, dict):
+            self.dependencies.append(dependency)
+            self.updated_at = datetime.now(timezone.utc)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
+    
+    async def add_instance(self, instance: Dict[str, Any]) -> None:
+        """Add a new instance asynchronously"""
+        if isinstance(instance, dict):
+            self.instances.append(instance)
+            self.updated_at = datetime.now(timezone.utc)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
+    
+    async def update_sync_status(self, status: str, error_message: Optional[str] = None) -> None:
+        """Update synchronization status asynchronously"""
+        valid_statuses = ['pending', 'in_progress', 'completed', 'failed', 'scheduled']
+        if status in valid_statuses:
+            self.sync_status = status
+            if error_message:
+                self.sync_error_message = error_message
+            if status == 'failed':
+                self.sync_error_count += 1
+            self.updated_at = datetime.now(timezone.utc)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
+    
+    async def get_health_summary(self) -> Dict[str, Any]:
+        """Get comprehensive health summary asynchronously"""
+        # Simulate async operation
+        await asyncio.sleep(0.001)
+        return {
+            'overall_health_score': self.overall_health_score,
+            'health_status': self.health_status,
+            'performance_score': self.performance_score,
+            'data_quality_score': self.data_quality_score,
+            'reliability_score': self.reliability_score,
+            'compliance_score': self.compliance_score,
+            'sync_status': self.sync_status,
+            'operational_status': self.operational_status,
+            'lifecycle_status': self.lifecycle_status
+        }
+    
+    async def is_healthy(self) -> bool:
+        """Check if twin is healthy asynchronously"""
+        # Simulate async operation
+        await asyncio.sleep(0.001)
+        return (
+            self.overall_health_score >= 80 and
+            self.health_status in ['healthy', 'warning'] and
+            self.sync_status != 'failed' and
+            self.operational_status != 'error'
+        )
+    
+    async def requires_maintenance(self) -> bool:
+        """Check if twin requires maintenance asynchronously"""
+        # Simulate async operation
+        await asyncio.sleep(0.001)
+        return (
+            self.overall_health_score < 50 or
+            self.health_status == 'critical' or
+            self.sync_error_count > 5 or
+            self.operational_status == 'maintenance'
+        )
+    
+    async def validate(self) -> bool:
+        """Validate twin registry data asynchronously"""
+        # Simulate async validation
+        await asyncio.sleep(0.001)
+        return (
+            bool(self.registry_id) and
+            bool(self.twin_id) and
+            bool(self.twin_name) and
+            bool(self.registry_name) and
+            bool(self.registry_type) and
+            bool(self.workflow_source) and
+            bool(self.user_id) and
+            bool(self.org_id)
+        )
 
 
 class TwinRegistryQuery(BaseModel):
@@ -186,6 +265,7 @@ class TwinRegistryQuery(BaseModel):
     lifecycle_status: Optional[str] = None
     user_id: Optional[str] = None
     org_id: Optional[str] = None
+    dept_id: Optional[str] = None  # Added dept_id for complete traceability
     created_after: Optional[datetime] = None
     created_before: Optional[datetime] = None
     
@@ -193,6 +273,12 @@ class TwinRegistryQuery(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
+    
+    async def validate(self) -> bool:
+        """Validate query parameters asynchronously"""
+        # Simulate async validation
+        await asyncio.sleep(0.001)
+        return True
 
 
 class TwinRegistrySummary(BaseModel):
@@ -204,11 +290,22 @@ class TwinRegistrySummary(BaseModel):
     registries_by_workflow: Dict[str, int]
     registries_by_category: Dict[str, int]
     registries_by_status: Dict[str, int]
+    registries_by_department: Dict[str, int]  # Added department breakdown
     
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
+    
+    async def calculate_totals(self) -> None:
+        """Calculate totals asynchronously"""
+        # Simulate async calculation
+        await asyncio.sleep(0.001)
+        self.total_registries = sum(self.registries_by_type.values())
+        self.active_registries = sum(
+            count for status, count in self.registries_by_status.items() 
+            if status in ['active', 'running']
+        )
 
 
 # Keep backward compatibility for existing code

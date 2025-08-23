@@ -94,7 +94,7 @@ class AasxEtlSchema(BaseSchema):
                     return False
             
             # Add enterprise enhancements
-            await self._create_enterprise_indexes(table_name, [])
+            await self._create_enterprise_indexes(table_name)
             await self._setup_table_monitoring(table_name)
             await self._validate_table_structure(table_name)
             await self._update_table_metadata(table_name)
@@ -374,6 +374,7 @@ class AasxEtlSchema(BaseSchema):
                 -- User Management & Ownership (Framework Access Control)
                 processed_by TEXT NOT NULL, -- user_id of the user who processed the job
                 org_id TEXT NOT NULL, -- organization_id of the user who processed the job
+                dept_id TEXT, -- department_id for complete traceability
                 owner_team TEXT,
                 steward_user_id TEXT,
                 
@@ -416,6 +417,7 @@ class AasxEtlSchema(BaseSchema):
                 FOREIGN KEY (project_id) REFERENCES projects (project_id) ON DELETE CASCADE,
                 FOREIGN KEY (processed_by) REFERENCES users (user_id) ON DELETE CASCADE,
                 FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL,
                 FOREIGN KEY (twin_registry_id) REFERENCES twin_registry (registry_id) ON DELETE SET NULL,
                 FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry (graph_id) ON DELETE SET NULL,
                 FOREIGN KEY (ai_rag_id) REFERENCES ai_rag_registry (registry_id) ON DELETE SET NULL
@@ -432,6 +434,7 @@ class AasxEtlSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_project_id ON aasx_processing (project_id)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_processed_by ON aasx_processing (processed_by)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_org_id ON aasx_processing (org_id)",
+            "CREATE INDEX IF NOT EXISTS idx_aasx_processing_dept_id ON aasx_processing (dept_id)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_job_type ON aasx_processing (job_type)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_source_type ON aasx_processing (source_type)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_status ON aasx_processing (processing_status)",
@@ -457,6 +460,7 @@ class AasxEtlSchema(BaseSchema):
                 metric_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 job_id TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
+                dept_id TEXT, -- department_id for complete traceability
                 
                 -- Real-time Health Metrics (Framework Health)
                 health_score INTEGER CHECK (health_score >= 0 AND health_score <= 100),
@@ -532,7 +536,8 @@ class AasxEtlSchema(BaseSchema):
                 quality_trend REAL, -- Quality metrics over time
                 
                 -- Foreign Key Constraints
-                FOREIGN KEY (job_id) REFERENCES aasx_processing (job_id) ON DELETE CASCADE
+                FOREIGN KEY (job_id) REFERENCES aasx_processing (job_id) ON DELETE CASCADE,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
             )
         """
 
@@ -544,6 +549,7 @@ class AasxEtlSchema(BaseSchema):
         index_queries = [
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_metrics_job_id ON aasx_processing_metrics (job_id)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_metrics_timestamp ON aasx_processing_metrics (timestamp)",
+            "CREATE INDEX IF NOT EXISTS idx_aasx_processing_metrics_dept_id ON aasx_processing_metrics (dept_id)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_metrics_health ON aasx_processing_metrics (health_score)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_metrics_performance ON aasx_processing_metrics (extraction_speed_sec, generation_speed_sec, validation_speed_sec)",
             "CREATE INDEX IF NOT EXISTS idx_aasx_processing_metrics_quality ON aasx_processing_metrics (data_freshness_score, data_completeness_score)",
@@ -708,7 +714,7 @@ class AasxEtlSchema(BaseSchema):
     # Additional enterprise helper methods would go here...
     # (These are placeholder implementations to avoid making the response too long)
     
-    async def _create_enterprise_indexes(self, table_name: str, index_queries: List[str]) -> bool:
+    async def _create_enterprise_indexes(self, table_name: str) -> bool:
         """Create enterprise-grade indexes for AASX processing tables."""
         return True
     

@@ -3,7 +3,7 @@ Federated Learning Module
 =========================
 
 A modular federated learning system that contains all FL-specific logic
-while using shared infrastructure from `src/shared/`.
+while using modern engine infrastructure from `src/engine/`.
 """
 
 from .core.federation_engine import FederationEngine

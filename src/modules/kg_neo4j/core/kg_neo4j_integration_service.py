@@ -14,7 +14,7 @@ from src.kg_neo4j.repositories.kg_graph_registry_repository import KGGraphRegist
 from src.kg_neo4j.repositories.kg_graph_metrics_repository import KGGraphMetricsRepository
 from src.kg_neo4j.models.kg_graph_registry import KGGraphRegistry
 from src.kg_neo4j.models.kg_graph_metrics import KGGraphMetrics
-from src.shared.database.async_base_manager import AsyncBaseDatabaseManager
+from src.engine.database.connection_manager import ConnectionManager
 
 logger = logging.getLogger(__name__)
 
@@ -22,12 +22,12 @@ logger = logging.getLogger(__name__)
 class KGNeo4jIntegrationService:
     """Business logic service for Neo4j integration operations."""
     
-    def __init__(self, async_db_manager: AsyncBaseDatabaseManager):
-        """Initialize the Neo4j integration service with async database manager."""
-        self.registry_repo = KGGraphRegistryRepository(async_db_manager)
-        self.metrics_repo = KGGraphMetricsRepository(async_db_manager)
-        self.db_manager = async_db_manager
-        logger.info("Knowledge Graph Neo4j Integration Service initialized with async support")
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the Neo4j integration service with connection manager."""
+        self.connection_manager = connection_manager
+        self.registry_repo = KGGraphRegistryRepository(connection_manager)
+        self.metrics_repo = KGGraphMetricsRepository(connection_manager)
+        logger.info("Knowledge Graph Neo4j Integration Service initialized with pure async support")
     
     async def initialize(self) -> None:
         """Initialize the Neo4j integration service."""
@@ -45,7 +45,7 @@ class KGNeo4jIntegrationService:
         """Test Neo4j connection and update status."""
         try:
             # Get graph details
-            graph = await self.registry_repo.get_by_graph_id(graph_id)
+            graph = await self.registry_repo.get_by_id(graph_id)
             if not graph:
                 return False, "Graph not found", {}
             
@@ -59,11 +59,10 @@ class KGNeo4jIntegrationService:
             disk_usage = 1024.0   # MB
             
             # Update connection status
-            await self.registry_repo.update_registry(graph_id, {
-                "neo4j_connection_status": connection_status,
-                "neo4j_last_connection_test": datetime.now(timezone.utc).isoformat(),
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            })
+            graph.neo4j_connection_status = connection_status
+            graph.neo4j_last_connection_test = datetime.now(timezone.utc)
+            graph.updated_at = datetime.now(timezone.utc)
+            await self.registry_repo.update(graph)
             
             # Record connection metrics
             await self._record_connection_metrics(graph_id, {
@@ -87,11 +86,15 @@ class KGNeo4jIntegrationService:
         except Exception as e:
             logger.error(f"❌ Neo4j connection test failed for graph {graph_id}: {e}")
             # Update connection status to failed
-            await self.registry_repo.update_registry(graph_id, {
-                "neo4j_connection_status": "failed",
-                "neo4j_sync_error_message": str(e),
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            })
+            try:
+                graph = await self.registry_repo.get_by_id(graph_id)
+                if graph:
+                    graph.neo4j_connection_status = "failed"
+                    graph.neo4j_sync_error_message = str(e)
+                    graph.updated_at = datetime.now(timezone.utc)
+                    await self.registry_repo.update(graph)
+            except Exception as update_error:
+                logger.error(f"Failed to update connection status: {update_error}")
             return False, f"Connection test failed: {str(e)}", {}
     
     async def establish_neo4j_connection(self, graph_id: str, connection_config: Dict[str, Any]) -> Tuple[bool, str]:
@@ -102,7 +105,7 @@ class KGNeo4jIntegrationService:
                 return False, "Invalid connection configuration"
             
             # Get graph details
-            graph = await self.registry_repo.get_by_graph_id(graph_id)
+            graph = await self.registry_repo.get_by_id(graph_id)
             if not graph:
                 return False, "Graph not found"
             
@@ -110,43 +113,44 @@ class KGNeo4jIntegrationService:
             # This would integrate with the existing neo4j_manager.py
             
             # Update connection status
-            await self.registry_repo.update_registry(graph_id, {
-                "neo4j_connection_status": "connecting",
-                "neo4j_connection_config": json.dumps(connection_config),
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            })
+            graph.neo4j_connection_status = "connecting"
+            graph.neo4j_connection_config = json.dumps(connection_config)
+            graph.updated_at = datetime.now(timezone.utc)
+            await self.registry_repo.update(graph)
             
             # Simulate connection establishment
             connection_successful = True
             
             if connection_successful:
                 # Update status to connected
-                await self.registry_repo.update_registry(graph_id, {
-                    "neo4j_connection_status": "connected",
-                    "neo4j_connection_established_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
-                })
+                graph.neo4j_connection_status = "connected"
+                graph.neo4j_connection_established_at = datetime.now(timezone.utc)
+                graph.updated_at = datetime.now(timezone.utc)
+                await self.registry_repo.update(graph)
                 
                 logger.info(f"✅ Neo4j connection established for graph {graph_id}")
                 return True, "Neo4j connection established successfully"
             else:
                 # Update status to failed
-                await self.registry_repo.update_registry(graph_id, {
-                    "neo4j_connection_status": "failed",
-                    "neo4j_sync_error_message": "Failed to establish connection",
-                    "updated_at": datetime.now(timezone.utc).isoformat()
-                })
+                graph.neo4j_connection_status = "failed"
+                graph.neo4j_sync_error_message = "Failed to establish connection"
+                graph.updated_at = datetime.now(timezone.utc)
+                await self.registry_repo.update(graph)
                 
                 return False, "Failed to establish Neo4j connection"
                 
         except Exception as e:
             logger.error(f"❌ Failed to establish Neo4j connection for graph {graph_id}: {e}")
             # Update connection status to failed
-            await self.registry_repo.update_registry(graph_id, {
-                "neo4j_connection_status": "failed",
-                "neo4j_sync_error_message": str(e),
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            })
+            try:
+                graph = await self.registry_repo.get_by_id(graph_id)
+                if graph:
+                    graph.neo4j_connection_status = "failed"
+                    graph.neo4j_sync_error_message = str(e)
+                    graph.updated_at = datetime.now(timezone.utc)
+                    await self.registry_repo.update(graph)
+            except Exception as update_error:
+                logger.error(f"Failed to update connection status: {update_error}")
             return False, f"Connection establishment failed: {str(e)}"
     
     # ==================== GRAPH DATA SYNCHRONIZATION ====================
@@ -155,7 +159,7 @@ class KGNeo4jIntegrationService:
         """Import graph data to Neo4j."""
         try:
             # Get graph details
-            graph = await self.registry_repo.get_by_graph_id(graph_id)
+            graph = await self.registry_repo.get_by_id(graph_id)
             if not graph:
                 return False, "Graph not found"
             
@@ -224,7 +228,7 @@ class KGNeo4jIntegrationService:
         """Export graph data from Neo4j."""
         try:
             # Get graph details
-            graph = await self.registry_repo.get_by_graph_id(graph_id)
+            graph = await self.registry_repo.get_by_id(graph_id)
             if not graph:
                 return False, "Graph not found"
             
@@ -290,7 +294,7 @@ class KGNeo4jIntegrationService:
         """Synchronize graph data with Neo4j."""
         try:
             # Get graph details
-            graph = await self.registry_repo.get_by_graph_id(graph_id)
+            graph = await self.registry_repo.get_by_id(graph_id)
             if not graph:
                 return False, "Graph not found"
             
@@ -366,7 +370,7 @@ class KGNeo4jIntegrationService:
         """Execute Cypher query on Neo4j graph."""
         try:
             # Get graph details
-            graph = await self.registry_repo.get_by_graph_id(graph_id)
+            graph = await self.registry_repo.get_by_id(graph_id)
             if not graph:
                 return False, "Graph not found", None
             
@@ -421,7 +425,7 @@ class KGNeo4jIntegrationService:
         """Get comprehensive graph statistics from Neo4j."""
         try:
             # Get graph details
-            graph = await self.registry_repo.get_by_graph_id(graph_id)
+            graph = await self.registry_repo.get_by_id(graph_id)
             if not graph:
                 return False, "Graph not found", None
             
@@ -471,7 +475,7 @@ class KGNeo4jIntegrationService:
                 query_execution_count=1
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             
         except Exception as e:
             logger.error(f"❌ Failed to record connection metrics for graph {graph_id}: {e}")
@@ -491,7 +495,7 @@ class KGNeo4jIntegrationService:
                 operation_data=import_data
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             
         except Exception as e:
             logger.error(f"❌ Failed to record import metrics for graph {graph_id}: {e}")
@@ -510,7 +514,7 @@ class KGNeo4jIntegrationService:
                 operation_data=export_data
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             
         except Exception as e:
             logger.error(f"❌ Failed to record export metrics for graph {graph_id}: {e}")
@@ -528,7 +532,7 @@ class KGNeo4jIntegrationService:
                 operation_data=sync_data
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             
         except Exception as e:
             logger.error(f"❌ Failed to record sync metrics for graph {graph_id}: {e}")
@@ -547,7 +551,7 @@ class KGNeo4jIntegrationService:
                 operation_data=query_data
             )
             
-            await self.metrics_repo.create_metrics(metrics)
+            await self.metrics_repo.create(metrics)
             
         except Exception as e:
             logger.error(f"❌ Failed to record query metrics for graph {graph_id}: {e}")

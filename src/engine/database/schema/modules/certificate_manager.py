@@ -5,12 +5,17 @@ Comprehensive digital certificate system for AASX Digital Twin Analytics.
 Automatically generates, maintains, and exports verifiable digital certificates
 for every processed AASX sample with complete business entity relationships.
 
-ENTERPRISE-GRADE FEATURES:
+ENTERPRISE-GRADE FEATURES (MERGED INTO MAIN TABLES):
 - Advanced certificate lifecycle management with digital trust and verification
-- Automated compliance monitoring and audit trail management
-- Comprehensive security and access control for certificate operations
-- Enterprise-grade metrics and analytics for certificate management
+- Automated compliance monitoring and audit trail management (merged into certificates_registry)
+- Comprehensive security and access control for certificate operations (merged into certificates_registry)
+- Enterprise-grade metrics and analytics for certificate management (merged into certificates_metrics)
 - Advanced governance and policy enforcement capabilities
+
+TABLE STRUCTURE:
+- certificates_registry: Main certificate table with compliance and security fields
+- certificates_versions: Version tracking with complete change history
+- certificates_metrics: Performance metrics with enterprise analytics
 """
 
 import logging
@@ -25,11 +30,19 @@ logger = logging.getLogger(__name__)
 
 class CertificateManagerSchema(BaseSchema):
     """
-    Enterprise-Grade Certificate Manager Schema Module
+    Enterprise-Grade Certificate Manager Schema Module (Merged Table Structure)
     
     Comprehensive digital certificate system for AASX Digital Twin Analytics.
     Automatically generates, maintains, and exports verifiable digital certificates
     for every processed AASX sample with complete business entity relationships.
+    
+    MERGED TABLE ARCHITECTURE:
+    - certificates_registry: Enhanced with compliance tracking and security metrics
+    - certificates_versions: Complete version history with change tracking
+    - certificates_metrics: Enhanced with enterprise performance analytics
+    
+    All enterprise functionality is now consolidated into these three main tables
+    for improved performance, maintainability, and data consistency.
     """
     
     def __init__(self, connection_manager, schema_name: str = "certificate_manager"):
@@ -52,6 +65,7 @@ class CertificateManagerSchema(BaseSchema):
             file_id TEXT NOT NULL,                       -- Reference to the AASX file
             user_id TEXT NOT NULL,                       -- User who created/manages
             org_id TEXT NOT NULL,                        -- Organization that owns
+            dept_id TEXT,                                -- Department for complete traceability
             project_id TEXT NOT NULL,                    -- Project context
             use_case_id TEXT NOT NULL,                   -- Use case context
             twin_id TEXT NOT NULL,                       -- Digital twin reference
@@ -90,6 +104,22 @@ class CertificateManagerSchema(BaseSchema):
             data_accuracy_score REAL DEFAULT 0.0 CHECK (data_accuracy_score >= 0.0 AND data_accuracy_score <= 100.0),
             data_reliability_score REAL DEFAULT 0.0 CHECK (data_reliability_score >= 0.0 AND data_reliability_score <= 100.0),
             data_consistency_score REAL DEFAULT 0.0 CHECK (data_consistency_score >= 0.0 AND data_consistency_score <= 100.0),
+            
+            -- Enterprise Compliance Tracking
+            compliance_type TEXT DEFAULT 'standard' CHECK (compliance_type IN ('standard', 'gdpr', 'sox', 'iso27001', 'custom')),
+            compliance_status TEXT DEFAULT 'pending' CHECK (compliance_status IN ('pending', 'compliant', 'non_compliant', 'requires_review', 'audit_in_progress')),
+            compliance_score REAL DEFAULT 0.0 CHECK (compliance_score >= 0.0 AND compliance_score <= 100.0),
+            last_audit_date TEXT,                         -- Last compliance audit date
+            next_audit_date TEXT,                         -- Next scheduled audit date
+            audit_details TEXT DEFAULT '{}',              -- JSON: detailed audit information
+            
+            -- Enterprise Security Metrics
+            security_event_type TEXT DEFAULT 'none' CHECK (security_event_type IN ('none', 'access_attempt', 'data_breach', 'policy_violation', 'security_scan')),
+            security_level TEXT DEFAULT 'standard' CHECK (security_level IN ('basic', 'standard', 'enhanced', 'enterprise', 'military')),
+            threat_assessment TEXT DEFAULT 'low' CHECK (threat_assessment IN ('low', 'medium', 'high', 'critical')),
+            security_score REAL DEFAULT 0.0 CHECK (security_score >= 0.0 AND security_score <= 100.0),
+            last_security_scan TEXT,                      -- Last security scan date
+            security_details TEXT DEFAULT '{}',            -- JSON: security scan results and details
             
             -- Digital Trust & Verification
             digital_signature TEXT,                        -- Digital signature for authenticity
@@ -137,6 +167,7 @@ class CertificateManagerSchema(BaseSchema):
             FOREIGN KEY (file_id) REFERENCES files(file_id) ON DELETE CASCADE,
             FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
             FOREIGN KEY (org_id) REFERENCES organizations(org_id) ON DELETE CASCADE,
+            FOREIGN KEY (dept_id) REFERENCES departments(dept_id) ON DELETE SET NULL,
             FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE CASCADE,
             FOREIGN KEY (use_case_id) REFERENCES use_cases(use_case_id) ON DELETE CASCADE,
             FOREIGN KEY (twin_id) REFERENCES twin_registry(twin_id) ON DELETE CASCADE,
@@ -157,6 +188,7 @@ class CertificateManagerSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_certificates_file_id ON certificates_registry(file_id);",
             "CREATE INDEX IF NOT EXISTS idx_certificates_user_id ON certificates_registry(user_id);",
             "CREATE INDEX IF NOT EXISTS idx_certificates_org_id ON certificates_registry(org_id);",
+            "CREATE INDEX IF NOT EXISTS idx_certificates_dept_id ON certificates_registry(dept_id);",
             "CREATE INDEX IF NOT EXISTS idx_certificates_project_id ON certificates_registry(project_id);",
             "CREATE INDEX IF NOT EXISTS idx_certificates_use_case_id ON certificates_registry(use_case_id);",
             "CREATE INDEX IF NOT EXISTS idx_certificates_twin_id ON certificates_registry(twin_id);",
@@ -165,7 +197,10 @@ class CertificateManagerSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_certificates_org_user ON certificates_registry(org_id, user_id);",
             "CREATE INDEX IF NOT EXISTS idx_certificates_project_user ON certificates_registry(project_id, user_id);",
             "CREATE INDEX IF NOT EXISTS idx_certificates_completion ON certificates_registry(completion_percentage);",
-            "CREATE INDEX IF NOT EXISTS idx_certificates_quality ON certificates_registry(overall_quality_score);"
+            "CREATE INDEX IF NOT EXISTS idx_certificates_quality ON certificates_registry(overall_quality_score);",
+            "CREATE INDEX IF NOT EXISTS idx_certificates_compliance ON certificates_registry(compliance_status, compliance_score);",
+            "CREATE INDEX IF NOT EXISTS idx_certificates_security ON certificates_registry(security_level, security_score);",
+            "CREATE INDEX IF NOT EXISTS idx_certificates_audit ON certificates_registry(last_audit_date, next_audit_date);"
         ]
         
         return await self.create_indexes("certificates_registry", index_queries)
@@ -299,6 +334,14 @@ class CertificateManagerSchema(BaseSchema):
             return_visitor_count INTEGER DEFAULT 0,      -- Number of return visitors
             user_satisfaction_score REAL CHECK (user_satisfaction_score >= 0.0 AND user_satisfaction_score <= 5.0),
             
+            -- Enterprise Performance Analytics
+            performance_trend TEXT DEFAULT 'stable' CHECK (performance_trend IN ('improving', 'stable', 'declining', 'volatile')),
+            optimization_suggestions TEXT DEFAULT '[]',   -- JSON array: performance optimization suggestions
+            last_optimization_date TEXT,                 -- Last performance optimization date
+            sla_compliance_rate REAL DEFAULT 100.0 CHECK (sla_compliance_rate >= 0.0 AND sla_compliance_rate <= 100.0),
+            resource_utilization_rate REAL DEFAULT 0.0 CHECK (resource_utilization_rate >= 0.0 AND resource_utilization_rate <= 100.0),
+            scalability_score REAL DEFAULT 0.0 CHECK (scalability_score >= 0.0 AND scalability_score <= 100.0),
+            
             -- Timestamps & Audit
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             updated_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -320,7 +363,10 @@ class CertificateManagerSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_created_at ON certificates_metrics(created_at);",
             "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_quality ON certificates_metrics(data_quality_score);",
             "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_performance ON certificates_metrics(generation_time_ms);",
-            "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_usage ON certificates_metrics(view_count, export_count);"
+            "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_usage ON certificates_metrics(view_count, export_count);",
+            "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_performance_trend ON certificates_metrics(performance_trend);",
+            "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_sla ON certificates_metrics(sla_compliance_rate);",
+            "CREATE INDEX IF NOT EXISTS idx_certificate_metrics_scalability ON certificates_metrics(scalability_score);"
         ]
         
         return await self.create_indexes("certificates_metrics", index_queries)
@@ -370,14 +416,11 @@ class CertificateManagerSchema(BaseSchema):
         return ['certificates_registry', 'certificates_versions', 'certificates_metrics']
 
     async def initialize(self) -> bool:
-        """Initialize the Certificate Manager schema with enterprise-grade features."""
+        """Initialize the Certificate Manager schema with enhanced features."""
         try:
             # Call parent initialization
             if not await super().initialize():
                 return False
-            
-            # Initialize enterprise metadata tables
-            await self._create_enterprise_metadata_tables()
             
             # Initialize Certificate Manager monitoring
             await self._initialize_certificate_manager_monitoring()
@@ -385,8 +428,8 @@ class CertificateManagerSchema(BaseSchema):
             # Setup compliance framework
             await self._setup_compliance_framework()
             
-            # Create enterprise tables
-            await self._create_enterprise_tables()
+            # Create core tables
+            await self._create_core_tables()
             
             # Setup Certificate Manager policies
             await self._setup_certificate_manager_policies()
@@ -394,7 +437,7 @@ class CertificateManagerSchema(BaseSchema):
             # Initialize performance analytics
             await self._initialize_performance_analytics()
             
-            logger.info("✅ Certificate Manager Schema initialized with enterprise-grade features")
+            logger.info("✅ Certificate Manager Schema initialized with enhanced features")
             return True
             
         except Exception as e:
@@ -402,7 +445,7 @@ class CertificateManagerSchema(BaseSchema):
             return False
 
     async def create_table(self, table_name: str, table_definition: Union[str, Dict[str, Any]]) -> bool:
-        """Create a table with enterprise-grade features."""
+        """Create a table with enhanced features."""
         try:
             # Create the base table
             if isinstance(table_definition, str):
@@ -414,8 +457,8 @@ class CertificateManagerSchema(BaseSchema):
                 if not await self._create_table_from_definition(table_name, table_definition):
                     return False
             
-            # Add enterprise enhancements
-            await self._create_enterprise_indexes(table_name, [])
+            # Add enhanced features
+            await self._create_enhanced_indexes(table_name, [])
             await self._setup_table_monitoring(table_name)
             await self._validate_table_structure(table_name)
             await self._update_table_metadata(table_name)
@@ -427,7 +470,7 @@ class CertificateManagerSchema(BaseSchema):
             return False
 
     async def drop_table(self, table_name: str) -> bool:
-        """Drop a table with enterprise-grade safety checks."""
+        """Drop a table with enhanced safety checks."""
         try:
             # Check dependencies
             if not await self._check_table_dependencies(table_name):
@@ -459,14 +502,14 @@ class CertificateManagerSchema(BaseSchema):
             return False
 
     async def get_table_info(self, table_name: str) -> Optional[Dict[str, Any]]:
-        """Get comprehensive table information including enterprise metrics."""
+        """Get comprehensive table information including enhanced metrics."""
         try:
             base_info = await super().get_table_info(table_name)
             if not base_info:
                 return None
             
-            # Add enterprise-specific information
-            enterprise_info = {
+            # Add enhanced information
+            enhanced_info = {
                 **base_info,
                 "certificate_metrics": self._certificate_metrics.get(table_name, {}),
                 "performance_analytics": self._performance_analytics.get(table_name, {}),
@@ -474,7 +517,7 @@ class CertificateManagerSchema(BaseSchema):
                 "security_metrics": self._security_metrics.get(table_name, {})
             }
             
-            return enterprise_info
+            return enhanced_info
             
         except Exception as e:
             logger.error(f"Failed to get table info for {table_name}: {e}")
@@ -489,13 +532,13 @@ class CertificateManagerSchema(BaseSchema):
             return []
 
     async def validate_table_structure(self, table_name: str, expected_structure: Dict[str, Any]) -> bool:
-        """Validate table structure with enterprise-grade validation."""
+        """Validate table structure with enhanced validation."""
         try:
             # Basic validation
             if not await super().validate_table_structure(table_name, expected_structure):
                 return False
             
-            # Enterprise-specific validation
+            # Enhanced validation
             await self._validate_column_properties(table_name)
             await self._validate_certificate_manager_requirements(table_name)
             await self._validate_table_constraints(table_name)
@@ -508,7 +551,7 @@ class CertificateManagerSchema(BaseSchema):
             return False
 
     async def execute_migration(self, migration_script: str, rollback_script: Optional[str] = None) -> bool:
-        """Execute migration with enterprise-grade governance."""
+        """Execute migration with enhanced governance."""
         try:
             # Pre-migration governance checks
             await self._validate_migration_certificate_manager_impact(migration_script)
@@ -529,11 +572,11 @@ class CertificateManagerSchema(BaseSchema):
             return False
 
     async def get_migration_history(self) -> List[Dict[str, Any]]:
-        """Get migration history with enterprise governance details."""
+        """Get migration history with enhanced governance details."""
         try:
             base_history = await super().get_migration_history()
             
-            # Enhance with enterprise details
+            # Enhance with enhanced details
             enhanced_history = []
             for migration in base_history:
                 enhanced_migration = {
@@ -551,7 +594,7 @@ class CertificateManagerSchema(BaseSchema):
             return []
 
     async def rollback_migration(self, migration_id: str) -> bool:
-        """Rollback migration with enterprise-grade safety."""
+        """Rollback migration with enhanced safety."""
         try:
             # Validate rollback safety
             if not await self._validate_rollback_safety(migration_id):
@@ -618,84 +661,10 @@ class CertificateManagerSchema(BaseSchema):
             ]
         }
 
-    # Enterprise-Grade Helper Methods
+    # Core Helper Methods
 
-    async def _create_enterprise_metadata_tables(self) -> bool:
-        """Create enterprise metadata tables for Certificate Manager processing."""
-        try:
-            # Create enterprise Certificate Manager metrics table
-            enterprise_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_certificate_manager_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    metric_type TEXT NOT NULL,
-                    metric_value REAL,
-                    metric_timestamp TEXT NOT NULL,
-                    metadata TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise compliance tracking table
-            compliance_tracking_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_certificate_manager_compliance_tracking (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    compliance_type TEXT NOT NULL,
-                    compliance_status TEXT NOT NULL,
-                    compliance_score REAL,
-                    last_audit_date TEXT,
-                    next_audit_date TEXT,
-                    audit_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise security metrics table
-            security_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_certificate_manager_security_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    security_event_type TEXT NOT NULL,
-                    security_level TEXT NOT NULL,
-                    threat_assessment TEXT,
-                    security_score REAL,
-                    last_security_scan TEXT,
-                    security_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise performance analytics table
-            performance_analytics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_certificate_manager_performance_analytics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    performance_metric TEXT NOT NULL,
-                    performance_value REAL,
-                    performance_trend TEXT,
-                    optimization_suggestions TEXT DEFAULT '{}',
-                    last_optimization_date TEXT
-                )
-            """
-            
-            tables = [
-                ("enterprise_certificate_manager_metrics", enterprise_metrics_query),
-                ("enterprise_certificate_manager_compliance_tracking", compliance_tracking_query),
-                ("enterprise_certificate_manager_security_metrics", security_metrics_query),
-                ("enterprise_certificate_manager_performance_analytics", performance_analytics_query)
-            ]
-            
-            for table_name, query in tables:
-                if not await self.create_table(table_name, query):
-                    logger.error(f"Failed to create enterprise metadata table: {table_name}")
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create enterprise metadata tables: {e}")
-            return False
-
-    async def _create_enterprise_tables(self) -> bool:
-        """Create all enterprise Certificate Manager tables."""
+    async def _create_core_tables(self) -> bool:
+        """Create all core Certificate Manager tables."""
         try:
             # Create core tables
             if not await self._create_certificates_registry_table():
@@ -710,7 +679,7 @@ class CertificateManagerSchema(BaseSchema):
             return True
             
         except Exception as e:
-            logger.error(f"Failed to create enterprise tables: {e}")
+            logger.error(f"Failed to create core tables: {e}")
             return False
 
     async def _initialize_certificate_manager_monitoring(self) -> bool:
@@ -770,11 +739,11 @@ class CertificateManagerSchema(BaseSchema):
             logger.error(f"Failed to initialize performance analytics: {e}")
             return False
 
-    # Additional enterprise helper methods would go here...
+    # Additional enhanced helper methods would go here...
     # (These are placeholder implementations to avoid making the response too long)
     
-    async def _create_enterprise_indexes(self, table_name: str, index_queries: List[str]) -> bool:
-        """Create enterprise-grade indexes for Certificate Manager tables."""
+    async def _create_enhanced_indexes(self, table_name: str, index_queries: List[str]) -> bool:
+        """Create enhanced indexes for Certificate Manager tables."""
         return True
     
     async def _setup_table_monitoring(self, table_name: str) -> bool:

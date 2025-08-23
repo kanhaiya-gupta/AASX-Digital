@@ -493,6 +493,7 @@ class CoreSystemSchema(BaseSchema):
                 -- User Management & Ownership
                 user_id TEXT NOT NULL,                             -- Current user who owns/accesses this registry
                 org_id TEXT NOT NULL,                              -- Organization this registry belongs to
+                dept_id TEXT,                                      -- Department for complete traceability
                 owner_team TEXT,                                   -- Team responsible for this system
                 steward_user_id TEXT,                              -- Data steward for this system
                 
@@ -543,7 +544,8 @@ class CoreSystemSchema(BaseSchema):
                 -- Constraints
                 FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
                 FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
-                FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL
+                FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
             )
         """
 
@@ -555,6 +557,7 @@ class CoreSystemSchema(BaseSchema):
         index_queries = [
             "CREATE INDEX IF NOT EXISTS idx_enterprise_core_system_registry_user_id ON core_system_registry (user_id)",
             "CREATE INDEX IF NOT EXISTS idx_enterprise_core_system_registry_org_id ON core_system_registry (org_id)",
+            "CREATE INDEX IF NOT EXISTS idx_enterprise_core_system_registry_dept_id ON core_system_registry (dept_id)",
             "CREATE INDEX IF NOT EXISTS idx_enterprise_core_system_registry_category ON core_system_registry (system_category)",
             "CREATE INDEX IF NOT EXISTS idx_enterprise_core_system_registry_type ON core_system_registry (system_type)",
             "CREATE INDEX IF NOT EXISTS idx_enterprise_core_system_registry_priority ON core_system_registry (system_priority)",

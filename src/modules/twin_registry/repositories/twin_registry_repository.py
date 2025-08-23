@@ -3,15 +3,15 @@ Twin Registry Repository
 
 Updated to use our new comprehensive database schema.
 Handles twin registry operations with the new twin_registry table.
+Phase 2: Service Layer Modernization with pure async support.
 """
 
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
-from src.shared.database.base_manager import BaseDatabaseManager
-from src.shared.repositories.base_repository import BaseRepository
-from src.twin_registry.models.twin_registry import (
+from src.engine.database.connection_manager import ConnectionManager
+from ..models.twin_registry import (
     TwinRegistry,
     TwinRegistryQuery,
     TwinRegistrySummary
@@ -20,13 +20,13 @@ from src.twin_registry.models.twin_registry import (
 logger = logging.getLogger(__name__)
 
 
-class TwinRegistryRepository(BaseRepository[TwinRegistry]):
+class TwinRegistryRepository:
     """Repository for managing twin registry data with new comprehensive schema."""
     
-    def __init__(self, db_manager: BaseDatabaseManager):
-        """Initialize the twin registry repository."""
-        super().__init__(db_manager, TwinRegistry)
-        logger.info("Twin Registry Repository initialized with new schema")
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the twin registry repository with engine connection manager."""
+        self.connection_manager = connection_manager
+        logger.info("Twin Registry Repository initialized with new schema and engine")
     
     def _get_table_name(self) -> str:
         """Get the table name for this repository."""
@@ -43,7 +43,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
             "sync_status", "sync_frequency", "last_sync_at", "next_sync_at", "sync_error_count",
             "sync_error_message", "performance_score", "data_quality_score", "reliability_score",
             "compliance_score", "security_level", "access_control_level", "encryption_enabled",
-            "audit_logging_enabled", "user_id", "org_id", "owner_team", "steward_user_id",
+            "audit_logging_enabled", "user_id", "org_id", "dept_id", "owner_team", "steward_user_id",
             "created_at", "updated_at", "activated_at", "last_accessed_at", "last_modified_at",
             "registry_config", "registry_metadata", "custom_attributes", "tags", "relationships",
             "dependencies", "instances"
@@ -75,11 +75,11 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
                 sync_status, sync_frequency, last_sync_at, next_sync_at, sync_error_count,
                 sync_error_message, performance_score, data_quality_score, reliability_score,
                 compliance_score, security_level, access_control_level, encryption_enabled,
-                audit_logging_enabled, user_id, org_id, owner_team, steward_user_id,
+                audit_logging_enabled, user_id, org_id, dept_id, owner_team, steward_user_id,
                 created_at, updated_at, activated_at, last_accessed_at, last_modified_at,
                 registry_config, registry_metadata, custom_attributes, tags, relationships,
                 dependencies, instances
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             
             params = (
@@ -108,8 +108,8 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
                 registry.availability_status,
                 registry.sync_status,
                 registry.sync_frequency,
-                registry.last_sync_at.isoformat() if registry.last_sync_at else None,
-                registry.next_sync_at.isoformat() if registry.next_sync_at else None,
+                registry.last_sync_at,
+                registry.next_sync_at,
                 registry.sync_error_count,
                 registry.sync_error_message,
                 registry.performance_score,
@@ -122,31 +122,32 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
                 registry.audit_logging_enabled,
                 registry.user_id,
                 registry.org_id,
+                registry.dept_id,  # Added dept_id
                 registry.owner_team,
                 registry.steward_user_id,
-                registry.created_at.isoformat(),
-                registry.updated_at.isoformat(),
-                registry.activated_at.isoformat() if registry.activated_at else None,
-                registry.last_accessed_at.isoformat() if registry.last_accessed_at else None,
-                registry.last_modified_at.isoformat() if registry.last_modified_at else None,
-                self._serialize_json(registry.registry_config),
-                self._serialize_json(registry.registry_metadata),
-                self._serialize_json(registry.custom_attributes),
-                self._serialize_json(registry.tags),
-                self._serialize_json(registry.relationships),
-                self._serialize_json(registry.dependencies),
-                self._serialize_json(registry.instances)
+                registry.created_at,
+                registry.updated_at,
+                registry.activated_at,
+                registry.last_accessed_at,
+                registry.last_modified_at,
+                registry.registry_config,
+                registry.registry_metadata,
+                registry.custom_attributes,
+                registry.tags,
+                registry.relationships,
+                registry.dependencies,
+                registry.instances
             )
             
-            async with self.db_manager.get_connection() as conn:
+            async with self.connection_manager.get_connection() as conn:
                 await conn.execute(sql, params)
                 await conn.commit()
             
-            logger.info(f"Created twin registry: {registry.registry_id}")
+            logger.info(f"Created twin registry entry for twin {registry.twin_id}")
             return registry
             
         except Exception as e:
-            logger.error(f"Failed to create twin registry: {e}")
+            logger.error(f"Failed to create twin registry entry: {e}")
             raise
     
     async def get_by_id(self, registry_id: str) -> Optional[TwinRegistry]:
@@ -154,7 +155,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
         try:
             sql = "SELECT * FROM twin_registry WHERE registry_id = ?"
             
-            async with self.db_manager.get_connection() as conn:
+            async with self.connection_manager.get_connection() as conn:
                 cursor = await conn.execute(sql, (registry_id,))
                 row = await cursor.fetchone()
             
@@ -171,7 +172,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
         try:
             sql = "SELECT * FROM twin_registry WHERE twin_id = ?"
             
-            async with self.db_manager.get_connection() as conn:
+            async with self.connection_manager.get_connection() as conn:
                 cursor = await conn.execute(sql, (twin_id,))
                 row = await cursor.fetchone()
             
@@ -234,7 +235,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
             sql += " ORDER BY created_at DESC"
             
             # Use the database manager's connection method
-            conn = self.db_manager.connection_manager.get_connection()
+            conn = self.connection_manager.get_connection()
             cursor = conn.execute(sql, params)
             rows = cursor.fetchall()
             
@@ -253,7 +254,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
         try:
             sql = "SELECT COUNT(*) FROM twin_registry"
             
-            conn = self.db_manager.connection_manager.get_connection()
+            conn = self.connection_manager.get_connection()
             cursor = conn.execute(sql)
             result = cursor.fetchone()
             
@@ -268,7 +269,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
         try:
             sql = "SELECT COUNT(*) FROM twin_registry WHERE registry_type = ?"
             
-            conn = self.db_manager.connection_manager.get_connection()
+            conn = self.connection_manager.get_connection()
             cursor = conn.execute(sql, (registry_type,))
             result = cursor.fetchone()
             
@@ -283,7 +284,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
         try:
             sql = "SELECT COUNT(*) FROM twin_registry WHERE integration_status = ?"
             
-            conn = self.db_manager.connection_manager.get_connection()
+            conn = self.connection_manager.get_connection()
             cursor = conn.execute(sql, (status,))
             result = cursor.fetchone()
             
@@ -339,8 +340,8 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
                 registry.availability_status,
                 registry.sync_status,
                 registry.sync_frequency,
-                registry.last_sync_at.isoformat() if registry.last_sync_at else None,
-                registry.next_sync_at.isoformat() if registry.next_sync_at else None,
+                registry.last_sync_at,
+                registry.next_sync_at,
                 registry.sync_error_count,
                 registry.sync_error_message,
                 registry.performance_score,
@@ -353,21 +354,21 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
                 registry.audit_logging_enabled,
                 registry.owner_team,
                 registry.steward_user_id,
-                registry.updated_at.isoformat(),
-                registry.activated_at.isoformat() if registry.activated_at else None,
-                registry.last_accessed_at.isoformat() if registry.last_accessed_at else None,
-                registry.last_modified_at.isoformat() if registry.last_modified_at else None,
-                self._serialize_json(registry.registry_config),
-                self._serialize_json(registry.registry_metadata),
-                self._serialize_json(registry.custom_attributes),
-                self._serialize_json(registry.tags),
-                self._serialize_json(registry.relationships),
-                self._serialize_json(registry.dependencies),
-                self._serialize_json(registry.instances),
+                registry.updated_at,
+                registry.activated_at,
+                registry.last_accessed_at,
+                registry.last_modified_at,
+                registry.registry_config,
+                registry.registry_metadata,
+                registry.custom_attributes,
+                registry.tags,
+                registry.relationships,
+                registry.dependencies,
+                registry.instances,
                 registry.registry_id
             )
             
-            async with self.db_manager.get_connection() as conn:
+            async with self.connection_manager.get_connection() as conn:
                 await conn.execute(sql, params)
                 await conn.commit()
             
@@ -383,7 +384,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
         try:
             sql = "DELETE FROM twin_registry WHERE registry_id = ?"
             
-            async with self.db_manager.get_connection() as conn:
+            async with self.connection_manager.get_connection() as conn:
                 cursor = await conn.execute(sql, (registry_id,))
                 await conn.commit()
             
@@ -399,7 +400,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
     async def get_summary(self) -> TwinRegistrySummary:
         """Get registry summary statistics."""
         try:
-            async with self.db_manager.get_connection() as conn:
+            async with self.connection_manager.get_connection() as conn:
                 # Total registries
                 cursor = await conn.execute("SELECT COUNT(*) FROM twin_registry")
                 total = (await cursor.fetchone())[0]
@@ -495,6 +496,7 @@ class TwinRegistryRepository(BaseRepository[TwinRegistry]):
                 audit_logging_enabled=bool(safe_get('audit_logging_enabled')),
                 user_id=safe_get('user_id'),
                 org_id=safe_get('org_id'),
+                dept_id=safe_get('dept_id'),
                 owner_team=safe_get('owner_team'),
                 steward_user_id=safe_get('steward_user_id'),
                 created_at=self._parse_datetime(safe_get('created_at')) or datetime.now(),

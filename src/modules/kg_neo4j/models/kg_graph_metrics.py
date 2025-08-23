@@ -5,7 +5,7 @@ Updated to match our comprehensive database schema with all fields.
 Supports real-time performance monitoring and analytics for knowledge graphs.
 """
 
-from src.shared.models.base_model import BaseModel
+from src.engine.models.base_model import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 
@@ -17,6 +17,7 @@ class KGGraphMetrics(BaseModel):
     metric_id: Optional[int] = None
     graph_id: str
     timestamp: datetime
+    dept_id: Optional[str] = None
     
     # Real-time Health Metrics (Same pattern as twin_registry_metrics)
     health_score: Optional[int] = None                           # Current health score (0-100)
@@ -84,69 +85,69 @@ class KGGraphMetrics(BaseModel):
         
         super().__init__(**data)
     
-    def update_neo4j_metrics(self, connection_status: str, query_time: float, memory: float, disk: float):
-        """Update Neo4j-specific performance metrics"""
+    async def update_neo4j_metrics(self, connection_status: str, query_time: float, memory: float, disk: float) -> None:
+        """Update Neo4j-specific performance metrics asynchronously"""
         self.neo4j_connection_status = connection_status
         self.neo4j_query_response_time_ms = query_time
         self.neo4j_memory_usage_mb = memory
         self.neo4j_disk_usage_mb = disk
         self.timestamp = datetime.now(timezone.utc)
     
-    def update_graph_performance(self, traversal_speed: float, query_complexity: float, 
-                                visualization_perf: float, analysis_accuracy: float):
-        """Update graph-specific performance metrics"""
+    async def update_graph_performance(self, traversal_speed: float, query_complexity: float, 
+                                visualization_perf: float, analysis_accuracy: float) -> None:
+        """Update graph-specific performance metrics asynchronously"""
         self.graph_traversal_speed_ms = traversal_speed
         self.graph_query_complexity_score = query_complexity
         self.graph_visualization_performance = visualization_perf
         self.graph_analysis_accuracy = analysis_accuracy
         self.timestamp = datetime.now(timezone.utc)
     
-    def update_user_activity(self, interactions: int, queries: int, views: int, exports: int):
-        """Update user interaction metrics"""
+    async def update_user_activity(self, interactions: int, queries: int, views: int, exports: int) -> None:
+        """Update user interaction metrics asynchronously"""
         self.user_interaction_count = interactions
         self.query_execution_count = queries
         self.visualization_view_count = views
         self.export_operation_count = exports
         self.timestamp = datetime.now(timezone.utc)
     
-    def update_data_quality(self, freshness: float, completeness: float, consistency: float, accuracy: float):
-        """Update data quality metrics"""
+    async def update_data_quality(self, freshness: float, completeness: float, consistency: float, accuracy: float) -> None:
+        """Update data quality metrics asynchronously"""
         self.data_freshness_score = max(0.0, min(1.0, freshness))
         self.data_completeness_score = max(0.0, min(1.0, completeness))
         self.data_consistency_score = max(0.0, min(1.0, consistency))
         self.data_accuracy_score = max(0.0, min(1.0, accuracy))
         self.timestamp = datetime.now(timezone.utc)
     
-    def update_system_resources(self, cpu: float, memory: float, network: float, storage: float):
-        """Update system resource metrics"""
+    async def update_system_resources(self, cpu: float, memory: float, network: float, storage: float) -> None:
+        """Update system resource metrics asynchronously"""
         self.cpu_usage_percent = max(0.0, min(100.0, cpu))
         self.memory_usage_percent = max(0.0, min(100.0, memory))
         self.network_throughput_mbps = max(0.0, network)
         self.storage_usage_percent = max(0.0, min(100.0, storage))
         self.timestamp = datetime.now(timezone.utc)
     
-    def add_performance_trend(self, trend_name: str, trend_data: Dict[str, Any]):
-        """Add performance trend data"""
+    async def add_performance_trend(self, trend_name: str, trend_data: Dict[str, Any]) -> None:
+        """Add performance trend data asynchronously"""
         self.performance_trends[trend_name] = trend_data
         self.timestamp = datetime.now(timezone.utc)
     
-    def add_resource_trend(self, resource_name: str, trend_data: Dict[str, Any]):
-        """Add resource utilization trend data"""
+    async def add_resource_trend(self, resource_name: str, trend_data: Dict[str, Any]) -> None:
+        """Add resource utilization trend data asynchronously"""
         self.resource_utilization_trends[resource_name] = trend_data
         self.timestamp = datetime.now(timezone.utc)
     
-    def add_user_activity(self, activity_type: str, activity_data: Dict[str, Any]):
-        """Add user activity data"""
+    async def add_user_activity(self, activity_type: str, activity_data: Dict[str, Any]) -> None:
+        """Add user activity data asynchronously"""
         self.user_activity[activity_type] = activity_data
         self.timestamp = datetime.now(timezone.utc)
     
-    def add_query_pattern(self, pattern_name: str, pattern_data: Dict[str, Any]):
-        """Add query pattern analysis data"""
+    async def add_query_pattern(self, pattern_name: str, pattern_data: Dict[str, Any]) -> None:
+        """Add query pattern analysis data asynchronously"""
         self.query_patterns[pattern_name] = pattern_data
         self.timestamp = datetime.now(timezone.utc)
     
-    def add_security_event(self, event_type: str, event_details: Dict[str, Any]):
-        """Add security event data"""
+    async def add_security_event(self, event_type: str, event_details: Dict[str, Any]) -> None:
+        """Add security event data asynchronously"""
         security_event = {
             "type": event_type,
             "details": event_details,
@@ -155,18 +156,18 @@ class KGGraphMetrics(BaseModel):
         self.security_events.append(security_event)
         self.timestamp = datetime.now(timezone.utc)
     
-    def add_graph_analytics(self, analytics_name: str, analytics_data: Dict[str, Any]):
-        """Add graph analytics data"""
+    async def add_graph_analytics(self, analytics_name: str, analytics_data: Dict[str, Any]) -> None:
+        """Add graph analytics data asynchronously"""
         self.graph_analytics[analytics_name] = analytics_data
         self.timestamp = datetime.now(timezone.utc)
     
-    def add_relationship_pattern(self, pattern_name: str, pattern_data: Dict[str, Any]):
-        """Add relationship pattern analysis data"""
+    async def add_relationship_pattern(self, pattern_name: str, pattern_data: Dict[str, Any]) -> None:
+        """Add relationship pattern analysis data asynchronously"""
         self.relationship_patterns[pattern_name] = pattern_data
         self.timestamp = datetime.now(timezone.utc)
     
-    def calculate_overall_health_score(self) -> int:
-        """Calculate overall health score based on various metrics"""
+    async def calculate_overall_health_score(self) -> int:
+        """Calculate overall health score based on various metrics asynchronously"""
         scores = []
         
         # Health score (if available)
@@ -196,6 +197,40 @@ class KGGraphMetrics(BaseModel):
             return int(sum(scores) / len(scores))
         else:
             return 0
+    
+    @classmethod
+    async def create_for_graph(
+        cls,
+        graph_id: str,
+        dept_id: Optional[str] = None,
+        **kwargs
+    ) -> "KGGraphMetrics":
+        """Create a new metrics entry for a graph asynchronously"""
+        return cls(
+            graph_id=graph_id,
+            dept_id=dept_id,
+            timestamp=datetime.now(timezone.utc),
+            **kwargs
+        )
+    
+    @classmethod
+    async def create_performance_metrics(
+        cls,
+        graph_id: str,
+        health_score: int,
+        response_time: float,
+        dept_id: Optional[str] = None,
+        **kwargs
+    ) -> "KGGraphMetrics":
+        """Create performance metrics entry asynchronously"""
+        return cls(
+            graph_id=graph_id,
+            dept_id=dept_id,
+            timestamp=datetime.now(timezone.utc),
+            health_score=health_score,
+            response_time_ms=response_time,
+            **kwargs
+        )
 
 
 # Query and Summary models for API responses
