@@ -9,10 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, func, text, select, update, delete
-from sqlalchemy.orm import selectinload
-
+from src.engine.database.connection_manager import ConnectionManager
 from ..models.certificates_versions import (
     CertificateVersion,
     VersionType,
@@ -32,35 +29,53 @@ class CertificatesVersionsRepository:
     Handles all CRUD operations and component-specific operations
     """
     
-    def __init__(self, db_session: AsyncSession):
-        self.db_session = db_session
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize with connection manager for raw SQL operations."""
+        self.connection_manager = connection_manager
+        self.table_name = "certificates_versions"
+        logger.info("Certificate Versions Repository initialized with ConnectionManager")
     
     # ========================================================================
     # VERSION MANAGEMENT
     # ========================================================================
     
     async def create(self, version: CertificateVersion) -> CertificateVersion:
-        """Create a new version"""
+        """Create a new version using raw SQL"""
         try:
-            self.db_session.add(version)
-            await self.db_session.commit()
-            await self.db_session.refresh(version)
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(version)
+            
+            # Build INSERT query dynamically
+            columns = list(db_data.keys())
+            placeholders = [f":{col}" for col in columns]
+            
+            query = f"""
+                INSERT INTO {self.table_name} ({', '.join(columns)})
+                VALUES ({', '.join(placeholders)})
+            """
+            
+            # Execute raw SQL
+            await self.execute_query(query, db_data)
+            
             logger.info(f"Created version {version.version_id}")
             return version
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error creating version: {e}")
             raise
     
     async def get_by_id(self, version_id: str) -> Optional[CertificateVersion]:
-        """Get version by ID"""
+        """Get version by ID using raw SQL"""
         try:
-            result = await self.db_session.execute(
-                select(CertificateVersion)
-                .where(CertificateVersion.version_id == version_id)
-                .where(CertificateVersion.is_deleted == False)
-            )
-            return result.scalar_one_or_none()
+            query = f"""
+                SELECT * FROM {self.table_name}
+                WHERE version_id = :version_id AND is_deleted = :is_deleted
+            """
+            
+            result = await self.fetch_one(query, {"version_id": version_id, "is_deleted": False})
+            
+            if result:
+                return self._dict_to_model(result)
+            return None
         except Exception as e:
             logger.error(f"Error retrieving version {version_id}: {e}")
             raise
@@ -71,17 +86,24 @@ class CertificatesVersionsRepository:
         limit: int = 100,
         offset: int = 0
     ) -> List[CertificateVersion]:
-        """Get all versions for a specific certificate"""
+        """Get all versions for a specific certificate using raw SQL"""
         try:
-            result = await self.db_session.execute(
-                select(CertificateVersion)
-                .where(CertificateVersion.certificate_id == certificate_id)
-                .where(CertificateVersion.is_deleted == False)
-                .order_by(CertificateVersion.created_at.desc())
-                .limit(limit)
-                .offset(offset)
-            )
-            return result.scalars().all()
+            query = f"""
+                SELECT * FROM {self.table_name}
+                WHERE certificate_id = :certificate_id AND is_deleted = :is_deleted
+                ORDER BY created_at DESC
+                LIMIT :limit OFFSET :offset
+            """
+            
+            params = {
+                "certificate_id": certificate_id,
+                "is_deleted": False,
+                "limit": limit,
+                "offset": offset
+            }
+            
+            result = await self.execute_query(query, params)
+            return [self._dict_to_model(row) for row in result]
         except Exception as e:
             logger.error(f"Error retrieving versions for certificate {certificate_id}: {e}")
             raise
@@ -92,18 +114,23 @@ class CertificatesVersionsRepository:
         offset: int = 0,
         filters: Optional[Dict[str, Any]] = None
     ) -> List[CertificateVersion]:
-        """Get all versions with optional filtering"""
+        """Get all versions with optional filtering using raw SQL"""
         try:
-            query = select(CertificateVersion).where(CertificateVersion.is_deleted == False)
+            query = f"SELECT * FROM {self.table_name} WHERE is_deleted = :is_deleted"
+            params = {"is_deleted": False}
             
             if filters:
                 for key, value in filters.items():
-                    if hasattr(CertificateVersion, key) and value is not None:
-                        query = query.where(getattr(CertificateVersion, key) == value)
+                    if value is not None:
+                        query += f" AND {key} = :{key}"
+                        params[key] = value
             
-            query = query.order_by(CertificateVersion.created_at.desc()).limit(limit).offset(offset)
-            result = await self.db_session.execute(query)
-            return result.scalars().all()
+            query += " ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+            params["limit"] = limit
+            params["offset"] = offset
+            
+            result = await self.execute_query(query, params)
+            return [self._dict_to_model(row) for row in result]
         except Exception as e:
             logger.error(f"Error retrieving versions: {e}")
             raise
@@ -113,46 +140,38 @@ class CertificatesVersionsRepository:
         try:
             update_data["updated_at"] = datetime.utcnow()
             
-            result = await self.db_session.execute(
-                update(CertificateVersion)
-                .where(CertificateVersion.version_id == version_id)
-                .values(**update_data)
-                .returning(CertificateVersion)
+            result = await self.execute_query(
+                f"""
+                UPDATE {self.table_name}
+                SET {', '.join([f'{k} = :{k}' for k in update_data.keys()])}
+                WHERE version_id = :version_id
+                RETURNING *
+                """,
+                {"version_id": version_id, **update_data}
             )
             
-            await self.db_session.commit()
-            updated_version = result.scalar_one_or_none()
+            if result:
+                return self._dict_to_model(result[0])
             
-            if updated_version:
-                logger.info(f"Updated version {version_id}")
-            
-            return updated_version
+            return None
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating version {version_id}: {e}")
             raise
     
     async def delete(self, version_id: str) -> bool:
         """Soft delete version"""
         try:
-            result = await self.db_session.execute(
-                update(CertificateVersion)
-                .where(CertificateVersion.version_id == version_id)
-                .values(
-                    is_deleted=True,
-                    deleted_at=datetime.utcnow()
-                )
+            result = await self.execute_query(
+                f"""
+                UPDATE {self.table_name}
+                SET is_deleted = :is_deleted, deleted_at = :deleted_at
+                WHERE version_id = :version_id
+                """,
+                {"version_id": version_id, "is_deleted": True, "deleted_at": datetime.utcnow()}
             )
             
-            await self.db_session.commit()
-            success = result.rowcount > 0
-            
-            if success:
-                logger.info(f"Deleted version {version_id}")
-            
-            return success
+            return result is not None and len(result) > 0
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error deleting version {version_id}: {e}")
             raise
     
@@ -191,7 +210,6 @@ class CertificatesVersionsRepository:
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating data snapshot: {e}")
             raise
     
@@ -224,15 +242,23 @@ class CertificatesVersionsRepository:
     ) -> List[CertificateVersion]:
         """Get versions with snapshots within a date range"""
         try:
-            result = await self.db_session.execute(
-                select(CertificateVersion)
-                .where(CertificateVersion.certificate_id == certificate_id)
-                .where(CertificateVersion.created_at >= start_date)
-                .where(CertificateVersion.created_at <= end_date)
-                .where(CertificateVersion.is_deleted == False)
-                .order_by(CertificateVersion.created_at.desc())
+            result = await self.execute_query(
+                f"""
+                SELECT * FROM {self.table_name}
+                WHERE certificate_id = :certificate_id
+                AND created_at >= :start_date
+                AND created_at <= :end_date
+                AND is_deleted = :is_deleted
+                ORDER BY created_at DESC
+                """,
+                {
+                    "certificate_id": certificate_id,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "is_deleted": False
+                }
             )
-            return result.scalars().all()
+            return [self._dict_to_model(row) for row in result]
         except Exception as e:
             logger.error(f"Error getting snapshots by date range: {e}")
             raise
@@ -318,7 +344,6 @@ class CertificatesVersionsRepository:
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating change tracking: {e}")
             raise
     
@@ -432,7 +457,6 @@ class CertificatesVersionsRepository:
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating approval workflow: {e}")
             raise
     
@@ -598,7 +622,6 @@ class CertificatesVersionsRepository:
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating digital verification: {e}")
             raise
     
@@ -740,7 +763,6 @@ class CertificatesVersionsRepository:
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating business intelligence: {e}")
             raise
     
@@ -847,15 +869,25 @@ class CertificatesVersionsRepository:
     async def get_latest_approved_version(self, certificate_id: str) -> Optional[CertificateVersion]:
         """Get the latest approved version of a certificate"""
         try:
-            result = await self.db_session.execute(
-                select(CertificateVersion)
-                .where(CertificateVersion.certificate_id == certificate_id)
-                .where(CertificateVersion.approval_status == ApprovalStatus.APPROVED)
-                .where(CertificateVersion.is_deleted == False)
-                .order_by(CertificateVersion.created_at.desc())
-                .limit(1)
+            result = await self.execute_query(
+                f"""
+                SELECT * FROM {self.table_name}
+                WHERE certificate_id = :certificate_id
+                AND approval_status = :approval_status
+                AND is_deleted = :is_deleted
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                {
+                    "certificate_id": certificate_id,
+                    "approval_status": ApprovalStatus.APPROVED,
+                    "is_deleted": False
+                }
             )
-            return result.scalar_one_or_none()
+            
+            if result:
+                return self._dict_to_model(result[0])
+            return None
         except Exception as e:
             logger.error(f"Error getting latest approved version: {e}")
             raise
@@ -868,18 +900,20 @@ class CertificatesVersionsRepository:
     ) -> List[CertificateVersion]:
         """Get version history within a date range"""
         try:
-            query = select(CertificateVersion).where(
-                CertificateVersion.certificate_id == certificate_id
-            ).where(CertificateVersion.is_deleted == False)
+            query = f"SELECT * FROM {self.table_name} WHERE certificate_id = :certificate_id AND is_deleted = :is_deleted"
+            params = {"certificate_id": certificate_id, "is_deleted": False}
             
             if start_date:
-                query = query.where(CertificateVersion.created_at >= start_date)
+                query += " AND created_at >= :start_date"
+                params["start_date"] = start_date
             if end_date:
-                query = query.where(CertificateVersion.created_at <= end_date)
+                query += " AND created_at <= :end_date"
+                params["end_date"] = end_date
             
-            query = query.order_by(CertificateVersion.created_at.desc())
-            result = await self.db_session.execute(query)
-            return result.scalars().all()
+            query += " ORDER BY created_at DESC"
+            
+            result = await self.execute_query(query, params)
+            return [self._dict_to_model(row) for row in result]
         except Exception as e:
             logger.error(f"Error getting version history: {e}")
             raise
@@ -891,14 +925,17 @@ class CertificatesVersionsRepository:
     ) -> List[CertificateVersion]:
         """Get versions by version type"""
         try:
-            result = await self.db_session.execute(
-                select(CertificateVersion)
-                .where(CertificateVersion.version_type == version_type)
-                .where(CertificateVersion.is_deleted == False)
-                .order_by(CertificateVersion.created_at.desc())
-                .limit(limit)
+            result = await self.execute_query(
+                f"""
+                SELECT * FROM {self.table_name}
+                WHERE version_type = :version_type
+                AND is_deleted = :is_deleted
+                ORDER BY created_at DESC
+                LIMIT :limit
+                """,
+                {"version_type": version_type, "is_deleted": False, "limit": limit}
             )
-            return result.scalars().all()
+            return [self._dict_to_model(row) for row in result]
         except Exception as e:
             logger.error(f"Error getting versions by type: {e}")
             raise
@@ -910,14 +947,17 @@ class CertificatesVersionsRepository:
     ) -> List[CertificateVersion]:
         """Get versions by approval status"""
         try:
-            result = await self.db_session.execute(
-                select(CertificateVersion)
-                .where(CertificateVersion.approval_status == approval_status)
-                .where(CertificateVersion.is_deleted == False)
-                .order_by(CertificateVersion.created_at.desc())
-                .limit(limit)
+            result = await self.execute_query(
+                f"""
+                SELECT * FROM {self.table_name}
+                WHERE approval_status = :approval_status
+                AND is_deleted = :is_deleted
+                ORDER BY created_at DESC
+                LIMIT :limit
+                """,
+                {"approval_status": approval_status, "is_deleted": False, "limit": limit}
             )
-            return result.scalars().all()
+            return [self._dict_to_model(row) for row in result]
         except Exception as e:
             logger.error(f"Error getting versions by approval status: {e}")
             raise
@@ -1091,3 +1131,40 @@ class CertificatesVersionsRepository:
         except Exception as e:
             logger.error(f"Error exporting version data: {e}")
             raise
+    
+    # ========================================================================
+    # HELPER METHODS
+    # ========================================================================
+    
+    def _model_to_dict(self, version: CertificateVersion) -> Dict[str, Any]:
+        """Convert Pydantic model to database dictionary."""
+        return version.model_dump()
+    
+    def _dict_to_model(self, data: Dict[str, Any]) -> CertificateVersion:
+        """Convert database dictionary to Pydantic model."""
+        return CertificateVersion(**data)
+    
+    # ========================================================================
+    # CONNECTION MANAGER METHODS
+    # ========================================================================
+    
+    async def execute_query(self, query: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """Execute a query using the connection manager."""
+        try:
+            if query.strip().upper().startswith('SELECT'):
+                return await self.connection_manager.execute_query(query, params or {})
+            else:
+                await self.connection_manager.execute_update(query, params or {})
+                return []
+        except Exception as e:
+            logger.error(f"Failed to execute query: {e}")
+            raise
+    
+    async def fetch_one(self, query: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+        """Fetch a single row using the connection manager."""
+        try:
+            result = await self.connection_manager.execute_query(query, params or {})
+            return result[0] if result and len(result) > 0 else None
+        except Exception as e:
+            logger.error(f"Failed to fetch one: {e}")
+            return None

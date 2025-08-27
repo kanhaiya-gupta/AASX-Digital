@@ -160,7 +160,7 @@ class CertificateManagerSchema(BaseSchema):
             -- Business Context
             business_unit TEXT,                            -- Business unit this belongs to
             cost_center TEXT,                              -- Cost center for billing
-            tags TEXT DEFAULT '[]',                        -- JSON array of tags for categorization
+            tags TEXT DEFAULT '{}',                        -- JSON object of tags for categorization
             custom_attributes TEXT DEFAULT '{}',           -- JSON object for custom fields
             
             -- Constraints (ALL BUSINESS ENTITY RELATIONSHIPS)
@@ -179,9 +179,8 @@ class CertificateManagerSchema(BaseSchema):
         )
         """
         
-        # Create the table
-        if not await self.create_table("certificates_registry", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
         
         # Create indexes for this table
         index_queries = [
@@ -263,9 +262,8 @@ class CertificateManagerSchema(BaseSchema):
         )
         """
         
-        # Create the table
-        if not await self.create_table("certificates_versions", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
         
         # Create indexes for this table
         index_queries = [
@@ -336,7 +334,7 @@ class CertificateManagerSchema(BaseSchema):
             
             -- Enterprise Performance Analytics
             performance_trend TEXT DEFAULT 'stable' CHECK (performance_trend IN ('improving', 'stable', 'declining', 'volatile')),
-            optimization_suggestions TEXT DEFAULT '[]',   -- JSON array: performance optimization suggestions
+            optimization_suggestions TEXT DEFAULT '{}',   -- JSON object: performance optimization suggestions
             last_optimization_date TEXT,                 -- Last performance optimization date
             sla_compliance_rate REAL DEFAULT 100.0 CHECK (sla_compliance_rate >= 0.0 AND sla_compliance_rate <= 100.0),
             resource_utilization_rate REAL DEFAULT 0.0 CHECK (resource_utilization_rate >= 0.0 AND resource_utilization_rate <= 100.0),
@@ -353,9 +351,8 @@ class CertificateManagerSchema(BaseSchema):
         )
         """
         
-        # Create the table
-        if not await self.create_table("certificates_metrics", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
         
         # Create indexes for this table
         index_queries = [
@@ -422,20 +419,9 @@ class CertificateManagerSchema(BaseSchema):
             if not await super().initialize():
                 return False
             
-            # Initialize Certificate Manager monitoring
-            await self._initialize_certificate_manager_monitoring()
-            
-            # Setup compliance framework
-            await self._setup_compliance_framework()
-            
             # Create core tables
-            await self._create_core_tables()
-            
-            # Setup Certificate Manager policies
-            await self._setup_certificate_manager_policies()
-            
-            # Initialize performance analytics
-            await self._initialize_performance_analytics()
+            if not await self._create_core_tables():
+                return False
             
             logger.info("✅ Certificate Manager Schema initialized with enhanced features")
             return True
@@ -443,223 +429,6 @@ class CertificateManagerSchema(BaseSchema):
         except Exception as e:
             logger.error(f"Failed to initialize Certificate Manager Schema: {e}")
             return False
-
-    async def create_table(self, table_name: str, table_definition: Union[str, Dict[str, Any]]) -> bool:
-        """Create a table with enhanced features."""
-        try:
-            # Create the base table
-            if isinstance(table_definition, str):
-                # Direct SQL definition
-                if not await super().create_table(table_name, table_definition):
-                    return False
-            else:
-                # Dictionary definition
-                if not await self._create_table_from_definition(table_name, table_definition):
-                    return False
-            
-            # Add enhanced features
-            await self._create_enhanced_indexes(table_name, [])
-            await self._setup_table_monitoring(table_name)
-            await self._validate_table_structure(table_name)
-            await self._update_table_metadata(table_name)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create table {table_name}: {e}")
-            return False
-
-    async def drop_table(self, table_name: str) -> bool:
-        """Drop a table with enhanced safety checks."""
-        try:
-            # Check dependencies
-            if not await self._check_table_dependencies(table_name):
-                logger.warning(f"Table {table_name} has dependencies, cannot drop safely")
-                return False
-            
-            # Backup table data
-            await self._backup_table_data(table_name)
-            
-            # Log governance event
-            await self._log_certificate_manager_governance_event("table_dropped", table_name)
-            
-            # Cleanup metadata
-            await self._cleanup_table_metadata(table_name)
-            
-            # Drop the table
-            return await super().drop_table(table_name)
-            
-        except Exception as e:
-            logger.error(f"Failed to drop table {table_name}: {e}")
-            return False
-
-    async def table_exists(self, table_name: str) -> bool:
-        """Check if a table exists."""
-        try:
-            return await super().table_exists(table_name)
-        except Exception as e:
-            logger.error(f"Failed to check table existence for {table_name}: {e}")
-            return False
-
-    async def get_table_info(self, table_name: str) -> Optional[Dict[str, Any]]:
-        """Get comprehensive table information including enhanced metrics."""
-        try:
-            base_info = await super().get_table_info(table_name)
-            if not base_info:
-                return None
-            
-            # Add enhanced information
-            enhanced_info = {
-                **base_info,
-                "certificate_metrics": self._certificate_metrics.get(table_name, {}),
-                "performance_analytics": self._performance_analytics.get(table_name, {}),
-                "compliance_status": self._compliance_status.get(table_name, {}),
-                "security_metrics": self._security_metrics.get(table_name, {})
-            }
-            
-            return enhanced_info
-            
-        except Exception as e:
-            logger.error(f"Failed to get table info for {table_name}: {e}")
-            return None
-
-    async def get_all_tables(self) -> List[str]:
-        """Get all tables managed by this schema."""
-        try:
-            return await super().get_all_tables()
-        except Exception as e:
-            logger.error(f"Failed to get all tables: {e}")
-            return []
-
-    async def validate_table_structure(self, table_name: str, expected_structure: Dict[str, Any]) -> bool:
-        """Validate table structure with enhanced validation."""
-        try:
-            # Basic validation
-            if not await super().validate_table_structure(table_name, expected_structure):
-                return False
-            
-            # Enhanced validation
-            await self._validate_column_properties(table_name)
-            await self._validate_certificate_manager_requirements(table_name)
-            await self._validate_table_constraints(table_name)
-            await self._validate_table_indexes(table_name)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to validate table structure for {table_name}: {e}")
-            return False
-
-    async def execute_migration(self, migration_script: str, rollback_script: Optional[str] = None) -> bool:
-        """Execute migration with enhanced governance."""
-        try:
-            # Pre-migration governance checks
-            await self._validate_migration_certificate_manager_impact(migration_script)
-            await self._create_migration_checkpoint(migration_script)
-            
-            # Execute migration
-            if not await super().execute_migration(migration_script, rollback_script):
-                return False
-            
-            # Post-migration validation
-            await self._validate_migration_results(migration_script)
-            await self._record_migration_success(migration_script)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to execute migration: {e}")
-            return False
-
-    async def get_migration_history(self) -> List[Dict[str, Any]]:
-        """Get migration history with enhanced governance details."""
-        try:
-            base_history = await super().get_migration_history()
-            
-            # Enhance with enhanced details
-            enhanced_history = []
-            for migration in base_history:
-                enhanced_migration = {
-                    **migration,
-                    "certificate_manager_impact_assessment": await self._assess_certificate_manager_impact(migration),
-                    "compliance_status": await self._check_migration_compliance(migration),
-                    "governance_details": await self._get_migration_details(migration)
-                }
-                enhanced_history.append(enhanced_migration)
-            
-            return enhanced_history
-            
-        except Exception as e:
-            logger.error(f"Failed to get migration history: {e}")
-            return []
-
-    async def rollback_migration(self, migration_id: str) -> bool:
-        """Rollback migration with enhanced safety."""
-        try:
-            # Validate rollback safety
-            if not await self._validate_rollback_safety(migration_id):
-                logger.warning(f"Rollback not safe for migration {migration_id}")
-                return False
-            
-            # Update migration status
-            await self._update_migration_status(migration_id, "rolling_back")
-            
-            # Execute rollback
-            if not await super().rollback_migration(migration_id):
-                return False
-            
-            # Restore system state
-            await self._restore_system_state(migration_id)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to rollback migration {migration_id}: {e}")
-            return False
-    
-    def get_validation_rules(self) -> Dict[str, Any]:
-        """Get validation rules for the certificate manager module."""
-        return {
-            "module_name": "certificate_manager",
-            "tables": {
-                "certificates_registry": {
-                    "required_columns": [
-                        "certificate_id", "file_id", "user_id", "org_id", 
-                        "project_id", "use_case_id", "twin_id", "certificate_name"
-                    ],
-                    "foreign_keys": [
-                        "files(file_id)", "users(user_id)", "organizations(org_id)",
-                        "projects(project_id)", "use_cases(use_case_id)", "twin_registry(twin_id)"
-                    ],
-                    "check_constraints": [
-                        "completion_percentage >= 0.0 AND completion_percentage <= 100.0",
-                        "overall_quality_score >= 0.0 AND overall_quality_score <= 100.0"
-                    ]
-                },
-                "certificates_versions": {
-                    "required_columns": ["version_id", "certificate_id", "version_number", "created_by"],
-                    "foreign_keys": [
-                        "certificates_registry(certificate_id)", "users(created_by)"
-                    ],
-                    "unique_constraints": ["certificate_id, version_number"]
-                },
-                "certificates_metrics": {
-                    "required_columns": ["metric_id", "certificate_id"],
-                    "foreign_keys": ["certificates_registry(certificate_id)"],
-                    "check_constraints": [
-                        "cache_hit_rate >= 0.0 AND cache_hit_rate <= 100.0",
-                        "data_quality_score >= 0.0 AND data_quality_score <= 100.0"
-                    ]
-                }
-            },
-            "business_rules": [
-                "Every certificate must be linked to a file, user, organization, project, use case, and digital twin",
-                "Certificate versions must have unique version numbers per certificate",
-                "Quality scores must be between 0.0 and 100.0",
-                "Completion percentage must be between 0.0 and 100.0",
-                "One certificate per file-twin combination"
-            ]
-        }
 
     # Core Helper Methods
 
@@ -681,207 +450,3 @@ class CertificateManagerSchema(BaseSchema):
         except Exception as e:
             logger.error(f"Failed to create core tables: {e}")
             return False
-
-    async def _initialize_certificate_manager_monitoring(self) -> bool:
-        """Initialize Certificate Manager monitoring capabilities."""
-        try:
-            # Setup monitoring for Certificate Manager tables
-            await self._setup_certificate_manager_monitoring()
-            await self._setup_performance_monitoring()
-            await self._setup_compliance_monitoring()
-            await self._setup_security_monitoring()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize Certificate Manager monitoring: {e}")
-            return False
-
-    async def _setup_compliance_framework(self) -> bool:
-        """Setup compliance framework for Certificate Manager processing."""
-        try:
-            # Initialize compliance tracking
-            await self._setup_compliance_alerts()
-            await self._validate_schema_compliance()
-            await self._setup_governance_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup compliance framework: {e}")
-            return False
-
-    async def _setup_certificate_manager_policies(self) -> bool:
-        """Setup Certificate Manager policies and governance."""
-        try:
-            # Setup processing policies
-            await self._setup_processing_policies()
-            await self._setup_quality_policies()
-            await self._setup_security_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup Certificate Manager policies: {e}")
-            return False
-
-    async def _initialize_performance_analytics(self) -> bool:
-        """Initialize performance analytics for Certificate Manager processing."""
-        try:
-            # Setup performance analytics
-            await self._setup_performance_analytics_framework()
-            await self._setup_optimization_monitoring()
-            await self._setup_trend_analysis()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize performance analytics: {e}")
-            return False
-
-    # Additional enhanced helper methods would go here...
-    # (These are placeholder implementations to avoid making the response too long)
-    
-    async def _create_enhanced_indexes(self, table_name: str, index_queries: List[str]) -> bool:
-        """Create enhanced indexes for Certificate Manager tables."""
-        return True
-    
-    async def _setup_table_monitoring(self, table_name: str) -> bool:
-        """Setup monitoring for Certificate Manager tables."""
-        return True
-    
-    async def _validate_table_structure(self, table_name: str) -> bool:
-        """Validate Certificate Manager table structure."""
-        return True
-    
-    async def _update_table_metadata(self, table_name: str) -> bool:
-        """Update table metadata for Certificate Manager."""
-        return True
-    
-    async def _check_table_dependencies(self, table_name: str) -> bool:
-        """Check table dependencies for Certificate Manager."""
-        return True
-    
-    async def _backup_table_data(self, table_name: str) -> bool:
-        """Backup table data for Certificate Manager."""
-        return True
-    
-    async def _cleanup_table_metadata(self, table_name: str) -> bool:
-        """Cleanup table metadata for Certificate Manager."""
-        return True
-    
-    async def _log_certificate_manager_governance_event(self, event_type: str, table_name: str) -> bool:
-        """Log Certificate Manager governance events."""
-        return True
-    
-    async def _validate_column_properties(self, table_name: str) -> bool:
-        """Validate column properties for Certificate Manager."""
-        return True
-    
-    async def _validate_certificate_manager_requirements(self, table_name: str) -> bool:
-        """Validate Certificate Manager-specific requirements."""
-        return True
-    
-    async def _validate_table_constraints(self, table_name: str) -> bool:
-        """Validate table constraints for Certificate Manager."""
-        return True
-    
-    async def _validate_table_indexes(self, table_name: str) -> bool:
-        """Validate table indexes for Certificate Manager."""
-        return True
-    
-    async def _validate_migration_certificate_manager_impact(self, migration_script: str) -> bool:
-        """Validate Certificate Manager impact of migration."""
-        return True
-    
-    async def _create_migration_checkpoint(self, migration_script: str) -> bool:
-        """Create migration checkpoint for Certificate Manager."""
-        return True
-    
-    async def _validate_migration_results(self, migration_script: str) -> bool:
-        """Validate migration results for Certificate Manager."""
-        return True
-    
-    async def _record_migration_success(self, migration_script: str) -> bool:
-        """Record migration success for Certificate Manager."""
-        return True
-    
-    async def _assess_certificate_manager_impact(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Assess Certificate Manager impact of migration."""
-        return {}
-    
-    async def _check_migration_compliance(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Check migration compliance for Certificate Manager."""
-        return {}
-    
-    async def _get_migration_details(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Get migration details for Certificate Manager."""
-        return {}
-    
-    async def _validate_rollback_safety(self, migration_id: str) -> bool:
-        """Validate rollback safety for Certificate Manager."""
-        return True
-    
-    async def _update_migration_status(self, migration_id: str, status: str) -> bool:
-        """Update migration status for Certificate Manager."""
-        return True
-    
-    async def _restore_system_state(self, migration_id: str) -> bool:
-        """Restore system state for Certificate Manager."""
-        return True
-    
-    async def _setup_certificate_manager_monitoring(self) -> bool:
-        """Setup Certificate Manager monitoring."""
-        return True
-    
-    async def _setup_performance_monitoring(self) -> bool:
-        """Setup performance monitoring for Certificate Manager."""
-        return True
-    
-    async def _setup_compliance_monitoring(self) -> bool:
-        """Setup compliance monitoring for Certificate Manager."""
-        return True
-    
-    async def _setup_security_monitoring(self) -> bool:
-        """Setup security monitoring for Certificate Manager."""
-        return True
-    
-    async def _setup_compliance_alerts(self) -> bool:
-        """Setup compliance alerts for Certificate Manager."""
-        return True
-    
-    async def _validate_schema_compliance(self) -> bool:
-        """Validate schema compliance for Certificate Manager."""
-        return True
-    
-    async def _setup_governance_policies(self) -> bool:
-        """Setup governance policies for Certificate Manager."""
-        return True
-    
-    async def _setup_processing_policies(self) -> bool:
-        """Setup processing policies for Certificate Manager."""
-        return True
-    
-    async def _setup_quality_policies(self) -> bool:
-        """Setup quality policies for Certificate Manager."""
-        return True
-    
-    async def _setup_security_policies(self) -> bool:
-        """Setup security policies for Certificate Manager."""
-        return True
-    
-    async def _setup_performance_analytics_framework(self) -> bool:
-        """Setup performance analytics framework for Certificate Manager."""
-        return True
-    
-    async def _setup_optimization_monitoring(self) -> bool:
-        """Setup optimization monitoring for Certificate Manager."""
-        return True
-    
-    async def _setup_trend_analysis(self) -> bool:
-        """Setup trend analysis for Certificate Manager."""
-        return True
-    
-    async def _create_table_from_definition(self, table_name: str, table_definition: Dict[str, Any]) -> bool:
-        """Create table from definition for Certificate Manager."""
-        return True

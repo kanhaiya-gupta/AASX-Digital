@@ -9,7 +9,6 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import logging
 from src.engine.database import ConnectionManager
-from src.engine.database.factory import DatabaseFactory
 from ..models.physics_modeling_registry import PhysicsModelingRegistry
 
 logger = logging.getLogger(__name__)
@@ -23,19 +22,10 @@ class PhysicsModelingRegistryRepository:
     for physics modeling registry data with enterprise features.
     """
     
-    def __init__(self):
+    def __init__(self, connection_manager: ConnectionManager):
         """Initialize the repository with database connection"""
-        self.connection_manager: Optional[ConnectionManager] = None
+        self.connection_manager = connection_manager
         self.table_name = "physics_modeling_registry"
-    
-    async def initialize(self) -> None:
-        """Async initialization of database connection"""
-        try:
-            self.connection_manager = await DatabaseFactory.create_connection_manager()
-            logger.info("Physics Modeling Registry Repository initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize repository: {e}")
-            raise
     
     async def create(self, model: PhysicsModelingRegistry) -> Optional[str]:
         """
@@ -47,9 +37,6 @@ class PhysicsModelingRegistryRepository:
         Returns:
             Created model ID or None if failed
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
             # Prepare data for insertion
             data = model.dict()
@@ -69,31 +56,50 @@ class PhysicsModelingRegistryRepository:
                     last_security_scan, security_details,
                     performance_trend, optimization_suggestions, last_optimization_date,
                     enterprise_metrics, tags, metadata
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (:model_id, :model_name, :model_type, :physics_domain, :model_version, :description, :parameters, :constraints, :mesh_config, :solver_config, :status, :lifecycle_stage, :created_by, :created_at, :updated_by, :updated_at, :validation_status, :validation_score, :quality_metrics, :compliance_type, :compliance_status, :compliance_score, :last_audit_date, :next_audit_date, :audit_details, :security_event_type, :threat_assessment, :security_score, :last_security_scan, :security_details, :performance_trend, :optimization_suggestions, :last_optimization_date, :enterprise_metrics, :tags, :metadata)
             """
             
-            values = (
-                data['model_id'], data['model_name'], data['model_type'],
-                data['physics_domain'], data['model_version'], data['description'],
-                str(data['parameters']), str(data['constraints']),
-                str(data['mesh_config']) if data['mesh_config'] else None,
-                str(data['solver_config']) if data['solver_config'] else None,
-                data['status'], data['lifecycle_stage'], data['created_by'],
-                data['created_at'], data['updated_by'], data['updated_at'],
-                data['validation_status'], data['validation_score'],
-                str(data['quality_metrics']),
-                data['compliance_type'], data['compliance_status'], data['compliance_score'],
-                data['last_audit_date'], data['next_audit_date'], data['audit_details'],
-                data['security_event_type'], data['threat_assessment'], data['security_score'],
-                data['last_security_scan'], data['security_details'],
-                data['performance_trend'], str(data['optimization_suggestions']) if data['optimization_suggestions'] else None,
-                data['last_optimization_date'], str(data['enterprise_metrics']) if data['enterprise_metrics'] else None,
-                str(data['tags']), str(data['metadata'])
-            )
+            # Prepare parameters with proper handling of complex types
+            params = {
+                'model_id': data['model_id'],
+                'model_name': data['model_name'],
+                'model_type': data['model_type'],
+                'physics_domain': data['physics_domain'],
+                'model_version': data['model_version'],
+                'description': data['description'],
+                'parameters': str(data['parameters']),
+                'constraints': str(data['constraints']),
+                'mesh_config': str(data['mesh_config']) if data['mesh_config'] else None,
+                'solver_config': str(data['solver_config']) if data['solver_config'] else None,
+                'status': data['status'],
+                'lifecycle_stage': data['lifecycle_stage'],
+                'created_by': data['created_by'],
+                'created_at': data['created_at'],
+                'updated_by': data['updated_by'],
+                'updated_at': data['updated_at'],
+                'validation_status': data['validation_status'],
+                'validation_score': data['validation_score'],
+                'quality_metrics': str(data['quality_metrics']),
+                'compliance_type': data['compliance_type'],
+                'compliance_status': data['compliance_status'],
+                'compliance_score': data['compliance_score'],
+                'last_audit_date': data['last_audit_date'],
+                'next_audit_date': data['next_audit_date'],
+                'audit_details': data['audit_details'],
+                'security_event_type': data['security_event_type'],
+                'threat_assessment': data['threat_assessment'],
+                'security_score': data['security_score'],
+                'last_security_scan': data['last_security_scan'],
+                'security_details': data['security_details'],
+                'performance_trend': data['performance_trend'],
+                'optimization_suggestions': str(data['optimization_suggestions']) if data['optimization_suggestions'] else None,
+                'last_optimization_date': data['last_optimization_date'],
+                'enterprise_metrics': str(data['enterprise_metrics']) if data['enterprise_metrics'] else None,
+                'tags': str(data['tags']),
+                'metadata': str(data['metadata'])
+            }
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, values)
-                await conn.commit()
+            await self.connection_manager.execute_update(query, params)
                 
             logger.info(f"Created physics modeling registry entry: {model.model_id}")
             return model.model_id
@@ -104,35 +110,31 @@ class PhysicsModelingRegistryRepository:
     
     async def get_by_id(self, model_id: str) -> Optional[PhysicsModelingRegistry]:
         """
-        Async retrieve physics modeling registry entry by ID
+        Async get physics modeling registry entry by ID
         
         Args:
-            model_id: Unique identifier for the model
+            model_id: Unique model identifier
             
         Returns:
             PhysicsModelingRegistry instance or None if not found
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE model_id = ?"
+            query = f"SELECT * FROM {self.table_name} WHERE model_id = :model_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (model_id,))
-                row = await cursor.fetchone()
-                
-            if row:
-                return await self._row_to_model(row)
+            result = await self.connection_manager.execute_query(query, {"model_id": model_id})
+            
+            if result and len(result) > 0:
+                row = result[0]
+                return PhysicsModelingRegistry(**row)
             return None
             
         except Exception as e:
-            logger.error(f"Failed to retrieve physics modeling registry entry: {e}")
+            logger.error(f"Error getting physics modeling registry by ID: {e}")
             return None
     
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[PhysicsModelingRegistry]:
         """
-        Async retrieve all physics modeling registry entries with pagination
+        Async get all physics modeling registry entries with pagination
         
         Args:
             limit: Maximum number of entries to return
@@ -141,26 +143,18 @@ class PhysicsModelingRegistryRepository:
         Returns:
             List of PhysicsModelingRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT ? OFFSET ?"
+            query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (limit, offset))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"limit": limit, "offset": offset})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsModelingRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to retrieve physics modeling registry entries: {e}")
+            logger.error(f"Error getting all physics modeling registry entries: {e}")
             return []
     
     async def update(self, model_id: str, updates: Dict[str, Any]) -> bool:
@@ -168,50 +162,30 @@ class PhysicsModelingRegistryRepository:
         Async update physics modeling registry entry
         
         Args:
-            model_id: Unique identifier for the model
+            model_id: Unique model identifier
             updates: Dictionary of fields to update
             
         Returns:
             True if update successful, False otherwise
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            # Prepare update fields
-            update_fields = []
-            values = []
-            
-            for field, value in updates.items():
-                if field in ['parameters', 'constraints', 'quality_metrics', 'optimization_suggestions', 'enterprise_metrics', 'tags', 'metadata']:
-                    update_fields.append(f"{field} = ?")
-                    values.append(str(value))
-                elif field in ['mesh_config', 'solver_config', 'audit_details', 'security_details']:
-                    if value is not None:
-                        update_fields.append(f"{field} = ?")
-                        values.append(str(value))
-                else:
-                    update_fields.append(f"{field} = ?")
-                    values.append(value)
-            
             # Add updated_at timestamp
-            update_fields.append("updated_at = ?")
-            values.append(datetime.utcnow().isoformat())
+            updates['updated_at'] = datetime.utcnow().isoformat()
             
-            # Add model_id for WHERE clause
-            values.append(model_id)
+            # Prepare SET clause and parameters
+            set_clause = ', '.join([f"{key} = :{key}" for key in updates.keys()])
+            params = updates.copy()
+            params['model_id'] = model_id
             
-            query = f"UPDATE {self.table_name} SET {', '.join(update_fields)} WHERE model_id = ?"
+            query = f"UPDATE {self.table_name} SET {set_clause} WHERE model_id = :model_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, values)
-                await conn.commit()
+            await self.connection_manager.execute_update(query, params)
                 
             logger.info(f"Updated physics modeling registry entry: {model_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to update physics modeling registry entry: {e}")
+            logger.error(f"Error updating physics modeling registry entry: {e}")
             return False
     
     async def delete(self, model_id: str) -> bool:
@@ -219,26 +193,21 @@ class PhysicsModelingRegistryRepository:
         Async delete physics modeling registry entry
         
         Args:
-            model_id: Unique identifier for the model
+            model_id: Unique model identifier
             
         Returns:
             True if deletion successful, False otherwise
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"DELETE FROM {self.table_name} WHERE model_id = ?"
+            query = f"DELETE FROM {self.table_name} WHERE model_id = :model_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (model_id,))
-                await conn.commit()
+            await self.connection_manager.execute_update(query, {"model_id": model_id})
                 
             logger.info(f"Deleted physics modeling registry entry: {model_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to delete physics modeling registry entry: {e}")
+            logger.error(f"Error deleting physics modeling registry entry: {e}")
             return False
     
     async def search_by_type(self, model_type: str) -> List[PhysicsModelingRegistry]:
@@ -251,26 +220,18 @@ class PhysicsModelingRegistryRepository:
         Returns:
             List of matching PhysicsModelingRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE model_type = ? ORDER BY created_at DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE model_type = :model_type ORDER BY created_at DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (model_type,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"model_type": model_type})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsModelingRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to search physics modeling registry entries: {e}")
+            logger.error(f"Error searching physics modeling registry entries: {e}")
             return []
     
     async def get_by_compliance_status(self, compliance_status: str) -> List[PhysicsModelingRegistry]:
@@ -283,26 +244,18 @@ class PhysicsModelingRegistryRepository:
         Returns:
             List of matching PhysicsModelingRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE compliance_status = ? ORDER BY created_at DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE compliance_status = :compliance_status ORDER BY created_at DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (compliance_status,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"compliance_status": compliance_status})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsModelingRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to get physics modeling registry entries by compliance status: {e}")
+            logger.error(f"Error getting physics modeling registry entries by compliance status: {e}")
             return []
     
     async def get_by_security_score_range(self, min_score: float, max_score: float) -> List[PhysicsModelingRegistry]:
@@ -316,26 +269,18 @@ class PhysicsModelingRegistryRepository:
         Returns:
             List of matching PhysicsModelingRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE security_score BETWEEN ? AND ? ORDER BY security_score DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE security_score BETWEEN :min_score AND :max_score ORDER BY security_score DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (min_score, max_score))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"min_score": min_score, "max_score": max_score})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsModelingRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to get physics modeling registry entries by security score range: {e}")
+            logger.error(f"Error getting physics modeling registry entries by security score range: {e}")
             return []
     
     async def count_by_status(self, status: str) -> int:
@@ -348,21 +293,41 @@ class PhysicsModelingRegistryRepository:
         Returns:
             Count of entries with the specified status
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT COUNT(*) FROM {self.table_name} WHERE status = ?"
+            query = f"SELECT COUNT(*) as count FROM {self.table_name} WHERE status = :status"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (status,))
-                result = await cursor.fetchone()
-                
-            return result[0] if result else 0
+            result = await self.connection_manager.execute_query(query, {"status": status})
+            
+            return result[0]['count'] if result and len(result) > 0 else 0
             
         except Exception as e:
-            logger.error(f"Failed to count physics modeling registry entries: {e}")
+            logger.error(f"Error counting physics modeling registry entries: {e}")
             return 0
+    
+    async def get_by_status(self, status: str, limit: int = 100) -> List[PhysicsModelingRegistry]:
+        """
+        Async get physics modeling registry entries by status
+        
+        Args:
+            status: Model status to filter by
+            limit: Maximum number of entries to return
+            
+        Returns:
+            List of PhysicsModelingRegistry instances
+        """
+        try:
+            query = f"SELECT * FROM {self.table_name} WHERE status = :status ORDER BY created_at DESC LIMIT :limit"
+            
+            result = await self.connection_manager.execute_query(query, {"status": status, "limit": limit})
+            
+            models = []
+            for row in result:
+                models.append(PhysicsModelingRegistry(**row))
+            return models
+            
+        except Exception as e:
+            logger.error(f"Error getting physics modeling registry entries by status: {e}")
+            return []
     
     async def _row_to_model(self, row: tuple) -> Optional[PhysicsModelingRegistry]:
         """

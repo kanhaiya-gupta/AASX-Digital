@@ -843,3 +843,4 @@ class SolverManagementService:
         except Exception as e:
             logger.error(f"Error closing solver management service: {e}")
 
+

@@ -9,7 +9,7 @@ Handles graph generation metadata, tracing, and integration references.
 import json
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, root_validator
+from pydantic import BaseModel, Field, validator, model_validator
 from src.engine.models.base_model import BaseModel as EngineBaseModel
 
 
@@ -200,19 +200,19 @@ class AIRagGraphMetadata(EngineBaseModel):
             raise ValueError('quality_score must be between 0.0 and 1.0')
         return v
     
-    @root_validator
-    def validate_processing_times(cls, values):
+    @model_validator(mode='after')
+    def validate_processing_times(self):
         """Validate processing time consistency."""
-        start_time = values.get('processing_start_time')
-        end_time = values.get('processing_end_time')
-        duration = values.get('processing_duration_ms')
+        start_time = self.processing_start_time
+        end_time = self.processing_end_time
+        duration = self.processing_duration_ms
         
         if start_time and end_time and duration:
             # Basic validation that duration is reasonable
             if duration < 0:
                 raise ValueError('processing_duration_ms cannot be negative')
         
-        return values
+        return self
     
     # Async Database Operations (Placeholder for repository integration)
     async def save_to_database(self) -> bool:

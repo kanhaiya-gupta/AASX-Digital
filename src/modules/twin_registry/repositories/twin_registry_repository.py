@@ -79,69 +79,78 @@ class TwinRegistryRepository:
                 created_at, updated_at, activated_at, last_accessed_at, last_modified_at,
                 registry_config, registry_metadata, custom_attributes, tags, relationships,
                 dependencies, instances
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (:registry_id, :twin_id, :twin_name, :registry_name, :twin_category, :twin_type,
+                :twin_priority, :twin_version, :registry_type, :workflow_source, :aasx_integration_id,
+                :physics_modeling_id, :federated_learning_id, :data_pipeline_id, :kg_neo4j_id,
+                :certificate_manager_id, :integration_status, :overall_health_score, :health_status,
+                :lifecycle_status, :lifecycle_phase, :operational_status, :availability_status,
+                :sync_status, :sync_frequency, :last_sync_at, :next_sync_at, :sync_error_count,
+                :sync_error_message, :performance_score, :data_quality_score, :reliability_score,
+                :compliance_score, :security_level, :access_control_level, :encryption_enabled,
+                :audit_logging_enabled, :user_id, :org_id, :dept_id, :owner_team, :steward_user_id,
+                :created_at, :updated_at, :activated_at, :last_accessed_at, :last_modified_at,
+                :registry_config, :registry_metadata, :custom_attributes, :tags, :relationships,
+                :dependencies, :instances)
             """
             
-            params = (
-                registry.registry_id,
-                registry.twin_id,
-                registry.twin_name,
-                registry.registry_name,
-                registry.twin_category,
-                registry.twin_type,
-                registry.twin_priority,
-                registry.twin_version,
-                registry.registry_type,
-                registry.workflow_source,
-                registry.aasx_integration_id,
-                registry.physics_modeling_id,
-                registry.federated_learning_id,
-                registry.data_pipeline_id,
-                registry.kg_neo4j_id,
-                registry.certificate_manager_id,
-                registry.integration_status,
-                registry.overall_health_score,
-                registry.health_status,
-                registry.lifecycle_status,
-                registry.lifecycle_phase,
-                registry.operational_status,
-                registry.availability_status,
-                registry.sync_status,
-                registry.sync_frequency,
-                registry.last_sync_at,
-                registry.next_sync_at,
-                registry.sync_error_count,
-                registry.sync_error_message,
-                registry.performance_score,
-                registry.data_quality_score,
-                registry.reliability_score,
-                registry.compliance_score,
-                registry.security_level,
-                registry.access_control_level,
-                registry.encryption_enabled,
-                registry.audit_logging_enabled,
-                registry.user_id,
-                registry.org_id,
-                registry.dept_id,  # Added dept_id
-                registry.owner_team,
-                registry.steward_user_id,
-                registry.created_at,
-                registry.updated_at,
-                registry.activated_at,
-                registry.last_accessed_at,
-                registry.last_modified_at,
-                registry.registry_config,
-                registry.registry_metadata,
-                registry.custom_attributes,
-                registry.tags,
-                registry.relationships,
-                registry.dependencies,
-                registry.instances
-            )
+            params = {
+                'registry_id': registry.registry_id,
+                'twin_id': registry.twin_id,
+                'twin_name': registry.twin_name,
+                'registry_name': registry.registry_name,
+                'twin_category': registry.twin_category,
+                'twin_type': registry.twin_type,
+                'twin_priority': registry.twin_priority,
+                'twin_version': registry.twin_version,
+                'registry_type': registry.registry_type,
+                'workflow_source': registry.workflow_source,
+                'aasx_integration_id': registry.aasx_integration_id,
+                'physics_modeling_id': registry.physics_modeling_id,
+                'federated_learning_id': registry.federated_learning_id,
+                'data_pipeline_id': registry.data_pipeline_id,
+                'kg_neo4j_id': registry.kg_neo4j_id,
+                'certificate_manager_id': registry.certificate_manager_id,
+                'integration_status': registry.integration_status,
+                'overall_health_score': registry.overall_health_score,
+                'health_status': registry.health_status,
+                'lifecycle_status': registry.lifecycle_status,
+                'lifecycle_phase': registry.lifecycle_phase,
+                'operational_status': registry.operational_status,
+                'availability_status': registry.availability_status,
+                'sync_status': registry.sync_status,
+                'sync_frequency': registry.sync_frequency,
+                'last_sync_at': registry.last_sync_at,
+                'next_sync_at': registry.next_sync_at,
+                'sync_error_count': registry.sync_error_count,
+                'sync_error_message': registry.sync_error_message,
+                'performance_score': registry.performance_score,
+                'data_quality_score': registry.data_quality_score,
+                'reliability_score': registry.reliability_score,
+                'compliance_score': registry.compliance_score,
+                'security_level': registry.security_level,
+                'access_control_level': registry.access_control_level,
+                'encryption_enabled': registry.encryption_enabled,
+                'audit_logging_enabled': registry.audit_logging_enabled,
+                'user_id': registry.user_id,
+                'org_id': registry.org_id,
+                'dept_id': registry.dept_id,
+                'owner_team': registry.owner_team,
+                'steward_user_id': registry.steward_user_id,
+                'created_at': registry.created_at,
+                'updated_at': registry.updated_at,
+                'activated_at': registry.activated_at,
+                'last_accessed_at': registry.last_accessed_at,
+                'last_modified_at': registry.last_modified_at,
+                'registry_config': registry.registry_config,
+                'registry_metadata': registry.registry_metadata,
+                'custom_attributes': registry.custom_attributes,
+                'tags': registry.tags,
+                'relationships': registry.relationships,
+                'dependencies': registry.dependencies,
+                'instances': registry.instances
+            }
             
-            async with self.connection_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
+            await self.connection_manager.execute_update(sql, params)
             
             logger.info(f"Created twin registry entry for twin {registry.twin_id}")
             return registry
@@ -153,14 +162,12 @@ class TwinRegistryRepository:
     async def get_by_id(self, registry_id: str) -> Optional[TwinRegistry]:
         """Get twin registry by ID."""
         try:
-            sql = "SELECT * FROM twin_registry WHERE registry_id = ?"
+            sql = "SELECT * FROM twin_registry WHERE registry_id = :registry_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(sql, (registry_id,))
-                row = await cursor.fetchone()
+            result = await self.connection_manager.execute_query(sql, {"registry_id": registry_id})
             
-            if row:
-                return self._row_to_registry(row)
+            if result and len(result) > 0:
+                return self._row_to_registry(result[0])
             return None
             
         except Exception as e:
@@ -170,14 +177,12 @@ class TwinRegistryRepository:
     async def get_by_twin_id(self, twin_id: str) -> Optional[TwinRegistry]:
         """Get twin registry by twin ID."""
         try:
-            sql = "SELECT * FROM twin_registry WHERE twin_id = ?"
+            sql = "SELECT * FROM twin_registry WHERE twin_id = :twin_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(sql, (twin_id,))
-                row = await cursor.fetchone()
+            result = await self.connection_manager.execute_query(sql, {"twin_id": twin_id})
             
-            if row:
-                return self._row_to_registry(row)
+            if result and len(result) > 0:
+                return self._row_to_registry(result[0])
             return None
             
         except Exception as e:
@@ -188,58 +193,55 @@ class TwinRegistryRepository:
         """Get all twin registries with optional filtering."""
         try:
             sql = "SELECT * FROM twin_registry"
-            params = []
+            params = {}
             
             if query:
                 conditions = []
                 if query.twin_id:
-                    conditions.append("twin_id = ?")
-                    params.append(query.twin_id)
+                    conditions.append("twin_id = :twin_id")
+                    params['twin_id'] = query.twin_id
                 if query.twin_name:
-                    conditions.append("twin_name LIKE ?")
-                    params.append(f"%{query.twin_name}%")
+                    conditions.append("twin_name LIKE :twin_name")
+                    params['twin_name'] = f"%{query.twin_name}%"
                 if query.registry_type:
-                    conditions.append("registry_type = ?")
-                    params.append(query.registry_type)
+                    conditions.append("registry_type = :registry_type")
+                    params['registry_type'] = query.registry_type
                 if query.workflow_source:
-                    conditions.append("workflow_source = ?")
-                    params.append(query.workflow_source)
+                    conditions.append("workflow_source = :workflow_source")
+                    params['workflow_source'] = query.workflow_source
                 if query.twin_category:
-                    conditions.append("twin_category = ?")
-                    params.append(query.twin_category)
+                    conditions.append("twin_category = :twin_category")
+                    params['twin_category'] = query.twin_category
                 if query.integration_status:
-                    conditions.append("integration_status = ?")
-                    params.append(query.integration_status)
+                    conditions.append("integration_status = :integration_status")
+                    params['integration_status'] = query.integration_status
                 if query.health_status:
-                    conditions.append("health_status = ?")
-                    params.append(query.health_status)
+                    conditions.append("health_status = :health_status")
+                    params['health_status'] = query.health_status
                 if query.lifecycle_status:
-                    conditions.append("lifecycle_status = ?")
-                    params.append(query.lifecycle_status)
+                    conditions.append("lifecycle_status = :lifecycle_status")
+                    params['lifecycle_status'] = query.lifecycle_status
                 if query.user_id:
-                    conditions.append("user_id = ?")
-                    params.append(query.user_id)
+                    conditions.append("user_id = :user_id")
+                    params['user_id'] = query.user_id
                 if query.org_id:
-                    conditions.append("org_id = ?")
-                    params.append(query.org_id)
+                    conditions.append("org_id = :org_id")
+                    params['org_id'] = query.org_id
                 if query.created_after:
-                    conditions.append("created_at >= ?")
-                    params.append(query.created_after.isoformat())
+                    conditions.append("created_at >= :created_after")
+                    params['created_after'] = query.created_after.isoformat()
                 if query.created_before:
-                    conditions.append("created_at <= ?")
-                    params.append(query.created_before.isoformat())
+                    conditions.append("created_at <= :created_before")
+                    params['created_before'] = query.created_before.isoformat()
                 
                 if conditions:
                     sql += " WHERE " + " AND ".join(conditions)
             
             sql += " ORDER BY created_at DESC"
             
-            # Use the database manager's connection method
-            conn = self.connection_manager.get_connection()
-            cursor = conn.execute(sql, params)
-            rows = cursor.fetchall()
+            result = await self.connection_manager.execute_query(sql, params)
             
-            return [self._row_to_registry(row) for row in rows]
+            return [self._row_to_registry(row) for row in result]
             
         except Exception as e:
             logger.error(f"Failed to get registries: {e}")
@@ -252,13 +254,11 @@ class TwinRegistryRepository:
     async def get_total_count(self) -> int:
         """Get total count of registries."""
         try:
-            sql = "SELECT COUNT(*) FROM twin_registry"
+            sql = "SELECT COUNT(*) as count FROM twin_registry"
             
-            conn = self.connection_manager.get_connection()
-            cursor = conn.execute(sql)
-            result = cursor.fetchone()
+            result = await self.connection_manager.execute_query(sql, {})
             
-            return result[0] if result else 0
+            return result[0]['count'] if result and len(result) > 0 else 0
             
         except Exception as e:
             logger.error(f"Failed to get total count: {e}")
@@ -267,31 +267,27 @@ class TwinRegistryRepository:
     async def get_count_by_type(self, registry_type: str) -> int:
         """Get count of registries by type."""
         try:
-            sql = "SELECT COUNT(*) FROM twin_registry WHERE registry_type = ?"
+            sql = "SELECT COUNT(*) as count FROM twin_registry WHERE registry_type = :registry_type"
             
-            conn = self.connection_manager.get_connection()
-            cursor = conn.execute(sql, (registry_type,))
-            result = cursor.fetchone()
+            result = await self.connection_manager.execute_query(sql, {"registry_type": registry_type})
             
-            return result[0] if result else 0
+            return result[0]['count'] if result and len(result) > 0 else 0
             
         except Exception as e:
-            logger.error(f"Failed to get count by type {registry_type}: {e}")
+            logger.error(f"Failed to get count by type: {e}")
             return 0
     
     async def get_count_by_status(self, status: str) -> int:
         """Get count of registries by integration status."""
         try:
-            sql = "SELECT COUNT(*) FROM twin_registry WHERE integration_status = ?"
+            sql = "SELECT COUNT(*) as count FROM twin_registry WHERE integration_status = :status"
             
-            conn = self.connection_manager.get_connection()
-            cursor = conn.execute(sql, (status,))
-            result = cursor.fetchone()
+            result = await self.connection_manager.execute_query(sql, {"status": status})
             
-            return result[0] if result else 0
+            return result[0]['count'] if result and len(result) > 0 else 0
             
         except Exception as e:
-            logger.error(f"Failed to get count by status {status}: {e}")
+            logger.error(f"Failed to get count by status: {e}")
             return 0
     
     async def update_registry(self, registry: TwinRegistry) -> TwinRegistry:
@@ -299,78 +295,76 @@ class TwinRegistryRepository:
         try:
             sql = """
             UPDATE twin_registry SET
-                twin_name = ?, registry_name = ?, twin_category = ?, twin_type = ?,
-                twin_priority = ?, twin_version = ?, registry_type = ?, workflow_source = ?,
-                aasx_integration_id = ?, physics_modeling_id = ?, federated_learning_id = ?,
-                data_pipeline_id = ?, kg_neo4j_id = ?, certificate_manager_id = ?,
-                integration_status = ?, overall_health_score = ?, health_status = ?,
-                lifecycle_status = ?, lifecycle_phase = ?, operational_status = ?,
-                availability_status = ?, sync_status = ?, sync_frequency = ?, last_sync_at = ?,
-                next_sync_at = ?, sync_error_count = ?, sync_error_message = ?,
-                performance_score = ?, data_quality_score = ?, reliability_score = ?,
-                compliance_score = ?, security_level = ?, access_control_level = ?,
-                encryption_enabled = ?, audit_logging_enabled = ?, owner_team = ?,
-                steward_user_id = ?, updated_at = ?, activated_at = ?, last_accessed_at = ?,
-                last_modified_at = ?, registry_config = ?, registry_metadata = ?,
-                custom_attributes = ?, tags = ?, relationships = ?, dependencies = ?, instances = ?
-            WHERE registry_id = ?
+                twin_name = :twin_name, registry_name = :registry_name, twin_category = :twin_category, twin_type = :twin_type,
+                twin_priority = :twin_priority, twin_version = :twin_version, registry_type = :registry_type, workflow_source = :workflow_source,
+                aasx_integration_id = :aasx_integration_id, physics_modeling_id = :physics_modeling_id, federated_learning_id = :federated_learning_id,
+                data_pipeline_id = :data_pipeline_id, kg_neo4j_id = :kg_neo4j_id, certificate_manager_id = :certificate_manager_id,
+                integration_status = :integration_status, overall_health_score = :overall_health_score, health_status = :health_status,
+                lifecycle_status = :lifecycle_status, lifecycle_phase = :lifecycle_phase, operational_status = :operational_status,
+                availability_status = :availability_status, sync_status = :sync_status, sync_frequency = :sync_frequency, last_sync_at = :last_sync_at,
+                next_sync_at = :next_sync_at, sync_error_count = :sync_error_count, sync_error_message = :sync_error_message,
+                performance_score = :performance_score, data_quality_score = :data_quality_score, reliability_score = :reliability_score,
+                compliance_score = :compliance_score, security_level = :security_level, access_control_level = :access_control_level,
+                encryption_enabled = :encryption_enabled, audit_logging_enabled = :audit_logging_enabled, owner_team = :owner_team,
+                steward_user_id = :steward_user_id, updated_at = :updated_at, activated_at = :activated_at, last_accessed_at = :last_accessed_at,
+                last_modified_at = :last_modified_at, registry_config = :registry_config, registry_metadata = :registry_metadata,
+                custom_attributes = :custom_attributes, tags = :tags, relationships = :relationships, dependencies = :dependencies, instances = :instances
+            WHERE registry_id = :registry_id
             """
             
-            params = (
-                registry.twin_name,
-                registry.registry_name,
-                registry.twin_category,
-                registry.twin_type,
-                registry.twin_priority,
-                registry.twin_version,
-                registry.registry_type,
-                registry.workflow_source,
-                registry.aasx_integration_id,
-                registry.physics_modeling_id,
-                registry.federated_learning_id,
-                registry.data_pipeline_id,
-                registry.kg_neo4j_id,
-                registry.certificate_manager_id,
-                registry.integration_status,
-                registry.overall_health_score,
-                registry.health_status,
-                registry.lifecycle_status,
-                registry.lifecycle_phase,
-                registry.operational_status,
-                registry.availability_status,
-                registry.sync_status,
-                registry.sync_frequency,
-                registry.last_sync_at,
-                registry.next_sync_at,
-                registry.sync_error_count,
-                registry.sync_error_message,
-                registry.performance_score,
-                registry.data_quality_score,
-                registry.reliability_score,
-                registry.compliance_score,
-                registry.security_level,
-                registry.access_control_level,
-                registry.encryption_enabled,
-                registry.audit_logging_enabled,
-                registry.owner_team,
-                registry.steward_user_id,
-                registry.updated_at,
-                registry.activated_at,
-                registry.last_accessed_at,
-                registry.last_modified_at,
-                registry.registry_config,
-                registry.registry_metadata,
-                registry.custom_attributes,
-                registry.tags,
-                registry.relationships,
-                registry.dependencies,
-                registry.instances,
-                registry.registry_id
-            )
+            params = {
+                'twin_name': registry.twin_name,
+                'registry_name': registry.registry_name,
+                'twin_category': registry.twin_category,
+                'twin_type': registry.twin_type,
+                'twin_priority': registry.twin_priority,
+                'twin_version': registry.twin_version,
+                'registry_type': registry.registry_type,
+                'workflow_source': registry.workflow_source,
+                'aasx_integration_id': registry.aasx_integration_id,
+                'physics_modeling_id': registry.physics_modeling_id,
+                'federated_learning_id': registry.federated_learning_id,
+                'data_pipeline_id': registry.data_pipeline_id,
+                'kg_neo4j_id': registry.kg_neo4j_id,
+                'certificate_manager_id': registry.certificate_manager_id,
+                'integration_status': registry.integration_status,
+                'overall_health_score': registry.overall_health_score,
+                'health_status': registry.health_status,
+                'lifecycle_status': registry.lifecycle_status,
+                'lifecycle_phase': registry.lifecycle_phase,
+                'operational_status': registry.operational_status,
+                'availability_status': registry.availability_status,
+                'sync_status': registry.sync_status,
+                'sync_frequency': registry.sync_frequency,
+                'last_sync_at': registry.last_sync_at,
+                'next_sync_at': registry.next_sync_at,
+                'sync_error_count': registry.sync_error_count,
+                'sync_error_message': registry.sync_error_message,
+                'performance_score': registry.performance_score,
+                'data_quality_score': registry.data_quality_score,
+                'reliability_score': registry.reliability_score,
+                'compliance_score': registry.compliance_score,
+                'security_level': registry.security_level,
+                'access_control_level': registry.access_control_level,
+                'encryption_enabled': registry.encryption_enabled,
+                'audit_logging_enabled': registry.audit_logging_enabled,
+                'owner_team': registry.owner_team,
+                'steward_user_id': registry.steward_user_id,
+                'updated_at': registry.updated_at,
+                'activated_at': registry.activated_at,
+                'last_accessed_at': registry.last_accessed_at,
+                'last_modified_at': registry.last_modified_at,
+                'registry_config': registry.registry_config,
+                'registry_metadata': registry.registry_metadata,
+                'custom_attributes': registry.custom_attributes,
+                'tags': registry.tags,
+                'relationships': registry.relationships,
+                'dependencies': registry.dependencies,
+                'instances': registry.instances,
+                'registry_id': registry.registry_id
+            }
             
-            async with self.connection_manager.get_connection() as conn:
-                await conn.execute(sql, params)
-                await conn.commit()
+            await self.connection_manager.execute_update(sql, params)
             
             logger.info(f"Updated twin registry: {registry.registry_id}")
             return registry
@@ -382,16 +376,12 @@ class TwinRegistryRepository:
     async def delete_registry(self, registry_id: str) -> bool:
         """Delete twin registry by ID."""
         try:
-            sql = "DELETE FROM twin_registry WHERE registry_id = ?"
+            sql = "DELETE FROM twin_registry WHERE registry_id = :registry_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(sql, (registry_id,))
-                await conn.commit()
+            await self.connection_manager.execute_update(sql, {"registry_id": registry_id})
             
-            deleted = cursor.rowcount > 0
-            if deleted:
-                logger.info(f"Deleted twin registry: {registry_id}")
-            return deleted
+            logger.info(f"Deleted twin registry: {registry_id}")
+            return True
             
         except Exception as e:
             logger.error(f"Failed to delete twin registry {registry_id}: {e}")
@@ -400,30 +390,29 @@ class TwinRegistryRepository:
     async def get_summary(self) -> TwinRegistrySummary:
         """Get registry summary statistics."""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                # Total registries
-                cursor = await conn.execute("SELECT COUNT(*) FROM twin_registry")
-                total = (await cursor.fetchone())[0]
-                
-                # Active registries (integration_status = 'active')
-                cursor = await conn.execute("SELECT COUNT(*) FROM twin_registry WHERE integration_status = 'active'")
-                active = (await cursor.fetchone())[0]
-                
-                # By type
-                cursor = await conn.execute("SELECT registry_type, COUNT(*) FROM twin_registry GROUP BY registry_type")
-                by_type = {row[0]: row[1] for row in await cursor.fetchall()}
-                
-                # By workflow
-                cursor = await conn.execute("SELECT workflow_source, COUNT(*) FROM twin_registry GROUP BY workflow_source")
-                by_workflow = {row[0]: row[1] for row in await cursor.fetchall()}
-                
-                # By category
-                cursor = await conn.execute("SELECT twin_category, COUNT(*) FROM twin_registry GROUP BY twin_category")
-                by_category = {row[0]: row[1] for row in await cursor.fetchall()}
-                
-                # By status
-                cursor = await conn.execute("SELECT integration_status, COUNT(*) FROM twin_registry GROUP BY integration_status")
-                by_status = {row[0]: row[1] for row in await cursor.fetchall()}
+            # Total registries
+            total_result = await self.connection_manager.execute_query("SELECT COUNT(*) as count FROM twin_registry", {})
+            total = total_result[0]['count'] if total_result and len(total_result) > 0 else 0
+            
+            # Active registries (integration_status = 'active')
+            active_result = await self.connection_manager.execute_query("SELECT COUNT(*) as count FROM twin_registry WHERE integration_status = 'active'", {})
+            active = active_result[0]['count'] if active_result and len(active_result) > 0 else 0
+            
+            # By type
+            by_type_result = await self.connection_manager.execute_query("SELECT registry_type, COUNT(*) as count FROM twin_registry GROUP BY registry_type", {})
+            by_type = {row['registry_type']: row['count'] for row in by_type_result}
+            
+            # By workflow
+            by_workflow_result = await self.connection_manager.execute_query("SELECT workflow_source, COUNT(*) as count FROM twin_registry GROUP BY workflow_source", {})
+            by_workflow = {row['workflow_source']: row['count'] for row in by_workflow_result}
+            
+            # By category
+            by_category_result = await self.connection_manager.execute_query("SELECT twin_category, COUNT(*) as count FROM twin_registry GROUP BY twin_category", {})
+            by_category = {row['twin_category']: row['count'] for row in by_category_result}
+            
+            # By status
+            by_status_result = await self.connection_manager.execute_query("SELECT integration_status, COUNT(*) as count FROM twin_registry GROUP BY integration_status", {})
+            by_status = {row['integration_status']: row['count'] for row in by_status_result}
             
             return TwinRegistrySummary(
                 total_registries=total,

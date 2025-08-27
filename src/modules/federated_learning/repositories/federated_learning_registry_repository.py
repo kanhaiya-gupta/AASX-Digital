@@ -37,33 +37,79 @@ class FederatedLearningRegistryRepository:
                     efficiency_score, scalability_score, optimization_potential, bottleneck_identification, performance_trend, 
                     last_optimization_date, optimization_suggestions,
                     user_id, org_id, dept_id, created_at, updated_at, metadata
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (:registry_id, :federation_name, :registry_name, :federation_type, :federation_category,
+                    :aasx_integration_id, :twin_registry_id, :kg_neo4j_id, :physics_modeling_id, :ai_rag_id, :certificate_manager_id,
+                    :integration_status, :overall_health_score, :health_status, :lifecycle_status,
+                    :federation_participation_status, :aggregation_status, :privacy_compliance_status, :algorithm_execution_status,
+                    :performance_score, :data_quality_score, :reliability_score, :compliance_score,
+                    :security_level, :access_control_level, :encryption_enabled,
+                    :compliance_framework, :compliance_status, :last_audit_date, :next_audit_date, :audit_details, :risk_level,
+                    :security_score, :threat_detection_score, :encryption_strength, :authentication_method, :access_control_score, 
+                    :data_protection_score, :incident_response_time, :security_audit_score, :last_security_scan, :security_details,
+                    :efficiency_score, :scalability_score, :optimization_potential, :bottleneck_identification, :performance_trend, 
+                    :last_optimization_date, :optimization_suggestions,
+                    :user_id, :org_id, :dept_id, :created_at, :updated_at, :metadata)
             """
             
-            params = (
-                registry.registry_id, registry.federation_name, registry.registry_name, 
-                registry.federation_type, registry.federation_category,
-                registry.aasx_integration_id, registry.twin_registry_id, registry.kg_neo4j_id,
-                registry.physics_modeling_id, registry.ai_rag_id, registry.certificate_manager_id,
-                registry.integration_status, registry.overall_health_score, registry.health_status,
-                registry.lifecycle_status, registry.federation_participation_status, registry.aggregation_status,
-                registry.privacy_compliance_status, registry.algorithm_execution_status,
-                registry.performance_score, registry.data_quality_score, registry.reliability_score,
-                registry.compliance_score, registry.security_level, registry.access_control_level,
-                registry.encryption_enabled, registry.compliance_framework, registry.compliance_status,
-                registry.last_audit_date, registry.next_audit_date, str(registry.audit_details) if registry.audit_details else None,
-                registry.risk_level, registry.security_score, registry.threat_detection_score,
-                registry.encryption_strength, registry.authentication_method, registry.access_control_score,
-                registry.data_protection_score, registry.incident_response_time, registry.security_audit_score,
-                registry.last_security_scan, str(registry.security_details) if registry.security_details else None,
-                registry.efficiency_score, registry.scalability_score, registry.optimization_potential,
-                registry.bottleneck_identification, registry.performance_trend, registry.last_optimization_date,
-                str(registry.optimization_suggestions) if registry.optimization_suggestions else None,
-                registry.user_id, registry.org_id, registry.dept_id, registry.created_at, registry.updated_at,
-                str(registry.metadata) if registry.metadata else None
-            )
+            params = {
+                'registry_id': registry.registry_id,
+                'federation_name': registry.federation_name,
+                'registry_name': registry.registry_name,
+                'federation_type': registry.federation_type,
+                'federation_category': registry.federation_category,
+                'aasx_integration_id': registry.aasx_integration_id,
+                'twin_registry_id': registry.twin_registry_id,
+                'kg_neo4j_id': registry.kg_neo4j_id,
+                'physics_modeling_id': registry.physics_modeling_id,
+                'ai_rag_id': registry.ai_rag_id,
+                'certificate_manager_id': registry.certificate_manager_id,
+                'integration_status': registry.integration_status,
+                'overall_health_score': registry.overall_health_score,
+                'health_status': registry.health_status,
+                'lifecycle_status': registry.lifecycle_status,
+                'federation_participation_status': registry.federation_participation_status,
+                'aggregation_status': registry.aggregation_status,
+                'privacy_compliance_status': registry.privacy_compliance_status,
+                'algorithm_execution_status': registry.algorithm_execution_status,
+                'performance_score': registry.performance_score,
+                'data_quality_score': registry.data_quality_score,
+                'reliability_score': registry.reliability_score,
+                'compliance_score': registry.compliance_score,
+                'security_level': registry.security_level,
+                'access_control_level': registry.access_control_level,
+                'encryption_enabled': registry.encryption_enabled,
+                'compliance_framework': registry.compliance_framework,
+                'compliance_status': registry.compliance_status,
+                'last_audit_date': registry.last_audit_date,
+                'next_audit_date': registry.next_audit_date,
+                'audit_details': str(registry.audit_details) if registry.audit_details else None,
+                'risk_level': registry.risk_level,
+                'security_score': registry.security_score,
+                'threat_detection_score': registry.threat_detection_score,
+                'encryption_strength': registry.encryption_strength,
+                'authentication_method': registry.authentication_method,
+                'access_control_score': registry.access_control_score,
+                'data_protection_score': registry.data_protection_score,
+                'incident_response_time': registry.incident_response_time,
+                'security_audit_score': registry.security_audit_score,
+                'last_security_scan': registry.last_security_scan,
+                'security_details': str(registry.security_details) if registry.security_details else None,
+                'efficiency_score': registry.efficiency_score,
+                'scalability_score': registry.scalability_score,
+                'optimization_potential': registry.optimization_potential,
+                'bottleneck_identification': registry.bottleneck_identification,
+                'performance_trend': registry.performance_trend,
+                'last_optimization_date': registry.last_optimization_date,
+                'optimization_suggestions': str(registry.optimization_suggestions) if registry.optimization_suggestions else None,
+                'user_id': registry.user_id,
+                'org_id': registry.org_id,
+                'dept_id': registry.dept_id,
+                'created_at': registry.created_at,
+                'updated_at': registry.updated_at,
+                'metadata': str(registry.metadata) if registry.metadata else None
+            }
             
-            await self.connection_manager.execute_query(query, params)
+            await self.connection_manager.execute_update(query, params)
             return True
             
         except Exception as e:
@@ -73,11 +119,11 @@ class FederatedLearningRegistryRepository:
     async def get_by_id(self, registry_id: str) -> Optional[FederatedLearningRegistry]:
         """Get registry by ID (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE registry_id = ?"
-            result = await self.connection_manager.fetch_one(query, (registry_id,))
+            query = f"SELECT * FROM {self.table_name} WHERE registry_id = :registry_id"
+            result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
             
-            if result:
-                return self._row_to_model(result)
+            if result and len(result) > 0:
+                return self._row_to_model(result[0])
             return None
             
         except Exception as e:
@@ -87,8 +133,8 @@ class FederatedLearningRegistryRepository:
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[FederatedLearningRegistry]:
         """Get all registries with pagination (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT ? OFFSET ?"
-            results = await self.connection_manager.fetch_all(query, (limit, offset))
+            query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
+            results = await self.connection_manager.execute_query(query, {"limit": limit, "offset": offset})
             
             return [self._row_to_model(row) for row in results]
             
@@ -99,8 +145,8 @@ class FederatedLearningRegistryRepository:
     async def get_by_federation_type(self, federation_type: str) -> List[FederatedLearningRegistry]:
         """Get registries by federation type (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE federation_type = ? ORDER BY created_at DESC"
-            results = await self.connection_manager.fetch_all(query, (federation_type,))
+            query = f"SELECT * FROM {self.table_name} WHERE federation_type = :federation_type ORDER BY created_at DESC"
+            results = await self.connection_manager.execute_query(query, {"federation_type": federation_type})
             
             return [self._row_to_model(row) for row in results]
             
@@ -111,8 +157,8 @@ class FederatedLearningRegistryRepository:
     async def get_by_health_status(self, health_status: str) -> List[FederatedLearningRegistry]:
         """Get registries by health status (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE health_status = ? ORDER BY overall_health_score DESC"
-            results = await self.connection_manager.fetch_all(query, (health_status,))
+            query = f"SELECT * FROM {self.table_name} WHERE health_status = :health_status ORDER BY overall_health_score DESC"
+            results = await self.connection_manager.execute_query(query, {"health_status": health_status})
             
             return [self._row_to_model(row) for row in results]
             
@@ -123,8 +169,8 @@ class FederatedLearningRegistryRepository:
     async def get_by_user(self, user_id: str) -> List[FederatedLearningRegistry]:
         """Get registries by user ID (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE user_id = ? ORDER BY created_at DESC"
-            results = await self.connection_manager.fetch_all(query, (user_id,))
+            query = f"SELECT * FROM {self.table_name} WHERE user_id = :user_id ORDER BY created_at DESC"
+            results = await self.connection_manager.execute_query(query, {"user_id": user_id})
             
             return [self._row_to_model(row) for row in results]
             
@@ -135,8 +181,8 @@ class FederatedLearningRegistryRepository:
     async def get_by_department(self, dept_id: str) -> List[FederatedLearningRegistry]:
         """Get registries by department ID (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE dept_id = ? ORDER BY created_at DESC"
-            results = await self.connection_manager.fetch_all(query, (dept_id,))
+            query = f"SELECT * FROM {self.table_name} WHERE dept_id = :dept_id ORDER BY created_at DESC"
+            results = await self.connection_manager.execute_query(query, {"dept_id": dept_id})
             
             return [self._row_to_model(row) for row in results]
             
@@ -194,13 +240,13 @@ class FederatedLearningRegistryRepository:
         try:
             query = f"""
                 SELECT * FROM {self.table_name} 
-                WHERE federation_name LIKE ? OR registry_name LIKE ? OR federation_category LIKE ?
-                ORDER BY created_at DESC LIMIT ?
+                WHERE federation_name LIKE :search_pattern OR registry_name LIKE :search_pattern OR federation_category LIKE :search_pattern
+                ORDER BY created_at DESC LIMIT :limit
             """
             search_pattern = f"%{search_term}%"
-            params = (search_pattern, search_pattern, search_pattern, limit)
+            params = {"search_pattern": search_pattern, "limit": limit}
             
-            results = await self.connection_manager.fetch_all(query, params)
+            results = await self.connection_manager.execute_query(query, params)
             return [self._row_to_model(row) for row in results]
             
         except Exception as e:
@@ -220,8 +266,8 @@ class FederatedLearningRegistryRepository:
                 FROM {self.table_name}
             """
             
-            result = await self.connection_manager.fetch_one(query)
-            return dict(result) if result else {}
+            result = await self.connection_manager.execute_query(query, {})
+            return dict(result[0]) if result and len(result) > 0 else {}
             
         except Exception as e:
             print(f"Error getting health summary: {e}")
@@ -240,8 +286,8 @@ class FederatedLearningRegistryRepository:
                 FROM {self.table_name}
             """
             
-            result = await self.connection_manager.fetch_one(query)
-            return dict(result) if result else {}
+            result = await self.connection_manager.execute_query(query, {})
+            return dict(result[0]) if result and len(result) > 0 else {}
             
         except Exception as e:
             print(f"Error getting compliance summary: {e}")

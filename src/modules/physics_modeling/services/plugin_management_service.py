@@ -811,3 +811,4 @@ class PluginManagementService:
         except Exception as e:
             logger.error(f"Error closing plugin management service: {e}")
 
+

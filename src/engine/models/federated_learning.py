@@ -152,3 +152,4 @@ class EnterpriseFederatedLearningPerformanceAnalytics(BaseModel):
         self.created_at: str = kwargs.get('created_at', datetime.now().isoformat())
         self.updated_at: str = kwargs.get('updated_at', datetime.now().isoformat())
 
+

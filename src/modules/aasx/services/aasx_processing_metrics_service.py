@@ -480,3 +480,242 @@ class ProcessingMetricsService:
         except Exception as e:
             logger.error(f"Failed to cleanup old metrics: {e}")
             return 0
+
+    # ENTERPRISE FEATURES - New methods for enterprise metrics capabilities
+    
+    async def create_enterprise_metrics(self, job_id: str, enterprise_metric_type: str,
+                                      enterprise_metric_value: float, enterprise_metadata: Dict[str, Any]) -> str:
+        """
+        Create enterprise-specific metrics for advanced analytics.
+        
+        Args:
+            job_id: Reference to aasx_processing.job_id
+            enterprise_metric_type: Type of enterprise metric
+            enterprise_metric_value: Numeric value of the metric
+            enterprise_metadata: Additional metadata for the metric
+            
+        Returns:
+            str: Created metric ID
+        """
+        try:
+            metrics_data = {
+                "job_id": job_id,
+                "timestamp": datetime.utcnow(),
+                "enterprise_metric_type": enterprise_metric_type,
+                "enterprise_metric_value": enterprise_metric_value,
+                "enterprise_metadata": enterprise_metadata
+            }
+            
+            return await self.create_metrics_record(job_id, metrics_data)
+            
+        except Exception as e:
+            logger.error(f"Failed to create enterprise metrics for job {job_id}: {e}")
+            raise
+    
+    async def update_performance_analytics(self, job_id: str, performance_metric: str,
+                                         performance_trend: str, trend_data: Dict[str, Any]) -> bool:
+        """
+        Update performance analytics for enterprise performance monitoring.
+        
+        Args:
+            job_id: Reference to aasx_processing.job_id
+            performance_metric: Performance metric identifier
+            performance_trend: Trend direction (increasing, decreasing, stable)
+            trend_data: Additional trend analysis data
+            
+        Returns:
+            bool: True if update successful
+        """
+        try:
+            # Get existing metrics for the job
+            metrics = await self.repository.get_by_job_id(job_id)
+            if not metrics:
+                logger.warning(f"No metrics found for job {job_id}, creating new record")
+                await self.create_enterprise_metrics(
+                    job_id, 
+                    f"performance_{performance_metric}", 
+                    0.0, 
+                    {"trend": performance_trend, **trend_data}
+                )
+                return True
+            
+            # Update the most recent metric record
+            latest_metric = metrics[-1]
+            latest_metric.performance_metric = performance_metric
+            latest_metric.performance_trend = performance_trend
+            
+            success = await self.repository.update(latest_metric)
+            if success:
+                logger.info(f"Updated performance analytics for job {job_id}: {performance_metric} - {performance_trend}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to update performance analytics for job {job_id}: {e}")
+            return False
+    
+    async def get_enterprise_metrics_summary(self, org_id: str, 
+                                           metric_type: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get enterprise metrics summary for business intelligence.
+        
+        Args:
+            org_id: Organization identifier
+            metric_type: Optional metric type filter
+            
+        Returns:
+            Dict[str, Any]: Enterprise metrics summary
+        """
+        try:
+            # Get all metrics for the organization (via job relationships)
+            # This would require joining with aasx_processing table
+            # For now, we'll get all metrics and filter by type
+            
+            # Get recent metrics (last 30 days)
+            end_date = datetime.utcnow()
+            start_date = end_date - timedelta(days=30)
+            
+            metrics = await self.repository.get_by_date_range(start_date, end_date, limit=1000)
+            
+            if metric_type:
+                metrics = [m for m in metrics if m.enterprise_metric_type == metric_type]
+            
+            if not metrics:
+                return {
+                    'total_metrics': 0,
+                    'metric_types': [],
+                    'average_values': {},
+                    'trends': {}
+                }
+            
+            # Group by metric type
+            metric_groups = {}
+            for metric in metrics:
+                m_type = metric.enterprise_metric_type
+                if m_type not in metric_groups:
+                    metric_groups[m_type] = []
+                metric_groups[m_type].append(metric)
+            
+            # Calculate statistics for each metric type
+            summary = {
+                'total_metrics': len(metrics),
+                'metric_types': list(metric_groups.keys()),
+                'average_values': {},
+                'trends': {},
+                'recent_activity': {}
+            }
+            
+            for m_type, type_metrics in metric_groups.items():
+                values = [m.enterprise_metric_value for m in type_metrics if m.enterprise_metric_value is not None]
+                if values:
+                    summary['average_values'][m_type] = round(statistics.mean(values), 2)
+                    
+                    # Determine trend (simple comparison of first vs last)
+                    if len(values) >= 2:
+                        first_avg = values[0]
+                        last_avg = values[-1]
+                        if last_avg > first_avg * 1.1:
+                            summary['trends'][m_type] = 'increasing'
+                        elif last_avg < first_avg * 0.9:
+                            summary['trends'][m_type] = 'decreasing'
+                        else:
+                            summary['trends'][m_type] = 'stable'
+                    else:
+                        summary['trends'][m_type] = 'insufficient_data'
+                
+                # Recent activity (last 7 days)
+                recent_metrics = [m for m in type_metrics 
+                                if (end_date - m.timestamp).days <= 7]
+                summary['recent_activity'][m_type] = len(recent_metrics)
+            
+            return summary
+            
+        except Exception as e:
+            logger.error(f"Failed to generate enterprise metrics summary for org {org_id}: {e}")
+            return {}
+    
+    async def track_compliance_metrics(self, job_id: str, compliance_type: str,
+                                     compliance_status: str, compliance_score: float) -> bool:
+        """
+        Track compliance metrics for enterprise governance.
+        
+        Args:
+            job_id: Reference to aasx_processing.job_id
+            compliance_type: Type of compliance
+            compliance_status: Current compliance status
+            compliance_score: Compliance score (0-100)
+            
+        Returns:
+            bool: True if tracking successful
+        """
+        try:
+            # Get existing metrics for the job
+            metrics = await self.repository.get_by_job_id(job_id)
+            if not metrics:
+                logger.warning(f"No metrics found for job {job_id}, creating new record")
+                await self.create_enterprise_metrics(
+                    job_id, 
+                    f"compliance_{compliance_type}", 
+                    compliance_score, 
+                    {"status": compliance_status, "type": compliance_type}
+                )
+                return True
+            
+            # Update the most recent metric record
+            latest_metric = metrics[-1]
+            latest_metric.compliance_type = compliance_type
+            latest_metric.compliance_status = compliance_status
+            latest_metric.compliance_score = compliance_score
+            
+            success = await self.repository.update(latest_metric)
+            if success:
+                logger.info(f"Updated compliance metrics for job {job_id}: {compliance_type} - {compliance_status}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to track compliance metrics for job {job_id}: {e}")
+            return False
+    
+    async def track_security_metrics(self, job_id: str, security_event_type: str,
+                                   threat_assessment: str, security_score: float) -> bool:
+        """
+        Track security metrics for enterprise security monitoring.
+        
+        Args:
+            job_id: Reference to aasx_processing.job_id
+            security_event_type: Type of security event
+            threat_assessment: Threat assessment level
+            security_score: Security score (0-100)
+            
+        Returns:
+            bool: True if tracking successful
+        """
+        try:
+            # Get existing metrics for the job
+            metrics = await self.repository.get_by_job_id(job_id)
+            if not metrics:
+                logger.warning(f"No metrics found for job {job_id}, creating new record")
+                await self.create_enterprise_metrics(
+                    job_id, 
+                    f"security_{security_event_type}", 
+                    security_score, 
+                    {"threat_assessment": threat_assessment, "event_type": security_event_type}
+                )
+                return True
+            
+            # Update the most recent metric record
+            latest_metric = metrics[-1]
+            latest_metric.security_event_type = security_event_type
+            latest_metric.threat_assessment = threat_assessment
+            latest_metric.security_score = security_score
+            
+            success = await self.repository.update(latest_metric)
+            if success:
+                logger.info(f"Updated security metrics for job {job_id}: {security_event_type} - {threat_assessment}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to track security metrics for job {job_id}: {e}")
+            return False

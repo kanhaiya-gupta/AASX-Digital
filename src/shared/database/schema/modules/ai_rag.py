@@ -312,3 +312,4 @@ class AIRagSchema(BaseSchemaModule):
         return self.create_indexes("ai_rag_metrics", index_queries)
 
 
+

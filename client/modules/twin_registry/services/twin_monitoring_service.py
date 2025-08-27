@@ -14,8 +14,8 @@ import asyncio
 
 # Import core Twin Registry services (only those that exist)
 try:
-    from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
-    from src.twin_registry.core.twin_sync_service import TwinSyncService
+    from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+from src.modules.twin_registry.core.twin_sync_service import TwinSyncService
     print("✅ Twin Registry core services imported successfully")
     CORE_SERVICES_AVAILABLE = True
 except ImportError as e:
@@ -47,7 +47,7 @@ class TwinMonitoringService:
             
             # Try to import core registry service for twin data access
             try:
-                from src.twin_registry.core.twin_registry_service import TwinRegistryService
+                from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService
                 self.core_registry = TwinRegistryService()
                 logger.info("✅ Twin Monitoring Service initialized with all core services")
             except ImportError as e:

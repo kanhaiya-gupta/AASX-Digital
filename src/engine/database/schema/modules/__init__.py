@@ -48,6 +48,7 @@ SCHEMA_MODULES = {
     'auth': AuthSchema,
 }
 
+
 def get_schema_module(module_name: str):
     """
     Get a schema module by name.

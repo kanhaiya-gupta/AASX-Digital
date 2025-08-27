@@ -43,24 +43,22 @@ class AIRagGraphMetadataRepository:
             str: Created graph_id if successful, None otherwise
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                # Prepare the INSERT query
-                columns = list(graph_metadata.keys())
-                placeholders = ', '.join(['?' for _ in columns])
-                values = list(graph_metadata.values())
-                
-                query = f"""
-                    INSERT INTO {self.table_name} 
-                    ({', '.join(columns)}) 
-                    VALUES ({placeholders})
-                """
-                
-                result = await session.execute(query, values)
-                await session.commit()
-                
-                graph_id = graph_metadata.get('graph_id')
-                logger.info(f"✅ Created graph metadata record: {graph_id}")
-                return graph_id
+            # Prepare the INSERT query
+            columns = list(graph_metadata.keys())
+            placeholders = ', '.join(['?' for _ in columns])
+            values = list(graph_metadata.values())
+            
+            query = f"""
+                INSERT INTO {self.table_name} 
+                ({', '.join(columns)}) 
+                VALUES ({placeholders})
+            """
+            
+            await self.connection_manager.execute_update(query, dict(zip(columns, values)))
+            
+            graph_id = graph_metadata.get('graph_id')
+            logger.info(f"✅ Created graph metadata record: {graph_id}")
+            return graph_id
                 
         except Exception as e:
             logger.error(f"❌ Failed to create graph metadata record: {e}")
@@ -77,14 +75,12 @@ class AIRagGraphMetadataRepository:
             Dict: Graph metadata record if found, None otherwise
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE graph_id = ?"
-                result = await session.execute(query, (graph_id,))
-                row = result.fetchone()
-                
-                if row:
-                    return dict(row)
-                return None
+            query = f"SELECT * FROM {self.table_name} WHERE graph_id = ?"
+            result = await self.connection_manager.execute_query(query, {"graph_id": graph_id})
+            
+            if result and len(result) > 0:
+                return result[0]
+            return None
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by ID {graph_id}: {e}")
@@ -98,15 +94,13 @@ class AIRagGraphMetadataRepository:
             registry_id: AI RAG registry ID
             
         Returns:
-            List[Dict]: List of graph metadata records
+            List: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE registry_id = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (registry_id,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE registry_id = ?"
+            result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by registry ID {registry_id}: {e}")
@@ -123,12 +117,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE processing_status = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (status,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE processing_status = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"status": status})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by status {status}: {e}")
@@ -145,12 +137,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE validation_status = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (validation_status,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE validation_status = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"validation_status": validation_status})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by validation status {validation_status}: {e}")
@@ -167,12 +157,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE graph_type = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (graph_type,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE graph_type = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"graph_type": graph_type})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by graph type {graph_type}: {e}")
@@ -189,12 +177,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE graph_category = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (graph_category,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE graph_category = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"graph_category": graph_category})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by category {graph_category}: {e}")
@@ -211,12 +197,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE created_by = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (user_id,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE created_by = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"user_id": user_id})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by user {user_id}: {e}")
@@ -233,12 +217,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE dept_id = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (dept_id,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE dept_id = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"dept_id": dept_id})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by department {dept_id}: {e}")
@@ -255,12 +237,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE org_id = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (org_id,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE org_id = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"org_id": org_id})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by organization {org_id}: {e}")
@@ -277,12 +257,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of high-quality graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE quality_score >= ? ORDER BY quality_score DESC"
-                result = await session.execute(query, (min_quality_score,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE quality_score >= ? ORDER BY quality_score DESC"
+            result = await self.connection_manager.execute_query(query, {"min_quality_score": min_quality_score})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get high-quality graph metadata: {e}")
@@ -296,12 +274,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of failed graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE processing_status = 'failed' ORDER BY created_at DESC"
-                result = await session.execute(query)
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE processing_status = 'failed' ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get failed graph metadata: {e}")
@@ -315,12 +291,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of processing graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE processing_status = 'processing' ORDER BY created_at ASC"
-                result = await session.execute(query)
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE processing_status = 'processing' ORDER BY created_at ASC"
+            result = await self.connection_manager.execute_query(query, {})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get processing graph metadata: {e}")
@@ -337,12 +311,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of recent graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT ?"
-                result = await session.execute(query, (limit,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT ?"
+            result = await self.connection_manager.execute_query(query, {"limit": limit})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get recent graph metadata: {e}")
@@ -360,12 +332,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records within the date range
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE created_at BETWEEN ? AND ? ORDER BY created_at DESC"
-                result = await session.execute(query, (start_date, end_date))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE created_at BETWEEN ? AND ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"start_date": start_date, "end_date": end_date})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by date range: {e}")
@@ -383,25 +353,19 @@ class AIRagGraphMetadataRepository:
             bool: True if update successful, False otherwise
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                # Add updated_at timestamp
-                updates['updated_at'] = datetime.now().isoformat()
-                
-                # Prepare the UPDATE query
-                set_clause = ', '.join([f"{key} = ?" for key in updates.keys()])
-                values = list(updates.values()) + [graph_id]
-                
-                query = f"UPDATE {self.table_name} SET {set_clause} WHERE graph_id = ?"
-                
-                result = await session.execute(query, values)
-                await session.commit()
-                
-                if result.rowcount > 0:
-                    logger.info(f"✅ Updated graph metadata record: {graph_id}")
-                    return True
-                else:
-                    logger.warning(f"⚠️ No rows updated for graph ID: {graph_id}")
-                    return False
+            # Add updated_at timestamp
+            updates['updated_at'] = datetime.now().isoformat()
+            
+            # Prepare the UPDATE query
+            set_clause = ', '.join([f"{key} = ?" for key in updates.keys()])
+            values = list(updates.values()) + [graph_id]
+            
+            query = f"UPDATE {self.table_name} SET {set_clause} WHERE graph_id = ?"
+            
+            await self.connection_manager.execute_update(query, dict(zip(updates.keys(), values)))
+            
+            logger.info(f"✅ Updated graph metadata record: {graph_id}")
+            return True
                 
         except Exception as e:
             logger.error(f"❌ Failed to update graph metadata record {graph_id}: {e}")
@@ -418,17 +382,11 @@ class AIRagGraphMetadataRepository:
             bool: True if deletion successful, False otherwise
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"DELETE FROM {self.table_name} WHERE graph_id = ?"
-                result = await session.execute(query, (graph_id,))
-                await session.commit()
-                
-                if result.rowcount > 0:
-                    logger.info(f"✅ Deleted graph metadata record: {graph_id}")
-                    return True
-                else:
-                    logger.warning(f"⚠️ No rows deleted for graph ID: {graph_id}")
-                    return False
+            query = f"DELETE FROM {self.table_name} WHERE graph_id = ?"
+            await self.connection_manager.execute_update(query, {"graph_id": graph_id})
+            
+            logger.info(f"✅ Deleted graph metadata record: {graph_id}")
+            return True
                 
         except Exception as e:
             logger.error(f"❌ Failed to delete graph metadata record {graph_id}: {e}")
@@ -442,12 +400,10 @@ class AIRagGraphMetadataRepository:
             int: Total count of records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT COUNT(*) as count FROM {self.table_name}"
-                result = await session.execute(query)
-                row = result.fetchone()
-                
-                return row['count'] if row else 0
+            query = f"SELECT COUNT(*) as count FROM {self.table_name}"
+            result = await self.connection_manager.execute_query(query, {})
+            
+            return result[0]['count'] if result and len(result) > 0 else 0
                 
         except Exception as e:
             logger.error(f"❌ Failed to count total graph metadata records: {e}")
@@ -464,12 +420,10 @@ class AIRagGraphMetadataRepository:
             int: Count of records with the specified status
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT COUNT(*) as count FROM {self.table_name} WHERE processing_status = ?"
-                result = await session.execute(query, (status,))
-                row = result.fetchone()
-                
-                return row['count'] if row else 0
+            query = f"SELECT COUNT(*) as count FROM {self.table_name} WHERE processing_status = ?"
+            result = await self.connection_manager.execute_query(query, {"status": status})
+            
+            return result[0]['count'] if result and len(result) > 0 else 0
                 
         except Exception as e:
             logger.error(f"❌ Failed to count graph metadata by status {status}: {e}")
@@ -486,12 +440,10 @@ class AIRagGraphMetadataRepository:
             int: Count of records with the specified validation status
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT COUNT(*) as count FROM {self.table_name} WHERE validation_status = ?"
-                result = await session.execute(query, (validation_status,))
-                row = result.fetchone()
-                
-                return row['count'] if row else 0
+            query = f"SELECT COUNT(*) as count FROM {self.table_name} WHERE validation_status = ?"
+            result = await self.connection_manager.execute_query(query, {"validation_status": validation_status})
+            
+            return result[0]['count'] if result and len(result) > 0 else 0
                 
         except Exception as e:
             logger.error(f"❌ Failed to count graph metadata by validation status {validation_status}: {e}")
@@ -509,18 +461,19 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of matching graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"""
-                    SELECT * FROM {self.table_name} 
-                    WHERE graph_name LIKE ? OR graph_type LIKE ? OR graph_category LIKE ?
-                    ORDER BY created_at DESC 
-                    LIMIT ?
-                """
-                search_pattern = f"%{search_term}%"
-                result = await session.execute(query, (search_pattern, search_pattern, search_pattern, limit))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"""
+                SELECT * FROM {self.table_name} 
+                WHERE graph_name LIKE ? OR graph_type LIKE ? OR graph_category LIKE ?
+                ORDER BY created_at DESC 
+                LIMIT ?
+            """
+            search_pattern = f"%{search_term}%"
+            result = await self.connection_manager.execute_query(query, {
+                "search_pattern": search_pattern,
+                "limit": limit
+            })
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to search graph metadata: {e}")
@@ -534,35 +487,34 @@ class AIRagGraphMetadataRepository:
             Dict: Performance statistics
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"""
-                    SELECT 
-                        COUNT(*) as total_graphs,
-                        AVG(quality_score) as avg_quality_score,
-                        AVG(generation_time_ms) as avg_generation_time,
-                        AVG(memory_usage_mb) as avg_memory_usage,
-                        AVG(cpu_usage_percent) as avg_cpu_usage,
-                        SUM(CASE WHEN processing_status = 'completed' THEN 1 ELSE 0 END) as completed_graphs,
-                        SUM(CASE WHEN processing_status = 'failed' THEN 1 ELSE 0 END) as failed_graphs,
-                        SUM(CASE WHEN validation_status = 'validated' THEN 1 ELSE 0 END) as validated_graphs
-                    FROM {self.table_name}
-                """
-                result = await session.execute(query)
-                row = result.fetchone()
-                
-                if row:
-                    return {
-                        "total_graphs": row['total_graphs'],
-                        "avg_quality_score": round(row['avg_quality_score'], 3) if row['avg_quality_score'] else 0.0,
-                        "avg_generation_time_ms": round(row['avg_generation_time'], 2) if row['avg_generation_time'] else 0.0,
-                        "avg_memory_usage_mb": round(row['avg_memory_usage'], 2) if row['avg_memory_usage'] else 0.0,
-                        "avg_cpu_usage_percent": round(row['avg_cpu_usage'], 2) if row['avg_cpu_usage'] else 0.0,
-                        "completed_graphs": row['completed_graphs'],
-                        "failed_graphs": row['failed_graphs'],
-                        "validated_graphs": row['validated_graphs'],
-                        "success_rate": round(row['completed_graphs'] / row['total_graphs'] * 100, 2) if row['total_graphs'] > 0 else 0.0
-                    }
-                return {}
+            query = f"""
+                SELECT 
+                    COUNT(*) as total_graphs,
+                    AVG(quality_score) as avg_quality_score,
+                    AVG(generation_time_ms) as avg_generation_time,
+                    AVG(memory_usage_mb) as avg_memory_usage,
+                    AVG(cpu_usage_percent) as avg_cpu_usage,
+                    SUM(CASE WHEN processing_status = 'completed' THEN 1 ELSE 0 END) as completed_graphs,
+                    SUM(CASE WHEN processing_status = 'failed' THEN 1 ELSE 0 END) as failed_graphs,
+                    SUM(CASE WHEN validation_status = 'validated' THEN 1 ELSE 0 END) as validated_graphs
+                FROM {self.table_name}
+            """
+            result = await self.connection_manager.execute_query(query, {})
+            
+            if result and len(result) > 0:
+                row = result[0]
+                return {
+                    "total_graphs": row['total_graphs'],
+                    "avg_quality_score": round(row['avg_quality_score'], 3) if row['avg_quality_score'] else 0.0,
+                    "avg_generation_time_ms": round(row['avg_generation_time'], 2) if row['avg_generation_time'] else 0.0,
+                    "avg_memory_usage_mb": round(row['avg_memory_usage'], 2) if row['avg_memory_usage'] else 0.0,
+                    "avg_cpu_usage_percent": round(row['avg_cpu_usage'], 2) if row['avg_cpu_usage'] else 0.0,
+                    "completed_graphs": row['completed_graphs'],
+                    "failed_graphs": row['failed_graphs'],
+                    "validated_graphs": row['validated_graphs'],
+                    "success_rate": round(row['completed_graphs'] / row['total_graphs'] * 100, 2) if row['total_graphs'] > 0 else 0.0
+                }
+            return {}
                 
         except Exception as e:
             logger.error(f"❌ Failed to get performance stats: {e}")
@@ -579,12 +531,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE kg_neo4j_graph_id = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (kg_neo4j_graph_id,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE kg_neo4j_graph_id = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"kg_neo4j_graph_id": kg_neo4j_graph_id})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by KG Neo4j ID {kg_neo4j_graph_id}: {e}")
@@ -601,12 +551,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE aasx_integration_id = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (aasx_integration_id,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE aasx_integration_id = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"aasx_integration_id": aasx_integration_id})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by AASX integration ID {aasx_integration_id}: {e}")
@@ -623,12 +571,10 @@ class AIRagGraphMetadataRepository:
             List[Dict]: List of graph metadata records
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT * FROM {self.table_name} WHERE twin_registry_id = ? ORDER BY created_at DESC"
-                result = await session.execute(query, (twin_registry_id,))
-                rows = result.fetchall()
-                
-                return [dict(row) for row in rows]
+            query = f"SELECT * FROM {self.table_name} WHERE twin_registry_id = ? ORDER BY created_at DESC"
+            result = await self.connection_manager.execute_query(query, {"twin_registry_id": twin_registry_id})
+            
+            return result
                 
         except Exception as e:
             logger.error(f"❌ Failed to get graph metadata by Twin Registry ID {twin_registry_id}: {e}")
@@ -645,12 +591,10 @@ class AIRagGraphMetadataRepository:
             bool: True if record exists, False otherwise
         """
         try:
-            async with self.connection_manager.get_session() as session:
-                query = f"SELECT 1 FROM {self.table_name} WHERE graph_id = ? LIMIT 1"
-                result = await session.execute(query, (graph_id,))
-                row = result.fetchone()
-                
-                return row is not None
+            query = f"SELECT 1 FROM {self.table_name} WHERE graph_id = ? LIMIT 1"
+            result = await self.connection_manager.execute_query(query, {"graph_id": graph_id})
+            
+            return len(result) > 0
                 
         except Exception as e:
             logger.error(f"❌ Failed to check existence of graph metadata {graph_id}: {e}")

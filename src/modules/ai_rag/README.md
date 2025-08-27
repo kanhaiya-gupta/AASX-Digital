@@ -332,3 +332,4 @@ For questions, issues, or contributions:
 - Follow the established patterns and architecture
 - Ensure all tests pass before submitting changes
 
+

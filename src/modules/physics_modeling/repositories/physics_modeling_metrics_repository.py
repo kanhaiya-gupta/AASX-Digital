@@ -9,7 +9,6 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 import logging
 from src.engine.database import ConnectionManager
-from src.engine.database.factory import DatabaseFactory
 from ..models.physics_modeling_metrics import PhysicsModelingMetrics
 
 logger = logging.getLogger(__name__)
@@ -23,19 +22,10 @@ class PhysicsModelingMetricsRepository:
     for physics modeling metrics data with enterprise features.
     """
     
-    def __init__(self):
+    def __init__(self, connection_manager: ConnectionManager):
         """Initialize the repository with database connection"""
-        self.connection_manager: Optional[ConnectionManager] = None
+        self.connection_manager = connection_manager
         self.table_name = "physics_modeling_metrics"
-    
-    async def initialize(self) -> None:
-        """Async initialization of database connection"""
-        try:
-            self.connection_manager = await DatabaseFactory.create_connection_manager()
-            logger.info("Physics Modeling Metrics Repository initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize repository: {e}")
-            raise
     
     async def create(self, metric: PhysicsModelingMetrics) -> Optional[str]:
         """
@@ -47,9 +37,6 @@ class PhysicsModelingMetricsRepository:
         Returns:
             Created metric ID or None if failed
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
             # Prepare data for insertion
             data = metric.dict()
@@ -69,32 +56,52 @@ class PhysicsModelingMetricsRepository:
                     security_metrics_details, performance_analytics_status, performance_analytics_score,
                     performance_analytics_details, warning_threshold, critical_threshold,
                     alert_status, alert_history, tags, metadata
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (:metric_id, :metric_name, :metric_type, :metric_category, :metric_value, :metric_unit, :model_id, :ml_model_id, :simulation_id, :solver_id, :plugin_id, :timestamp, :collection_date, :valid_from, :valid_until, :confidence_level, :data_quality_score, :validation_status, :validation_notes, :enterprise_metric_type, :enterprise_metric_value, :enterprise_metric_timestamp, :enterprise_metadata, :compliance_tracking_status, :compliance_tracking_score, :compliance_tracking_details, :security_metrics_status, :security_metrics_score, :security_metrics_details, :performance_analytics_status, :performance_analytics_score, :performance_analytics_details, :warning_threshold, :critical_threshold, :alert_status, :alert_history, :tags, :metadata)
             """
             
-            values = (
-                data['metric_id'], data['metric_name'], data['metric_type'],
-                data['metric_category'], data['metric_value'], data['metric_unit'],
-                data['model_id'], data['ml_model_id'], data['simulation_id'],
-                data['solver_id'], data['plugin_id'], data['timestamp'],
-                data['collection_date'], data['valid_from'], data['valid_until'],
-                data['confidence_level'], data['data_quality_score'],
-                data['validation_status'], data['validation_notes'],
-                data['enterprise_metric_type'], data['enterprise_metric_value'],
-                data['enterprise_metric_timestamp'], str(data['enterprise_metadata']) if data['enterprise_metadata'] else None,
-                data['compliance_tracking_status'], data['compliance_tracking_score'],
-                str(data['compliance_tracking_details']) if data['compliance_tracking_details'] else None,
-                data['security_metrics_status'], data['security_metrics_score'],
-                str(data['security_metrics_details']) if data['security_metrics_details'] else None,
-                data['performance_analytics_status'], data['performance_analytics_score'],
-                str(data['performance_analytics_details']) if data['performance_analytics_details'] else None,
-                data['warning_threshold'], data['critical_threshold'],
-                data['alert_status'], str(data['alert_history']), str(data['tags']), str(data['metadata'])
-            )
+            # Prepare parameters with proper handling of complex types
+            params = {
+                'metric_id': data['metric_id'],
+                'metric_name': data['metric_name'],
+                'metric_type': data['metric_type'],
+                'metric_category': data['metric_category'],
+                'metric_value': data['metric_value'],
+                'metric_unit': data['metric_unit'],
+                'model_id': data['model_id'],
+                'ml_model_id': data['ml_model_id'],
+                'simulation_id': data['simulation_id'],
+                'solver_id': data['solver_id'],
+                'plugin_id': data['plugin_id'],
+                'timestamp': data['timestamp'],
+                'collection_date': data['collection_date'],
+                'valid_from': data['valid_from'],
+                'valid_until': data['valid_until'],
+                'confidence_level': data['confidence_level'],
+                'data_quality_score': data['data_quality_score'],
+                'validation_status': data['validation_status'],
+                'validation_notes': data['validation_notes'],
+                'enterprise_metric_type': data['enterprise_metric_type'],
+                'enterprise_metric_value': data['enterprise_metric_value'],
+                'enterprise_metric_timestamp': data['enterprise_metric_timestamp'],
+                'enterprise_metadata': str(data['enterprise_metadata']) if data['enterprise_metadata'] else None,
+                'compliance_tracking_status': data['compliance_tracking_status'],
+                'compliance_tracking_score': data['compliance_tracking_score'],
+                'compliance_tracking_details': str(data['compliance_tracking_details']) if data['compliance_tracking_details'] else None,
+                'security_metrics_status': data['security_metrics_status'],
+                'security_metrics_score': data['security_metrics_score'],
+                'security_metrics_details': str(data['security_metrics_details']) if data['security_metrics_details'] else None,
+                'performance_analytics_status': data['performance_analytics_status'],
+                'performance_analytics_score': data['performance_analytics_score'],
+                'performance_analytics_details': str(data['performance_analytics_details']) if data['performance_analytics_details'] else None,
+                'warning_threshold': data['warning_threshold'],
+                'critical_threshold': data['critical_threshold'],
+                'alert_status': data['alert_status'],
+                'alert_history': str(data['alert_history']),
+                'tags': str(data['tags']),
+                'metadata': str(data['metadata'])
+            }
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, values)
-                await conn.commit()
+            await self.connection_manager.execute_update(query, params)
                 
             logger.info(f"Created physics modeling metrics entry: {metric.metric_id}")
             return metric.metric_id
@@ -105,35 +112,31 @@ class PhysicsModelingMetricsRepository:
     
     async def get_by_id(self, metric_id: str) -> Optional[PhysicsModelingMetrics]:
         """
-        Async retrieve physics modeling metrics entry by ID
+        Async get physics modeling metrics entry by ID
         
         Args:
-            metric_id: Unique identifier for the metric
+            metric_id: Unique metric identifier
             
         Returns:
             PhysicsModelingMetrics instance or None if not found
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE metric_id = ?"
+            query = f"SELECT * FROM {self.table_name} WHERE metric_id = :metric_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (metric_id,))
-                row = await cursor.fetchone()
-                
-            if row:
-                return await self._row_to_model(row)
+            result = await self.connection_manager.execute_query(query, {"metric_id": metric_id})
+            
+            if result and len(result) > 0:
+                row = result[0]
+                return PhysicsModelingMetrics(**row)
             return None
             
         except Exception as e:
-            logger.error(f"Failed to retrieve physics modeling metrics entry: {e}")
+            logger.error(f"Error getting physics modeling metrics by ID: {e}")
             return None
     
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[PhysicsModelingMetrics]:
         """
-        Async retrieve all physics modeling metrics entries with pagination
+        Async get all physics modeling metrics entries with pagination
         
         Args:
             limit: Maximum number of entries to return
@@ -142,26 +145,18 @@ class PhysicsModelingMetricsRepository:
         Returns:
             List of PhysicsModelingMetrics instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} ORDER BY timestamp DESC LIMIT ? OFFSET ?"
+            query = f"SELECT * FROM {self.table_name} ORDER BY timestamp DESC LIMIT :limit OFFSET :offset"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (limit, offset))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"limit": limit, "offset": offset})
+            
             metrics = []
-            for row in rows:
-                metric = await self._row_to_model(row)
-                if metric:
-                    metrics.append(metric)
-            
+            for row in result:
+                metrics.append(PhysicsModelingMetrics(**row))
             return metrics
             
         except Exception as e:
-            logger.error(f"Failed to retrieve physics modeling metrics entries: {e}")
+            logger.error(f"Error getting all physics modeling metrics entries: {e}")
             return []
     
     async def update(self, metric_id: str, updates: Dict[str, Any]) -> bool:
@@ -169,43 +164,30 @@ class PhysicsModelingMetricsRepository:
         Async update physics modeling metrics entry
         
         Args:
-            metric_id: Unique identifier for the metric
+            metric_id: Unique metric identifier
             updates: Dictionary of fields to update
             
         Returns:
             True if update successful, False otherwise
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            # Prepare update fields
-            update_fields = []
-            values = []
+            # Add updated timestamp
+            updates['timestamp'] = datetime.utcnow().isoformat()
             
-            for field, value in updates.items():
-                if field in ['enterprise_metadata', 'compliance_tracking_details', 'security_metrics_details',
-                           'performance_analytics_details', 'alert_history', 'tags', 'metadata']:
-                    update_fields.append(f"{field} = ?")
-                    values.append(str(value))
-                else:
-                    update_fields.append(f"{field} = ?")
-                    values.append(value)
+            # Prepare SET clause and parameters
+            set_clause = ', '.join([f"{key} = :{key}" for key in updates.keys()])
+            params = updates.copy()
+            params['metric_id'] = metric_id
             
-            # Add metric_id for WHERE clause
-            values.append(metric_id)
+            query = f"UPDATE {self.table_name} SET {set_clause} WHERE metric_id = :metric_id"
             
-            query = f"UPDATE {self.table_name} SET {', '.join(update_fields)} WHERE metric_id = ?"
-            
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, values)
-                await conn.commit()
+            await self.connection_manager.execute_update(query, params)
                 
             logger.info(f"Updated physics modeling metrics entry: {metric_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to update physics modeling metrics entry: {e}")
+            logger.error(f"Error updating physics modeling metrics entry: {e}")
             return False
     
     async def delete(self, metric_id: str) -> bool:
@@ -213,58 +195,46 @@ class PhysicsModelingMetricsRepository:
         Async delete physics modeling metrics entry
         
         Args:
-            metric_id: Unique identifier for the metric
+            metric_id: Unique metric identifier
             
         Returns:
             True if deletion successful, False otherwise
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"DELETE FROM {self.table_name} WHERE metric_id = ?"
+            query = f"DELETE FROM {self.table_name} WHERE metric_id = :metric_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (metric_id,))
-                await conn.commit()
+            await self.connection_manager.execute_update(query, {"metric_id": metric_id})
                 
             logger.info(f"Deleted physics modeling metrics entry: {metric_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to delete physics modeling metrics entry: {e}")
+            logger.error(f"Error deleting physics modeling metrics entry: {e}")
             return False
     
-    async def get_by_model_id(self, model_id: str) -> List[PhysicsModelingMetrics]:
+    async def get_by_model_id(self, model_id: str, limit: int = 100) -> List[PhysicsModelingMetrics]:
         """
-        Async get physics modeling metrics by associated model ID
+        Async get physics modeling metrics entries by model ID
         
         Args:
-            model_id: Associated physics model ID
+            model_id: Model identifier to filter by
+            limit: Maximum number of entries to return
             
         Returns:
-            List of matching PhysicsModelingMetrics instances
+            List of PhysicsModelingMetrics instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE model_id = ? ORDER BY timestamp DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE model_id = :model_id ORDER BY timestamp DESC LIMIT :limit"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (model_id,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"model_id": model_id, "limit": limit})
+            
             metrics = []
-            for row in rows:
-                metric = await self._row_to_model(row)
-                if metric:
-                    metrics.append(metric)
-            
+            for row in result:
+                metrics.append(PhysicsModelingMetrics(**row))
             return metrics
             
         except Exception as e:
-            logger.error(f"Failed to get physics modeling metrics by model ID: {e}")
+            logger.error(f"Error getting physics modeling metrics by model ID: {e}")
             return []
     
     async def get_by_ml_model_id(self, ml_model_id: str) -> List[PhysicsModelingMetrics]:
@@ -277,26 +247,18 @@ class PhysicsModelingMetricsRepository:
         Returns:
             List of matching PhysicsModelingMetrics instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE ml_model_id = ? ORDER BY timestamp DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE ml_model_id = :ml_model_id ORDER BY timestamp DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (ml_model_id,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"ml_model_id": ml_model_id})
+            
             metrics = []
-            for row in rows:
-                metric = await self._row_to_model(row)
-                if metric:
-                    metrics.append(metric)
-            
+            for row in result:
+                metrics.append(PhysicsModelingMetrics(**row))
             return metrics
             
         except Exception as e:
-            logger.error(f"Failed to get physics modeling metrics by ML model ID: {e}")
+            logger.error(f"Error getting physics modeling metrics by ML model ID: {e}")
             return []
     
     async def get_by_metric_type(self, metric_type: str) -> List[PhysicsModelingMetrics]:
@@ -309,26 +271,18 @@ class PhysicsModelingMetricsRepository:
         Returns:
             List of matching PhysicsModelingMetrics instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE metric_type = ? ORDER BY timestamp DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE metric_type = :metric_type ORDER BY timestamp DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (metric_type,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"metric_type": metric_type})
+            
             metrics = []
-            for row in rows:
-                metric = await self._row_to_model(row)
-                if metric:
-                    metrics.append(metric)
-            
+            for row in result:
+                metrics.append(PhysicsModelingMetrics(**row))
             return metrics
             
         except Exception as e:
-            logger.error(f"Failed to get physics modeling metrics by metric type: {e}")
+            logger.error(f"Error getting physics modeling metrics by metric type: {e}")
             return []
     
     async def get_by_time_range(self, start_time: datetime, end_time: datetime) -> List[PhysicsModelingMetrics]:
@@ -342,26 +296,18 @@ class PhysicsModelingMetricsRepository:
         Returns:
             List of matching PhysicsModelingMetrics instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE timestamp BETWEEN :start_time AND :end_time ORDER BY timestamp DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (start_time.isoformat(), end_time.isoformat()))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"start_time": start_time.isoformat(), "end_time": end_time.isoformat()})
+            
             metrics = []
-            for row in rows:
-                metric = await self._row_to_model(row)
-                if metric:
-                    metrics.append(metric)
-            
+            for row in result:
+                metrics.append(PhysicsModelingMetrics(**row))
             return metrics
             
         except Exception as e:
-            logger.error(f"Failed to get physics modeling metrics by time range: {e}")
+            logger.error(f"Error getting physics modeling metrics by time range: {e}")
             return []
     
     async def get_by_alert_status(self, alert_status: str) -> List[PhysicsModelingMetrics]:
@@ -374,26 +320,18 @@ class PhysicsModelingMetricsRepository:
         Returns:
             List of matching PhysicsModelingMetrics instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE alert_status = ? ORDER BY timestamp DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE alert_status = :alert_status ORDER BY timestamp DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (alert_status,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"alert_status": alert_status})
+            
             metrics = []
-            for row in rows:
-                metric = await self._row_to_model(row)
-                if metric:
-                    metrics.append(metric)
-            
+            for row in result:
+                metrics.append(PhysicsModelingMetrics(**row))
             return metrics
             
         except Exception as e:
-            logger.error(f"Failed to get physics modeling metrics by alert status: {e}")
+            logger.error(f"Error getting physics modeling metrics by alert status: {e}")
             return []
     
     async def get_recent_metrics(self, hours: int = 24) -> List[PhysicsModelingMetrics]:
@@ -406,27 +344,19 @@ class PhysicsModelingMetricsRepository:
         Returns:
             List of recent PhysicsModelingMetrics instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
             cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-            query = f"SELECT * FROM {self.table_name} WHERE timestamp >= ? ORDER BY timestamp DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE timestamp >= :cutoff_time ORDER BY timestamp DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (cutoff_time.isoformat(),))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"cutoff_time": cutoff_time.isoformat()})
+            
             metrics = []
-            for row in rows:
-                metric = await self._row_to_model(row)
-                if metric:
-                    metrics.append(metric)
-            
+            for row in result:
+                metrics.append(PhysicsModelingMetrics(**row))
             return metrics
             
         except Exception as e:
-            logger.error(f"Failed to get recent physics modeling metrics: {e}")
+            logger.error(f"Error getting recent physics modeling metrics: {e}")
             return []
     
     async def count_by_metric_type(self, metric_type: str) -> int:
@@ -439,20 +369,15 @@ class PhysicsModelingMetricsRepository:
         Returns:
             Count of metrics with the specified type
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT COUNT(*) FROM {self.table_name} WHERE metric_type = ?"
+            query = f"SELECT COUNT(*) as count FROM {self.table_name} WHERE metric_type = :metric_type"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (metric_type,))
-                result = await cursor.fetchone()
-                
-            return result[0] if result else 0
+            result = await self.connection_manager.execute_query(query, {"metric_type": metric_type})
+            
+            return result[0]['count'] if result and len(result) > 0 else 0
             
         except Exception as e:
-            logger.error(f"Failed to count physics modeling metrics: {e}")
+            logger.error(f"Error counting physics modeling metrics: {e}")
             return 0
     
     async def _row_to_model(self, row: tuple) -> Optional[PhysicsModelingMetrics]:

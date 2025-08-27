@@ -9,7 +9,6 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import logging
 from src.engine.database import ConnectionManager
-from src.engine.database.factory import DatabaseFactory
 from ..models.physics_ml_registry import PhysicsMLRegistry
 
 logger = logging.getLogger(__name__)
@@ -23,19 +22,10 @@ class PhysicsMLRegistryRepository:
     for physics ML registry data with enterprise features.
     """
     
-    def __init__(self):
+    def __init__(self, connection_manager: ConnectionManager):
         """Initialize the repository with database connection"""
-        self.connection_manager: Optional[ConnectionManager] = None
+        self.connection_manager = connection_manager
         self.table_name = "physics_ml_registry"
-    
-    async def initialize(self) -> None:
-        """Async initialization of database connection"""
-        try:
-            self.connection_manager = await DatabaseFactory.create_connection_manager()
-            logger.info("Physics ML Registry Repository initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize repository: {e}")
-            raise
     
     async def create(self, model: PhysicsMLRegistry) -> Optional[str]:
         """
@@ -47,9 +37,6 @@ class PhysicsMLRegistryRepository:
         Returns:
             Created model ID or None if failed
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
             # Prepare data for insertion
             data = model.dict()
@@ -69,32 +56,53 @@ class PhysicsMLRegistryRepository:
                     ml_optimization_suggestions, last_ml_optimization_date,
                     enterprise_ml_metrics, model_path, model_size, inference_latency,
                     deployment_status, tags, metadata
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (:ml_model_id, :model_name, :model_type, :physics_domain, :ml_framework, :model_version, :description, :architecture, :hyperparameters, :loss_functions, :optimization_config, :training_status, :training_progress, :validation_metrics, :test_metrics, :physics_constraints, :conservation_laws, :boundary_conditions, :initial_conditions, :status, :lifecycle_stage, :created_by, :created_at, :updated_by, :updated_at, :ml_compliance_type, :ml_compliance_status, :ml_compliance_score, :ml_security_score, :ml_performance_trend, :ml_optimization_suggestions, :last_ml_optimization_date, :enterprise_ml_metrics, :model_path, :model_size, :inference_latency, :deployment_status, :tags, :metadata)
             """
             
-            values = (
-                data['ml_model_id'], data['model_name'], data['model_type'],
-                data['physics_domain'], data['ml_framework'], data['model_version'],
-                data['description'], str(data['architecture']), str(data['hyperparameters']),
-                str(data['loss_functions']), str(data['optimization_config']) if data['optimization_config'] else None,
-                data['training_status'], data['training_progress'], str(data['validation_metrics']),
-                str(data['test_metrics']) if data['test_metrics'] else None,
-                str(data['physics_constraints']), str(data['conservation_laws']),
-                str(data['boundary_conditions']) if data['boundary_conditions'] else None,
-                str(data['initial_conditions']) if data['initial_conditions'] else None,
-                data['status'], data['lifecycle_stage'], data['created_by'],
-                data['created_at'], data['updated_by'], data['updated_at'],
-                data['ml_compliance_type'], data['ml_compliance_status'], data['ml_compliance_score'],
-                data['ml_security_score'], data['ml_performance_trend'],
-                str(data['ml_optimization_suggestions']) if data['ml_optimization_suggestions'] else None,
-                data['last_ml_optimization_date'], str(data['enterprise_ml_metrics']) if data['enterprise_ml_metrics'] else None,
-                data['model_path'], data['model_size'], data['inference_latency'],
-                data['deployment_status'], str(data['tags']), str(data['metadata'])
-            )
+            # Prepare parameters with proper handling of complex types
+            params = {
+                'ml_model_id': data['ml_model_id'],
+                'model_name': data['model_name'],
+                'model_type': data['model_type'],
+                'physics_domain': data['physics_domain'],
+                'ml_framework': data['ml_framework'],
+                'model_version': data['model_version'],
+                'description': data['description'],
+                'architecture': str(data['architecture']),
+                'hyperparameters': str(data['hyperparameters']),
+                'loss_functions': str(data['loss_functions']),
+                'optimization_config': str(data['optimization_config']) if data['optimization_config'] else None,
+                'training_status': data['training_status'],
+                'training_progress': data['training_progress'],
+                'validation_metrics': str(data['validation_metrics']),
+                'test_metrics': str(data['test_metrics']) if data['test_metrics'] else None,
+                'physics_constraints': str(data['physics_constraints']),
+                'conservation_laws': str(data['conservation_laws']),
+                'boundary_conditions': str(data['boundary_conditions']) if data['boundary_conditions'] else None,
+                'initial_conditions': str(data['initial_conditions']) if data['initial_conditions'] else None,
+                'status': data['status'],
+                'lifecycle_stage': data['lifecycle_stage'],
+                'created_by': data['created_by'],
+                'created_at': data['created_at'],
+                'updated_by': data['updated_by'],
+                'updated_at': data['updated_at'],
+                'ml_compliance_type': data['ml_compliance_type'],
+                'ml_compliance_status': data['ml_compliance_status'],
+                'ml_compliance_score': data['ml_compliance_score'],
+                'ml_security_score': data['ml_security_score'],
+                'ml_performance_trend': data['ml_performance_trend'],
+                'ml_optimization_suggestions': str(data['ml_optimization_suggestions']) if data['ml_optimization_suggestions'] else None,
+                'last_ml_optimization_date': data['last_ml_optimization_date'],
+                'enterprise_ml_metrics': str(data['enterprise_ml_metrics']) if data['enterprise_ml_metrics'] else None,
+                'model_path': data['model_path'],
+                'model_size': data['model_size'],
+                'inference_latency': data['inference_latency'],
+                'deployment_status': data['deployment_status'],
+                'tags': str(data['tags']),
+                'metadata': str(data['metadata'])
+            }
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, values)
-                await conn.commit()
+            await self.connection_manager.execute_update(query, params)
                 
             logger.info(f"Created physics ML registry entry: {model.ml_model_id}")
             return model.ml_model_id
@@ -105,35 +113,31 @@ class PhysicsMLRegistryRepository:
     
     async def get_by_id(self, ml_model_id: str) -> Optional[PhysicsMLRegistry]:
         """
-        Async retrieve physics ML registry entry by ID
+        Async get physics ML registry entry by ID
         
         Args:
-            ml_model_id: Unique identifier for the ML model
+            ml_model_id: Unique ML model identifier
             
         Returns:
             PhysicsMLRegistry instance or None if not found
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE ml_model_id = ?"
+            query = f"SELECT * FROM {self.table_name} WHERE ml_model_id = :ml_model_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (ml_model_id,))
-                row = await cursor.fetchone()
-                
-            if row:
-                return await self._row_to_model(row)
+            result = await self.connection_manager.execute_query(query, {"ml_model_id": ml_model_id})
+            
+            if result and len(result) > 0:
+                row = result[0]
+                return PhysicsMLRegistry(**row)
             return None
             
         except Exception as e:
-            logger.error(f"Failed to retrieve physics ML registry entry: {e}")
+            logger.error(f"Error getting physics ML registry by ID: {e}")
             return None
     
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[PhysicsMLRegistry]:
         """
-        Async retrieve all physics ML registry entries with pagination
+        Async get all physics ML registry entries with pagination
         
         Args:
             limit: Maximum number of entries to return
@@ -142,26 +146,18 @@ class PhysicsMLRegistryRepository:
         Returns:
             List of PhysicsMLRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT ? OFFSET ?"
+            query = f"SELECT * FROM {self.table_name} ORDER BY created_at DESC LIMIT :limit OFFSET :offset"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (limit, offset))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"limit": limit, "offset": offset})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsMLRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to retrieve physics ML registry entries: {e}")
+            logger.error(f"Error getting all physics ML registry entries: {e}")
             return []
     
     async def update(self, ml_model_id: str, updates: Dict[str, Any]) -> bool:
@@ -169,52 +165,30 @@ class PhysicsMLRegistryRepository:
         Async update physics ML registry entry
         
         Args:
-            ml_model_id: Unique identifier for the ML model
+            ml_model_id: Unique ML model identifier
             updates: Dictionary of fields to update
             
         Returns:
             True if update successful, False otherwise
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            # Prepare update fields
-            update_fields = []
-            values = []
-            
-            for field, value in updates.items():
-                if field in ['architecture', 'hyperparameters', 'loss_functions', 'validation_metrics', 
-                           'test_metrics', 'physics_constraints', 'conservation_laws', 
-                           'ml_optimization_suggestions', 'enterprise_ml_metrics', 'tags', 'metadata']:
-                    update_fields.append(f"{field} = ?")
-                    values.append(str(value))
-                elif field in ['optimization_config', 'boundary_conditions', 'initial_conditions']:
-                    if value is not None:
-                        update_fields.append(f"{field} = ?")
-                        values.append(str(value))
-                else:
-                    update_fields.append(f"{field} = ?")
-                    values.append(value)
-            
             # Add updated_at timestamp
-            update_fields.append("updated_at = ?")
-            values.append(datetime.utcnow().isoformat())
+            updates['updated_at'] = datetime.utcnow().isoformat()
             
-            # Add ml_model_id for WHERE clause
-            values.append(ml_model_id)
+            # Prepare SET clause and parameters
+            set_clause = ', '.join([f"{key} = :{key}" for key in updates.keys()])
+            params = updates.copy()
+            params['ml_model_id'] = ml_model_id
             
-            query = f"UPDATE {self.table_name} SET {', '.join(update_fields)} WHERE ml_model_id = ?"
+            query = f"UPDATE {self.table_name} SET {set_clause} WHERE ml_model_id = :ml_model_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, values)
-                await conn.commit()
+            await self.connection_manager.execute_update(query, params)
                 
             logger.info(f"Updated physics ML registry entry: {ml_model_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to update physics ML registry entry: {e}")
+            logger.error(f"Error updating physics ML registry entry: {e}")
             return False
     
     async def delete(self, ml_model_id: str) -> bool:
@@ -222,26 +196,21 @@ class PhysicsMLRegistryRepository:
         Async delete physics ML registry entry
         
         Args:
-            ml_model_id: Unique identifier for the ML model
+            ml_model_id: Unique ML model identifier
             
         Returns:
             True if deletion successful, False otherwise
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"DELETE FROM {self.table_name} WHERE ml_model_id = ?"
+            query = f"DELETE FROM {self.table_name} WHERE ml_model_id = :ml_model_id"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (ml_model_id,))
-                await conn.commit()
+            await self.connection_manager.execute_update(query, {"ml_model_id": ml_model_id})
                 
             logger.info(f"Deleted physics ML registry entry: {ml_model_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to delete physics ML registry entry: {e}")
+            logger.error(f"Error deleting physics ML registry entry: {e}")
             return False
     
     async def search_by_type(self, model_type: str) -> List[PhysicsMLRegistry]:
@@ -254,26 +223,18 @@ class PhysicsMLRegistryRepository:
         Returns:
             List of matching PhysicsMLRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE model_type = ? ORDER BY created_at DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE model_type = :model_type ORDER BY created_at DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (model_type,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"model_type": model_type})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsMLRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to search physics ML registry entries: {e}")
+            logger.error(f"Error searching physics ML registry entries: {e}")
             return []
     
     async def get_by_training_status(self, training_status: str) -> List[PhysicsMLRegistry]:
@@ -286,26 +247,18 @@ class PhysicsMLRegistryRepository:
         Returns:
             List of matching PhysicsMLRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE training_status = ? ORDER BY created_at DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE training_status = :training_status ORDER BY created_at DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (training_status,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"training_status": training_status})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsMLRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to get physics ML registry entries by training status: {e}")
+            logger.error(f"Error getting physics ML registry entries by training status: {e}")
             return []
     
     async def get_by_ml_framework(self, ml_framework: str) -> List[PhysicsMLRegistry]:
@@ -318,26 +271,18 @@ class PhysicsMLRegistryRepository:
         Returns:
             List of matching PhysicsMLRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE ml_framework = ? ORDER BY created_at DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE ml_framework = :ml_framework ORDER BY created_at DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (ml_framework,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"ml_framework": ml_framework})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsMLRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to get physics ML registry entries by ML framework: {e}")
+            logger.error(f"Error getting physics ML registry entries by ML framework: {e}")
             return []
     
     async def get_by_ml_compliance_status(self, compliance_status: str) -> List[PhysicsMLRegistry]:
@@ -350,26 +295,18 @@ class PhysicsMLRegistryRepository:
         Returns:
             List of matching PhysicsMLRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE ml_compliance_status = ? ORDER BY created_at DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE ml_compliance_status = :compliance_status ORDER BY created_at DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (compliance_status,))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"compliance_status": compliance_status})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsMLRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to get physics ML registry entries by ML compliance status: {e}")
+            logger.error(f"Error getting physics ML registry entries by ML compliance status: {e}")
             return []
     
     async def get_by_ml_security_score_range(self, min_score: float, max_score: float) -> List[PhysicsMLRegistry]:
@@ -383,26 +320,18 @@ class PhysicsMLRegistryRepository:
         Returns:
             List of matching PhysicsMLRegistry instances
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE ml_security_score BETWEEN ? AND ? ORDER BY ml_security_score DESC"
+            query = f"SELECT * FROM {self.table_name} WHERE ml_security_score BETWEEN :min_score AND :max_score ORDER BY ml_security_score DESC"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (min_score, max_score))
-                rows = await cursor.fetchall()
-                
+            result = await self.connection_manager.execute_query(query, {"min_score": min_score, "max_score": max_score})
+            
             models = []
-            for row in rows:
-                model = await self._row_to_model(row)
-                if model:
-                    models.append(model)
-            
+            for row in result:
+                models.append(PhysicsMLRegistry(**row))
             return models
             
         except Exception as e:
-            logger.error(f"Failed to get physics ML registry entries by ML security score range: {e}")
+            logger.error(f"Error getting physics ML registry entries by ML security score range: {e}")
             return []
     
     async def count_by_training_status(self, training_status: str) -> int:
@@ -415,20 +344,15 @@ class PhysicsMLRegistryRepository:
         Returns:
             Count of entries with the specified training status
         """
-        if not self.connection_manager:
-            await self.initialize()
-        
         try:
-            query = f"SELECT COUNT(*) FROM {self.table_name} WHERE training_status = ?"
+            query = f"SELECT COUNT(*) as count FROM {self.table_name} WHERE training_status = :training_status"
             
-            async with self.connection_manager.get_connection() as conn:
-                cursor = await conn.execute(query, (training_status,))
-                result = await cursor.fetchone()
-                
-            return result[0] if result else 0
+            result = await self.connection_manager.execute_query(query, {"training_status": training_status})
+            
+            return result[0]['count'] if result and len(result) > 0 else 0
             
         except Exception as e:
-            logger.error(f"Failed to count physics ML registry entries: {e}")
+            logger.error(f"Error counting physics ML registry entries: {e}")
             return 0
     
     async def _row_to_model(self, row: tuple) -> Optional[PhysicsMLRegistry]:

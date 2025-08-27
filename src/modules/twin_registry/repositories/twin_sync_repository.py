@@ -10,19 +10,19 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import json
 
-from src.shared.database.base_manager import BaseDatabaseManager
-from src.shared.repositories.base_repository import BaseRepository
-from src.twin_registry.models.twin_sync import TwinSyncHistory, TwinSyncStatus, TwinSyncConfiguration
+from src.engine.database.connection_manager import ConnectionManager
+from ..models.twin_sync import TwinSyncHistory, TwinSyncStatus, TwinSyncConfiguration
 
 logger = logging.getLogger(__name__)
 
 
-class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
+class TwinSyncRepository:
     """Repository for managing twin synchronization using JSON fields."""
     
-    def __init__(self, db_manager: BaseDatabaseManager):
-        """Initialize the twin sync repository."""
-        super().__init__(db_manager, TwinSyncHistory)
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the twin sync repository with engine connection manager."""
+        self.connection_manager = connection_manager
+        self.table_name = "twin_registry"
         logger.info("Twin Sync Repository initialized (JSON field mode)")
     
     def _get_table_name(self) -> str:
@@ -78,10 +78,10 @@ class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
             # Update the JSON field
             query = """
             UPDATE twin_registry 
-            SET sync_status = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET sync_status = :sync_status, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(current_history), registry_id))
+            await self.connection_manager.execute_update(query, {"sync_status": json.dumps(current_history), "registry_id": registry_id})
             
             # Also update the sync status fields
             await self._update_sync_status(registry_id, sync_history.status, sync_history.sync_type)
@@ -159,9 +159,9 @@ class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
             # Update sync-related fields
             query = """
             UPDATE twin_registry 
-            SET sync_status = ?, sync_frequency = ?, last_sync_at = ?, next_sync_at = ?, 
-                sync_error_count = ?, sync_error_message = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET sync_status = :sync_status, sync_frequency = :frequency, last_sync_at = :last_sync_at, next_sync_at = :next_sync_at, 
+                sync_error_count = :error_count, sync_error_message = :error_message, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
             
             # Extract values from sync_status
@@ -169,17 +169,17 @@ class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
             error_count = sync_status.metadata.get("error_count", 0) if sync_status.metadata else 0
             error_message = sync_status.metadata.get("error_message") if sync_status.metadata else None
             
-            params = (
-                sync_status.last_sync_status,
-                frequency,
-                sync_status.last_sync_timestamp,
-                sync_status.next_sync_timestamp,
-                error_count,
-                error_message,
-                registry_id
-            )
+            params = {
+                "sync_status": sync_status.last_sync_status,
+                "frequency": frequency,
+                "last_sync_at": sync_status.last_sync_timestamp,
+                "next_sync_at": sync_status.next_sync_timestamp,
+                "error_count": error_count,
+                "error_message": error_message,
+                "registry_id": registry_id
+            }
             
-            await self.execute_query(query, params)
+            await self.connection_manager.execute_update(query, params)
             logger.info(f"Updated sync status for registry {registry_id}")
             return True
             
@@ -231,10 +231,10 @@ class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
                 # Update the JSON field
                 query = """
                 UPDATE twin_registry 
-                SET sync_status = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE registry_id = ?
+                SET sync_status = :sync_status, updated_at = CURRENT_TIMESTAMP
+                WHERE registry_id = :registry_id
                 """
-                await self.execute_query(query, (json.dumps(history), registry_id))
+                await self.connection_manager.execute_update(query, {"sync_status": json.dumps(history), "registry_id": registry_id})
                 
                 cleaned_count = original_count - len(history)
                 logger.info(f"Cleaned up {cleaned_count} old sync history records from registry {registry_id}")
@@ -248,12 +248,12 @@ class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
     
     async def _get_sync_history_json(self, registry_id: str) -> List[Dict[str, Any]]:
         """Get the sync_status JSON field from the registry."""
-        query = "SELECT sync_status FROM twin_registry WHERE registry_id = ?"
-        result = await self.fetch_one(query, (registry_id,))
+        query = "SELECT sync_status FROM twin_registry WHERE registry_id = :registry_id"
+        result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
         
-        if result and result.get("sync_status"):
+        if result and len(result) > 0 and result[0].get("sync_status"):
             try:
-                return json.loads(result["sync_status"])
+                return json.loads(result[0]["sync_status"])
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON in sync_status field for registry {registry_id}")
                 return []
@@ -268,19 +268,19 @@ class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
             # Update sync status fields
             query = """
             UPDATE twin_registry 
-            SET sync_status = ?, last_sync_at = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET sync_status = :status, last_sync_at = :last_sync_at, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (status, now, registry_id))
+            await self.connection_manager.execute_update(query, {"status": status, "last_sync_at": now, "registry_id": registry_id})
             
             # Update error count if failed
             if status == "failed":
                 error_query = """
                 UPDATE twin_registry 
                 SET sync_error_count = sync_error_count + 1, updated_at = CURRENT_TIMESTAMP
-                WHERE registry_id = ?
+                WHERE registry_id = :registry_id
                 """
-                await self.execute_query(error_query, (registry_id,))
+                await self.connection_manager.execute_update(error_query, {"registry_id": registry_id})
             
         except Exception as e:
             logger.error(f"Failed to update sync status: {e}")
@@ -297,4 +297,25 @@ class TwinSyncRepository(BaseRepository[TwinSyncHistory]):
             error_message=history_dict.get("error_message"),
             sync_data=history_dict.get("sync_data", {}),
             metadata=history_dict.get("metadata", {})
-        ) 
+        )
+    
+    async def execute_query(self, query: str, params: dict = None) -> List[Dict[str, Any]]:
+        """Execute a query using the connection manager."""
+        try:
+            if query.strip().upper().startswith('SELECT'):
+                return await self.connection_manager.execute_query(query, params or {})
+            else:
+                await self.connection_manager.execute_update(query, params or {})
+                return []
+        except Exception as e:
+            logger.error(f"Failed to execute query: {e}")
+            raise
+    
+    async def fetch_one(self, query: str, params: dict = None) -> Optional[Dict[str, Any]]:
+        """Fetch a single row using the connection manager."""
+        try:
+            result = await self.connection_manager.execute_query(query, params or {})
+            return result[0] if result and len(result) > 0 else None
+        except Exception as e:
+            logger.error(f"Failed to fetch one: {e}")
+            return None 

@@ -1,9 +1,18 @@
 """
 Twin Registry Models Package
 
-Provides Pydantic models for the Twin Registry module with pure async support.
+Provides Pydantic models for the Twin Registry module with comprehensive enterprise features.
 All models extend from src.engine.models.base_model.BaseModel for consistency.
-Pure async implementation for modern architecture.
+Enhanced with enterprise-grade computed fields, business intelligence methods, and comprehensive Query/Summary models.
+NOW INCLUDES ALL METHODS THAT CERTIFICATE MANAGER HAS:
+- validate_integrity()
+- update_health_metrics()
+- generate_summary()
+- export_data()
+
+ENHANCED WITH ADDITIONAL COMPUTED FIELDS:
+- overall_score, enterprise_health_status, risk_assessment (Registry)
+- overall_metrics_score, system_efficiency_score, user_engagement_score (Metrics)
 """
 
 from .twin_registry import (
@@ -32,5 +41,14 @@ __all__ = [
     
     # Factory Functions
     'create_twin_registry',
-    'create_metrics'
+    'create_metrics',
+    
+    # Enterprise Features Available:
+    # - Comprehensive enterprise compliance tracking
+    # - Advanced security metrics and threat assessment
+    # - Business intelligence and risk assessment
+    # - Performance optimization and maintenance scheduling
+    # - Real-time health monitoring and alerting
+    # - Advanced filtering and querying capabilities
+    # - Enterprise-grade analytics and reporting
 ] 

@@ -339,3 +339,4 @@ class AasxEtlSchema(BaseSchemaModule):
         return self.create_indexes("aasx_processing_metrics", index_queries)
 
 
+

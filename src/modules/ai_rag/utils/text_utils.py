@@ -319,3 +319,4 @@ def generate_text_hash(text: str, algorithm: str = "md5") -> str:
         logger.warning(f"Unknown hash algorithm: {algorithm}, using MD5")
         return hashlib.md5(text_bytes).hexdigest()
 
+

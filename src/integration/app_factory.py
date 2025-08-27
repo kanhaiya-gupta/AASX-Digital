@@ -277,7 +277,8 @@ def include_routers(app: FastAPI) -> None:
     
     # Include all other modules
     modules_to_load = [
-        "aasx_etl",
+        "data_platform",  # Central business services hub
+        "aasx_etl",  # AASX ETL module
         "kg_neo4j", 
         "ai_rag",
         "twin_registry",

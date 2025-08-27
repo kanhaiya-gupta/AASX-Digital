@@ -12,9 +12,7 @@ from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timedelta
 import json
 import asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text, select, update, delete, and_, or_, func
-from sqlalchemy.exc import SQLAlchemyError
+from src.engine.database.connection_manager import ConnectionManager
 
 from ..models.certificates_metrics import (
     CertificateMetrics,
@@ -30,12 +28,14 @@ logger = logging.getLogger(__name__)
 class CertificatesMetricsRepository:
     """Repository for certificates_metrics table operations"""
     
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize with connection manager for raw SQL operations."""
+        self.connection_manager = connection_manager
         self.table_name = "certificates_metrics"
+        logger.info("Certificate Metrics Repository initialized with ConnectionManager")
     
     async def create_metrics(self, metrics: CertificateMetrics) -> bool:
-        """Create new certificate metrics in the database"""
+        """Create new certificate metrics in the database using raw SQL"""
         try:
             # Convert model to dictionary for database storage
             metrics_data = await metrics.to_dict()
@@ -50,47 +50,35 @@ class CertificatesMetricsRepository:
                 VALUES ({', '.join(placeholders)})
             """
             
-            # Execute insert
-            result = await self.session.execute(text(query), metrics_data)
-            await self.session.commit()
+            # Execute insert using ConnectionManager
+            await self.execute_query(query, metrics_data)
             
             logger.info(f"Created certificate metrics: {metrics.metrics_id}")
             return True
             
-        except SQLAlchemyError as e:
-            logger.error(f"Error creating certificate metrics: {e}")
-            await self.session.rollback()
-            return False
         except Exception as e:
-            logger.error(f"Unexpected error creating certificate metrics: {e}")
-            await self.session.rollback()
+            logger.error(f"Error creating certificate metrics: {e}")
             return False
     
     async def get_metrics_by_id(self, metrics_id: str) -> Optional[CertificateMetrics]:
-        """Retrieve certificate metrics by ID"""
+        """Retrieve certificate metrics by ID using raw SQL"""
         try:
             query = f"SELECT * FROM {self.table_name} WHERE metrics_id = :metrics_id"
-            result = await self.session.execute(text(query), {"metrics_id": metrics_id})
-            row = result.fetchone()
+            result = await self.fetch_one(query, {"metrics_id": metrics_id})
             
-            if row:
-                # Convert row to dictionary
-                metrics_data = dict(row._mapping)
+            if result:
                 # Create model instance
-                metrics = CertificateMetrics(**metrics_data)
+                metrics = CertificateMetrics(**result)
                 return metrics
             
             return None
             
-        except SQLAlchemyError as e:
-            logger.error(f"Error retrieving certificate metrics {metrics_id}: {e}")
-            return None
         except Exception as e:
-            logger.error(f"Unexpected error retrieving certificate metrics {metrics_id}: {e}")
+            logger.error(f"Error retrieving certificate metrics {metrics_id}: {e}")
             return None
     
     async def get_metrics_by_certificate(self, certificate_id: str, limit: int = 100) -> List[CertificateMetrics]:
-        """Retrieve all metrics for a specific certificate"""
+        """Retrieve all metrics for a specific certificate using raw SQL"""
         try:
             query = f"""
                 SELECT * FROM {self.table_name} 
@@ -98,22 +86,14 @@ class CertificatesMetricsRepository:
                 ORDER BY created_at DESC 
                 LIMIT :limit
             """
-            result = await self.session.execute(text(query), {"cert_id": certificate_id, "limit": limit})
-            rows = result.fetchall()
             
-            metrics_list = []
-            for row in rows:
-                metrics_data = dict(row._mapping)
-                metrics = CertificateMetrics(**metrics_data)
-                metrics_list.append(metrics)
+            params = {"cert_id": certificate_id, "limit": limit}
+            result = await self.execute_query(query, params)
             
-            return metrics_list
+            return [CertificateMetrics(**row) for row in result]
             
-        except SQLAlchemyError as e:
-            logger.error(f"Error retrieving metrics for certificate {certificate_id}: {e}")
-            return []
         except Exception as e:
-            logger.error(f"Unexpected error retrieving metrics for certificate {certificate_id}: {e}")
+            logger.error(f"Error retrieving metrics for certificate {certificate_id}: {e}")
             return []
     
     async def get_latest_metrics(self, certificate_id: str) -> Optional[CertificateMetrics]:
@@ -125,21 +105,16 @@ class CertificatesMetricsRepository:
                 ORDER BY created_at DESC 
                 LIMIT 1
             """
-            result = await self.session.execute(text(query), {"cert_id": certificate_id})
-            row = result.fetchone()
+            result = await self.fetch_one(query, {"cert_id": certificate_id})
             
-            if row:
-                metrics_data = dict(row._mapping)
-                metrics = CertificateMetrics(**metrics_data)
+            if result:
+                metrics = CertificateMetrics(**result)
                 return metrics
             
             return None
             
-        except SQLAlchemyError as e:
-            logger.error(f"Error retrieving latest metrics for certificate {certificate_id}: {e}")
-            return None
         except Exception as e:
-            logger.error(f"Unexpected error retrieving latest metrics for certificate {certificate_id}: {e}")
+            logger.error(f"Error retrieving latest metrics for certificate {certificate_id}: {e}")
             return None
     
     async def get_metrics_by_org(self, org_id: str, limit: int = 100) -> List[CertificateMetrics]:
@@ -151,22 +126,11 @@ class CertificatesMetricsRepository:
                 ORDER BY created_at DESC 
                 LIMIT :limit
             """
-            result = await self.session.execute(text(query), {"org_id": org_id, "limit": limit})
-            rows = result.fetchall()
+            result = await self.execute_query(query, {"org_id": org_id, "limit": limit})
+            return [CertificateMetrics(**row) for row in result]
             
-            metrics_list = []
-            for row in rows:
-                metrics_data = dict(row._mapping)
-                metrics = CertificateMetrics(**metrics_data)
-                metrics_list.append(metrics)
-            
-            return metrics_list
-            
-        except SQLAlchemyError as e:
-            logger.error(f"Error retrieving metrics for org {org_id}: {e}")
-            return []
         except Exception as e:
-            logger.error(f"Unexpected error retrieving metrics for org {org_id}: {e}")
+            logger.error(f"Error retrieving metrics for org {org_id}: {e}")
             return []
     
     async def get_metrics_by_dept(self, dept_id: str, limit: int = 100) -> List[CertificateMetrics]:
@@ -178,22 +142,11 @@ class CertificatesMetricsRepository:
                 ORDER BY created_at DESC 
                 LIMIT :limit
             """
-            result = await self.session.execute(text(query), {"dept_id": dept_id, "limit": limit})
-            rows = result.fetchall()
+            result = await self.execute_query(query, {"dept_id": dept_id, "limit": limit})
+            return [CertificateMetrics(**row) for row in result]
             
-            metrics_list = []
-            for row in rows:
-                metrics_data = dict(row._mapping)
-                metrics = CertificateMetrics(**metrics_data)
-                metrics_list.append(metrics)
-            
-            return metrics_list
-            
-        except SQLAlchemyError as e:
-            logger.error(f"Error retrieving metrics for dept {dept_id}: {e}")
-            return []
         except Exception as e:
-            logger.error(f"Unexpected error retrieving metrics for dept {dept_id}: {e}")
+            logger.error(f"Error retrieving metrics for dept {dept_id}: {e}")
             return []
     
     async def get_metrics_by_category(self, certificate_id: str, category: MetricCategory, limit: int = 100) -> List[CertificateMetrics]:
@@ -205,26 +158,15 @@ class CertificatesMetricsRepository:
                 ORDER BY created_at DESC 
                 LIMIT :limit
             """
-            result = await self.session.execute(text(query), {
+            result = await self.execute_query(query, {
                 "cert_id": certificate_id, 
                 "cat": category.value, 
                 "limit": limit
             })
-            rows = result.fetchall()
+            return [CertificateMetrics(**row) for row in result]
             
-            metrics_list = []
-            for row in rows:
-                metrics_data = dict(row._mapping)
-                metrics = CertificateMetrics(**metrics_data)
-                metrics_list.append(metrics)
-            
-            return metrics_list
-            
-        except SQLAlchemyError as e:
-            logger.error(f"Error retrieving {category.value} metrics for certificate {certificate_id}: {e}")
-            return []
         except Exception as e:
-            logger.error(f"Unexpected error retrieving {category.value} metrics for certificate {certificate_id}: {e}")
+            logger.error(f"Error retrieving {category.value} metrics for certificate {certificate_id}: {e}")
             return []
     
     async def update_metrics(self, metrics: CertificateMetrics) -> bool:
@@ -245,9 +187,8 @@ class CertificatesMetricsRepository:
             # Add back the metrics_id for WHERE clause
             update_data = {**metrics_data, "metrics_id": metrics_id, "updated_at": datetime.utcnow().isoformat()}
             
-            # Execute update
-            result = await self.session.execute(text(query), update_data)
-            await self.session.commit()
+            # Execute update using ConnectionManager
+            await self.execute_query(query, update_data)
             
             if result.rowcount > 0:
                 logger.info(f"Updated certificate metrics: {metrics.metrics_id}")
@@ -256,21 +197,18 @@ class CertificatesMetricsRepository:
                 logger.warning(f"No metrics found to update: {metrics.metrics_id}")
                 return False
                 
-        except SQLAlchemyError as e:
+        except Exception as e:
             logger.error(f"Error updating certificate metrics {metrics.metrics_id}: {e}")
-            await self.session.rollback()
             return False
         except Exception as e:
             logger.error(f"Unexpected error updating certificate metrics {metrics.metrics_id}: {e}")
-            await self.session.rollback()
             return False
     
     async def delete_metrics(self, metrics_id: str) -> bool:
         """Delete certificate metrics by ID"""
         try:
             query = f"DELETE FROM {self.table_name} WHERE metrics_id = :metrics_id"
-            result = await self.session.execute(text(query), {"metrics_id": metrics_id})
-            await self.session.commit()
+            result = await self.execute_query(query, {"metrics_id": metrics_id})
             
             if result.rowcount > 0:
                 logger.info(f"Deleted certificate metrics: {metrics_id}")
@@ -279,13 +217,11 @@ class CertificatesMetricsRepository:
                 logger.warning(f"No metrics found to delete: {metrics_id}")
                 return False
                 
-        except SQLAlchemyError as e:
+        except Exception as e:
             logger.error(f"Error deleting certificate metrics {metrics_id}: {e}")
-            await self.session.rollback()
             return False
         except Exception as e:
             logger.error(f"Unexpected error deleting certificate metrics {metrics_id}: {e}")
-            await self.session.rollback()
             return False
     
 
@@ -302,19 +238,18 @@ class CertificatesMetricsRepository:
                 WHERE certificate_id = :cert_id AND created_at >= :start_date
                 ORDER BY created_at ASC
             """
-            result = await self.session.execute(text(query), {
+            result = await self.execute_query(query, {
                 "cert_id": certificate_id,
                 "start_date": start_date.isoformat()
             })
-            rows = result.fetchall()
             
-            if not rows:
+            if not result:
                 return {"trend": "insufficient_data", "message": "No metrics data available for trend analysis"}
             
             # Calculate trends
             trends = {
                 "period_days": days,
-                "total_metrics": len(rows),
+                "total_metrics": len(result),
                 "performance_trend": "stable",
                 "quality_trend": "stable",
                 "usage_trend": "stable",
@@ -323,8 +258,8 @@ class CertificatesMetricsRepository:
             
             # Analyze performance trends
             performance_scores = []
-            for row in rows:
-                metrics_data = dict(row._mapping)
+            for row in result:
+                metrics_data = dict(row)
                 if "performance_metrics_data" in metrics_data and metrics_data["performance_metrics_data"]:
                     try:
                         perf_data = json.loads(metrics_data["performance_metrics_data"])
@@ -372,18 +307,10 @@ class CertificatesMetricsRepository:
                 """
                 params["limit"] = limit
             
-            result = await self.session.execute(text(query), params)
-            rows = result.fetchall()
+            result = await self.execute_query(query, params)
+            return [CertificateMetrics(**row) for row in result]
             
-            metrics_list = []
-            for row in rows:
-                metrics_data = dict(row._mapping)
-                metrics = CertificateMetrics(**metrics_data)
-                metrics_list.append(metrics)
-            
-            return metrics_list
-            
-        except SQLAlchemyError as e:
+        except Exception as e:
             logger.error(f"Error searching certificate metrics: {e}")
             return []
         except Exception as e:
@@ -445,18 +372,10 @@ class CertificatesMetricsRepository:
             params["limit"] = limit
             params["offset"] = offset
             
-            result = await self.session.execute(text(query), params)
-            rows = result.fetchall()
+            result = await self.execute_query(query, params)
+            return [CertificateMetrics(**row) for row in result]
             
-            metrics_list = []
-            for row in rows:
-                metrics_data = dict(row._mapping)
-                metrics = CertificateMetrics(**metrics_data)
-                metrics_list.append(metrics)
-            
-            return metrics_list
-            
-        except SQLAlchemyError as e:
+        except Exception as e:
             logger.error(f"Error retrieving all metrics: {e}")
             return []
         except Exception as e:
@@ -481,8 +400,8 @@ class CertificatesMetricsRepository:
             
             # Get total count
             count_query = f"SELECT COUNT(*) as total FROM {self.table_name} WHERE {where_clause}"
-            count_result = await self.session.execute(text(count_query), params)
-            total_count = count_result.scalar()
+            count_result = await self.execute_query(count_query, params)
+            total_count = count_result[0][0] if count_result else 0
             
             # Get metric category distribution
             category_query = f"""
@@ -491,8 +410,8 @@ class CertificatesMetricsRepository:
                 WHERE {where_clause} 
                 GROUP BY metric_category
             """
-            category_result = await self.session.execute(text(category_query), params)
-            category_distribution = {row.metric_category: row.count for row in category_result.fetchall()}
+            category_result = await self.execute_query(category_query, params)
+            category_distribution = {row[0]: row[1] for row in category_result}
             
             # Get metric priority distribution
             priority_query = f"""
@@ -501,8 +420,8 @@ class CertificatesMetricsRepository:
                 WHERE {where_clause} 
                 GROUP BY metric_priority
             """
-            priority_result = await self.session.execute(text(priority_query), params)
-            priority_distribution = {row.metric_priority: row.count for row in priority_result.fetchall()}
+            priority_result = await self.execute_query(priority_query, params)
+            priority_distribution = {row[0]: row[1] for row in priority_result}
             
             # Get average performance scores
             performance_query = f"""
@@ -510,8 +429,8 @@ class CertificatesMetricsRepository:
                 FROM {self.table_name} 
                 WHERE {where_clause} AND performance_score IS NOT NULL
             """
-            performance_result = await self.session.execute(text(performance_query), params)
-            avg_performance = performance_result.scalar() or 0.0
+            performance_result = await self.execute_query(performance_query, params)
+            avg_performance = performance_result[0][0] if performance_result else 0.0
             
             return {
                 "total_metrics": total_count,
@@ -522,7 +441,7 @@ class CertificatesMetricsRepository:
                 "dept_id": dept_id
             }
             
-        except SQLAlchemyError as e:
+        except Exception as e:
             logger.error(f"Error getting metrics stats: {e}")
             return {}
         except Exception as e:
@@ -534,8 +453,8 @@ class CertificatesMetricsRepository:
         """Check repository health by performing a simple query"""
         try:
             query = f"SELECT 1 FROM {self.table_name} LIMIT 1"
-            await self.session.execute(text(query))
-            return True
+            result = await self.execute_query(query)
+            return bool(result)
         except Exception as e:
             logger.error(f"Repository health check failed: {e}")
             return False
@@ -1232,3 +1151,40 @@ class CertificatesMetricsRepository:
         except Exception as e:
             logger.error(f"Error getting comprehensive metrics analytics: {e}")
             return {}
+    
+    # ========================================================================
+    # HELPER METHODS
+    # ========================================================================
+    
+    def _model_to_dict(self, metrics: CertificateMetrics) -> Dict[str, Any]:
+        """Convert Pydantic model to database dictionary."""
+        return metrics.model_dump()
+    
+    def _dict_to_model(self, data: Dict[str, Any]) -> CertificateMetrics:
+        """Convert database dictionary to Pydantic model."""
+        return CertificateMetrics(**data)
+    
+    # ========================================================================
+    # CONNECTION MANAGER METHODS
+    # ========================================================================
+    
+    async def execute_query(self, query: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """Execute a query using the connection manager."""
+        try:
+            if query.strip().upper().startswith('SELECT'):
+                return await self.connection_manager.execute_query(query, params or {})
+            else:
+                await self.connection_manager.execute_update(query, params or {})
+                return []
+        except Exception as e:
+            logger.error(f"Failed to execute query: {e}")
+            raise
+    
+    async def fetch_one(self, query: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+        """Fetch a single row using the connection manager."""
+        try:
+            result = await self.connection_manager.execute_query(query, params or {})
+            return result[0] if result and len(result) > 0 else None
+        except Exception as e:
+            logger.error(f"Failed to fetch one: {e}")
+            return None

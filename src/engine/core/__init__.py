@@ -1,12 +1,8 @@
 """
-Core framework components for the engine system.
+Core Engine Components
+======================
 
-This module provides the foundational building blocks including:
-- Abstract base classes
-- Protocol interfaces
-- Custom exceptions
-- System constants
-- Common decorators
+Provides core functionality for the AAS Data Modeling Engine.
 """
 
 from .base_classes import (
@@ -60,6 +56,11 @@ from .decorators import (
     require_permission
 )
 
+from .request_context import (
+    RequestContextService,
+    request_context_service
+)
+
 __all__ = [
     # Base Classes
     'BaseService',
@@ -105,5 +106,9 @@ __all__ = [
     'log_execution',
     'measure_performance',
     'require_auth',
-    'require_permission'
+    'require_permission',
+    
+    # Request Context
+    'RequestContextService',
+    'request_context_service'
 ]

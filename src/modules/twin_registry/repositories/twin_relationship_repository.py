@@ -10,19 +10,19 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import json
 
-from src.shared.database.base_manager import BaseDatabaseManager
-from src.shared.repositories.base_repository import BaseRepository
-from src.twin_registry.models.twin_relationship import TwinRelationship, TwinRelationshipQuery
+from src.engine.database.connection_manager import ConnectionManager
+from ..models.twin_relationship import TwinRelationship, TwinRelationshipQuery
 
 logger = logging.getLogger(__name__)
 
 
-class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
+class TwinRelationshipRepository:
     """Repository for managing twin relationships using JSON fields."""
     
-    def __init__(self, db_manager: BaseDatabaseManager):
-        """Initialize the twin relationship repository."""
-        super().__init__(db_manager, TwinRelationship)
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the twin relationship repository with engine connection manager."""
+        self.connection_manager = connection_manager
+        self.table_name = "twin_registry"
         logger.info("Twin Relationship Repository initialized (JSON field mode)")
     
     def _get_table_name(self) -> str:
@@ -81,10 +81,10 @@ class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
             # Update the JSON field
             query = """
             UPDATE twin_registry 
-            SET relationships = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET relationships = :relationships, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(current_relationships), registry_id))
+            await self.connection_manager.execute_update(query, {"relationships": json.dumps(current_relationships), "registry_id": registry_id})
             
             logger.info(f"Created relationship: {relationship.id} in registry {registry_id}")
             return relationship
@@ -184,10 +184,10 @@ class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
             # Update the JSON field
             query = """
             UPDATE twin_registry 
-            SET relationships = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET relationships = :relationships, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(relationships), registry_id))
+            await self.connection_manager.execute_update(query, {"relationships": json.dumps(relationships), "registry_id": registry_id})
             
             logger.info(f"Updated relationship: {relationship_id} in registry {registry_id}")
             return True
@@ -196,7 +196,7 @@ class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
             logger.error(f"Failed to update relationship {relationship_id}: {e}")
             return False
     
-    async def deactivate_relationship(self, registry_id: str, relationship_id: str) -> bool:
+    async def deactivate_instance(self, registry_id: str, relationship_id: str) -> bool:
         """Deactivate a relationship in the JSON field."""
         try:
             relationships = await self._get_relationships_json(registry_id)
@@ -211,10 +211,10 @@ class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
             # Update the JSON field
             query = """
             UPDATE twin_registry 
-            SET relationships = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET relationships = :relationships, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(relationships), registry_id))
+            await self.connection_manager.execute_update(query, {"relationships": json.dumps(relationships), "registry_id": registry_id})
             
             logger.info(f"Deactivated relationship: {relationship_id} in registry {registry_id}")
             return True
@@ -236,10 +236,10 @@ class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
                 # Update the JSON field
                 query = """
                 UPDATE twin_registry 
-                SET relationships = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE registry_id = ?
+                SET relationships = :relationships, updated_at = CURRENT_TIMESTAMP
+                WHERE registry_id = :registry_id
                 """
-                await self.execute_query(query, (json.dumps(relationships), registry_id))
+                await self.connection_manager.execute_update(query, {"relationships": json.dumps(relationships), "registry_id": registry_id})
                 
                 logger.info(f"Deleted relationship: {relationship_id} from registry {registry_id}")
                 return True
@@ -315,12 +315,13 @@ class TwinRelationshipRepository(BaseRepository[TwinRelationship]):
     
     async def _get_relationships_json(self, registry_id: str) -> List[Dict[str, Any]]:
         """Get the relationships JSON field from the registry."""
-        query = "SELECT relationships FROM twin_registry WHERE registry_id = ?"
-        result = await self.fetch_one(query, (registry_id,))
+        query = "SELECT relationships FROM twin_registry WHERE registry_id = :registry_id"
         
-        if result and result.get("relationships"):
+        result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
+        
+        if result and len(result) > 0 and result[0].get("relationships"):
             try:
-                return json.loads(result["relationships"])
+                return json.loads(result[0]["relationships"])
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON in relationships field for registry {registry_id}")
                 return []

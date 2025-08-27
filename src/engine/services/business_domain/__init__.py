@@ -10,6 +10,7 @@ Services:
 - ProjectService: Manages projects, tasks, and milestones
 - FileService: Manages files, documents, and file operations
 - WorkflowService: Manages business workflows and process automation
+- UseCaseService: Manages use cases, categorization, and project hierarchy
 
 Each service follows the modular architecture pattern and extends BaseService
 for consistent behavior and integration.
@@ -54,11 +55,23 @@ from .workflow_service import (
     WorkflowEvent
 )
 
+from .use_case_service import (
+    UseCaseService,
+    UseCaseStatus,
+    UseCaseCategory,
+    BusinessCriticality,
+    DataVolumeEstimate,
+    UpdateFrequency,
+    UseCaseInfo,
+    UseCaseProjectLink
+)
+
 # Convenience functions for accessing services
 _organization_service: OrganizationService = None
 _project_service: ProjectService = None
 _file_service: FileService = None
 _workflow_service: WorkflowService = None
+_use_case_service: UseCaseService = None
 
 def get_organization_service() -> OrganizationService:
     """Get the global organization service instance."""
@@ -108,6 +121,18 @@ def set_workflow_service(service: WorkflowService) -> None:
     global _workflow_service
     _workflow_service = service
 
+def get_use_case_service() -> UseCaseService:
+    """Get the global use case service instance."""
+    global _use_case_service
+    if _use_case_service is None:
+        _use_case_service = UseCaseService()
+    return _use_case_service
+
+def set_use_case_service(service: UseCaseService) -> None:
+    """Set the global use case service instance."""
+    global _use_case_service
+    _use_case_service = service
+
 async def initialize_business_domain_services() -> None:
     """Initialize all business domain services."""
     try:
@@ -127,11 +152,16 @@ async def initialize_business_domain_services() -> None:
         wf_service = get_workflow_service()
         await wf_service.start()
         
+        # Initialize use case service
+        uc_service = get_use_case_service()
+        await uc_service.start()
+        
         print("🏢 Business Domain Services Initialized")
         print(f"   📊 Organization Service: {org_service.health_status}")
         print(f"   📋 Project Service: {proj_service.health_status}")
         print(f"   📁 File Service: {file_service.health_status}")
         print(f"   🔄 Workflow Service: {wf_service.health_status}")
+        print(f"   🎯 Use Case Service: {uc_service.health_status}")
         
     except Exception as e:
         print(f"❌ Failed to initialize business domain services: {e}")
@@ -202,6 +232,7 @@ __all__ = [
     'ProjectService', 
     'FileService',
     'WorkflowService',
+    'UseCaseService',
     
     # Data Models
     'OrganizationType',
@@ -227,6 +258,13 @@ __all__ = [
     'WorkflowInstance',
     'WorkflowTask',
     'WorkflowEvent',
+    'UseCaseStatus',
+    'UseCaseCategory',
+    'BusinessCriticality',
+    'DataVolumeEstimate',
+    'UpdateFrequency',
+    'UseCaseInfo',
+    'UseCaseProjectLink',
     
     # Utility Functions
     'get_organization_service',
@@ -237,6 +275,8 @@ __all__ = [
     'set_project_service',
     'set_file_service',
     'set_workflow_service',
+    'get_use_case_service',
+    'set_use_case_service',
     'initialize_business_domain_services',
     'get_business_domain_services_info',
     'stop_business_domain_services'

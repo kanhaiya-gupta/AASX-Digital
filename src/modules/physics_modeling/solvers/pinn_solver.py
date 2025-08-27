@@ -517,3 +517,4 @@ class PINNSolver(BaseSolver):
             'loss_weights': self.loss_weights.copy()
         }
 
+

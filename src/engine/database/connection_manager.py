@@ -4,6 +4,7 @@ Abstract Base Database Connection Manager
 
 Defines the interface for all database connection managers (SQLite, PostgreSQL, MySQL).
 This ensures consistent behavior across different database types.
+All methods are pure async for modern async-first architecture.
 """
 
 from abc import ABC, abstractmethod
@@ -14,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ConnectionManager(ABC):
-    """Abstract base class for database connection management"""
+    """Abstract base class for database connection management - Pure Async"""
     
     def __init__(self, connection_config: Union[str, Path, Dict[str, Any]]):
         """
@@ -31,17 +32,7 @@ class ConnectionManager(ABC):
         self._is_connected = False
         
     @abstractmethod
-    def connect(self) -> bool:
-        """
-        Establish database connection.
-        
-        Returns:
-            bool: True if connection successful, False otherwise
-        """
-        pass
-    
-    @abstractmethod
-    async def connect_async(self) -> bool:
+    async def connect(self) -> bool:
         """
         Establish database connection asynchronously.
         
@@ -51,17 +42,7 @@ class ConnectionManager(ABC):
         pass
     
     @abstractmethod
-    def disconnect(self) -> bool:
-        """
-        Close database connection.
-        
-        Returns:
-            bool: True if disconnection successful, False otherwise
-        """
-        pass
-    
-    @abstractmethod
-    async def disconnect_async(self) -> bool:
+    async def disconnect(self) -> bool:
         """
         Close database connection asynchronously.
         
@@ -71,9 +52,9 @@ class ConnectionManager(ABC):
         pass
     
     @abstractmethod
-    def get_connection(self) -> Any:
+    async def get_connection(self) -> Any:
         """
-        Get the active database connection.
+        Get the active database connection asynchronously.
         
         Returns:
             Database connection object
@@ -81,9 +62,9 @@ class ConnectionManager(ABC):
         pass
     
     @abstractmethod
-    def execute_query(self, query: str, params: Optional[tuple] = None) -> List[Dict[str, Any]]:
+    async def execute_query(self, query: str, params: Optional[tuple] = None) -> List[Dict[str, Any]]:
         """
-        Execute a SELECT query.
+        Execute a SELECT query asynchronously.
         
         Args:
             query: SQL query string
@@ -95,9 +76,9 @@ class ConnectionManager(ABC):
         pass
     
     @abstractmethod
-    def execute_update(self, query: str, params: Optional[tuple] = None) -> int:
+    async def execute_update(self, query: str, params: Optional[tuple] = None) -> int:
         """
-        Execute an INSERT, UPDATE, or DELETE query.
+        Execute an INSERT, UPDATE, or DELETE query asynchronously.
         
         Args:
             query: SQL query string
@@ -109,9 +90,9 @@ class ConnectionManager(ABC):
         pass
     
     @abstractmethod
-    def execute_transaction(self, queries: List[tuple]) -> bool:
+    async def execute_transaction(self, queries: List[tuple]) -> bool:
         """
-        Execute multiple queries in a transaction.
+        Execute multiple queries in a transaction asynchronously.
         
         Args:
             queries: List of (query, params) tuples
@@ -122,106 +103,88 @@ class ConnectionManager(ABC):
         pass
     
     @abstractmethod
-    def begin_transaction(self) -> bool:
+    async def begin_transaction(self) -> bool:
         """
-        Begin a new transaction.
+        Begin a new transaction asynchronously.
         
         Returns:
-            bool: True if transaction started successfully
+            bool: True if transaction started successfully, False otherwise
         """
         pass
     
     @abstractmethod
-    def commit_transaction(self) -> bool:
+    async def commit_transaction(self) -> bool:
         """
-        Commit the current transaction.
+        Commit the current transaction asynchronously.
         
         Returns:
-            bool: True if commit successful
+            bool: True if commit successful, False otherwise
         """
         pass
     
     @abstractmethod
-    def rollback_transaction(self) -> bool:
+    async def rollback_transaction(self) -> bool:
         """
-        Rollback the current transaction.
+        Rollback the current transaction asynchronously.
         
         Returns:
-            bool: True if rollback successful
+            bool: True if rollback successful, False otherwise
         """
         pass
     
     @abstractmethod
-    def test_connection(self) -> bool:
+    async def test_connection(self) -> bool:
         """
-        Test if the database connection is working.
+        Test if the database connection is working asynchronously.
         
         Returns:
-            bool: True if connection test successful
+            bool: True if connection test successful, False otherwise
         """
         pass
     
     @abstractmethod
-    def get_database_info(self) -> Dict[str, Any]:
+    async def get_database_info(self) -> Dict[str, Any]:
         """
-        Get database version and connection information.
+        Get database information asynchronously.
         
         Returns:
-            Dictionary with database information
+            Dictionary containing database information
         """
         pass
     
-    @property
-    def is_connected(self) -> bool:
-        """Check if database is connected"""
-        return self._is_connected
+    @abstractmethod
+    async def health_check(self) -> Dict[str, Any]:
+        """
+        Perform a health check on the database connection asynchronously.
+        
+        Returns:
+            Dictionary containing health status information
+        """
+        pass
     
-    @property
-    def connection_string(self) -> str:
-        """Get the connection string (for logging/debugging)"""
-        if isinstance(self.connection_config, (str, Path)):
-            return str(self.connection_config)
-        elif isinstance(self.connection_config, dict):
-            return f"{self.connection_config.get('host', 'localhost')}:{self.connection_config.get('port', 'default')}/{self.connection_config.get('database', 'unknown')}"
-        return "unknown"
+    @abstractmethod
+    async def get_metrics(self) -> Any:
+        """
+        Get performance metrics asynchronously.
+        
+        Returns:
+            Metrics object or dictionary
+        """
+        pass
     
-    def __enter__(self):
-        """Context manager entry"""
-        self.connect()
-        return self
+    @abstractmethod
+    async def reset_metrics(self) -> None:
+        """
+        Reset performance metrics asynchronously.
+        """
+        pass
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit"""
-        try:
-            # For async managers, we need to handle this differently
-            if hasattr(self, 'disconnect_async'):
-                # Schedule async disconnect (can't await in sync context)
-                import asyncio
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        loop.create_task(self.disconnect_async())
-                except:
-                    pass
-            else:
-                self.disconnect()
-        except:
-            pass
-    
-    def __del__(self):
-        """Cleanup on deletion"""
-        try:
-            # For async managers, we need to handle this differently
-            if hasattr(self, 'disconnect_async'):
-                # Schedule async disconnect (can't await in sync context)
-                import asyncio
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        loop.create_task(self.disconnect_async())
-                except:
-                    pass
-            else:
-                self.disconnect()
-        except:
-            pass
+    @abstractmethod
+    async def get_cursor_async(self):
+        """
+        Get an async cursor context manager.
+        
+        Returns:
+            Async context manager for database operations
+        """
+        pass

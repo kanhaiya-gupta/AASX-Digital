@@ -15,6 +15,12 @@ from .aasx_processor import (
     round_trip_conversion
 )
 
+# AASX Population Orchestrator
+from .aasx_population_orchestrator import (
+    AASXPopulationOrchestrator,
+    create_aasx_population_orchestrator
+)
+
 __version__ = "1.0.0"
 __author__ = "AAS Data Modeling Team"
 
@@ -24,5 +30,7 @@ __all__ = [
     'generate_aasx',
     'generate_aasx_from_structured',
     'batch_generate',
-    'round_trip_conversion'
+    'round_trip_conversion',
+    'AASXPopulationOrchestrator',
+    'create_aasx_population_orchestrator'
 ]

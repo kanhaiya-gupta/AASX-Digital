@@ -10,19 +10,19 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import json
 
-from src.shared.database.base_manager import BaseDatabaseManager
-from src.shared.repositories.base_repository import BaseRepository
-from src.twin_registry.models.twin_lifecycle import TwinLifecycleEvent, TwinLifecycleStatus, TwinLifecycleSummary, LifecycleStatusEnum
+from src.engine.database.connection_manager import ConnectionManager
+from ..models.twin_lifecycle import TwinLifecycleEvent, TwinLifecycleStatus, TwinLifecycleSummary, LifecycleStatusEnum
 
 logger = logging.getLogger(__name__)
 
 
-class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
+class TwinLifecycleRepository:
     """Repository for managing twin lifecycle using JSON fields."""
     
-    def __init__(self, db_manager: BaseDatabaseManager):
-        """Initialize the twin lifecycle repository."""
-        super().__init__(db_manager, TwinLifecycleEvent)
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the twin lifecycle repository with engine connection manager."""
+        self.connection_manager = connection_manager
+        self.table_name = "twin_registry"
         logger.info("Twin Lifecycle Repository initialized (JSON field mode)")
     
     def _get_table_name(self) -> str:
@@ -78,10 +78,10 @@ class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
             # Update the JSON field in metrics table
             query = """
             UPDATE twin_registry_metrics 
-            SET lifecycle_events = ?, timestamp = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET lifecycle_events = :lifecycle_events, timestamp = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(current_events), registry_id))
+            await self.connection_manager.execute_update(query, {"lifecycle_events": json.dumps(current_events), "registry_id": registry_id})
             
             # Also update the lifecycle status in main registry table
             await self._update_lifecycle_status(registry_id, event.event_type.value, event.status)
@@ -150,19 +150,18 @@ class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
             query = """
             SELECT lifecycle_status, lifecycle_phase, updated_at 
             FROM twin_registry 
-            WHERE registry_id = ?
+            WHERE registry_id = :registry_id
             """
-            result = await self.fetch_one(query, (registry_id,))
+            result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
             
-            if result:
+            if result and len(result) > 0:
+                row = result[0]
                 return TwinLifecycleStatus(
                     twin_id=registry_id,
-                    current_status=LifecycleStatusEnum(result.get("lifecycle_status", "created")),
-                    last_event=None,  # Would need to fetch from events if needed
-                    last_updated=datetime.fromisoformat(result.get("updated_at", "")) if result.get("updated_at") else datetime.now(timezone.utc),
-                    lifecycle_metadata={"phase": result.get("lifecycle_phase", "development")}
+                    lifecycle_status=row['lifecycle_status'],
+                    lifecycle_phase=row['lifecycle_phase'],
+                    last_updated=row['updated_at']
                 )
-            
             return None
             
         except Exception as e:
@@ -172,22 +171,22 @@ class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
     async def update_lifecycle_status(self, registry_id: str, status: LifecycleStatusEnum, phase: str = None) -> bool:
         """Update the lifecycle status in the registry."""
         try:
-            set_clauses = ["lifecycle_status = ?", "updated_at = CURRENT_TIMESTAMP"]
-            params = [status.value]
+            set_clauses = ["lifecycle_status = :lifecycle_status", "updated_at = CURRENT_TIMESTAMP"]
+            params = {"lifecycle_status": status.value}
             
             if phase:
-                set_clauses.append("lifecycle_phase = ?")
-                params.append(phase)
+                set_clauses.append("lifecycle_phase = :lifecycle_phase")
+                params["lifecycle_phase"] = phase
             
-            params.append(registry_id)
+            params["registry_id"] = registry_id
             
             query = f"""
             UPDATE twin_registry 
             SET {', '.join(set_clauses)}
-            WHERE registry_id = ?
+            WHERE registry_id = :registry_id
             """
             
-            await self.execute_query(query, tuple(params))
+            await self.connection_manager.execute_update(query, params)
             logger.info(f"Updated lifecycle status to {status.value} for registry {registry_id}")
             return True
             
@@ -244,12 +243,12 @@ class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
     
     async def _get_lifecycle_events_json(self, registry_id: str) -> List[Dict[str, Any]]:
         """Get the lifecycle_events JSON field from the metrics table."""
-        query = "SELECT lifecycle_events FROM twin_registry_metrics WHERE registry_id = ?"
-        result = await self.fetch_one(query, (registry_id,))
+        query = "SELECT lifecycle_events FROM twin_registry_metrics WHERE registry_id = :registry_id"
+        result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
         
-        if result and result.get("lifecycle_events"):
+        if result and result[0].get("lifecycle_events"):
             try:
-                return json.loads(result["lifecycle_events"])
+                return json.loads(result[0]["lifecycle_events"])
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON in lifecycle_events field for registry {registry_id}")
                 return []
@@ -273,10 +272,10 @@ class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
             # Update the registry
             query = """
             UPDATE twin_registry 
-            SET lifecycle_status = ?, lifecycle_phase = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET lifecycle_status = :event_status, lifecycle_phase = :new_phase, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (event_status, new_phase, registry_id))
+            await self.connection_manager.execute_update(query, {"event_status": event_status, "new_phase": new_phase, "registry_id": registry_id})
             
         except Exception as e:
             logger.error(f"Failed to update lifecycle status: {e}")
@@ -293,4 +292,25 @@ class TwinLifecycleRepository(BaseRepository[TwinLifecycleEvent]):
             triggered_by=event_dict.get("triggered_by"),
             status=event_dict.get("status", "completed"),
             error_message=event_dict.get("error_message")
-        ) 
+        )
+    
+    async def execute_query(self, query: str, params: dict = None) -> List[Dict[str, Any]]:
+        """Execute a query using the connection manager."""
+        try:
+            if query.strip().upper().startswith('SELECT'):
+                return await self.connection_manager.execute_query(query, params or {})
+            else:
+                await self.connection_manager.execute_update(query, params or {})
+                return []
+        except Exception as e:
+            logger.error(f"Failed to execute query: {e}")
+            raise
+    
+    async def fetch_one(self, query: str, params: dict = None) -> Optional[Dict[str, Any]]:
+        """Fetch a single row using the connection manager."""
+        try:
+            result = await self.connection_manager.execute_query(query, params or {})
+            return result[0] if result and len(result) > 0 else None
+        except Exception as e:
+            logger.error(f"Failed to fetch one: {e}")
+            return None 

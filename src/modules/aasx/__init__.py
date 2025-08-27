@@ -18,7 +18,7 @@ __author__ = "AAS Data Modeling Team"
 __description__ = "Pure async AASX processing module with comprehensive workflows"
 
 # Core Components
-from .core.aasx_processor import AasxProcessor
+# Note: AasxProcessor class moved to client layer
 
 # Models (Pure Async)
 from .models import (
@@ -29,34 +29,33 @@ from .models import (
 )
 
 # Services (Pure Async)
-from .services.aasx_processing_service import AasxProcessingService
-from .services.processing_metrics_service import ProcessingMetricsService
+from .services.aasx_processing_service import AASXProcessingService
+from .services.aasx_processing_metrics_service import ProcessingMetricsService
 
 # Repositories (Pure Async)
 from .repositories.aasx_processing_repository import AasxProcessingRepository
-from .repositories.processing_metrics_repository import ProcessingMetricsRepository
+from .repositories.aasx_processing_metrics_repository import AasxProcessingMetricsRepository
 
 # Events (Pure Async)
 from .events.event_manager import EventManager
 
 # Integration (Pure Async)
-from .integration.external_tools import ExternalToolsIntegration
-from .integration.api_client import ApiClient
+from .integration.external_processor import ExternalProcessor
+from .integration.api_client import APIClient
 
 # Utilities (Pure Async)
-from .utils.validation import ValidationUtils
-from .utils.format_converter import FormatConverter
+from .utils.validation_utils import ValidationEngine
+from .utils.format_utils import FormatConverter
 
 # Configuration (Pure Async)
-from .config.aasx_config import AASXConfig
-from .config.validation_rules_config import ValidationRulesConfig
+from .config.settings import AASXConfig
+from .config.validation_rules import ValidationRulesConfig
 
-# Populator (Pure Async)
-from .populator.test_data_generator import TestDataGenerator
+
 
 __all__ = [
     # Core
-    'AasxProcessor',
+    # Note: AasxProcessor class moved to client layer
     
     # Models (Pure Async)
     'AasxProcessing',
@@ -65,28 +64,25 @@ __all__ = [
     'create_aasx_processing_metrics',
     
     # Services (Pure Async)
-    'AasxProcessingService',
+    'AASXProcessingService',
     'ProcessingMetricsService',
     
     # Repositories (Pure Async)
     'AasxProcessingRepository',
-    'ProcessingMetricsRepository',
+    'AasxProcessingMetricsRepository',
     
     # Events (Pure Async)
     'EventManager',
     
     # Integration (Pure Async)
-    'ExternalToolsIntegration',
-    'ApiClient',
+    'ExternalProcessor',
+    'APIClient',
     
     # Utilities (Pure Async)
-    'ValidationUtils',
+    'ValidationEngine',
     'FormatConverter',
     
     # Configuration (Pure Async)
     'AASXConfig',
-    'ValidationRulesConfig',
-    
-    # Populator (Pure Async)
-    'TestDataGenerator'
+    'ValidationRulesConfig'
 ] 

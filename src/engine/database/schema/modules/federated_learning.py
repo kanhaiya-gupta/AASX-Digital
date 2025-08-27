@@ -55,23 +55,9 @@ class FederatedLearningSchema(BaseSchema):
             if not await super().initialize():
                 return False
             
-            # Initialize enterprise metadata tables
-            await self._create_enterprise_metadata_tables()
-            
-            # Initialize Federated Learning monitoring
-            await self._initialize_federated_learning_monitoring()
-            
-            # Setup compliance framework
-            await self._setup_compliance_framework()
-            
-            # Create enterprise tables
-            await self._create_enterprise_tables()
-            
-            # Setup Federated Learning policies
-            await self._setup_federated_learning_policies()
-            
-            # Initialize performance analytics
-            await self._initialize_performance_analytics()
+            # Create core tables
+            if not await self._create_enterprise_tables():
+                return False
             
             logger.info("✅ Federated Learning Schema initialized with enterprise-grade features")
             return True
@@ -86,171 +72,13 @@ class FederatedLearningSchema(BaseSchema):
             # Create the base table
             if isinstance(table_definition, str):
                 # Direct SQL definition
-                if not await super().create_table(table_name, table_definition):
-                    return False
+                return await super().create_table(table_name, table_definition)
             else:
                 # Dictionary definition
-                if not await self._create_table_from_definition(table_name, table_definition):
-                    return False
-            
-            # Add enterprise enhancements
-            await self._create_enterprise_indexes(table_name, [])
-            await self._setup_table_monitoring(table_name)
-            await self._validate_table_structure(table_name)
-            await self._update_table_metadata(table_name)
-            
-            return True
+                return await super().create_table(table_name, table_definition)
             
         except Exception as e:
             logger.error(f"Failed to create table {table_name}: {e}")
-            return False
-
-    async def drop_table(self, table_name: str) -> bool:
-        """Drop a table with enterprise-grade safety checks."""
-        try:
-            # Check dependencies
-            if not await self._check_table_dependencies(table_name):
-                logger.warning(f"Table {table_name} has dependencies, cannot drop safely")
-                return False
-            
-            # Backup table data
-            await self._backup_table_data(table_name)
-            
-            # Log governance event
-            await self._log_federated_learning_governance_event("table_dropped", table_name)
-            
-            # Cleanup metadata
-            await self._cleanup_table_metadata(table_name)
-            
-            # Drop the table
-            return await super().drop_table(table_name)
-            
-        except Exception as e:
-            logger.error(f"Failed to drop table {table_name}: {e}")
-            return False
-
-    async def table_exists(self, table_name: str) -> bool:
-        """Check if a table exists."""
-        try:
-            return await super().table_exists(table_name)
-        except Exception as e:
-            logger.error(f"Failed to check table existence for {table_name}: {e}")
-            return False
-
-    async def get_table_info(self, table_name: str) -> Optional[Dict[str, Any]]:
-        """Get comprehensive table information including enterprise metrics."""
-        try:
-            base_info = await super().get_table_info(table_name)
-            if not base_info:
-                return None
-            
-            # Add enterprise-specific information
-            enterprise_info = {
-                **base_info,
-                "federated_learning_metrics": self._federated_learning_metrics.get(table_name, {}),
-                "performance_analytics": self._performance_analytics.get(table_name, {}),
-                "compliance_status": self._compliance_status.get(table_name, {}),
-                "security_metrics": self._security_metrics.get(table_name, {})
-            }
-            
-            return enterprise_info
-            
-        except Exception as e:
-            logger.error(f"Failed to get table info for {table_name}: {e}")
-            return None
-
-    async def get_all_tables(self) -> List[str]:
-        """Get all tables managed by this schema."""
-        try:
-            return await super().get_all_tables()
-        except Exception as e:
-            logger.error(f"Failed to get all tables: {e}")
-            return []
-
-    async def validate_table_structure(self, table_name: str, expected_structure: Dict[str, Any]) -> bool:
-        """Validate table structure with enterprise-grade validation."""
-        try:
-            # Basic validation
-            if not await super().validate_table_structure(table_name, expected_structure):
-                return False
-            
-            # Enterprise-specific validation
-            await self._validate_column_properties(table_name)
-            await self._validate_federated_learning_requirements(table_name)
-            await self._validate_table_constraints(table_name)
-            await self._validate_table_indexes(table_name)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to validate table structure for {table_name}: {e}")
-            return False
-
-    async def execute_migration(self, migration_script: str, rollback_script: Optional[str] = None) -> bool:
-        """Execute migration with enterprise-grade governance."""
-        try:
-            # Pre-migration governance checks
-            await self._validate_migration_federated_learning_impact(migration_script)
-            await self._create_migration_checkpoint(migration_script)
-            
-            # Execute migration
-            if not await super().execute_migration(migration_script, rollback_script):
-                return False
-            
-            # Post-migration validation
-            await self._validate_migration_results(migration_script)
-            await self._record_migration_success(migration_script)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to execute migration: {e}")
-            return False
-
-    async def get_migration_history(self) -> List[Dict[str, Any]]:
-        """Get migration history with enterprise governance details."""
-        try:
-            base_history = await super().get_migration_history()
-            
-            # Enhance with enterprise details
-            enhanced_history = []
-            for migration in base_history:
-                enhanced_migration = {
-                    **migration,
-                    "federated_learning_impact_assessment": await self._assess_federated_learning_impact(migration),
-                    "compliance_status": await self._check_migration_compliance(migration),
-                    "governance_details": await self._get_migration_details(migration)
-                }
-                enhanced_history.append(enhanced_migration)
-            
-            return enhanced_history
-            
-        except Exception as e:
-            logger.error(f"Failed to get migration history: {e}")
-            return []
-
-    async def rollback_migration(self, migration_id: str) -> bool:
-        """Rollback migration with enterprise-grade safety."""
-        try:
-            # Validate rollback safety
-            if not await self._validate_rollback_safety(migration_id):
-                logger.warning(f"Rollback not safe for migration {migration_id}")
-                return False
-            
-            # Update migration status
-            await self._update_migration_status(migration_id, "rolling_back")
-            
-            # Execute rollback
-            if not await super().rollback_migration(migration_id):
-                return False
-            
-            # Restore system state
-            await self._restore_system_state(migration_id)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to rollback migration {migration_id}: {e}")
             return False
 
     async def create_tables(self) -> bool:
@@ -311,13 +139,13 @@ class FederatedLearningSchema(BaseSchema):
                 workflow_source TEXT NOT NULL -- aasx_file, structured_data, both
                     CHECK (workflow_source IN ('aasx_file', 'structured_data', 'both')),
                 
-                                 -- Module Integration References (Links to other modules - NO data duplication)
-                 aasx_integration_id TEXT, -- Reference to aasx_processing table
-                 twin_registry_id TEXT, -- Reference to twin_registry table
-                 kg_neo4j_id TEXT, -- Reference to kg_graph_registry table
-                 physics_modeling_id TEXT, -- Reference to physics_modeling table
-                 ai_rag_id TEXT, -- Reference to ai_rag_registry table
-                 certificate_manager_id TEXT, -- Reference to certificate module
+                -- Module Integration References (Links to other modules - NO data duplication)
+                aasx_integration_id TEXT, -- Reference to aasx_processing table
+                twin_registry_id TEXT, -- Reference to twin_registry table
+                kg_neo4j_id TEXT, -- Reference to kg_graph_registry table
+                physics_modeling_id TEXT, -- Reference to physics_modeling table
+                ai_rag_id TEXT, -- Reference to ai_rag_registry table
+                certificate_manager_id TEXT, -- Reference to certificate module
                 
                 -- Integration Status & Health
                 integration_status TEXT NOT NULL DEFAULT 'pending' -- pending, active, inactive, error, maintenance, deprecated
@@ -421,24 +249,28 @@ class FederatedLearningSchema(BaseSchema):
                 registry_config TEXT DEFAULT '{}', -- Registry configuration settings
                 registry_metadata TEXT DEFAULT '{}', -- Additional metadata
                 custom_attributes TEXT DEFAULT '{}', -- User-defined custom attributes
-                tags TEXT DEFAULT '[]', -- JSON array of tags for categorization
+                tags TEXT DEFAULT '{}', -- JSON object of tags for categorization
                 
-                -- Relationships & Dependencies (JSON arrays)
-                relationships TEXT DEFAULT '[]', -- Array of relationship objects
-                dependencies TEXT DEFAULT '[]', -- Array of dependency objects
-                federation_instances TEXT DEFAULT '[]', -- Array of federation instance objects
+                -- Relationships & Dependencies (JSON objects)
+                relationships TEXT DEFAULT '{}', -- Object of relationship objects
+                dependencies TEXT DEFAULT '{}', -- Object of dependency objects
+                federation_instances TEXT DEFAULT '{}', -- Object of federation instance objects
                 
                 -- Constraints
+                FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
+                FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
+                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL,
                 FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
                 FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
                 FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
-                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
+                FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling(physics_id) ON DELETE SET NULL,
+                FOREIGN KEY (ai_rag_id) REFERENCES ai_rag_registry(registry_id) ON DELETE SET NULL,
+                FOREIGN KEY (certificate_manager_id) REFERENCES certificate_manager(cert_id) ON DELETE SET NULL
             )
         """
 
-        # Create the table
-        if not await self.create_table("federated_learning_registry", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
 
         # Create indexes
         index_queries = [
@@ -560,9 +392,8 @@ class FederatedLearningSchema(BaseSchema):
             )
         """
 
-        # Create the table
-        if not await self.create_table("federated_learning_metrics", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
 
         # Create indexes
         index_queries = [
@@ -582,12 +413,6 @@ class FederatedLearningSchema(BaseSchema):
 
     # Enterprise-Grade Helper Methods
 
-    async def _create_enterprise_metadata_tables(self) -> bool:
-        """Enterprise metadata tables are now merged into main tables."""
-        # Enterprise columns have been merged into federated_learning_registry and federated_learning_metrics
-        # No separate enterprise tables needed
-        return True
-
     async def _create_enterprise_tables(self) -> bool:
         """Create all enterprise Federated Learning tables."""
         try:
@@ -603,207 +428,3 @@ class FederatedLearningSchema(BaseSchema):
         except Exception as e:
             logger.error(f"Failed to create enterprise tables: {e}")
             return False
-
-    async def _initialize_federated_learning_monitoring(self) -> bool:
-        """Initialize Federated Learning monitoring capabilities."""
-        try:
-            # Setup monitoring for Federated Learning tables
-            await self._setup_federated_learning_monitoring()
-            await self._setup_performance_monitoring()
-            await self._setup_compliance_monitoring()
-            await self._setup_security_monitoring()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize Federated Learning monitoring: {e}")
-            return False
-
-    async def _setup_compliance_framework(self) -> bool:
-        """Setup compliance framework for Federated Learning processing."""
-        try:
-            # Initialize compliance tracking
-            await self._setup_compliance_alerts()
-            await self._validate_schema_compliance()
-            await self._setup_governance_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup compliance framework: {e}")
-            return False
-
-    async def _setup_federated_learning_policies(self) -> bool:
-        """Setup Federated Learning policies and governance."""
-        try:
-            # Setup processing policies
-            await self._setup_processing_policies()
-            await self._setup_quality_policies()
-            await self._setup_security_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup Federated Learning policies: {e}")
-            return False
-
-    async def _initialize_performance_analytics(self) -> bool:
-        """Initialize performance analytics for Federated Learning processing."""
-        try:
-            # Setup performance analytics
-            await self._setup_performance_analytics_framework()
-            await self._setup_optimization_monitoring()
-            await self._setup_trend_analysis()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize performance analytics: {e}")
-            return False
-
-    # Additional enterprise helper methods would go here...
-    # (These are placeholder implementations to avoid making the response too long)
-    
-    async def _create_enterprise_indexes(self, table_name: str, index_queries: List[str]) -> bool:
-        """Create enterprise-grade indexes for Federated Learning tables."""
-        return True
-    
-    async def _setup_table_monitoring(self, table_name: str) -> bool:
-        """Setup monitoring for Federated Learning tables."""
-        return True
-    
-    async def _validate_table_structure(self, table_name: str) -> bool:
-        """Validate Federated Learning table structure."""
-        return True
-    
-    async def _update_table_metadata(self, table_name: str) -> bool:
-        """Update table metadata for Federated Learning."""
-        return True
-    
-    async def _check_table_dependencies(self, table_name: str) -> bool:
-        """Check table dependencies for Federated Learning."""
-        return True
-    
-    async def _backup_table_data(self, table_name: str) -> bool:
-        """Backup table data for Federated Learning."""
-        return True
-    
-    async def _cleanup_table_metadata(self, table_name: str) -> bool:
-        """Cleanup table metadata for Federated Learning."""
-        return True
-    
-    async def _log_federated_learning_governance_event(self, event_type: str, table_name: str) -> bool:
-        """Log Federated Learning governance events."""
-        return True
-    
-    async def _validate_column_properties(self, table_name: str) -> bool:
-        """Validate column properties for Federated Learning."""
-        return True
-    
-    async def _validate_federated_learning_requirements(self, table_name: str) -> bool:
-        """Validate Federated Learning-specific requirements."""
-        return True
-    
-    async def _validate_table_constraints(self, table_name: str) -> bool:
-        """Validate table constraints for Federated Learning."""
-        return True
-    
-    async def _validate_table_indexes(self, table_name: str) -> bool:
-        """Validate table indexes for Federated Learning."""
-        return True
-    
-    async def _validate_migration_federated_learning_impact(self, migration_script: str) -> bool:
-        """Validate Federated Learning impact of migration."""
-        return True
-    
-    async def _create_migration_checkpoint(self, migration_script: str) -> bool:
-        """Create migration checkpoint for Federated Learning."""
-        return True
-    
-    async def _validate_migration_results(self, migration_script: str) -> bool:
-        """Validate migration results for Federated Learning."""
-        return True
-    
-    async def _record_migration_success(self, migration_script: str) -> bool:
-        """Record migration success for Federated Learning."""
-        return True
-    
-    async def _assess_federated_learning_impact(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Assess Federated Learning impact of migration."""
-        return {}
-    
-    async def _check_migration_compliance(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Check migration compliance for Federated Learning."""
-        return {}
-    
-    async def _get_migration_details(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Get migration details for Federated Learning."""
-        return {}
-    
-    async def _validate_rollback_safety(self, migration_id: str) -> bool:
-        """Validate rollback safety for Federated Learning."""
-        return True
-    
-    async def _update_migration_status(self, migration_id: str, status: str) -> bool:
-        """Update migration status for Federated Learning."""
-        return True
-    
-    async def _restore_system_state(self, migration_id: str) -> bool:
-        """Restore system state for Federated Learning."""
-        return True
-    
-    async def _setup_federated_learning_monitoring(self) -> bool:
-        """Setup Federated Learning monitoring."""
-        return True
-    
-    async def _setup_performance_monitoring(self) -> bool:
-        """Setup performance monitoring for Federated Learning."""
-        return True
-    
-    async def _setup_compliance_monitoring(self) -> bool:
-        """Setup compliance monitoring for Federated Learning."""
-        return True
-    
-    async def _setup_security_monitoring(self) -> bool:
-        """Setup security monitoring for Federated Learning."""
-        return True
-    
-    async def _setup_compliance_alerts(self) -> bool:
-        """Setup compliance alerts for Federated Learning."""
-        return True
-    
-    async def _validate_schema_compliance(self) -> bool:
-        """Validate schema compliance for Federated Learning."""
-        return True
-    
-    async def _setup_governance_policies(self) -> bool:
-        """Setup governance policies for Federated Learning."""
-        return True
-    
-    async def _setup_processing_policies(self) -> bool:
-        """Setup processing policies for Federated Learning."""
-        return True
-    
-    async def _setup_quality_policies(self) -> bool:
-        """Setup quality policies for Federated Learning."""
-        return True
-    
-    async def _setup_security_policies(self) -> bool:
-        """Setup security policies for Federated Learning."""
-        return True
-    
-    async def _setup_performance_analytics_framework(self) -> bool:
-        """Setup performance analytics framework for Federated Learning."""
-        return True
-    
-    async def _setup_optimization_monitoring(self) -> bool:
-        """Setup optimization monitoring for Federated Learning."""
-        return True
-    
-    async def _setup_trend_analysis(self) -> bool:
-        """Setup trend analysis for Federated Learning."""
-        return True
-    
-    async def _create_table_from_definition(self, table_name: str, table_definition: Dict[str, Any]) -> bool:
-        """Create table from definition for Federated Learning."""
-        return True

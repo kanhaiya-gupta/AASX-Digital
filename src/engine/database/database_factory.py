@@ -3,7 +3,8 @@ Database Factory Pattern
 ========================
 
 Creates the appropriate database connection manager based on configuration.
-Supports SQLite, PostgreSQL, and MySQL with both sync and async modes.
+Supports SQLite, PostgreSQL, and MySQL with pure async implementations.
+All managers are designed for high-performance, non-blocking operations.
 """
 
 import logging
@@ -12,9 +13,9 @@ from pathlib import Path
 from enum import Enum
 
 from .connection_manager import ConnectionManager
-from .sqlite_manager import SQLiteConnectionManager, AsyncSQLiteConnectionManager
-from .postgres_manager import PostgresConnectionManager, AsyncPostgresConnectionManager
-from .mysql_manager import MySQLConnectionManager, AsyncMySQLConnectionManager
+from .sqlite_manager import SQLiteConnectionManager
+from .postgres_manager import PostgresConnectionManager
+from .mysql_manager import MySQLConnectionManager
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class DatabaseFactory:
     def create_connection_manager(
         database_type: Union[str, DatabaseType],
         connection_config: Union[str, Path, Dict[str, Any]],
-        mode: Union[str, ConnectionMode] = ConnectionMode.SYNC
+        mode: Union[str, ConnectionMode] = ConnectionMode.ASYNC
     ) -> ConnectionManager:
         """
         Create a database connection manager based on type and configuration.
@@ -46,10 +47,10 @@ class DatabaseFactory:
             connection_config: Connection configuration
                 - For SQLite: Path to database file
                 - For PostgreSQL/MySQL: Connection parameters dict
-            mode: Connection mode (sync or async)
+            mode: Connection mode (async only - maintained for compatibility)
             
         Returns:
-            Database connection manager instance
+            Database connection manager instance (all are pure async)
             
         Raises:
             ValueError: If database type is not supported
@@ -68,28 +69,22 @@ class DatabaseFactory:
         
         try:
             if database_type == DatabaseType.SQLITE:
-                if mode == ConnectionMode.ASYNC:
-                    return AsyncSQLiteConnectionManager(connection_config)
-                else:
-                    return SQLiteConnectionManager(connection_config)
+                # SQLiteConnectionManager is pure async
+                return SQLiteConnectionManager(connection_config)
                 
             elif database_type == DatabaseType.POSTGRESQL:
                 if not isinstance(connection_config, dict):
                     raise ValueError("PostgreSQL requires connection parameters dictionary")
                 
-                if mode == ConnectionMode.SYNC:
-                    return PostgresConnectionManager(connection_config)
-                else:
-                    return AsyncPostgresConnectionManager(connection_config)
+                # PostgresConnectionManager is pure async
+                return PostgresConnectionManager(connection_config)
                     
             elif database_type == DatabaseType.MYSQL:
                 if not isinstance(connection_config, dict):
                     raise ValueError("MySQL requires connection parameters dictionary")
                 
-                if mode == ConnectionMode.SYNC:
-                    return MySQLConnectionManager(connection_config)
-                else:
-                    return AsyncMySQLConnectionManager(connection_config)
+                # MySQLConnectionManager is pure async
+                return MySQLConnectionManager(connection_config)
                     
             else:
                 raise ValueError(f"Unsupported database type: {database_type}")
@@ -123,7 +118,7 @@ class DatabaseFactory:
         
         database_type = config['type']
         connection_config = config['connection']
-        mode = config.get('mode', 'sync')
+        mode = config.get('mode', 'async')
         
         return DatabaseFactory.create_connection_manager(
             database_type=database_type,
@@ -134,7 +129,7 @@ class DatabaseFactory:
     @staticmethod
     def create_from_url(
         database_url: str,
-        mode: Union[str, ConnectionMode] = ConnectionMode.SYNC
+        mode: Union[str, ConnectionMode] = ConnectionMode.ASYNC
     ) -> ConnectionManager:
         """
         Create database connection manager from URL string.
@@ -144,10 +139,10 @@ class DatabaseFactory:
                 - SQLite: sqlite:///path/to/database.db
                 - PostgreSQL: postgresql://user:password@host:port/database
                 - MySQL: mysql://user:password@host:port/database
-            mode: Connection mode (sync or async)
+            mode: Connection mode (async only - maintained for compatibility)
             
         Returns:
-            Database connection manager instance
+            Database connection manager instance (all are pure async)
         """
         
         try:
@@ -274,27 +269,27 @@ class DatabaseFactory:
         """Get information about supported database types"""
         return {
             'sqlite': {
-                'description': 'SQLite database (file-based)',
-                'sync_support': True,
+                'description': 'SQLite database (file-based) - Pure Async',
+                'sync_support': False,
                 'async_support': True,
                 'connection_pooling': False,
-                'requirements': ['built-in'],
+                'requirements': ['aiosqlite'],
                 'url_format': 'sqlite:///path/to/database.db'
             },
             'postgresql': {
-                'description': 'PostgreSQL database server',
-                'sync_support': True,
+                'description': 'PostgreSQL database server - Pure Async',
+                'sync_support': False,
                 'async_support': True,
                 'connection_pooling': True,
-                'requirements': ['psycopg2-binary', 'asyncpg'],
+                'requirements': ['asyncpg'],
                 'url_format': 'postgresql://user:password@host:port/database'
             },
             'mysql': {
-                'description': 'MySQL database server',
-                'sync_support': True,
+                'description': 'MySQL database server - Pure Async',
+                'sync_support': False,
                 'async_support': True,
                 'connection_pooling': True,
-                'requirements': ['PyMySQL', 'aiomysql'],
+                'requirements': ['aiomysql'],
                 'url_format': 'mysql://user:password@host:port/database'
             }
         }
@@ -319,7 +314,7 @@ class DatabaseFactory:
 
 # Convenience functions for common use cases
 def create_sqlite_manager(db_path: Union[str, Path]) -> SQLiteConnectionManager:
-    """Create SQLite connection manager"""
+    """Create SQLite connection manager (Pure Async)"""
     return DatabaseFactory.create_connection_manager(
         database_type=DatabaseType.SQLITE,
         connection_config=db_path
@@ -333,7 +328,7 @@ def create_postgresql_manager(
     password: str = '',
     **kwargs
 ) -> PostgresConnectionManager:
-    """Create PostgreSQL connection manager"""
+    """Create PostgreSQL connection manager (Pure Async)"""
     config = {
         'host': host,
         'port': port,
@@ -355,7 +350,7 @@ def create_mysql_manager(
     password: str = '',
     **kwargs
 ) -> MySQLConnectionManager:
-    """Create MySQL connection manager"""
+    """Create MySQL connection manager (Pure Async)"""
     config = {
         'host': host,
         'port': port,

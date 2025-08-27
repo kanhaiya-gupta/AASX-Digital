@@ -10,19 +10,19 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 import json
 
-from src.shared.database.base_manager import BaseDatabaseManager
-from src.shared.repositories.base_repository import BaseRepository
-from src.twin_registry.models.twin_instance import TwinInstance
+from src.engine.database.connection_manager import ConnectionManager
+from ..models.twin_instance import TwinInstance
 
 logger = logging.getLogger(__name__)
 
 
-class TwinInstanceRepository(BaseRepository[TwinInstance]):
+class TwinInstanceRepository:
     """Repository for managing twin instances using JSON fields."""
     
-    def __init__(self, db_manager: BaseDatabaseManager):
-        """Initialize the twin instance repository."""
-        super().__init__(db_manager, TwinInstance)
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize the twin instance repository with engine connection manager."""
+        self.connection_manager = connection_manager
+        self.table_name = "twin_registry"
         logger.info("Twin Instance Repository initialized (JSON field mode)")
     
     def _get_table_name(self) -> str:
@@ -78,10 +78,10 @@ class TwinInstanceRepository(BaseRepository[TwinInstance]):
             # Update the JSON field
             query = """
             UPDATE twin_registry 
-            SET instances = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET instances = :instances, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(current_instances), registry_id))
+            await self.connection_manager.execute_update(query, {"instances": json.dumps(current_instances), "registry_id": registry_id})
             
             logger.info(f"Created twin instance: {instance.id} in registry {registry_id}")
             return instance
@@ -160,10 +160,10 @@ class TwinInstanceRepository(BaseRepository[TwinInstance]):
             # Update the JSON field
             query = """
             UPDATE twin_registry 
-            SET instances = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET instances = :instances, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(instances), registry_id))
+            await self.connection_manager.execute_update(query, {"instances": json.dumps(instances), "registry_id": registry_id})
             
             logger.info(f"Updated twin instance: {instance_id} in registry {registry_id}")
             return True
@@ -187,10 +187,10 @@ class TwinInstanceRepository(BaseRepository[TwinInstance]):
             # Update the JSON field
             query = """
             UPDATE twin_registry 
-            SET instances = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE registry_id = ?
+            SET instances = :instances, updated_at = CURRENT_TIMESTAMP
+            WHERE registry_id = :registry_id
             """
-            await self.execute_query(query, (json.dumps(instances), registry_id))
+            await self.connection_manager.execute_update(query, {"instances": json.dumps(instances), "registry_id": registry_id})
             
             logger.info(f"Deactivated twin instance: {instance_id} in registry {registry_id}")
             return True
@@ -212,10 +212,10 @@ class TwinInstanceRepository(BaseRepository[TwinInstance]):
                 # Update the JSON field
                 query = """
                 UPDATE twin_registry 
-                SET instances = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE registry_id = ?
+                SET instances = :instances, updated_at = CURRENT_TIMESTAMP
+                WHERE registry_id = :registry_id
                 """
-                await self.execute_query(query, (json.dumps(instances), registry_id))
+                await self.connection_manager.execute_update(query, {"instances": json.dumps(instances), "registry_id": registry_id})
                 
                 logger.info(f"Deleted twin instance: {instance_id} from registry {registry_id}")
                 return True
@@ -243,12 +243,12 @@ class TwinInstanceRepository(BaseRepository[TwinInstance]):
     
     async def _get_instances_json(self, registry_id: str) -> List[Dict[str, Any]]:
         """Get the instances JSON field from the registry."""
-        query = "SELECT instances FROM twin_registry WHERE registry_id = ?"
-        result = await self.fetch_one(query, (registry_id,))
+        query = "SELECT instances FROM twin_registry WHERE registry_id = :registry_id"
+        result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
         
-        if result and result.get("instances"):
+        if result and len(result) > 0 and result[0].get("instances"):
             try:
-                return json.loads(result["instances"])
+                return json.loads(result[0]["instances"])
             except json.JSONDecodeError:
                 logger.warning(f"Invalid JSON in instances field for registry {registry_id}")
                 return []
@@ -267,4 +267,25 @@ class TwinInstanceRepository(BaseRepository[TwinInstance]):
             updated_at=inst_dict.get("updated_at"),
             is_active=inst_dict.get("is_active", True),
             version=inst_dict.get("version", 1)
-        ) 
+        )
+    
+    async def execute_query(self, query: str, params: dict = None) -> List[Dict[str, Any]]:
+        """Execute a query using the connection manager."""
+        try:
+            if query.strip().upper().startswith('SELECT'):
+                return await self.connection_manager.execute_query(query, params or {})
+            else:
+                await self.connection_manager.execute_update(query, params or {})
+                return []
+        except Exception as e:
+            logger.error(f"Failed to execute query: {e}")
+            raise
+    
+    async def fetch_one(self, query: str, params: dict = None) -> Optional[Dict[str, Any]]:
+        """Fetch a single row using the connection manager."""
+        try:
+            result = await self.connection_manager.execute_query(query, params or {})
+            return result[0] if result and len(result) > 0 else None
+        except Exception as e:
+            logger.error(f"Failed to fetch one: {e}")
+            return None 

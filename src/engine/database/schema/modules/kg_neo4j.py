@@ -30,9 +30,14 @@ class KgNeo4jSchema(BaseSchema):
     Enterprise-Grade KG Neo4j Schema Module
 
     Manages the following tables:
-    - kg_graph_registry: Main knowledge graph registry and lifecycle management (Enhanced with ML)
-    - kg_neo4j_ml_registry: ML models and training sessions registry (NEW)
-    - kg_graph_metrics: Performance metrics and analytics (Enhanced with ML)
+    - kg_graph_registry: Main knowledge graph registry and lifecycle management (Enhanced with ML, Compliance, Security, Multiple Graph Sources)
+    - kg_neo4j_ml_registry: ML models and training sessions registry (Enhanced with Performance Analytics)
+    - kg_graph_metrics: Performance metrics and analytics (Enhanced with Enterprise Metrics)
+
+    Multiple Graph Source Support:
+    - AASX Files: 1 AASX file = 1 graph (single source)
+    - Twin Registry: 1 twin = 1 graph (single source)
+    - AI RAG: 1 AASX file = Multiple documents = Multiple graphs (multiple sources)
     """
 
     def __init__(self, connection_manager, schema_name: str = "kg_neo4j"):
@@ -44,7 +49,7 @@ class KgNeo4jSchema(BaseSchema):
 
     def get_module_description(self) -> str:
         """Get human-readable description of this module."""
-        return "Knowledge Graph Neo4j module for comprehensive graph lifecycle management, Neo4j synchronization, ML training traceability, schema management, and relationship analytics"
+        return "Knowledge Graph Neo4j module for comprehensive graph lifecycle management, Neo4j synchronization, ML training traceability, schema management, relationship analytics, multiple graph source support, and complete framework integration"
 
     def get_table_names(self) -> List[str]:
         """Get list of table names managed by this module."""
@@ -57,23 +62,8 @@ class KgNeo4jSchema(BaseSchema):
             if not await super().initialize():
                 return False
             
-            # Initialize enterprise metadata tables
-            await self._create_enterprise_metadata_tables()
-            
-            # Initialize KG Neo4j monitoring
-            await self._initialize_kg_neo4j_monitoring()
-            
-            # Setup compliance framework
-            await self._setup_compliance_framework()
-            
-            # Create enterprise tables
-            await self._create_enterprise_tables()
-            
-            # Setup KG Neo4j policies
-            await self._setup_kg_neo4j_policies()
-            
-            # Initialize performance analytics
-            await self._initialize_performance_analytics()
+            # Create consolidated tables
+            await self._create_consolidated_tables()
             
             logger.info("✅ KG Neo4j Schema initialized with enterprise-grade features")
             return True
@@ -82,178 +72,7 @@ class KgNeo4jSchema(BaseSchema):
             logger.error(f"Failed to initialize KG Neo4j Schema: {e}")
             return False
 
-    async def create_table(self, table_name: str, table_definition: Union[str, Dict[str, Any]]) -> bool:
-        """Create a table with enterprise-grade features."""
-        try:
-            # Create the base table
-            if isinstance(table_definition, str):
-                # Direct SQL definition
-                if not await super().create_table(table_name, table_definition):
-                    return False
-            else:
-                # Dictionary definition
-                if not await self._create_table_from_definition(table_name, table_definition):
-                    return False
-            
-            # Add enterprise enhancements
-            await self._create_enterprise_indexes(table_name, [])
-            await self._setup_table_monitoring(table_name)
-            await self._validate_table_structure(table_name)
-            await self._update_table_metadata(table_name)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create table {table_name}: {e}")
-            return False
 
-    async def drop_table(self, table_name: str) -> bool:
-        """Drop a table with enterprise-grade safety checks."""
-        try:
-            # Check dependencies
-            if not await self._check_table_dependencies(table_name):
-                logger.warning(f"Table {table_name} has dependencies, cannot drop safely")
-                return False
-            
-            # Backup table data
-            await self._backup_table_data(table_name)
-            
-            # Log governance event
-            await self._log_kg_neo4j_governance_event("table_dropped", table_name)
-            
-            # Cleanup metadata
-            await self._cleanup_table_metadata(table_name)
-            
-            # Drop the table
-            return await super().drop_table(table_name)
-            
-        except Exception as e:
-            logger.error(f"Failed to drop table {table_name}: {e}")
-            return False
-
-    async def table_exists(self, table_name: str) -> bool:
-        """Check if a table exists."""
-        try:
-            return await super().table_exists(table_name)
-        except Exception as e:
-            logger.error(f"Failed to check table existence for {table_name}: {e}")
-            return False
-
-    async def get_table_info(self, table_name: str) -> Optional[Dict[str, Any]]:
-        """Get comprehensive table information including enterprise metrics."""
-        try:
-            base_info = await super().get_table_info(table_name)
-            if not base_info:
-                return None
-            
-            # Add enterprise-specific information
-            enterprise_info = {
-                **base_info,
-                "kg_neo4j_metrics": self._kg_neo4j_metrics.get(table_name, {}),
-                "performance_analytics": self._performance_analytics.get(table_name, {}),
-                "compliance_status": self._compliance_status.get(table_name, {}),
-                "security_metrics": self._security_metrics.get(table_name, {})
-            }
-            
-            return enterprise_info
-            
-        except Exception as e:
-            logger.error(f"Failed to get table info for {table_name}: {e}")
-            return None
-
-    async def get_all_tables(self) -> List[str]:
-        """Get all tables managed by this schema."""
-        try:
-            return await super().get_all_tables()
-        except Exception as e:
-            logger.error(f"Failed to get all tables: {e}")
-            return []
-
-    async def validate_table_structure(self, table_name: str, expected_structure: Dict[str, Any]) -> bool:
-        """Validate table structure with enterprise-grade validation."""
-        try:
-            # Basic validation
-            if not await super().validate_table_structure(table_name, expected_structure):
-                return False
-            
-            # Enterprise-specific validation
-            await self._validate_column_properties(table_name)
-            await self._validate_kg_neo4j_requirements(table_name)
-            await self._validate_table_constraints(table_name)
-            await self._validate_table_indexes(table_name)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to validate table structure for {table_name}: {e}")
-            return False
-
-    async def execute_migration(self, migration_script: str, rollback_script: Optional[str] = None) -> bool:
-        """Execute migration with enterprise-grade governance."""
-        try:
-            # Pre-migration governance checks
-            await self._validate_migration_kg_neo4j_impact(migration_script)
-            await self._create_migration_checkpoint(migration_script)
-            
-            # Execute migration
-            if not await super().execute_migration(migration_script, rollback_script):
-                return False
-            
-            # Post-migration validation
-            await self._validate_migration_results(migration_script)
-            await self._record_migration_success(migration_script)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to execute migration: {e}")
-            return False
-
-    async def get_migration_history(self) -> List[Dict[str, Any]]:
-        """Get migration history with enterprise governance details."""
-        try:
-            base_history = await super().get_migration_history()
-            
-            # Enhance with enterprise details
-            enhanced_history = []
-            for migration in base_history:
-                enhanced_migration = {
-                    **migration,
-                    "kg_neo4j_impact_assessment": await self._assess_kg_neo4j_impact(migration),
-                    "compliance_status": await self._check_migration_compliance(migration),
-                    "governance_details": await self._get_migration_details(migration)
-                }
-                enhanced_history.append(enhanced_migration)
-            
-            return enhanced_history
-            
-        except Exception as e:
-            logger.error(f"Failed to get migration history: {e}")
-            return []
-
-    async def rollback_migration(self, migration_id: str) -> bool:
-        """Rollback migration with enterprise-grade safety."""
-        try:
-            # Validate rollback safety
-            if not await self._validate_rollback_safety(migration_id):
-                logger.warning(f"Rollback not safe for migration {migration_id}")
-                return False
-            
-            # Update migration status
-            await self._update_migration_status(migration_id, "rolling_back")
-            
-            # Execute rollback
-            if not await super().rollback_migration(migration_id):
-                return False
-            
-            # Restore system state
-            await self._restore_system_state(migration_id)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to rollback migration {migration_id}: {e}")
-            return False
 
     async def create_tables(self) -> bool:
         """
@@ -275,7 +94,7 @@ class KgNeo4jSchema(BaseSchema):
                 logger.error("Failed to create kg_graph_registry table")
                 return False
 
-            # 2. Create KG Neo4j ML Registry Table (NEW)
+            # 2. Create KG Neo4j ML Registry Table (Enhanced)
             if await self._create_kg_neo4j_ml_registry_table():
                 tables_created.append("kg_neo4j_ml_registry")
             else:
@@ -297,7 +116,7 @@ class KgNeo4jSchema(BaseSchema):
             return False
 
     async def _create_kg_graph_registry_table(self) -> bool:
-        """Create the enhanced knowledge graph registry table with ML training capabilities."""
+        """Create the enhanced knowledge graph registry table with ML training capabilities and multiple graph source support."""
         query = """
             CREATE TABLE IF NOT EXISTS kg_graph_registry (
                 -- Primary Identification
@@ -375,17 +194,51 @@ class KgNeo4jSchema(BaseSchema):
                 total_relationships INTEGER DEFAULT 0,              -- Total number of relationships in the graph
                 graph_complexity TEXT DEFAULT 'simple' CHECK (graph_complexity IN ('simple', 'moderate', 'complex', 'very_complex')),
                 
+                -- Multiple Graph Support (CONSOLIDATED from multiple sources)
+                -- graphs_json: JSON object storing multiple graphs with unique IDs as keys
+                --   Example: {"graph_001": {"type": "asset_graph", "source": "aasx", "nodes": 150, "relationships": 300},
+                --            "graph_002": {"type": "relationship_graph", "source": "ai_rag_doc_1", "nodes": 75, "relationships": 120},
+                --            "graph_003": {"type": "process_graph", "source": "twin_registry", "nodes": 200, "relationships": 450}}
+                -- graph_count: Total number of graphs stored in graphs_json
+                -- graph_types: JSON object of graph types with counts {"asset_graph": 2, "relationship_graph": 1, "process_graph": 1}
+                -- graph_sources: JSON object of graph sources with counts {"aasx": 1, "ai_rag": 1, "twin_registry": 1}
+                graphs_json TEXT DEFAULT '{}',                     -- JSON object of all graphs from this source
+                graph_count INTEGER DEFAULT 0,                     -- Total number of graphs
+                graph_types TEXT DEFAULT '{}',                     -- JSON object of graph types with counts
+                graph_sources TEXT DEFAULT '{}',                    -- JSON object of graph sources with counts
+                
                 -- Performance & Quality Metrics
                 performance_score REAL DEFAULT 0.0 CHECK (performance_score >= 0.0 AND performance_score <= 1.0),
                 data_quality_score REAL DEFAULT 0.0 CHECK (data_quality_score >= 0.0 AND data_quality_score <= 1.0),
                 reliability_score REAL DEFAULT 0.0 CHECK (reliability_score >= 0.0 AND reliability_score <= 1.0),
-                compliance_score REAL DEFAULT 0.0 CHECK (compliance_score >= 0.0 AND compliance_score <= 1.0),
                 
                 -- Security & Access Control
                 security_level TEXT DEFAULT 'standard' CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')),
                 access_control_level TEXT DEFAULT 'user' CHECK (access_control_level IN ('public', 'user', 'admin', 'system', 'restricted')),
                 encryption_enabled BOOLEAN DEFAULT FALSE,           -- Whether graph data is encrypted
                 audit_logging_enabled BOOLEAN DEFAULT TRUE,         -- Whether audit logging is enabled
+                
+                -- Enterprise Compliance & Security (Merged from enterprise tables)
+                metric_type TEXT DEFAULT 'standard',               -- Type of metric being tracked
+                metric_timestamp TEXT,                             -- Specific timestamp for the metric
+                compliance_status TEXT DEFAULT 'pending' CHECK (compliance_status IN ('pending', 'compliant', 'non_compliant', 'requires_review', 'exempt')),
+                compliance_type TEXT DEFAULT 'standard',            -- Type of compliance being tracked
+                compliance_score REAL DEFAULT 0.0 CHECK (compliance_score >= 0.0 AND compliance_score <= 1.0),
+                last_compliance_audit TEXT,                        -- Last compliance audit date
+                next_compliance_audit TEXT,                         -- Next scheduled compliance audit
+                compliance_audit_details TEXT DEFAULT '{}',         -- JSON: detailed compliance audit information
+                compliance_rules_count INTEGER DEFAULT 0,           -- Number of active compliance rules
+                compliance_violations_count INTEGER DEFAULT 0,     -- Number of compliance violations
+                
+                security_threat_level TEXT DEFAULT 'low' CHECK (security_threat_level IN ('low', 'medium', 'high', 'critical')),
+                security_event_type TEXT DEFAULT 'none',           -- Type of security event
+                threat_assessment TEXT DEFAULT 'low',              -- Detailed threat assessment description
+                security_score REAL DEFAULT 0.0 CHECK (security_score >= 0.0 AND security_score <= 1.0),
+                last_security_scan TEXT,                           -- Last security scan date
+                security_scan_details TEXT DEFAULT '{}',           -- JSON: detailed security scan results
+                security_incidents_count INTEGER DEFAULT 0,        -- Number of security incidents
+                security_patches_count INTEGER DEFAULT 0,          -- Number of security patches applied
+                security_vulnerabilities_count INTEGER DEFAULT 0,  -- Number of known vulnerabilities
                 
                 -- User Management & Ownership
                 user_id TEXT NOT NULL,                             -- Current user who owns/accesses this graph
@@ -405,12 +258,12 @@ class KgNeo4jSchema(BaseSchema):
                 registry_config TEXT DEFAULT '{}',                 -- Registry configuration settings
                 registry_metadata TEXT DEFAULT '{}',                -- Additional metadata
                 custom_attributes TEXT DEFAULT '{}',                -- User-defined custom attributes
-                tags TEXT DEFAULT '[]',                            -- JSON array of tags for categorization
+                tags TEXT DEFAULT '{}',                            -- JSON object of tags for categorization
                 
-                -- Relationships & Dependencies (JSON arrays)
-                relationships TEXT DEFAULT '[]',                    -- Array of relationship objects
-                dependencies TEXT DEFAULT '[]',                     -- Array of dependency objects
-                graph_instances TEXT DEFAULT '[]',                  -- Array of graph instance objects
+                -- Relationships & Dependencies (JSON objects)
+                relationships TEXT DEFAULT '{}',                    -- Object of relationship objects
+                dependencies TEXT DEFAULT '{}',                     -- Object of dependency objects
+                graph_instances TEXT DEFAULT '{}',                  -- Object of graph instance objects
                 
                 -- Constraints (INCLUDING ALL ORIGINAL FOREIGN KEYS)
                 FOREIGN KEY (file_id) REFERENCES files (file_id) ON DELETE CASCADE,
@@ -418,13 +271,16 @@ class KgNeo4jSchema(BaseSchema):
                 FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
                 FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL,
                 FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
-                FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(twin_id) ON DELETE SET NULL
+                FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
+                FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling(physics_id) ON DELETE SET NULL,
+                FOREIGN KEY (federated_learning_id) REFERENCES federated_learning(learning_id) ON DELETE SET NULL,
+                FOREIGN KEY (ai_rag_id) REFERENCES ai_rag_registry(registry_id) ON DELETE SET NULL,
+                FOREIGN KEY (certificate_manager_id) REFERENCES certificate_manager(cert_id) ON DELETE SET NULL
             )
         """
 
-        # Create the table
-        if not await self.create_table("kg_graph_registry", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
 
         # Create indexes (INCLUDING ALL ORIGINAL INDEXES)
         index_queries = [
@@ -450,7 +306,14 @@ class KgNeo4jSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_schema ON kg_graph_registry (schema_version, ontology_version)",
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_quality ON kg_graph_registry (validation_status, completeness_score)",
             "CREATE INDEX IF NOT EXISTS idx_kg_registry_integration ON kg_graph_registry (aasx_integration_id, twin_registry_id, physics_modeling_id, federated_learning_id, ai_rag_id)",
-            "CREATE INDEX IF NOT EXISTS idx_kg_registry_performance ON kg_graph_registry (performance_score, data_quality_score, reliability_score)"
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_performance ON kg_graph_registry (performance_score, data_quality_score, reliability_score)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_compliance ON kg_graph_registry (compliance_status, compliance_score, last_compliance_audit)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_security ON kg_graph_registry (security_threat_level, security_score, last_security_scan)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_enterprise_fields ON kg_graph_registry (metric_type, compliance_type, security_event_type)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_ai_rag ON kg_graph_registry (ai_rag_id)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_graph_count ON kg_graph_registry (graph_count)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_graph_sources ON kg_graph_registry (graph_sources)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_registry_multiple_graphs ON kg_graph_registry (graph_count, graph_types, graph_sources)"
         ]
 
         return await self.create_indexes("kg_graph_registry", index_queries)
@@ -510,6 +373,17 @@ class KgNeo4jSchema(BaseSchema):
                 usage_count INTEGER DEFAULT 0,                     -- Number of times model was used
                 last_used_at TEXT,                                -- Last time model was used
                 
+                -- Enterprise Performance Analytics (Merged from enterprise table)
+                performance_trend TEXT DEFAULT 'stable' CHECK (performance_trend IN ('improving', 'stable', 'declining', 'fluctuating')),
+                performance_metric TEXT DEFAULT 'standard',         -- Specific performance metric identifier
+                performance_value REAL,                             -- Actual performance value
+                optimization_suggestions TEXT DEFAULT '{}',         -- JSON: AI-generated optimization recommendations
+                last_optimization_date TEXT,                       -- Last optimization performed
+                optimization_effectiveness_score REAL CHECK (optimization_effectiveness_score >= 0.0 AND optimization_effectiveness_score <= 1.0),
+                performance_benchmarks TEXT DEFAULT '{}',          -- JSON: performance benchmarks and comparisons
+                resource_efficiency_score REAL CHECK (resource_efficiency_score >= 0.0 AND resource_efficiency_score <= 1.0),
+                scalability_score REAL CHECK (scalability_score >= 0.0 AND scalability_score <= 1.0),
+                
                 -- Integration References (Links to other modules - NO data duplication)
                 aasx_integration_id TEXT,                          -- Reference to aasx_processing table
                 twin_registry_id TEXT,                              -- Reference to twin_registry table
@@ -545,18 +419,23 @@ class KgNeo4jSchema(BaseSchema):
                 ml_config TEXT DEFAULT '{}',                        -- ML configuration settings
                 model_metadata TEXT DEFAULT '{}',                    -- Additional model metadata
                 custom_attributes TEXT DEFAULT '{}',                 -- User-defined custom attributes
-                tags TEXT DEFAULT '[]',                             -- JSON array of tags for categorization
+                tags TEXT DEFAULT '{}',                             -- JSON object of tags for categorization
                 
                 -- Constraints
                 FOREIGN KEY (graph_id) REFERENCES kg_graph_registry (graph_id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
+                FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
                 FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
-                FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL
+                FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
+                FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling(physics_id) ON DELETE SET NULL,
+                FOREIGN KEY (federated_learning_id) REFERENCES federated_learning(learning_id) ON DELETE SET NULL,
+                FOREIGN KEY (ai_rag_id) REFERENCES ai_rag_registry(registry_id) ON DELETE SET NULL,
+                FOREIGN KEY (certificate_manager_id) REFERENCES certificate_manager(cert_id) ON DELETE SET NULL
             )
         """
 
-        # Create the table
-        if not await self.create_table("kg_neo4j_ml_registry", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
 
         # Create indexes
         index_queries = [
@@ -571,7 +450,9 @@ class KgNeo4jSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_kg_neo4j_ml_registry_created ON kg_neo4j_ml_registry (created_at)",
             "CREATE INDEX IF NOT EXISTS idx_kg_neo4j_ml_registry_performance ON kg_neo4j_ml_registry (final_accuracy, precision_score, recall_score, f1_score)",
             "CREATE INDEX IF NOT EXISTS idx_kg_neo4j_ml_registry_quality ON kg_neo4j_ml_registry (model_quality_score, validation_status, compliance_score)",
-            "CREATE INDEX IF NOT EXISTS idx_kg_neo4j_ml_registry_integration ON kg_neo4j_ml_registry (aasx_integration_id, twin_registry_id, physics_modeling_id, federated_learning_id, ai_rag_id)"
+            "CREATE INDEX IF NOT EXISTS idx_kg_neo4j_ml_registry_integration ON kg_neo4j_ml_registry (aasx_integration_id, twin_registry_id, physics_modeling_id, federated_learning_id, ai_rag_id)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_neo4j_ml_registry_performance ON kg_neo4j_ml_registry (performance_trend, optimization_effectiveness_score, resource_efficiency_score, scalability_score)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_neo4j_ml_registry_enterprise_fields ON kg_neo4j_ml_registry (performance_metric, performance_value)"
         ]
 
         return await self.create_indexes("kg_neo4j_ml_registry", index_queries)
@@ -612,6 +493,11 @@ class KgNeo4jSchema(BaseSchema):
                 neo4j_import_speed_rels_per_sec REAL,
                 neo4j_memory_usage_mb REAL,
                 neo4j_disk_usage_mb REAL,
+                
+                -- Graph Size Metrics (Framework Performance - Graph Scale)
+                total_nodes INTEGER DEFAULT 0,                     -- Total number of nodes in the graph
+                total_relationships INTEGER DEFAULT 0,              -- Total number of relationships in the graph
+                graph_complexity TEXT DEFAULT 'simple' CHECK (graph_complexity IN ('simple', 'moderate', 'complex', 'very_complex')),
                 
                 -- Graph Analytics Metrics (ORIGINAL SCHEMA - Framework Performance)
                 graph_traversal_speed_ms REAL,
@@ -673,15 +559,29 @@ class KgNeo4jSchema(BaseSchema):
                 
                 -- Knowledge Graph Patterns & Analytics (Framework Trends - JSON)
                 knowledge_graph_patterns TEXT DEFAULT '{}', -- JSON: {"hourly": {...}, "daily": {...}, "weekly": {...}, "monthly": {...}}
-                graph_operation_patterns TEXT DEFAULT '{}', -- JSON: {"operation_types": {...}, "complexity_distribution": {...}, "processing_times": [...]}
+                graph_operation_patterns TEXT DEFAULT '{}', -- JSON: {"operation_types": {...}, "complexity_distribution": {...}, "processing_times": {...}}
                 compliance_status TEXT DEFAULT '{}', -- JSON: {"compliance_score": 0.95, "audit_status": "passed", "last_audit": "2024-01-15T00:00:00Z"}
-                security_events TEXT DEFAULT '[]', -- JSON: {"events": [...], "threat_level": "low", "last_security_scan": "2024-01-15T00:00:00Z"}
+                security_events TEXT DEFAULT '{}', -- JSON: {"events": {...}, "threat_level": "low", "last_security_scan": "2024-01-15T00:00:00Z"}
                 
                 -- Knowledge Graph-Specific Metrics (Framework Capabilities - JSON)
                 knowledge_graph_analytics TEXT DEFAULT '{}', -- JSON: {"query_quality": 0.94, "traversal_quality": 0.92, "analysis_quality": 0.96}
-                category_effectiveness TEXT DEFAULT '{}', -- JSON: {"category_comparison": {...}, "best_performing": "structured_data", "optimization_suggestions": [...]}
+                category_effectiveness TEXT DEFAULT '{}', -- JSON: {"category_comparison": {...}, "best_performing": "structured_data", "optimization_suggestions": {...}}
                 workflow_performance TEXT DEFAULT '{}', -- JSON: {"extraction_performance": {...}, "generation_performance": {...}, "hybrid_performance": {...}}
-                graph_size_performance_efficiency TEXT DEFAULT '{}', -- JSON: {"performance_by_graph_size": {...}, "quality_by_graph_size": {...}, "optimization_opportunities": [...]}
+                graph_size_performance_efficiency TEXT DEFAULT '{}', -- JSON: {"performance_by_graph_size": {...}, "quality_by_graph_size": {...}, "optimization_opportunities": {...}}
+                
+                -- Enterprise Metrics (Merged from enterprise tables)
+                enterprise_metrics TEXT DEFAULT '{}', -- JSON: comprehensive enterprise metrics and monitoring data
+                enterprise_compliance_metrics TEXT DEFAULT '{}', -- JSON: compliance tracking and auditing metrics
+                enterprise_security_metrics TEXT DEFAULT '{}', -- JSON: security metrics and threat assessment data
+                enterprise_performance_analytics TEXT DEFAULT '{}', -- JSON: performance analytics and optimization data
+                
+                -- Additional Enterprise Fields (Complete coverage)
+                metric_type TEXT DEFAULT 'standard', -- Type of metric being tracked
+                metric_timestamp TEXT, -- Specific timestamp for the metric
+                compliance_type TEXT DEFAULT 'standard', -- Type of compliance being tracked
+                security_event_type TEXT DEFAULT 'none', -- Type of security event
+                performance_metric TEXT DEFAULT 'standard', -- Specific performance metric identifier
+                performance_value REAL, -- Actual performance value
                 
                 -- Time-based Analytics (Framework Time Analysis)
                 hour_of_day INTEGER CHECK (hour_of_day >= 0 AND hour_of_day <= 23),
@@ -698,9 +598,8 @@ class KgNeo4jSchema(BaseSchema):
             )
         """
 
-        # Create the table
-        if not await self.create_table("kg_graph_metrics", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
 
         # Create indexes (INCLUDING ALL ORIGINAL INDEXES)
         index_queries = [
@@ -708,6 +607,7 @@ class KgNeo4jSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_timestamp ON kg_graph_metrics (timestamp)",
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_health ON kg_graph_metrics (health_score)",
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_neo4j ON kg_graph_metrics (neo4j_connection_status)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_metrics_graph_size ON kg_graph_metrics (total_nodes, total_relationships, graph_complexity)",
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_performance ON kg_graph_metrics (graph_visualization_performance, graph_analysis_accuracy)",
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_quality ON kg_graph_metrics (data_freshness_score, data_completeness_score)",
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_resources ON kg_graph_metrics (cpu_usage_percent, memory_usage_percent)",
@@ -715,306 +615,45 @@ class KgNeo4jSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_ml ON kg_graph_metrics (active_training_sessions, completed_sessions, failed_sessions)",
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_schema ON kg_graph_metrics (schema_validation_rate, ontology_consistency_score, quality_rule_effectiveness)",
             "CREATE INDEX IF NOT EXISTS idx_kg_metrics_graph_performance ON kg_graph_metrics (graph_query_speed_sec, relationship_traversal_speed_sec, node_creation_speed_sec)",
-            "CREATE INDEX IF NOT EXISTS idx_kg_metrics_time_analysis ON kg_graph_metrics (hour_of_day, day_of_week, month)"
+            "CREATE INDEX IF NOT EXISTS idx_kg_metrics_time_analysis ON kg_graph_metrics (hour_of_day, day_of_week, month)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_metrics_enterprise ON kg_graph_metrics (enterprise_metrics, enterprise_compliance_metrics, enterprise_security_metrics, enterprise_performance_analytics)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_metrics_enterprise_fields ON kg_graph_metrics (metric_type, compliance_type, security_event_type, performance_metric)"
         ]
 
         return await self.create_indexes("kg_graph_metrics", index_queries)
 
-    # Enterprise-Grade Helper Methods
+    # Enterprise-Grade Helper Methods (Consolidated into main tables)
 
-    async def _create_enterprise_metadata_tables(self) -> bool:
-        """Create enterprise metadata tables for KG Neo4j processing."""
+    async def _create_consolidated_tables(self) -> bool:
+        """Create all consolidated KG Neo4j tables."""
         try:
-            # Create enterprise KG Neo4j metrics table
-            enterprise_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_kg_neo4j_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    metric_type TEXT NOT NULL,
-                    metric_value REAL,
-                    metric_timestamp TEXT NOT NULL,
-                    metadata TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise compliance tracking table
-            compliance_tracking_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_kg_neo4j_compliance_tracking (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    compliance_type TEXT NOT NULL,
-                    compliance_status TEXT NOT NULL,
-                    compliance_score REAL,
-                    last_audit_date TEXT,
-                    next_audit_date TEXT,
-                    audit_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise security metrics table
-            security_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_kg_neo4j_security_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    security_event_type TEXT NOT NULL,
-                    security_level TEXT NOT NULL,
-                    threat_assessment TEXT,
-                    security_score REAL,
-                    last_security_scan TEXT,
-                    security_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise performance analytics table
-            performance_analytics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_kg_neo4j_performance_analytics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    performance_metric TEXT NOT NULL,
-                    performance_value REAL,
-                    performance_trend TEXT,
-                    optimization_suggestions TEXT DEFAULT '{}',
-                    last_optimization_date TEXT
-                )
-            """
-            
-            tables = [
-                ("enterprise_kg_neo4j_metrics", enterprise_metrics_query),
-                ("enterprise_kg_neo4j_compliance_tracking", compliance_tracking_query),
-                ("enterprise_kg_neo4j_security_metrics", security_metrics_query),
-                ("enterprise_kg_neo4j_performance_analytics", performance_analytics_query)
-            ]
-            
-            for table_name, query in tables:
-                if not await self.create_table(table_name, query):
-                    logger.error(f"Failed to create enterprise metadata table: {table_name}")
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create enterprise metadata tables: {e}")
-            return False
-
-    async def _create_enterprise_tables(self) -> bool:
-        """Create all enterprise KG Neo4j tables."""
-        try:
-            # Create core tables
-            if not await self._create_kg_graph_registry_table():
+            # 1. Create KG Graph Registry Table (Enhanced)
+            if await self._create_kg_graph_registry_table():
+                logger.info("✅ kg_graph_registry table created/updated")
+            else:
+                logger.error("Failed to create/update kg_graph_registry table")
                 return False
-            
-            if not await self._create_kg_neo4j_ml_registry_table():
+
+            # 2. Create KG Neo4j ML Registry Table (Enhanced)
+            if await self._create_kg_neo4j_ml_registry_table():
+                logger.info("✅ kg_neo4j_ml_registry table created/updated")
+            else:
+                logger.error("Failed to create/update kg_neo4j_ml_registry table")
                 return False
-            
-            if not await self._create_kg_graph_metrics_table():
+
+            # 3. Create KG Graph Metrics Table (Enhanced)
+            if await self._create_kg_graph_metrics_table():
+                logger.info("✅ kg_graph_metrics table created/updated")
+            else:
+                logger.error("Failed to create/update kg_graph_metrics table")
                 return False
-            
+
             return True
             
         except Exception as e:
-            logger.error(f"Failed to create enterprise tables: {e}")
+            logger.error(f"Failed to create consolidated KG Neo4j tables: {e}")
             return False
 
-    async def _initialize_kg_neo4j_monitoring(self) -> bool:
-        """Initialize KG Neo4j monitoring capabilities."""
-        try:
-            # Setup monitoring for KG Neo4j tables
-            await self._setup_kg_neo4j_monitoring()
-            await self._setup_performance_monitoring()
-            await self._setup_compliance_monitoring()
-            await self._setup_security_monitoring()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize KG Neo4j monitoring: {e}")
-            return False
 
-    async def _setup_compliance_framework(self) -> bool:
-        """Setup compliance framework for KG Neo4j processing."""
-        try:
-            # Initialize compliance tracking
-            await self._setup_compliance_alerts()
-            await self._validate_schema_compliance()
-            await self._setup_governance_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup compliance framework: {e}")
-            return False
 
-    async def _setup_kg_neo4j_policies(self) -> bool:
-        """Setup KG Neo4j policies and governance."""
-        try:
-            # Setup processing policies
-            await self._setup_processing_policies()
-            await self._setup_quality_policies()
-            await self._setup_security_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup KG Neo4j policies: {e}")
-            return False
 
-    async def _initialize_performance_analytics(self) -> bool:
-        """Initialize performance analytics for KG Neo4j processing."""
-        try:
-            # Setup performance analytics
-            await self._setup_performance_analytics_framework()
-            await self._setup_optimization_monitoring()
-            await self._setup_trend_analysis()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize performance analytics: {e}")
-            return False
-
-    # Additional enterprise helper methods would go here...
-    # (These are placeholder implementations to avoid making the response too long)
-    
-    async def _create_enterprise_indexes(self, table_name: str, index_queries: List[str]) -> bool:
-        """Create enterprise-grade indexes for KG Neo4j tables."""
-        return True
-    
-    async def _setup_table_monitoring(self, table_name: str) -> bool:
-        """Setup monitoring for KG Neo4j tables."""
-        return True
-    
-    async def _validate_table_structure(self, table_name: str) -> bool:
-        """Validate KG Neo4j table structure."""
-        return True
-    
-    async def _update_table_metadata(self, table_name: str) -> bool:
-        """Update table metadata for KG Neo4j."""
-        return True
-    
-    async def _check_table_dependencies(self, table_name: str) -> bool:
-        """Check table dependencies for KG Neo4j."""
-        return True
-    
-    async def _backup_table_data(self, table_name: str) -> bool:
-        """Backup table data for KG Neo4j."""
-        return True
-    
-    async def _cleanup_table_metadata(self, table_name: str) -> bool:
-        """Cleanup table metadata for KG Neo4j."""
-        return True
-    
-    async def _log_kg_neo4j_governance_event(self, event_type: str, table_name: str) -> bool:
-        """Log KG Neo4j governance events."""
-        return True
-    
-    async def _validate_column_properties(self, table_name: str) -> bool:
-        """Validate column properties for KG Neo4j."""
-        return True
-    
-    async def _validate_kg_neo4j_requirements(self, table_name: str) -> bool:
-        """Validate KG Neo4j-specific requirements."""
-        return True
-    
-    async def _validate_table_constraints(self, table_name: str) -> bool:
-        """Validate table constraints for KG Neo4j."""
-        return True
-    
-    async def _validate_table_indexes(self, table_name: str) -> bool:
-        """Validate table indexes for KG Neo4j."""
-        return True
-    
-    async def _validate_migration_kg_neo4j_impact(self, migration_script: str) -> bool:
-        """Validate KG Neo4j impact of migration."""
-        return True
-    
-    async def _create_migration_checkpoint(self, migration_script: str) -> bool:
-        """Create migration checkpoint for KG Neo4j."""
-        return True
-    
-    async def _validate_migration_results(self, migration_script: str) -> bool:
-        """Validate migration results for KG Neo4j."""
-        return True
-    
-    async def _record_migration_success(self, migration_script: str) -> bool:
-        """Record migration success for KG Neo4j."""
-        return True
-    
-    async def _assess_kg_neo4j_impact(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Assess KG Neo4j impact of migration."""
-        return {}
-    
-    async def _check_migration_compliance(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Check migration compliance for KG Neo4j."""
-        return {}
-    
-    async def _get_migration_details(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Get migration details for KG Neo4j."""
-        return {}
-    
-    async def _validate_rollback_safety(self, migration_id: str) -> bool:
-        """Validate rollback safety for KG Neo4j."""
-        return True
-    
-    async def _update_migration_status(self, migration_id: str, status: str) -> bool:
-        """Update migration status for KG Neo4j."""
-        return True
-    
-    async def _restore_system_state(self, migration_id: str) -> bool:
-        """Restore system state for KG Neo4j."""
-        return True
-    
-    async def _setup_kg_neo4j_monitoring(self) -> bool:
-        """Setup KG Neo4j monitoring."""
-        return True
-    
-    async def _setup_performance_monitoring(self) -> bool:
-        """Setup performance monitoring for KG Neo4j."""
-        return True
-    
-    async def _setup_compliance_monitoring(self) -> bool:
-        """Setup compliance monitoring for KG Neo4j."""
-        return True
-    
-    async def _setup_security_monitoring(self) -> bool:
-        """Setup security monitoring for KG Neo4j."""
-        return True
-    
-    async def _setup_compliance_alerts(self) -> bool:
-        """Setup compliance alerts for KG Neo4j."""
-        return True
-    
-    async def _validate_schema_compliance(self) -> bool:
-        """Validate schema compliance for KG Neo4j."""
-        return True
-    
-    async def _setup_governance_policies(self) -> bool:
-        """Setup governance policies for KG Neo4j."""
-        return True
-    
-    async def _setup_processing_policies(self) -> bool:
-        """Setup processing policies for KG Neo4j."""
-        return True
-    
-    async def _setup_quality_policies(self) -> bool:
-        """Setup quality policies for KG Neo4j."""
-        return True
-    
-    async def _setup_security_policies(self) -> bool:
-        """Setup security policies for KG Neo4j."""
-        return True
-    
-    async def _setup_performance_analytics_framework(self) -> bool:
-        """Setup performance analytics framework for KG Neo4j."""
-        return True
-    
-    async def _setup_optimization_monitoring(self) -> bool:
-        """Setup optimization monitoring for KG Neo4j."""
-        return True
-    
-    async def _setup_trend_analysis(self) -> bool:
-        """Setup trend analysis for KG Neo4j."""
-        return True
-    
-    async def _create_table_from_definition(self, table_name: str, table_definition: Dict[str, Any]) -> bool:
-        """Create table from definition for KG Neo4j."""
-        return True

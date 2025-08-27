@@ -13,11 +13,11 @@ import logging
 
 # Import core Twin Registry services
 try:
-    from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
-    from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
-    from src.twin_registry.core.twin_relationship_service import TwinRelationshipService
-    from src.twin_registry.core.twin_instance_service import TwinInstanceService
-    from src.twin_registry.core.twin_sync_service import TwinSyncService
+    from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+from src.modules.twin_registry.core.twin_relationship_service import TwinRelationshipService
+from src.modules.twin_registry.core.twin_instance_service import TwinInstanceService
+from src.modules.twin_registry.core.twin_sync_service import TwinSyncService
     print("✅ Twin Registry core services imported successfully")
     CORE_SERVICES_AVAILABLE = True
 except ImportError as e:
@@ -132,15 +132,18 @@ class TwinRegistryService:
             logger.warning("⚠️ Core registry service not available - using direct database query")
             try:
                 # Import database manager directly
-                from src.shared.database.connection_manager import DatabaseConnectionManager
-                from src.shared.database.base_manager import BaseDatabaseManager
+                from src.engine.database.database_factory import DatabaseFactory, DatabaseType
+                from src.engine.database.connection_manager import ConnectionManager
                 from pathlib import Path
                 
                 # Connect to database
                 data_dir = Path("data")
                 db_path = data_dir / "aasx_database.db"
-                connection_manager = DatabaseConnectionManager(db_path)
-                db_manager = BaseDatabaseManager(connection_manager)
+                connection_manager = DatabaseFactory.create_connection_manager(
+                    DatabaseType.SQLITE, 
+                    str(db_path)
+                )
+                # Use the connection manager directly since we don't have a BaseDatabaseManager
                 
                 # Query twins directly
                 query = "SELECT * FROM twin_registry ORDER BY created_at DESC LIMIT ? OFFSET ?"

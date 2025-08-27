@@ -30,36 +30,34 @@ class GenerationLogRepository:
     async def create(self, log: GenerationLog) -> bool:
         """Create a new generation log"""
         try:
-            async with self.connection_manager.get_session() as session:
-                log_data = log.to_dict()
-                
-                query = f"""
-                INSERT INTO {self.table_name} (
-                    log_id, registry_id, session_id, generation_type,
-                    generation_model, generation_prompt, generated_content,
-                    model_parameters, generation_config, context_documents,
-                    generation_time_ms, token_count, cost_credits,
-                    quality_score, relevance_score, coherence_score, accuracy_score,
-                    user_rating, user_feedback, feedback_timestamp, metadata,
-                    tags, flags, error_message, error_code, retry_count,
-                    created_at, updated_at, generated_at
-                ) VALUES (
-                    :log_id, :registry_id, :session_id, :generation_type,
-                    :generation_model, :generation_prompt, :generated_content,
-                    :model_parameters, :generation_config, :context_documents,
-                    :generation_time_ms, :token_count, :cost_credits,
-                    :quality_score, :relevance_score, :coherence_score, :accuracy_score,
-                    :user_rating, :user_feedback, :feedback_timestamp, :metadata,
-                    :tags, :flags, :error_message, :error_code, :retry_count,
-                    :created_at, :updated_at, :generated_at
-                )
-                """
-                
-                await session.execute(query, log_data)
-                await session.commit()
-                
-                logger.info(f"Created generation log: {log.log_id}")
-                return True
+            log_data = log.to_dict()
+            
+            query = f"""
+            INSERT INTO {self.table_name} (
+                log_id, registry_id, session_id, generation_type,
+                generation_model, generation_prompt, generated_content,
+                model_parameters, generation_config, context_documents,
+                generation_time_ms, token_count, cost_credits,
+                quality_score, relevance_score, coherence_score, accuracy_score,
+                user_rating, user_feedback, feedback_timestamp, metadata,
+                tags, flags, error_message, error_code, retry_count,
+                created_at, updated_at, generated_at
+            ) VALUES (
+                :log_id, :registry_id, :session_id, :generation_type,
+                :generation_model, :generation_prompt, :generated_content,
+                :model_parameters, :generation_config, :context_documents,
+                :generation_time_ms, :token_count, :cost_credits,
+                :quality_score, :relevance_score, :coherence_score, :accuracy_score,
+                :user_rating, :user_feedback, :feedback_timestamp, :metadata,
+                :tags, :flags, :error_message, :error_code, :retry_count,
+                :created_at, :updated_at, :generated_at
+            )
+            """
+            
+            await self.connection_manager.execute_update(query, log_data)
+            
+            logger.info(f"Created generation log: {log.log_id}")
+            return True
                 
         except Exception as e:
             logger.error(f"Error creating generation log: {e}")

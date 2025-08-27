@@ -897,3 +897,4 @@ class GraphSyncManager:
         self.config.update(new_config)
         logger.info("⚙️ Synchronization configuration updated")
 
+

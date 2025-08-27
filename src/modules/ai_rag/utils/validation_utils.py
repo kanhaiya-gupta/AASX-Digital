@@ -333,3 +333,4 @@ def validate_json_structure(data: Any, expected_structure: Dict[str, Any]) -> bo
     
     return _validate_value(data, expected_structure)
 
+

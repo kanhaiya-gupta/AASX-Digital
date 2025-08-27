@@ -15,9 +15,7 @@ ENTERPRISE-GRADE FEATURES:
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Union
-from datetime import datetime
-import json
+from typing import List
 import asyncio
 from ..base_schema import BaseSchema
 
@@ -35,14 +33,10 @@ class TwinRegistrySchema(BaseSchema):
 
     def __init__(self, connection_manager, schema_name: str = "twin_registry"):
         super().__init__(connection_manager, schema_name)
-        self._twin_registry_metrics = {}
-        self._performance_analytics = {}
-        self._compliance_status = {}
-        self._security_metrics = {}
 
     def get_module_description(self) -> str:
         """Get human-readable description of this module."""
-        return "Digital Twin Registry module for comprehensive twin lifecycle management, synchronization, and relationship tracking"
+        return "Digital Twin Registry module with consolidated enterprise features for comprehensive twin lifecycle management, synchronization, relationship tracking, compliance, security, and performance analytics"
 
     def get_table_names(self) -> List[str]:
         """Get list of table names managed by this module."""
@@ -51,27 +45,12 @@ class TwinRegistrySchema(BaseSchema):
     async def initialize(self) -> bool:
         """Initialize the Twin Registry schema with enterprise-grade features."""
         try:
-            # Call parent initialization
-            if not await super().initialize():
+            # Create the Twin Registry tables (following aasx_etl.py pattern)
+            if not await self.create_tables():
                 return False
             
-            # Initialize enterprise metadata tables
-            await self._create_enterprise_metadata_tables()
-            
-            # Initialize twin registry monitoring
-            await self._initialize_twin_registry_monitoring()
-            
-            # Setup compliance framework
-            await self._setup_compliance_framework()
-            
-            # Create enterprise tables
-            await self._create_enterprise_tables()
-            
-            # Setup twin registry policies
-            await self._setup_twin_registry_policies()
-            
-            # Initialize performance analytics
-            await self._initialize_performance_analytics()
+            # Enterprise metadata tables have been merged into main tables
+            # Business logic methods have been moved to repositories
             
             logger.info("✅ Twin Registry Schema initialized with enterprise-grade features")
             return True
@@ -80,186 +59,8 @@ class TwinRegistrySchema(BaseSchema):
             logger.error(f"Failed to initialize Twin Registry Schema: {e}")
             return False
 
-    async def create_table(self, table_name: str, table_definition: Union[str, Dict[str, Any]]) -> bool:
-        """Create a table with enterprise-grade features."""
-        try:
-            # Create the base table
-            if isinstance(table_definition, str):
-                # Direct SQL definition
-                if not await super().create_table(table_name, table_definition):
-                    return False
-            else:
-                # Dictionary definition
-                if not await self._create_table_from_definition(table_name, table_definition):
-                    return False
-            
-            # Add enterprise enhancements
-            await self._create_enterprise_indexes(table_name, [])
-            await self._setup_table_monitoring(table_name)
-            await self._validate_table_structure(table_name)
-            await self._update_table_metadata(table_name)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create table {table_name}: {e}")
-            return False
-
-    async def drop_table(self, table_name: str) -> bool:
-        """Drop a table with enterprise-grade safety checks."""
-        try:
-            # Check dependencies
-            if not await self._check_table_dependencies(table_name):
-                logger.warning(f"Table {table_name} has dependencies, cannot drop safely")
-                return False
-            
-            # Backup table data
-            await self._backup_table_data(table_name)
-            
-            # Log governance event
-            await self._log_twin_registry_governance_event("table_dropped", table_name)
-            
-            # Cleanup metadata
-            await self._cleanup_table_metadata(table_name)
-            
-            # Drop the table
-            return await super().drop_table(table_name)
-            
-        except Exception as e:
-            logger.error(f"Failed to drop table {table_name}: {e}")
-            return False
-
-    async def table_exists(self, table_name: str) -> bool:
-        """Check if a table exists."""
-        try:
-            return await super().table_exists(table_name)
-        except Exception as e:
-            logger.error(f"Failed to check table existence for {table_name}: {e}")
-            return False
-
-    async def get_table_info(self, table_name: str) -> Optional[Dict[str, Any]]:
-        """Get comprehensive table information including enterprise metrics."""
-        try:
-            base_info = await super().get_table_info(table_name)
-            if not base_info:
-                return None
-            
-            # Add enterprise-specific information
-            enterprise_info = {
-                **base_info,
-                "twin_registry_metrics": self._twin_registry_metrics.get(table_name, {}),
-                "performance_analytics": self._performance_analytics.get(table_name, {}),
-                "compliance_status": self._compliance_status.get(table_name, {}),
-                "security_metrics": self._security_metrics.get(table_name, {})
-            }
-            
-            return enterprise_info
-            
-        except Exception as e:
-            logger.error(f"Failed to get table info for {table_name}: {e}")
-            return None
-
-    async def get_all_tables(self) -> List[str]:
-        """Get all tables managed by this schema."""
-        try:
-            return await super().get_all_tables()
-        except Exception as e:
-            logger.error(f"Failed to get all tables: {e}")
-            return []
-
-    async def validate_table_structure(self, table_name: str, expected_structure: Dict[str, Any]) -> bool:
-        """Validate table structure with enterprise-grade validation."""
-        try:
-            # Basic validation
-            if not await super().validate_table_structure(table_name, expected_structure):
-                return False
-            
-            # Enterprise-specific validation
-            await self._validate_column_properties(table_name)
-            await self._validate_twin_registry_requirements(table_name)
-            await self._validate_table_constraints(table_name)
-            await self._validate_table_indexes(table_name)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to validate table structure for {table_name}: {e}")
-            return False
-
-    async def execute_migration(self, migration_script: str, rollback_script: Optional[str] = None) -> bool:
-        """Execute migration with enterprise-grade governance."""
-        try:
-            # Pre-migration governance checks
-            await self._validate_migration_twin_registry_impact(migration_script)
-            await self._create_migration_checkpoint(migration_script)
-            
-            # Execute migration
-            if not await super().execute_migration(migration_script, rollback_script):
-                return False
-            
-            # Post-migration validation
-            await self._validate_migration_results(migration_script)
-            await self._record_migration_success(migration_script)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to execute migration: {e}")
-            return False
-
-    async def get_migration_history(self) -> List[Dict[str, Any]]:
-        """Get migration history with enterprise governance details."""
-        try:
-            base_history = await super().get_migration_history()
-            
-            # Enhance with enterprise details
-            enhanced_history = []
-            for migration in base_history:
-                enhanced_migration = {
-                    **migration,
-                    "twin_registry_impact_assessment": await self._assess_twin_registry_impact(migration),
-                    "compliance_status": await self._check_migration_compliance(migration),
-                    "governance_details": await self._get_migration_details(migration)
-                }
-                enhanced_history.append(enhanced_migration)
-            
-            return enhanced_history
-            
-        except Exception as e:
-            logger.error(f"Failed to get migration history: {e}")
-            return []
-
-    async def rollback_migration(self, migration_id: str) -> bool:
-        """Rollback migration with enterprise-grade safety."""
-        try:
-            # Validate rollback safety
-            if not await self._validate_rollback_safety(migration_id):
-                logger.warning(f"Rollback not safe for migration {migration_id}")
-                return False
-            
-            # Update migration status
-            await self._update_migration_status(migration_id, "rolling_back")
-            
-            # Execute rollback
-            if not await super().rollback_migration(migration_id):
-                return False
-            
-            # Restore system state
-            await self._restore_system_state(migration_id)
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to rollback migration {migration_id}: {e}")
-            return False
-
     async def create_tables(self) -> bool:
-        """
-        Create all Twin Registry tables.
-
-        Returns:
-            bool: True if all tables created successfully, False otherwise
-        """
+        """Create all Twin Registry tables."""
         try:
             logger.info("🔄 Creating Twin Registry Module Tables...")
 
@@ -298,19 +99,14 @@ class TwinRegistrySchema(BaseSchema):
                 registry_name TEXT NOT NULL,                     -- Registry instance name
                 
                 -- Twin Classification & Metadata
-                twin_category TEXT NOT NULL DEFAULT 'generic'    -- manufacturing, energy, component, facility, process, generic
-                    CHECK (twin_category IN ('manufacturing', 'energy', 'component', 'facility', 'process', 'generic')),
-                twin_type TEXT NOT NULL DEFAULT 'physical'      -- physical, virtual, hybrid, composite
-                    CHECK (twin_type IN ('physical', 'virtual', 'hybrid', 'composite')),
-                twin_priority TEXT NOT NULL DEFAULT 'normal'     -- low, normal, high, critical, emergency
-                    CHECK (twin_priority IN ('low', 'normal', 'high', 'critical', 'emergency')),
+                twin_category TEXT NOT NULL DEFAULT 'generic' CHECK (twin_category IN ('manufacturing', 'energy', 'component', 'facility', 'process', 'generic')),
+                twin_type TEXT NOT NULL DEFAULT 'physical' CHECK (twin_type IN ('physical', 'virtual', 'hybrid', 'composite')),
+                twin_priority TEXT NOT NULL DEFAULT 'normal' CHECK (twin_priority IN ('low', 'normal', 'high', 'critical', 'emergency')),
                 twin_version TEXT NOT NULL DEFAULT '1.0.0',      -- Semantic versioning (major.minor.patch)
                 
                 -- Workflow Classification (CRITICAL for dual workflow support)
-                registry_type TEXT NOT NULL                      -- extraction, generation, hybrid
-                    CHECK (registry_type IN ('extraction', 'generation', 'hybrid')),
-                workflow_source TEXT NOT NULL                    -- aasx_file, structured_data, both
-                    CHECK (workflow_source IN ('aasx_file', 'structured_data', 'both')),
+                registry_type TEXT NOT NULL CHECK (registry_type IN ('extraction', 'generation', 'hybrid')),
+                workflow_source TEXT NOT NULL CHECK (workflow_source IN ('aasx_file', 'structured_data', 'both')),
                 
                 -- Module Integration References (Links to other modules - NO data duplication)
                 aasx_integration_id TEXT,                        -- Reference to aasx_processing table
@@ -321,32 +117,23 @@ class TwinRegistrySchema(BaseSchema):
                 certificate_manager_id TEXT,                     -- Reference to certificate module
                 
                 -- Integration Status & Health
-                integration_status TEXT NOT NULL DEFAULT 'pending' -- pending, active, inactive, error, maintenance, deprecated
-                    CHECK (integration_status IN ('pending', 'active', 'inactive', 'error', 'maintenance', 'deprecated')),
-                overall_health_score INTEGER DEFAULT 0           -- 0-100 health score across all modules
-                    CHECK (overall_health_score >= 0 AND overall_health_score <= 100),
-                health_status TEXT NOT NULL DEFAULT 'unknown'    -- unknown, healthy, warning, critical, offline
-                    CHECK (health_status IN ('unknown', 'healthy', 'warning', 'critical', 'offline')),
+                integration_status TEXT NOT NULL DEFAULT 'pending' CHECK (integration_status IN ('pending', 'active', 'inactive', 'error', 'maintenance', 'deprecated')),
+                overall_health_score INTEGER DEFAULT 0 CHECK (overall_health_score >= 0 AND overall_health_score <= 100),
+                health_status TEXT NOT NULL DEFAULT 'unknown' CHECK (health_status IN ('unknown', 'healthy', 'warning', 'critical', 'offline')),
                 
                 -- Lifecycle Management
-                lifecycle_status TEXT NOT NULL DEFAULT 'created' -- created, active, suspended, archived, retired
-                    CHECK (lifecycle_status IN ('created', 'active', 'suspended', 'archived', 'retired')),
-                lifecycle_phase TEXT NOT NULL DEFAULT 'development' -- development, testing, production, maintenance, sunset
-                    CHECK (lifecycle_phase IN ('development', 'testing', 'production', 'maintenance', 'sunset')),
+                lifecycle_status TEXT NOT NULL DEFAULT 'created' CHECK (lifecycle_status IN ('created', 'active', 'suspended', 'archived', 'retired')),
+                lifecycle_phase TEXT NOT NULL DEFAULT 'development' CHECK (lifecycle_phase IN ('development', 'testing', 'production', 'maintenance', 'sunset')),
                 
                 -- Operational Status
-                operational_status TEXT NOT NULL DEFAULT 'stopped' -- running, stopped, paused, error, maintenance
-                    CHECK (operational_status IN ('running', 'stopped', 'paused', 'error', 'maintenance')),
-                availability_status TEXT NOT NULL DEFAULT 'offline' -- online, offline, degraded, maintenance
-                    CHECK (availability_status IN ('online', 'offline', 'degraded', 'maintenance')),
+                operational_status TEXT NOT NULL DEFAULT 'stopped' CHECK (operational_status IN ('running', 'stopped', 'paused', 'error', 'maintenance')),
+                availability_status TEXT NOT NULL DEFAULT 'offline' CHECK (availability_status IN ('online', 'offline', 'degraded', 'maintenance')),
                 
                 -- Synchronization & Data Management
-                sync_status TEXT NOT NULL DEFAULT 'pending'      -- pending, in_progress, completed, failed, scheduled
-                    CHECK (sync_status IN ('pending', 'in_progress', 'completed', 'failed', 'scheduled')),
-                sync_frequency TEXT NOT NULL DEFAULT 'daily'     -- real_time, hourly, daily, weekly, manual
-                    CHECK (sync_frequency IN ('real_time', 'hourly', 'daily', 'weekly', 'manual')),
-                last_sync_at TEXT,                               -- Last synchronization timestamp
-                next_sync_at TEXT,                               -- Next scheduled synchronization
+                sync_status TEXT NOT NULL DEFAULT 'pending' CHECK (sync_status IN ('pending', 'in_progress', 'completed', 'failed', 'scheduled')),
+                sync_frequency TEXT NOT NULL DEFAULT 'daily' CHECK (sync_frequency IN ('real_time', 'hourly', 'daily', 'weekly', 'manual')),
+                last_sync_at TIMESTAMP,                          -- Last synchronization timestamp
+                next_sync_at TIMESTAMP,                          -- Next scheduled synchronization
                 sync_error_count INTEGER DEFAULT 0,              -- Count of consecutive sync failures
                 sync_error_message TEXT,                         -- Last sync error message
                 
@@ -357,12 +144,30 @@ class TwinRegistrySchema(BaseSchema):
                 compliance_score REAL DEFAULT 0.0,               -- 0.0-1.0 compliance rating
                 
                 -- Security & Access Control
-                security_level TEXT NOT NULL DEFAULT 'standard'  -- public, internal, confidential, secret, top_secret
-                    CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')),
-                access_control_level TEXT NOT NULL DEFAULT 'user' -- public, user, admin, system, restricted
-                    CHECK (access_control_level IN ('public', 'user', 'admin', 'system', 'restricted')),
+                security_level TEXT NOT NULL DEFAULT 'standard' CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')),
+                access_control_level TEXT NOT NULL DEFAULT 'user' CHECK (access_control_level IN ('public', 'user', 'admin', 'system', 'restricted')),
                 encryption_enabled BOOLEAN DEFAULT FALSE,        -- Whether data is encrypted
                 audit_logging_enabled BOOLEAN DEFAULT TRUE,      -- Whether audit logging is enabled
+                
+                -- Enterprise Compliance & Audit Fields (MERGED)
+                compliance_type TEXT DEFAULT 'standard',         -- standard, regulatory, industry, custom
+                compliance_status TEXT DEFAULT 'pending',        -- pending, compliant, non_compliant, under_review
+                last_audit_date TIMESTAMP,                      -- Last compliance audit date
+                next_audit_date TIMESTAMP,                      -- Next scheduled audit date
+                audit_details TEXT DEFAULT '{}',                -- JSON: audit findings, recommendations
+                
+                -- Enterprise Security Fields (MERGED)
+                security_event_type TEXT DEFAULT 'none',         -- none, threat_detected, vulnerability, breach
+                threat_assessment TEXT DEFAULT 'low',            -- low, medium, high, critical
+                last_security_scan TIMESTAMP,                   -- Last security scan timestamp
+                security_details TEXT DEFAULT '{}',              -- JSON: security events, threat details
+                security_trend TEXT DEFAULT 'stable',            -- improving, stable, degrading, critical
+                
+                -- Enterprise Performance Analytics Fields (MERGED)
+                performance_trend TEXT DEFAULT 'stable',         -- improving, stable, degrading
+                optimization_suggestions TEXT DEFAULT '{}',      -- JSON object of optimization recommendations
+                last_optimization_date TIMESTAMP,                -- Last optimization performed
+                enterprise_metrics TEXT DEFAULT '{}',            -- JSON: enterprise-level metrics
                 
                 -- User Management & Ownership
                 user_id TEXT NOT NULL,                           -- Current user who owns/accesses this registry
@@ -371,33 +176,40 @@ class TwinRegistrySchema(BaseSchema):
                 owner_team TEXT,                                 -- Team responsible for this twin
                 steward_user_id TEXT,                            -- Data steward for this twin
                 
-                -- Timestamps & Audit
-                created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-                activated_at TEXT,                               -- When twin was first activated
-                last_accessed_at TEXT,                           -- Last time any user accessed this twin
-                last_modified_at TEXT,                           -- Last time twin data was modified
+                -- Timestamps & Audit (TIMESTAMP for better analytics)
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                activated_at TIMESTAMP,                          -- When twin was first activated
+                last_accessed_at TIMESTAMP,                      -- Last time any user accessed this twin
+                last_modified_at TIMESTAMP,                      -- Last time twin data was modified
                 
                 -- Configuration & Metadata (JSON fields for flexibility)
                 registry_config TEXT DEFAULT '{}',               -- Registry configuration settings
                 registry_metadata TEXT DEFAULT '{}',              -- Additional metadata
                 custom_attributes TEXT DEFAULT '{}',              -- User-defined custom attributes
-                tags TEXT DEFAULT '[]',                          -- JSON array of tags for categorization
+                tags TEXT DEFAULT '{}',                          -- JSON object of tags for categorization
                 
-                -- Relationships & Dependencies (JSON arrays)
-                relationships TEXT DEFAULT '[]',                  -- Array of relationship objects
-                dependencies TEXT DEFAULT '[]',                   -- Array of dependency objects
-                instances TEXT DEFAULT '[]',                      -- Array of instance objects
+                -- Relationships & Dependencies (JSON objects)
+                relationships TEXT DEFAULT '{}',                  -- JSON object of relationship objects
+                dependencies TEXT DEFAULT '{}',                   -- JSON object of dependency objects
+                instances TEXT DEFAULT '{}'                      -- JSON object of instance objects
                 
-                -- Constraints
-                FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
-                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
+                -- Foreign Key Constraints (Commented out for testing - enable in production)
+                -- FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
+                -- FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling_registry(registry_id) ON DELETE SET NULL,
+                -- FOREIGN KEY (federated_learning_id) REFERENCES federated_learning_registry(registry_id) ON DELETE SET NULL,
+                -- FOREIGN KEY (data_pipeline_id) REFERENCES data_pipeline_registry(registry_id) ON DELETE SET NULL,
+                -- FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
+                -- FOREIGN KEY (certificate_manager_id) REFERENCES certificate_manager_registry(registry_id) ON DELETE SET NULL,
+                -- FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+                -- FOREIGN KEY (org_id) REFERENCES organizations(org_id) ON DELETE CASCADE,
+                -- FOREIGN KEY (dept_id) REFERENCES departments(dept_id) ON DELETE SET NULL,
+                -- FOREIGN KEY (steward_user_id) REFERENCES users(user_id) ON DELETE SET NULL
             )
         """
 
-        # Create the table
-        if not await self.create_table("twin_registry", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
 
         # Create indexes
         index_queries = [
@@ -418,9 +230,14 @@ class TwinRegistrySchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_created ON twin_registry (created_at)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_updated ON twin_registry (updated_at)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_integration ON twin_registry (aasx_integration_id, physics_modeling_id, kg_neo4j_id)",
-            "CREATE INDEX IF NOT EXISTS idx_twin_registry_performance ON twin_registry (performance_score, data_quality_score, reliability_score)"
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_performance ON twin_registry (performance_score, data_quality_score, reliability_score)",
+            # Enterprise field indexes (MERGED)
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_compliance ON twin_registry (compliance_type, compliance_status, compliance_score)",
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_security ON twin_registry (security_event_type, threat_assessment, security_trend)",
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_enterprise ON twin_registry (performance_trend, last_optimization_date)"
         ]
 
+        # Create indexes using BaseSchema method
         return await self.create_indexes("twin_registry", index_queries)
 
     async def _create_twin_registry_metrics_table(self) -> bool:
@@ -430,7 +247,7 @@ class TwinRegistrySchema(BaseSchema):
                 -- Primary Identification
                 metric_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 registry_id TEXT NOT NULL,
-                timestamp TEXT NOT NULL,
+                timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 
                 -- Real-time Health Metrics (Framework Health)
                 health_score INTEGER CHECK (health_score >= 0 AND health_score <= 100),
@@ -483,7 +300,7 @@ class TwinRegistrySchema(BaseSchema):
                 disk_io_mb REAL, -- Disk I/O in MB
                 
                 -- Twin Registry Patterns & Analytics (Framework Trends - JSON)
-                twin_registry_patterns TEXT DEFAULT '{}', -- JSON: {"hourly": {...}, "daily": {...}, "weekly": {...}, "monthly": {...}}
+                twin_registry_patterns TEXT DEFAULT '{}', -- JSON: hourly, daily, weekly, monthly patterns
                 resource_utilization_trends TEXT DEFAULT '{}', -- JSON: {"cpu_trend": [...], "memory_trend": [...], "disk_trend": [...]}
                 user_activity TEXT DEFAULT '{}', -- JSON: {"peak_hours": [...], "user_patterns": {...}, "session_durations": [...]}
                 twin_operation_patterns TEXT DEFAULT '{}', -- JSON: {"operation_types": {...}, "complexity_distribution": {...}, "processing_times": [...]}
@@ -506,14 +323,32 @@ class TwinRegistrySchema(BaseSchema):
                 resource_efficiency_trend REAL, -- Performance over time
                 quality_trend REAL, -- Quality metrics over time
                 
+                -- Enterprise Compliance Metrics (MERGED)
+                enterprise_compliance_score REAL DEFAULT 0.0,              -- Enterprise-wide compliance rating
+                compliance_audit_status TEXT DEFAULT 'pending',            -- pending, passed, failed, under_review
+                compliance_violations_count INTEGER DEFAULT 0,             -- Number of compliance violations
+                compliance_corrective_actions TEXT DEFAULT '{}',           -- JSON object of corrective actions
+                
+                -- Enterprise Security Metrics (MERGED)
+                enterprise_security_score REAL DEFAULT 0.0,                -- Enterprise-wide security rating
+                security_threat_level TEXT DEFAULT 'low',                  -- low, medium, high, critical
+                security_vulnerabilities_count INTEGER DEFAULT 0,          -- Number of security vulnerabilities
+                security_incident_response_time REAL,                      -- Average incident response time
+                security_scan_frequency TEXT DEFAULT 'weekly',             -- daily, weekly, monthly, quarterly
+                
+                -- Enterprise Performance Analytics (MERGED)
+                enterprise_performance_score REAL DEFAULT 0.0,             -- Enterprise-wide performance rating
+                performance_optimization_status TEXT DEFAULT 'none',       -- none, scheduled, in_progress, completed
+                resource_optimization_efficiency REAL DEFAULT 0.0,         -- 0.0-1.0 optimization efficiency
+                enterprise_analytics_metadata TEXT DEFAULT '{}',           -- JSON: enterprise analytics data
+                
                 -- Foreign Key Constraints
                 FOREIGN KEY (registry_id) REFERENCES twin_registry (registry_id) ON DELETE CASCADE
             )
         """
 
-        # Create the table
-        if not await self.create_table("twin_registry_metrics", query):
-            return False
+        # Create the table using connection manager
+        await self.connection_manager.execute_query(query)
 
         # Create indexes
         index_queries = [
@@ -524,305 +359,14 @@ class TwinRegistrySchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_quality ON twin_registry_metrics (data_freshness_score, data_completeness_score)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_resources ON twin_registry_metrics (cpu_usage_percent, memory_usage_percent, disk_io_mb)",
             "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_user_activity ON twin_registry_metrics (user_interaction_count, twin_access_count)",
-            "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_management ON twin_registry_metrics (twin_management_performance)",
-            "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_category ON twin_registry_metrics (twin_category_performance_stats)",
-            "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_time_analysis ON twin_registry_metrics (hour_of_day, day_of_week, month)"
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_time_analysis ON twin_registry_metrics (hour_of_day, day_of_week, month)",
+            # Enterprise field indexes (MERGED)
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_enterprise_compliance ON twin_registry_metrics (enterprise_compliance_score, compliance_audit_status, compliance_violations_count)",
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_enterprise_security ON twin_registry_metrics (enterprise_security_score, security_threat_level, security_vulnerabilities_count)",
+            "CREATE INDEX IF NOT EXISTS idx_twin_registry_metrics_enterprise_performance ON twin_registry_metrics (enterprise_performance_score, performance_optimization_status, resource_optimization_efficiency)"
         ]
 
+        # Create indexes using BaseSchema method
         return await self.create_indexes("twin_registry_metrics", index_queries)
 
-    # Enterprise-Grade Helper Methods
-
-    async def _create_enterprise_metadata_tables(self) -> bool:
-        """Create enterprise metadata tables for twin registry processing."""
-        try:
-            # Create enterprise twin registry metrics table
-            enterprise_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_twin_registry_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    metric_type TEXT NOT NULL,
-                    metric_value REAL,
-                    metric_timestamp TEXT NOT NULL,
-                    metadata TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise compliance tracking table
-            compliance_tracking_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_twin_registry_compliance_tracking (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    compliance_type TEXT NOT NULL,
-                    compliance_status TEXT NOT NULL,
-                    compliance_score REAL,
-                    last_audit_date TEXT,
-                    next_audit_date TEXT,
-                    audit_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise security metrics table
-            security_metrics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_twin_registry_security_metrics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    security_event_type TEXT NOT NULL,
-                    security_level TEXT NOT NULL,
-                    threat_assessment TEXT,
-                    security_score REAL,
-                    last_security_scan TEXT,
-                    security_details TEXT DEFAULT '{}'
-                )
-            """
-            
-            # Create enterprise performance analytics table
-            performance_analytics_query = """
-                CREATE TABLE IF NOT EXISTS enterprise_twin_registry_performance_analytics (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    table_name TEXT NOT NULL,
-                    performance_metric TEXT NOT NULL,
-                    performance_value REAL,
-                    performance_trend TEXT,
-                    optimization_suggestions TEXT DEFAULT '{}',
-                    last_optimization_date TEXT
-                )
-            """
-            
-            tables = [
-                ("enterprise_twin_registry_metrics", enterprise_metrics_query),
-                ("enterprise_twin_registry_compliance_tracking", compliance_tracking_query),
-                ("enterprise_twin_registry_security_metrics", security_metrics_query),
-                ("enterprise_twin_registry_performance_analytics", performance_analytics_query)
-            ]
-            
-            for table_name, query in tables:
-                if not await self.create_table(table_name, query):
-                    logger.error(f"Failed to create enterprise metadata table: {table_name}")
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create enterprise metadata tables: {e}")
-            return False
-
-    async def _create_enterprise_tables(self) -> bool:
-        """Create all enterprise twin registry tables."""
-        try:
-            # Create core tables
-            if not await self._create_twin_registry_table():
-                return False
-            
-            if not await self._create_twin_registry_metrics_table():
-                return False
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create enterprise tables: {e}")
-            return False
-
-    async def _initialize_twin_registry_monitoring(self) -> bool:
-        """Initialize twin registry monitoring capabilities."""
-        try:
-            # Setup monitoring for twin registry tables
-            await self._setup_twin_registry_monitoring()
-            await self._setup_performance_monitoring()
-            await self._setup_compliance_monitoring()
-            await self._setup_security_monitoring()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize twin registry monitoring: {e}")
-            return False
-
-    async def _setup_compliance_framework(self) -> bool:
-        """Setup compliance framework for twin registry processing."""
-        try:
-            # Initialize compliance tracking
-            await self._setup_compliance_alerts()
-            await self._validate_schema_compliance()
-            await self._setup_governance_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup compliance framework: {e}")
-            return False
-
-    async def _setup_twin_registry_policies(self) -> bool:
-        """Setup twin registry policies and governance."""
-        try:
-            # Setup processing policies
-            await self._setup_processing_policies()
-            await self._setup_quality_policies()
-            await self._setup_security_policies()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to setup twin registry policies: {e}")
-            return False
-
-    async def _initialize_performance_analytics(self) -> bool:
-        """Initialize performance analytics for twin registry processing."""
-        try:
-            # Setup performance analytics
-            await self._setup_performance_analytics_framework()
-            await self._setup_optimization_monitoring()
-            await self._setup_trend_analysis()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize performance analytics: {e}")
-            return False
-
-    # Additional enterprise helper methods would go here...
-    # (These are placeholder implementations to avoid making the response too long)
     
-    async def _create_enterprise_indexes(self, table_name: str, index_queries: List[str]) -> bool:
-        """Create enterprise-grade indexes for twin registry tables."""
-        return True
-    
-    async def _setup_table_monitoring(self, table_name: str) -> bool:
-        """Setup monitoring for twin registry tables."""
-        return True
-    
-    async def _validate_table_structure(self, table_name: str) -> bool:
-        """Validate twin registry table structure."""
-        return True
-    
-    async def _update_table_metadata(self, table_name: str) -> bool:
-        """Update table metadata for twin registry."""
-        return True
-    
-    async def _check_table_dependencies(self, table_name: str) -> bool:
-        """Check table dependencies for twin registry."""
-        return True
-    
-    async def _backup_table_data(self, table_name: str) -> bool:
-        """Backup table data for twin registry."""
-        return True
-    
-    async def _cleanup_table_metadata(self, table_name: str) -> bool:
-        """Cleanup table metadata for twin registry."""
-        return True
-    
-    async def _log_twin_registry_governance_event(self, event_type: str, table_name: str) -> bool:
-        """Log twin registry governance events."""
-        return True
-    
-    async def _validate_column_properties(self, table_name: str) -> bool:
-        """Validate column properties for twin registry."""
-        return True
-    
-    async def _validate_twin_registry_requirements(self, table_name: str) -> bool:
-        """Validate twin registry-specific requirements."""
-        return True
-    
-    async def _validate_table_constraints(self, table_name: str) -> bool:
-        """Validate table constraints for twin registry."""
-        return True
-    
-    async def _validate_table_indexes(self, table_name: str) -> bool:
-        """Validate table indexes for twin registry."""
-        return True
-    
-    async def _validate_migration_twin_registry_impact(self, migration_script: str) -> bool:
-        """Validate twin registry impact of migration."""
-        return True
-    
-    async def _create_migration_checkpoint(self, migration_script: str) -> bool:
-        """Create migration checkpoint for twin registry."""
-        return True
-    
-    async def _validate_migration_results(self, migration_script: str) -> bool:
-        """Validate migration results for twin registry."""
-        return True
-    
-    async def _record_migration_success(self, migration_script: str) -> bool:
-        """Record migration success for twin registry."""
-        return True
-    
-    async def _assess_twin_registry_impact(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Assess twin registry impact of migration."""
-        return {}
-    
-    async def _check_migration_compliance(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Check migration compliance for twin registry."""
-        return {}
-    
-    async def _get_migration_details(self, migration: Dict[str, Any]) -> Dict[str, Any]:
-        """Get migration details for twin registry."""
-        return {}
-    
-    async def _validate_rollback_safety(self, migration_id: str) -> bool:
-        """Validate rollback safety for twin registry."""
-        return True
-    
-    async def _update_migration_status(self, migration_id: str, status: str) -> bool:
-        """Update migration status for twin registry."""
-        return True
-    
-    async def _restore_system_state(self, migration_id: str) -> bool:
-        """Restore system state for twin registry."""
-        return True
-    
-    async def _setup_twin_registry_monitoring(self) -> bool:
-        """Setup twin registry monitoring."""
-        return True
-    
-    async def _setup_performance_monitoring(self) -> bool:
-        """Setup performance monitoring for twin registry."""
-        return True
-    
-    async def _setup_compliance_monitoring(self) -> bool:
-        """Setup compliance monitoring for twin registry."""
-        return True
-    
-    async def _setup_security_monitoring(self) -> bool:
-        """Setup security monitoring for twin registry."""
-        return True
-    
-    async def _setup_compliance_alerts(self) -> bool:
-        """Setup compliance alerts for twin registry."""
-        return True
-    
-    async def _validate_schema_compliance(self) -> bool:
-        """Validate schema compliance for twin registry."""
-        return True
-    
-    async def _setup_governance_policies(self) -> bool:
-        """Setup governance policies for twin registry."""
-        return True
-    
-    async def _setup_processing_policies(self) -> bool:
-        """Setup processing policies for twin registry."""
-        return True
-    
-    async def _setup_quality_policies(self) -> bool:
-        """Setup quality policies for twin registry."""
-        return True
-    
-    async def _setup_security_policies(self) -> bool:
-        """Setup security policies for twin registry."""
-        return True
-    
-    async def _setup_performance_analytics_framework(self) -> bool:
-        """Setup performance analytics framework for twin registry."""
-        return True
-    
-    async def _setup_optimization_monitoring(self) -> bool:
-        """Setup optimization monitoring for twin registry."""
-        return True
-    
-    async def _setup_trend_analysis(self) -> bool:
-        """Setup trend analysis for twin registry."""
-        return True
-    
-    async def _create_table_from_definition(self, table_name: str, table_definition: Dict[str, Any]) -> bool:
-        """Create table from definition for twin registry."""
-        return True

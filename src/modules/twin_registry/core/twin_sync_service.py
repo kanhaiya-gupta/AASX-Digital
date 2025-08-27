@@ -10,8 +10,8 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.shared.database.base_manager import BaseDatabaseManager
+from src.engine.database.connection_manager import ConnectionManager
+from src.engine.database.database_factory import DatabaseFactory, DatabaseType
 from ..models.twin_sync import (
     TwinSyncHistory, 
     TwinSyncStatus, 

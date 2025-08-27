@@ -1056,3 +1056,4 @@ class GraphLifecycleManager:
         self.config.update(new_config)
         logger.info("⚙️ Lifecycle configuration updated")
 
+

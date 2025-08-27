@@ -31,23 +31,40 @@ class FederatedLearningMetricsRepository:
                     enterprise_health_score, federation_efficiency_score, privacy_preservation_score,
                     quality_score, collaboration_effectiveness, risk_assessment_score, compliance_adherence,
                     created_at, updated_at, metadata
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (:registry_id, :health_score, :response_time_ms, :uptime_percentage, :error_rate,
+                    :federation_participation_speed_sec, :aggregation_speed_sec, :privacy_compliance_speed_sec,
+                    :cpu_usage_percent, :memory_usage_percent, :gpu_usage_percent, :network_throughput_mbps,
+                    :enterprise_health_score, :federation_efficiency_score, :privacy_preservation_score,
+                    :quality_score, :collaboration_effectiveness, :risk_assessment_score, :compliance_adherence,
+                    :created_at, :updated_at, :metadata)
             """
             
-            params = (
-                metrics.registry_id, metrics.health_score, metrics.response_time_ms,
-                metrics.uptime_percentage, metrics.error_rate, metrics.federation_participation_speed_sec,
-                metrics.aggregation_speed_sec, metrics.privacy_compliance_speed_sec,
-                metrics.cpu_usage_percent, metrics.memory_usage_percent, metrics.gpu_usage_percent,
-                metrics.network_throughput_mbps, metrics.enterprise_health_score,
-                metrics.federation_efficiency_score, metrics.privacy_preservation_score,
-                metrics.quality_score, metrics.collaboration_effectiveness,
-                metrics.risk_assessment_score, metrics.compliance_adherence,
-                metrics.created_at, metrics.updated_at,
-                str(metrics.metadata) if metrics.metadata else None
-            )
+            params = {
+                'registry_id': metrics.registry_id,
+                'health_score': metrics.health_score,
+                'response_time_ms': metrics.response_time_ms,
+                'uptime_percentage': metrics.uptime_percentage,
+                'error_rate': metrics.error_rate,
+                'federation_participation_speed_sec': metrics.federation_participation_speed_sec,
+                'aggregation_speed_sec': metrics.aggregation_speed_sec,
+                'privacy_compliance_speed_sec': metrics.privacy_compliance_speed_sec,
+                'cpu_usage_percent': metrics.cpu_usage_percent,
+                'memory_usage_percent': metrics.memory_usage_percent,
+                'gpu_usage_percent': metrics.gpu_usage_percent,
+                'network_throughput_mbps': metrics.network_throughput_mbps,
+                'enterprise_health_score': metrics.enterprise_health_score,
+                'federation_efficiency_score': metrics.federation_efficiency_score,
+                'privacy_preservation_score': metrics.privacy_preservation_score,
+                'quality_score': metrics.quality_score,
+                'collaboration_effectiveness': metrics.collaboration_effectiveness,
+                'risk_assessment_score': metrics.risk_assessment_score,
+                'compliance_adherence': metrics.compliance_adherence,
+                'created_at': metrics.created_at,
+                'updated_at': metrics.updated_at,
+                'metadata': str(metrics.metadata) if metrics.metadata else None
+            }
             
-            await self.connection_manager.execute_query(query, params)
+            await self.connection_manager.execute_update(query, params)
             return True
             
         except Exception as e:
@@ -57,11 +74,11 @@ class FederatedLearningMetricsRepository:
     async def get_by_id(self, metric_id: int) -> Optional[FederatedLearningMetrics]:
         """Get metrics by ID (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE metric_id = ?"
-            result = await self.connection_manager.fetch_one(query, (metric_id,))
+            query = f"SELECT * FROM {self.table_name} WHERE metric_id = :metric_id"
+            result = await self.connection_manager.execute_query(query, {"metric_id": metric_id})
             
-            if result:
-                return self._row_to_model(result)
+            if result and len(result) > 0:
+                return self._row_to_model(result[0])
             return None
             
         except Exception as e:
@@ -71,8 +88,8 @@ class FederatedLearningMetricsRepository:
     async def get_by_registry_id(self, registry_id: str, limit: int = 100) -> List[FederatedLearningMetrics]:
         """Get metrics by registry ID (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE registry_id = ? ORDER BY created_at DESC LIMIT ?"
-            results = await self.connection_manager.fetch_all(query, (registry_id, limit))
+            query = f"SELECT * FROM {self.table_name} WHERE registry_id = :registry_id ORDER BY created_at DESC LIMIT :limit"
+            results = await self.connection_manager.execute_query(query, {"registry_id": registry_id, "limit": limit})
             
             return [self._row_to_model(row) for row in results]
             
@@ -83,11 +100,11 @@ class FederatedLearningMetricsRepository:
     async def get_latest_by_registry_id(self, registry_id: str) -> Optional[FederatedLearningMetrics]:
         """Get latest metrics for a registry (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE registry_id = ? ORDER BY created_at DESC LIMIT 1"
-            result = await self.connection_manager.fetch_one(query, (registry_id,))
+            query = f"SELECT * FROM {self.table_name} WHERE registry_id = :registry_id ORDER BY created_at DESC LIMIT 1"
+            result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
             
-            if result:
-                return self._row_to_model(result)
+            if result and len(result) > 0:
+                return self._row_to_model(result[0])
             return None
             
         except Exception as e:
@@ -97,8 +114,8 @@ class FederatedLearningMetricsRepository:
     async def get_by_time_range(self, registry_id: str, start_time: datetime, end_time: datetime) -> List[FederatedLearningMetrics]:
         """Get metrics within a time range (async)"""
         try:
-            query = f"SELECT * FROM {self.table_name} WHERE registry_id = ? AND created_at BETWEEN ? AND ? ORDER BY created_at ASC"
-            results = await self.connection_manager.fetch_all(query, (registry_id, start_time, end_time))
+            query = f"SELECT * FROM {self.table_name} WHERE registry_id = :registry_id AND created_at BETWEEN :start_time AND :end_time ORDER BY created_at ASC"
+            results = await self.connection_manager.execute_query(query, {"registry_id": registry_id, "start_time": start_time, "end_time": end_time})
             
             return [self._row_to_model(row) for row in results]
             
@@ -121,12 +138,12 @@ class FederatedLearningMetricsRepository:
                     AVG(cpu_usage_percent) as avg_cpu,
                     AVG(memory_usage_percent) as avg_memory
                 FROM {self.table_name} 
-                WHERE registry_id = ? AND created_at BETWEEN ? AND ?
+                WHERE registry_id = :registry_id AND created_at BETWEEN :start_time AND :end_time
                 GROUP BY DATE(created_at)
                 ORDER BY date ASC
             """
             
-            results = await self.connection_manager.fetch_all(query, (registry_id, start_time, end_time))
+            results = await self.connection_manager.execute_query(query, {"registry_id": registry_id, "start_time": start_time, "end_time": end_time})
             
             trends = {
                 'dates': [],
@@ -156,25 +173,25 @@ class FederatedLearningMetricsRepository:
         try:
             # Build dynamic update query
             set_clauses = []
-            params = []
+            params = {}
             
             for key, value in update_data.items():
                 if key == 'metadata':
-                    set_clauses.append(f"{key} = ?")
-                    params.append(str(value) if value else None)
+                    set_clauses.append(f"{key} = :{key}")
+                    params[key] = str(value) if value else None
                 else:
-                    set_clauses.append(f"{key} = ?")
-                    params.append(value)
+                    set_clauses.append(f"{key} = :{key}")
+                    params[key] = value
             
             # Add updated_at timestamp
-            set_clauses.append("updated_at = ?")
-            params.append(datetime.now())
+            set_clauses.append("updated_at = :updated_at")
+            params['updated_at'] = datetime.now()
             
             # Add metric_id for WHERE clause
-            params.append(metric_id)
+            params['metric_id'] = metric_id
             
-            query = f"UPDATE {self.table_name} SET {', '.join(set_clauses)} WHERE metric_id = ?"
-            await self.connection_manager.execute_query(query, params)
+            query = f"UPDATE {self.table_name} SET {', '.join(set_clauses)} WHERE metric_id = :metric_id"
+            await self.connection_manager.execute_update(query, params)
             
             return True
             
@@ -194,7 +211,7 @@ class FederatedLearningMetricsRepository:
             return False
     
     async def get_performance_summary(self, registry_id: str) -> Dict[str, Any]:
-        """Get performance summary for a registry (async)"""
+        """Get performance summary for a specific registry (async)"""
         try:
             query = f"""
                 SELECT 
@@ -208,11 +225,11 @@ class FederatedLearningMetricsRepository:
                     AVG(enterprise_health_score) as avg_enterprise_health,
                     AVG(federation_efficiency_score) as avg_federation_efficiency
                 FROM {self.table_name}
-                WHERE registry_id = ?
+                WHERE registry_id = :registry_id
             """
             
-            result = await self.connection_manager.fetch_one(query, (registry_id,))
-            return dict(result) if result else {}
+            result = await self.connection_manager.execute_query(query, {"registry_id": registry_id})
+            return dict(result[0]) if result and len(result) > 0 else {}
             
         except Exception as e:
             print(f"Error getting performance summary: {e}")
@@ -225,17 +242,23 @@ class FederatedLearningMetricsRepository:
                 SELECT 
                     metric_id, created_at, health_score, error_rate, cpu_usage_percent, memory_usage_percent
                 FROM {self.table_name}
-                WHERE registry_id = ? AND (
-                    health_score < ? OR 
-                    error_rate > ? OR 
-                    cpu_usage_percent > ? OR 
-                    memory_usage_percent > ?
+                WHERE registry_id = :registry_id AND (
+                    health_score < :threshold OR 
+                    error_rate > :error_threshold OR 
+                    cpu_usage_percent > :threshold OR 
+                    memory_usage_percent > :threshold
                 )
                 ORDER BY created_at DESC
                 LIMIT 50
             """
             
-            results = await self.connection_manager.fetch_all(query, (registry_id, threshold, 100-threshold, threshold, threshold))
+            params = {
+                "registry_id": registry_id, 
+                "threshold": threshold, 
+                "error_threshold": 100-threshold
+            }
+            
+            results = await self.connection_manager.execute_query(query, params)
             
             alerts = []
             for row in results:
@@ -279,8 +302,8 @@ class FederatedLearningMetricsRepository:
                 WHERE enterprise_health_score IS NOT NULL
             """
             
-            result = await self.connection_manager.fetch_one(query)
-            return dict(result) if result else {}
+            result = await self.connection_manager.execute_query(query, {})
+            return dict(result[0]) if result and len(result) > 0 else {}
             
         except Exception as e:
             print(f"Error getting enterprise metrics summary: {e}")

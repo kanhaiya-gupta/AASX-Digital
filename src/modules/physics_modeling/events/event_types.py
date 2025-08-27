@@ -254,3 +254,4 @@ class ServiceEvent(BasePhysicsEvent):
         self.throughput = throughput
         self.error_rate = error_rate
 
+

@@ -371,3 +371,4 @@ class IntegrationCoordinator:
             logger.error(f"Failed to cleanup integration coordinator: {e}")
             raise
 
+

@@ -10,7 +10,6 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 
 from src.engine.database.connection_manager import ConnectionManager
-from src.engine.database.schema.modules.kg_neo4j import kg_graph_metrics
 from ..models.kg_graph_metrics import (
     KGGraphMetrics,
     KGGraphMetricsQuery,
@@ -26,7 +25,7 @@ class KGGraphMetricsRepository:
     def __init__(self, connection_manager: ConnectionManager):
         """Initialize the knowledge graph metrics repository."""
         self.connection_manager = connection_manager
-        self.table = kg_graph_metrics
+        self.table_name = "kg_graph_metrics"
         logger.info("Knowledge Graph Metrics Repository initialized with pure async support")
     
     async def initialize(self) -> None:
@@ -44,21 +43,24 @@ class KGGraphMetricsRepository:
     async def create(self, metrics: KGGraphMetrics) -> KGGraphMetrics:
         """Create a new metrics entry asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                # Convert model to dict for insertion
-                data = metrics.dict()
-                
-                # Insert into database
-                query = self.table.insert()
-                result = await conn.execute(query, data)
-                
-                # Get the created record
-                created_id = result.inserted_primary_key[0]
-                metrics.metric_id = created_id
-                
-                logger.info(f"Created metrics entry: {metrics.metric_id}")
-                return metrics
-                
+            # Convert model to dict for insertion
+            data = metrics.dict()
+            
+            # Build INSERT query dynamically
+            columns = list(data.keys())
+            placeholders = [f":{col}" for col in columns]
+            
+            query = f"""
+                INSERT INTO {self.table_name} ({', '.join(columns)})
+                VALUES ({', '.join(placeholders)})
+            """
+            
+            # Execute raw SQL
+            await self.connection_manager.execute_update(query, data)
+            
+            logger.info(f"Created metrics entry: {metrics.metric_id}")
+            return metrics
+            
         except Exception as e:
             logger.error(f"Failed to create metrics entry: {e}")
             raise
@@ -66,15 +68,13 @@ class KGGraphMetricsRepository:
     async def get_by_id(self, metric_id: int) -> Optional[KGGraphMetrics]:
         """Get metrics entry by ID asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                query = self.table.select().where(self.table.c.metric_id == metric_id)
-                result = await conn.execute(query)
-                row = result.fetchone()
-                
-                if row:
-                    return KGGraphMetrics(**dict(row))
-                return None
-                
+            query = f"SELECT * FROM {self.table_name} WHERE metric_id = :metric_id"
+            result = await self.connection_manager.execute_query(query, {"metric_id": metric_id})
+            
+            if result and len(result) > 0:
+                return KGGraphMetrics(**result[0])
+            return None
+            
         except Exception as e:
             logger.error(f"Failed to get metrics entry by ID {metric_id}: {e}")
             raise
@@ -82,13 +82,11 @@ class KGGraphMetricsRepository:
     async def get_by_graph_id(self, graph_id: str) -> List[KGGraphMetrics]:
         """Get all metrics entries for a specific graph asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                query = self.table.select().where(self.table.c.graph_id == graph_id)
-                result = await conn.execute(query)
-                rows = result.fetchall()
-                
-                return [KGGraphMetrics(**dict(row)) for row in rows]
-                
+            query = f"SELECT * FROM {self.table_name} WHERE graph_id = :graph_id"
+            result = await self.connection_manager.execute_query(query, {"graph_id": graph_id})
+            
+            return [KGGraphMetrics(**row) for row in result]
+            
         except Exception as e:
             logger.error(f"Failed to get metrics entries for graph {graph_id}: {e}")
             raise
@@ -96,17 +94,21 @@ class KGGraphMetricsRepository:
     async def get_by_timestamp_range(self, graph_id: str, start_time: datetime, end_time: datetime) -> List[KGGraphMetrics]:
         """Get metrics entries within a timestamp range asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                query = self.table.select().where(
-                    (self.table.c.graph_id == graph_id) &
-                    (self.table.c.timestamp >= start_time) &
-                    (self.table.c.timestamp <= end_time)
-                )
-                result = await conn.execute(query)
-                rows = result.fetchall()
-                
-                return [KGGraphMetrics(**dict(row)) for row in rows]
-                
+            query = f"""
+                SELECT * FROM {self.table_name} 
+                WHERE graph_id = :graph_id 
+                AND timestamp >= :start_time 
+                AND timestamp <= :end_time
+            """
+            params = {
+                "graph_id": graph_id,
+                "start_time": start_time,
+                "end_time": end_time
+            }
+            result = await self.connection_manager.execute_query(query, params)
+            
+            return [KGGraphMetrics(**row) for row in result]
+            
         except Exception as e:
             logger.error(f"Failed to get metrics entries by timestamp range: {e}")
             raise
@@ -114,17 +116,18 @@ class KGGraphMetricsRepository:
     async def get_latest_metrics(self, graph_id: str) -> Optional[KGGraphMetrics]:
         """Get the latest metrics entry for a graph asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                query = self.table.select().where(
-                    self.table.c.graph_id == graph_id
-                ).order_by(self.table.c.timestamp.desc()).limit(1)
-                result = await conn.execute(query)
-                row = result.fetchone()
-                
-                if row:
-                    return KGGraphMetrics(**dict(row))
-                return None
-                
+            query = f"""
+                SELECT * FROM {self.table_name} 
+                WHERE graph_id = :graph_id 
+                ORDER BY timestamp DESC 
+                LIMIT 1
+            """
+            result = await self.connection_manager.execute_query(query, {"graph_id": graph_id})
+            
+            if result and len(result) > 0:
+                return KGGraphMetrics(**result[0])
+            return None
+            
         except Exception as e:
             logger.error(f"Failed to get latest metrics for graph {graph_id}: {e}")
             raise
@@ -132,22 +135,29 @@ class KGGraphMetricsRepository:
     async def update(self, metrics: KGGraphMetrics) -> KGGraphMetrics:
         """Update an existing metrics entry asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                # Update timestamp
-                metrics.timestamp = datetime.now(timezone.utc)
-                
-                # Convert model to dict for update
-                data = metrics.dict(exclude={'metric_id'})
-                
-                # Update in database
-                query = self.table.update().where(
-                    self.table.c.metric_id == metrics.metric_id
-                )
-                await conn.execute(query, data)
-                
-                logger.info(f"Updated metrics entry: {metrics.metric_id}")
-                return metrics
-                
+            # Update timestamp
+            metrics.timestamp = datetime.now(timezone.utc)
+            
+            # Convert model to dict for update
+            data = metrics.dict(exclude={'metric_id'})
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in data.keys()]
+            query = f"""
+                UPDATE {self.table_name} 
+                SET {', '.join(set_clauses)}
+                WHERE metric_id = :metric_id
+            """
+            
+            # Add metric_id to params
+            params = {**data, "metric_id": metrics.metric_id}
+            
+            # Execute raw SQL
+            await self.connection_manager.execute_update(query, params)
+            
+            logger.info(f"Updated metrics entry: {metrics.metric_id}")
+            return metrics
+            
         except Exception as e:
             logger.error(f"Failed to update metrics entry {metrics.metric_id}: {e}")
             raise
@@ -155,18 +165,12 @@ class KGGraphMetricsRepository:
     async def delete(self, metric_id: int) -> bool:
         """Delete a metrics entry asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                query = self.table.delete().where(self.table.c.metric_id == metric_id)
-                result = await conn.execute(query)
-                
-                deleted = result.rowcount > 0
-                if deleted:
-                    logger.info(f"Deleted metrics entry: {metric_id}")
-                else:
-                    logger.warning(f"Metrics entry not found for deletion: {metric_id}")
-                
-                return deleted
-                
+            query = f"DELETE FROM {self.table_name} WHERE metric_id = :metric_id"
+            await self.connection_manager.execute_update(query, {"metric_id": metric_id})
+            
+            logger.info(f"Deleted metrics entry: {metric_id}")
+            return True
+            
         except Exception as e:
             logger.error(f"Failed to delete metrics entry {metric_id}: {e}")
             raise
@@ -176,28 +180,32 @@ class KGGraphMetricsRepository:
     async def query(self, query_params: KGGraphMetricsQuery) -> List[KGGraphMetrics]:
         """Query metrics entries with filters asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                # Build query with filters
-                query = self.table.select()
-                
-                if query_params.graph_id:
-                    query = query.where(self.table.c.graph_id == query_params.graph_id)
-                if query_params.start_timestamp:
-                    query = query.where(self.table.c.timestamp >= query_params.start_timestamp)
-                if query_params.end_timestamp:
-                    query = query.where(self.table.c.timestamp <= query_params.end_timestamp)
-                if query_params.metric_type:
-                    # Filter by metric type (this would need to be implemented based on your metric_type logic)
-                    pass
-                
-                # Add pagination
-                query = query.limit(query_params.limit).offset(query_params.offset)
-                
-                result = await conn.execute(query)
-                rows = result.fetchall()
-                
-                return [KGGraphMetrics(**dict(row)) for row in rows]
-                
+            # Build query with filters
+            query = f"SELECT * FROM {self.table_name} WHERE 1=1"
+            params = {}
+            
+            if query_params.graph_id:
+                query += " AND graph_id = :graph_id"
+                params["graph_id"] = query_params.graph_id
+            if query_params.start_timestamp:
+                query += " AND timestamp >= :start_timestamp"
+                params["start_timestamp"] = query_params.start_timestamp
+            if query_params.end_timestamp:
+                query += " AND timestamp <= :end_timestamp"
+                params["end_timestamp"] = query_params.end_timestamp
+            if query_params.metric_type:
+                # Filter by metric type (this would need to be implemented based on your metric_type logic)
+                pass
+            
+            # Add pagination
+            query += " LIMIT :limit OFFSET :offset"
+            params["limit"] = query_params.limit
+            params["offset"] = query_params.offset
+            
+            result = await self.connection_manager.execute_query(query, params)
+            
+            return [KGGraphMetrics(**row) for row in result]
+            
         except Exception as e:
             logger.error(f"Failed to query metrics entries: {e}")
             raise
@@ -205,12 +213,10 @@ class KGGraphMetricsRepository:
     async def get_total_count(self) -> int:
         """Get total count of metrics entries asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                query = self.table.select()
-                result = await conn.execute(query)
-                rows = result.fetchall()
-                return len(rows)
-                
+            query = f"SELECT COUNT(*) as total FROM {self.table_name}"
+            result = await self.connection_manager.execute_query(query, {})
+            return result[0]['total'] if result and len(result) > 0 else 0
+            
         except Exception as e:
             logger.error(f"Failed to get total count: {e}")
             raise
@@ -276,63 +282,47 @@ class KGGraphMetricsRepository:
     async def get_summary(self) -> KGGraphMetricsSummary:
         """Get comprehensive summary of metrics asynchronously"""
         try:
-            async with self.connection_manager.get_connection() as conn:
-                # Get total metrics
-                total_query = self.table.select()
-                total_result = await conn.execute(total_query)
-                total_metrics = len(total_result.fetchall())
+            # Get total metrics
+            total_query = f"SELECT COUNT(*) as total FROM {self.table_name}"
+            total_result = await self.connection_manager.execute_query(total_query, {})
+            total_metrics = total_result[0]['total'] if total_result and len(total_result) > 0 else 0
+            
+            # Calculate average health score
+            health_query = f"SELECT health_score FROM {self.table_name} WHERE health_score IS NOT NULL"
+            health_result = await self.connection_manager.execute_query(health_query, {})
+            
+            if health_result:
+                avg_health_score = sum(row['health_score'] for row in health_result if 'health_score' in row and row['health_score']) / len(health_result)
+            else:
+                avg_health_score = 0.0
+            
+            # Calculate average response time
+            response_query = f"SELECT response_time_ms FROM {self.table_name} WHERE response_time_ms IS NOT NULL"
+            response_result = await self.connection_manager.execute_query(response_query, {})
+            
+            if response_result:
+                avg_response_time = sum(row['response_time_ms'] for row in response_result if 'response_time_ms' in row and row['response_time_ms']) / len(response_result)
+            else:
+                avg_response_time = 0.0
+            
+            # Calculate total user interactions
+            interactions_query = f"SELECT user_interaction_count FROM {self.table_name} WHERE user_interaction_count IS NOT NULL"
+            interactions_result = await self.connection_manager.execute_query(interactions_query, {})
                 
-                # Calculate average health score
-                health_query = self.table.select(self.table.c.health_score).where(
-                    self.table.c.health_score.isnot(None)
-                )
-                health_result = await conn.execute(health_query)
-                health_rows = health_result.fetchall()
-                
-                if health_rows:
-                    avg_health_score = sum(row.health_score for row in health_rows) / len(health_rows)
-                else:
-                    avg_health_score = 0.0
-                
-                # Calculate average response time
-                response_query = self.table.select(self.table.c.response_time_ms).where(
-                    self.table.c.response_time_ms.isnot(None)
-                )
-                response_result = await conn.execute(response_query)
-                response_rows = response_result.fetchall()
-                
-                if response_rows:
-                    avg_response_time = sum(row.response_time_ms for row in response_rows) / len(response_rows)
-                else:
-                    avg_response_time = 0.0
-                
-                # Calculate total user interactions
-                interactions_query = self.table.select(self.table.c.user_interaction_count).where(
-                    self.table.c.user_interaction_count.isnot(None)
-                )
-                interactions_result = await conn.execute(interactions_query)
-                interactions_rows = interactions_result.fetchall()
-                
-                total_user_interactions = sum(row.user_interaction_count for row in interactions_rows if row.user_interaction_count)
+                total_user_interactions = sum(row['user_interaction_count'] for row in interactions_result if 'user_interaction_count' in row and row['user_interaction_count'])
                 
                 # Calculate total queries executed
-                queries_query = self.table.select(self.table.c.query_execution_count).where(
-                    self.table.c.query_execution_count.isnot(None)
-                )
-                queries_result = await conn.execute(queries_query)
-                queries_rows = queries_result.fetchall()
+                queries_query = f"SELECT query_execution_count FROM {self.table_name} WHERE query_execution_count IS NOT NULL"
+                queries_result = await self.connection_manager.execute_query(queries_query, {})
                 
-                total_queries_executed = sum(row.query_execution_count for row in queries_rows if row.query_execution_count)
+                total_queries_executed = sum(row['query_execution_count'] for row in queries_result if 'query_execution_count' in row and row['query_execution_count'])
                 
                 # Calculate average data quality
-                quality_query = self.table.select(self.table.c.data_freshness_score).where(
-                    self.table.c.data_freshness_score.isnot(None)
-                )
-                quality_result = await conn.execute(quality_query)
-                quality_rows = quality_result.fetchall()
+                quality_query = f"SELECT data_freshness_score FROM {self.table_name} WHERE data_freshness_score IS NOT NULL"
+                quality_result = await self.connection_manager.execute_query(quality_query, {})
                 
-                if quality_rows:
-                    avg_data_quality = sum(row.data_freshness_score for row in quality_rows) / len(quality_rows)
+                if quality_result:
+                    avg_data_quality = sum(row['data_freshness_score'] for row in quality_result if 'data_freshness_score' in row and row['data_freshness_score']) / len(quality_result)
                 else:
                     avg_data_quality = 0.0
                 

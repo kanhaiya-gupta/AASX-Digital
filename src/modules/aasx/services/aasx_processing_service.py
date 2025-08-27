@@ -616,3 +616,170 @@ class AASXProcessingService:
         except Exception as e:
             logger.error(f"Failed to cleanup old jobs: {e}")
             return 0
+
+    # ENTERPRISE FEATURES - New methods for enterprise capabilities
+    
+    async def update_compliance_status(self, job_id: str, compliance_type: str, 
+                                     compliance_score: float, audit_details: Dict[str, Any]) -> bool:
+        """
+        Update compliance status for enterprise governance.
+        
+        Args:
+            job_id: Job identifier
+            compliance_type: Type of compliance (standard, enterprise, government, healthcare, financial)
+            compliance_score: Compliance score (0-100)
+            audit_details: Detailed audit information
+            
+        Returns:
+            bool: True if update successful
+        """
+        try:
+            job = await self.repository.get_by_id(job_id)
+            if not job:
+                logger.error(f"Job {job_id} not found for compliance update")
+                return False
+            
+            # Update compliance fields
+            job.compliance_type = compliance_type
+            job.compliance_score = compliance_score
+            job.audit_details = audit_details
+            job.last_audit_date = datetime.now().isoformat()
+            
+            # Calculate next audit date (90 days from now for enterprise)
+            if compliance_type == "enterprise":
+                from datetime import timedelta
+                next_audit = datetime.now() + timedelta(days=90)
+                job.next_audit_date = next_audit.isoformat()
+            
+            success = await self.repository.update(job)
+            if success:
+                logger.info(f"Updated compliance status for job {job_id}: {compliance_type} - {compliance_score}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to update compliance status for job {job_id}: {e}")
+            return False
+    
+    async def update_security_metrics(self, job_id: str, security_event_type: str,
+                                    threat_assessment: str, security_score: float,
+                                    security_details: Dict[str, Any]) -> bool:
+        """
+        Update security metrics for enterprise security monitoring.
+        
+        Args:
+            job_id: Job identifier
+            security_event_type: Type of security event (none, low, medium, high, critical)
+            threat_assessment: Threat assessment level (low, medium, high, critical, unknown)
+            security_score: Security score (0-100)
+            security_details: Detailed security information
+            
+        Returns:
+            bool: True if update successful
+        """
+        try:
+            job = await self.repository.get_by_id(job_id)
+            if not job:
+                logger.error(f"Job {job_id} not found for security update")
+                return False
+            
+            # Update security fields
+            job.security_event_type = security_event_type
+            job.threat_assessment = threat_assessment
+            job.security_score = security_score
+            job.security_details = security_details
+            job.last_security_scan = datetime.now().isoformat()
+            
+            success = await self.repository.update(job)
+            if success:
+                logger.info(f"Updated security metrics for job {job_id}: {security_event_type} - {threat_assessment}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Failed to update security metrics for job {job_id}: {e}")
+            return False
+    
+    async def get_enterprise_compliance_report(self, org_id: str, 
+                                            compliance_type: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get enterprise compliance report for governance.
+        
+        Args:
+            org_id: Organization identifier
+            compliance_type: Optional compliance type filter
+            
+        Returns:
+            Dict[str, Any]: Compliance report data
+        """
+        try:
+            # Get all jobs for the organization
+            jobs = await self.repository.get_by_org_id(org_id)
+            
+            if compliance_type:
+                jobs = [job for job in jobs if job.compliance_type == compliance_type]
+            
+            # Calculate compliance statistics
+            total_jobs = len(jobs)
+            compliant_jobs = [job for job in jobs if job.compliance_score >= 80]
+            warning_jobs = [job for job in jobs if 60 <= job.compliance_score < 80]
+            non_compliant_jobs = [job for job in jobs if job.compliance_score < 60]
+            
+            avg_compliance_score = sum(job.compliance_score for job in jobs) / total_jobs if total_jobs > 0 else 0
+            
+            return {
+                'total_jobs': total_jobs,
+                'compliant_jobs': len(compliant_jobs),
+                'warning_jobs': len(warning_jobs),
+                'non_compliant_jobs': len(non_compliant_jobs),
+                'average_compliance_score': round(avg_compliance_score, 2),
+                'compliance_status': 'compliant' if avg_compliance_score >= 80 else 'warning' if avg_compliance_score >= 60 else 'non_compliant',
+                'jobs_requiring_attention': [job.job_id for job in warning_jobs + non_compliant_jobs]
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to generate enterprise compliance report for org {org_id}: {e}")
+            return {}
+    
+    async def get_enterprise_security_report(self, org_id: str) -> Dict[str, Any]:
+        """
+        Get enterprise security report for security monitoring.
+        
+        Args:
+            org_id: Organization identifier
+            
+        Returns:
+            Dict[str, Any]: Security report data
+        """
+        try:
+            # Get all jobs for the organization
+            jobs = await self.repository.get_by_org_id(org_id)
+            
+            # Calculate security statistics
+            total_jobs = len(jobs)
+            secure_jobs = [job for job in jobs if job.security_score >= 80]
+            warning_jobs = [job for job in jobs if 60 <= job.security_score < 80]
+            at_risk_jobs = [job for job in jobs if job.security_score < 60]
+            
+            # Count by threat assessment
+            threat_counts = {}
+            for job in jobs:
+                threat_level = job.threat_assessment
+                threat_counts[threat_level] = threat_counts.get(threat_level, 0) + 1
+            
+            avg_security_score = sum(job.security_score for job in jobs) / total_jobs if total_jobs > 0 else 0
+            
+            return {
+                'total_jobs': total_jobs,
+                'secure_jobs': len(secure_jobs),
+                'warning_jobs': len(warning_jobs),
+                'at_risk_jobs': len(at_risk_jobs),
+                'average_security_score': round(avg_security_score, 2),
+                'security_status': 'secure' if avg_security_score >= 80 else 'warning' if avg_security_score >= 60 else 'at_risk',
+                'threat_assessment_distribution': threat_counts,
+                'jobs_requiring_security_attention': [job.job_id for job in warning_jobs + at_risk_jobs]
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to generate enterprise security report for org {org_id}: {e}")
+            return {}

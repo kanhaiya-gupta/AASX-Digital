@@ -1,6 +1,6 @@
 """
 AAS Data Modeling Engine - World-Class Models Package
-====================================================
+===================================================
 
 Comprehensive, enterprise-grade models with:
 - Enhanced Pydantic models with business logic
@@ -73,6 +73,12 @@ from .enterprise_patterns import (
     ModelRegistry
 )
 
+# Request Context Models (NEW - Added for authentication)
+from .request_context import (
+    PermissionLevel, SessionInfo, UserContext, RequestContext,
+    AuthenticationResult, AuthorizationResult
+)
+
 # Version and metadata
 __version__ = "2.0.0"
 __author__ = "AAS Data Modeling Engine Team"
@@ -102,7 +108,11 @@ __all__ = [
     'BusinessDomainFactory', 'AuthFactory', 'ModelBuilder', 'CoreSystemBuilder',
     'BusinessDomainBuilder', 'ModelEventBus', 'AuditObserver', 'MetricsObserver',
     'ValidationStrategy', 'StrictValidationStrategy', 'RelaxedValidationStrategy', 'ValidationContext',
-    'ModelCommand', 'CreateModelCommand', 'UpdateModelCommand', 'CommandInvoker', 'ModelRegistry'
+    'ModelCommand', 'CreateModelCommand', 'UpdateModelCommand', 'CommandInvoker', 'ModelRegistry',
+    
+    # Request Context Models (NEW)
+    'PermissionLevel', 'SessionInfo', 'UserContext', 'RequestContext',
+    'AuthenticationResult', 'AuthorizationResult'
 ]
 
 # Convenience imports for common use cases

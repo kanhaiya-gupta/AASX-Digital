@@ -218,10 +218,10 @@ class RealTimeMonitor:
         """
         try:
             # Import here to avoid circular imports
-            from src.twin_registry.repositories.twin_registry_metrics_repository import TwinRegistryMetricsRepository
-            from src.twin_registry.models.twin_registry_metrics import TwinRegistryMetrics
-            from src.shared.database.connection_manager import DatabaseConnectionManager
-            from src.shared.database.base_manager import BaseDatabaseManager
+            from ..repositories.twin_registry_metrics_repository import TwinRegistryMetricsRepository
+from ..models.twin_registry_metrics import TwinRegistryMetrics
+            from src.engine.database.connection_manager import ConnectionManager
+from src.engine.database.database_factory import DatabaseFactory, DatabaseType
             from datetime import datetime, timezone
             
             # Initialize repository

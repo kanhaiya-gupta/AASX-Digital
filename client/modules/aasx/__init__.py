@@ -1,1 +1,0 @@
-# AASX module for AASX Digital Twin Analytics Framework 

@@ -19,7 +19,7 @@ os.environ['NODE_ENV'] = 'production'
 # Load environment variables from .env file if it exists
 try:
     from dotenv import load_dotenv
-    # The webapp config will handle loading the correct .env file
+    # The client config will handle loading the correct .env file
 except ImportError:
     # If python-dotenv is not installed, continue without it
     pass
@@ -36,7 +36,7 @@ class AASXDigitalTwinFramework:
     
     def __init__(self):
         self.project_root = Path(__file__).parent
-        self.webapp_dir = self.project_root / "webapp"
+        self.client_dir = self.project_root / "client"
         self.running = False
         
     def check_environment(self) -> bool:
@@ -51,15 +51,15 @@ class AASXDigitalTwinFramework:
             logger.error(f"❌ Python 3.8+ required, found {python_version.major}.{python_version.minor}")
             return False
         
-        # Check webapp directory
-        if not self.webapp_dir.exists():
-            logger.error("❌ Webapp directory not found!")
+        # Check client directory
+        if not self.client_dir.exists():
+            logger.error("❌ Client directory not found!")
             return False
         
         # Check app.py
-        app_path = self.webapp_dir / "app.py"
+        app_path = self.client_dir / "app.py"
         if not app_path.exists():
-            logger.error("❌ app.py not found in webapp directory!")
+            logger.error("❌ app.py not found in client directory!")
             return False
         
         # Check src directory (renamed from backend)
@@ -162,8 +162,8 @@ class AASXDigitalTwinFramework:
         logger.info("📡 Shutdown signal received")
         self.running = False
     
-    def start_webapp(self, host: str = "0.0.0.0", port: int = 8000) -> bool:
-        """Start the FastAPI webapp"""
+    def start_client(self, host: str = "0.0.0.0", port: int = 8000) -> bool:
+        """Start the FastAPI client application"""
         try:
             # Display startup information
             logger.info("🚀 Starting AASX Digital Twin Analytics Framework...")
@@ -200,7 +200,7 @@ class AASXDigitalTwinFramework:
             
             # Start uvicorn server
             uvicorn.run(
-                "webapp.app:app",
+                "client.app:app",
                 host=host,
                 port=port,
                 reload=False,  # Disable reload for production
@@ -231,8 +231,8 @@ class AASXDigitalTwinFramework:
             if not skip_checks:
                 self.check_services()
             
-            # Start webapp
-            return self.start_webapp(host, port)
+            # Start client
+            return self.start_client(host, port)
             
         except Exception as e:
             logger.error(f"❌ Framework startup failed: {e}")
@@ -253,8 +253,8 @@ Examples:
         """
     )
     
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the webapp to")
-    parser.add_argument("--port", type=int, default=8000, help="Port to run the webapp on")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the client application to")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the client application on")
     parser.add_argument("--skip-checks", action="store_true", help="Skip dependency and service checks")
     parser.add_argument("--check-only", action="store_true", help="Only check environment and dependencies")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")

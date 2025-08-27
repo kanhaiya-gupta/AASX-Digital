@@ -4,7 +4,7 @@ Twin Instance Model
 Manages versioning and instances of digital twins.
 """
 
-from src.shared.models.base_model import BaseModel
+from src.engine.models.base_model import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 import uuid

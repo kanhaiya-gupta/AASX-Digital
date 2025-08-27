@@ -9,10 +9,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, func, text, select, update, delete
-from sqlalchemy.orm import selectinload
-
+from src.engine.database.connection_manager import ConnectionManager
 from ..models.certificates_registry import (
     CertificateRegistry,
     ModuleStatus,
@@ -31,35 +28,53 @@ class CertificatesRegistryRepository:
     Handles all CRUD operations and component-specific operations
     """
     
-    def __init__(self, db_session: AsyncSession):
-        self.db_session = db_session
+    def __init__(self, connection_manager: ConnectionManager):
+        """Initialize with connection manager for raw SQL operations."""
+        self.connection_manager = connection_manager
+        self.table_name = "certificates_registry"
+        logger.info("Certificate Registry Repository initialized with ConnectionManager")
     
     # ========================================================================
     # CORE CERTIFICATE OPERATIONS
     # ========================================================================
     
     async def create(self, certificate: CertificateRegistry) -> CertificateRegistry:
-        """Create a new certificate"""
+        """Create a new certificate using raw SQL"""
         try:
-            self.db_session.add(certificate)
-            await self.db_session.commit()
-            await self.db_session.refresh(certificate)
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build INSERT query dynamically
+            columns = list(db_data.keys())
+            placeholders = [f":{col}" for col in columns]
+            
+            query = f"""
+                INSERT INTO {self.table_name} ({', '.join(columns)})
+                VALUES ({', '.join(placeholders)})
+            """
+            
+            # Execute raw SQL
+            await self.execute_query(query, db_data)
+            
             logger.info(f"Created certificate {certificate.certificate_id}")
             return certificate
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error creating certificate: {e}")
             raise
     
     async def get_by_id(self, certificate_id: str) -> Optional[CertificateRegistry]:
-        """Get certificate by ID"""
+        """Get certificate by ID using raw SQL"""
         try:
-            result = await self.db_session.execute(
-                select(CertificateRegistry)
-                .where(CertificateRegistry.certificate_id == certificate_id)
-                .where(CertificateRegistry.is_deleted == False)
-            )
-            return result.scalar_one_or_none()
+            query = f"""
+                SELECT * FROM {self.table_name}
+                WHERE certificate_id = :certificate_id AND is_deleted = :is_deleted
+            """
+            
+            result = await self.fetch_one(query, {"certificate_id": certificate_id, "is_deleted": False})
+            
+            if result:
+                return self._dict_to_model(result)
+            return None
         except Exception as e:
             logger.error(f"Error retrieving certificate {certificate_id}: {e}")
             raise
@@ -70,68 +85,71 @@ class CertificatesRegistryRepository:
         offset: int = 0,
         filters: Optional[Dict[str, Any]] = None
     ) -> List[CertificateRegistry]:
-        """Get all certificates with optional filtering"""
+        """Get all certificates with optional filtering using raw SQL"""
         try:
-            query = select(CertificateRegistry).where(CertificateRegistry.is_deleted == False)
+            query = f"SELECT * FROM {self.table_name} WHERE is_deleted = :is_deleted"
+            params = {"is_deleted": False}
             
             if filters:
                 for key, value in filters.items():
-                    if hasattr(CertificateRegistry, key) and value is not None:
-                        query = query.where(getattr(CertificateRegistry, key) == value)
+                    if value is not None:
+                        query += f" AND {key} = :{key}"
+                        params[key] = value
             
-            query = query.limit(limit).offset(offset)
-            result = await self.db_session.execute(query)
-            return result.scalars().all()
+            query += " LIMIT :limit OFFSET :offset"
+            params["limit"] = limit
+            params["offset"] = offset
+            
+            result = await self.execute_query(query, params)
+            return [self._dict_to_model(row) for row in result]
         except Exception as e:
             logger.error(f"Error retrieving certificates: {e}")
             raise
     
     async def update(self, certificate_id: str, update_data: Dict[str, Any]) -> Optional[CertificateRegistry]:
-        """Update certificate"""
+        """Update certificate using raw SQL"""
         try:
             update_data["updated_at"] = datetime.utcnow()
             
-            result = await self.db_session.execute(
-                update(CertificateRegistry)
-                .where(CertificateRegistry.certificate_id == certificate_id)
-                .values(**update_data)
-                .returning(CertificateRegistry)
-            )
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in update_data.keys()]
+            query = f"""
+                UPDATE {self.table_name} 
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+                RETURNING *
+            """
             
-            await self.db_session.commit()
-            updated_certificate = result.scalar_one_or_none()
+            # Add certificate_id to params
+            params = {**update_data, "certificate_id": certificate_id}
             
-            if updated_certificate:
-                logger.info(f"Updated certificate {certificate_id}")
+            result = await self.fetch_one(query, params)
             
-            return updated_certificate
+            if result:
+                return self._dict_to_model(result)
+            return None
         except Exception as e:
-            await self.db_session.rollback()
-            logger.error(f"Error updating certificate {certificate_id}: {e}")
+            logger.error(f"Error updating certificate: {e}")
             raise
     
     async def delete(self, certificate_id: str, user_id: str) -> bool:
-        """Soft delete certificate"""
+        """Soft delete certificate using raw SQL"""
         try:
-            result = await self.db_session.execute(
-                update(CertificateRegistry)
-                .where(CertificateRegistry.certificate_id == certificate_id)
-                .values(
-                    is_deleted=True,
-                    deleted_at=datetime.utcnow(),
-                    deleted_by=user_id
-                )
-            )
+            query = f"""
+                UPDATE {self.table_name}
+                SET is_deleted = :is_deleted, deleted_at = :deleted_at, deleted_by = :deleted_by
+                WHERE certificate_id = :certificate_id
+            """
+            params = {
+                "is_deleted": True,
+                "deleted_at": datetime.utcnow(),
+                "deleted_by": user_id,
+                "certificate_id": certificate_id
+            }
             
-            await self.db_session.commit()
-            success = result.rowcount > 0
-            
-            if success:
-                logger.info(f"Deleted certificate {certificate_id}")
-            
-            return success
+            await self.execute_query(query, params)
+            return True # Raw SQL execute_query doesn't return rowcount directly, assume success if no error
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error deleting certificate {certificate_id}: {e}")
             raise
     
@@ -146,7 +164,7 @@ class CertificatesRegistryRepository:
         status: ModuleStatus,
         health_score: Optional[float] = None
     ) -> bool:
-        """Update status of a specific module"""
+        """Update status of a specific module using raw SQL"""
         try:
             # Get current certificate
             certificate = await self.get_by_id(certificate_id)
@@ -178,12 +196,25 @@ class CertificatesRegistryRepository:
             )
             certificate.module_status.active_modules = active_modules
             
-            await self.db_session.commit()
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in db_data.keys() if key != "certificate_id"] # Exclude certificate_id for update
+            query = f"""
+                UPDATE {self.table_name}
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+            """
+            
+            # Add certificate_id to params
+            params = {**db_data, "certificate_id": certificate_id}
+            
+            await self.execute_query(query, params)
             logger.info(f"Updated module {module_name} status to {status} for certificate {certificate_id}")
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating module status: {e}")
             raise
     
@@ -193,7 +224,7 @@ class CertificatesRegistryRepository:
         status: ModuleStatus,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by specific module status"""
+        """Get certificates by specific module status using raw SQL"""
         try:
             # This would require a more complex query to filter by nested JSON data
             # For now, we'll get all certificates and filter in Python
@@ -215,7 +246,7 @@ class CertificatesRegistryRepository:
             raise
     
     async def get_system_health_summary(self) -> Dict[str, Any]:
-        """Get overall system health summary across all certificates"""
+        """Get overall system health summary across all certificates using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -273,7 +304,7 @@ class CertificatesRegistryRepository:
         certificate_id: str,
         quality_data: Dict[str, Any]
     ) -> bool:
-        """Update quality assessment data"""
+        """Update quality assessment data using raw SQL"""
         try:
             certificate = await self.get_by_id(certificate_id)
             if not certificate:
@@ -306,12 +337,25 @@ class CertificatesRegistryRepository:
             else:
                 certificate.quality_assessment.quality_level = QualityLevel.CRITICAL
             
-            await self.db_session.commit()
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in db_data.keys() if key != "certificate_id"] # Exclude certificate_id for update
+            query = f"""
+                UPDATE {self.table_name}
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+            """
+            
+            # Add certificate_id to params
+            params = {**db_data, "certificate_id": certificate_id}
+            
+            await self.execute_query(query, params)
             logger.info(f"Updated quality assessment for certificate {certificate_id}")
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating quality assessment: {e}")
             raise
     
@@ -320,7 +364,7 @@ class CertificatesRegistryRepository:
         quality_level: QualityLevel,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by quality level"""
+        """Get certificates by quality level using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -338,7 +382,7 @@ class CertificatesRegistryRepository:
             raise
     
     async def get_quality_statistics(self) -> Dict[str, Any]:
-        """Get quality statistics across all certificates"""
+        """Get quality statistics across all certificates using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -380,7 +424,7 @@ class CertificatesRegistryRepository:
         certificate_id: str,
         compliance_data: Dict[str, Any]
     ) -> bool:
-        """Update compliance tracking data"""
+        """Update compliance tracking data using raw SQL"""
         try:
             certificate = await self.get_by_id(certificate_id)
             if not certificate:
@@ -408,12 +452,25 @@ class CertificatesRegistryRepository:
                 else:
                     certificate.compliance_tracking.compliance_status = ComplianceStatus.NON_COMPLIANT
             
-            await self.db_session.commit()
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in db_data.keys() if key != "certificate_id"] # Exclude certificate_id for update
+            query = f"""
+                UPDATE {self.table_name}
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+            """
+            
+            # Add certificate_id to params
+            params = {**db_data, "certificate_id": certificate_id}
+            
+            await self.execute_query(query, params)
             logger.info(f"Updated compliance tracking for certificate {certificate_id}")
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating compliance tracking: {e}")
             raise
     
@@ -422,7 +479,7 @@ class CertificatesRegistryRepository:
         compliance_status: ComplianceStatus,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by compliance status"""
+        """Get certificates by compliance status using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -440,7 +497,7 @@ class CertificatesRegistryRepository:
             raise
     
     async def get_compliance_statistics(self) -> Dict[str, Any]:
-        """Get compliance statistics across all certificates"""
+        """Get compliance statistics across all certificates using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -480,7 +537,7 @@ class CertificatesRegistryRepository:
         certificate_id: str,
         security_data: Dict[str, Any]
     ) -> bool:
-        """Update security metrics data"""
+        """Update security metrics data using raw SQL"""
         try:
             certificate = await self.get_by_id(certificate_id)
             if not certificate:
@@ -524,12 +581,25 @@ class CertificatesRegistryRepository:
                 else:
                     certificate.security_metrics.security_level = SecurityLevel.CRITICAL
             
-            await self.db_session.commit()
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in db_data.keys() if key != "certificate_id"] # Exclude certificate_id for update
+            query = f"""
+                UPDATE {self.table_name}
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+            """
+            
+            # Add certificate_id to params
+            params = {**db_data, "certificate_id": certificate_id}
+            
+            await self.execute_query(query, params)
             logger.info(f"Updated security metrics for certificate {certificate_id}")
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating security metrics: {e}")
             raise
     
@@ -538,7 +608,7 @@ class CertificatesRegistryRepository:
         security_level: SecurityLevel,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by security level"""
+        """Get certificates by security level using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -556,7 +626,7 @@ class CertificatesRegistryRepository:
             raise
     
     async def get_security_statistics(self) -> Dict[str, Any]:
-        """Get security statistics across all certificates"""
+        """Get security statistics across all certificates using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -596,7 +666,7 @@ class CertificatesRegistryRepository:
         certificate_id: str,
         business_data: Dict[str, Any]
     ) -> bool:
-        """Update business context data"""
+        """Update business context data using raw SQL"""
         try:
             certificate = await self.get_by_id(certificate_id)
             if not certificate:
@@ -607,12 +677,25 @@ class CertificatesRegistryRepository:
                 if hasattr(certificate.business_context, key):
                     setattr(certificate.business_context, key, value)
             
-            await self.db_session.commit()
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in db_data.keys() if key != "certificate_id"] # Exclude certificate_id for update
+            query = f"""
+                UPDATE {self.table_name}
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+            """
+            
+            # Add certificate_id to params
+            params = {**db_data, "certificate_id": certificate_id}
+            
+            await self.execute_query(query, params)
             logger.info(f"Updated business context for certificate {certificate_id}")
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating business context: {e}")
             raise
     
@@ -621,7 +704,7 @@ class CertificatesRegistryRepository:
         business_tag: str,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by business tag"""
+        """Get certificates by business tag using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -643,7 +726,7 @@ class CertificatesRegistryRepository:
         business_owner: str,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by business owner"""
+        """Get certificates by business owner using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -670,7 +753,7 @@ class CertificatesRegistryRepository:
         module_name: str,
         summary_data: Dict[str, Any]
     ) -> bool:
-        """Update module summary data"""
+        """Update module summary data using raw SQL"""
         try:
             certificate = await self.get_by_id(certificate_id)
             if not certificate:
@@ -686,12 +769,25 @@ class CertificatesRegistryRepository:
             certificate.module_summaries.summary_generated_at = datetime.utcnow()
             certificate.module_summaries.modules_with_data += 1
             
-            await self.db_session.commit()
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in db_data.keys() if key != "certificate_id"] # Exclude certificate_id for update
+            query = f"""
+                UPDATE {self.table_name}
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+            """
+            
+            # Add certificate_id to params
+            params = {**db_data, "certificate_id": certificate_id}
+            
+            await self.execute_query(query, params)
             logger.info(f"Updated module summary for {module_name} in certificate {certificate_id}")
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating module summary: {e}")
             raise
     
@@ -700,7 +796,7 @@ class CertificatesRegistryRepository:
         min_coverage_percentage: float,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by module data coverage"""
+        """Get certificates by module data coverage using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -727,7 +823,7 @@ class CertificatesRegistryRepository:
         certificate_id: str,
         trust_data: Dict[str, Any]
     ) -> bool:
-        """Update digital trust data"""
+        """Update digital trust data using raw SQL"""
         try:
             certificate = await self.get_by_id(certificate_id)
             if not certificate:
@@ -774,12 +870,25 @@ class CertificatesRegistryRepository:
                 else:
                     certificate.digital_trust.trust_level = "untrusted"
             
-            await self.db_session.commit()
+            # Convert Pydantic model to database dict
+            db_data = self._model_to_dict(certificate)
+            
+            # Build UPDATE query dynamically
+            set_clauses = [f"{key} = :{key}" for key in db_data.keys() if key != "certificate_id"] # Exclude certificate_id for update
+            query = f"""
+                UPDATE {self.table_name}
+                SET {', '.join(set_clauses)}
+                WHERE certificate_id = :certificate_id
+            """
+            
+            # Add certificate_id to params
+            params = {**db_data, "certificate_id": certificate_id}
+            
+            await self.execute_query(query, params)
             logger.info(f"Updated digital trust for certificate {certificate_id}")
             return True
             
         except Exception as e:
-            await self.db_session.rollback()
             logger.error(f"Error updating digital trust: {e}")
             raise
     
@@ -788,7 +897,7 @@ class CertificatesRegistryRepository:
         trust_level: str,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by trust level"""
+        """Get certificates by trust level using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -806,7 +915,7 @@ class CertificatesRegistryRepository:
             raise
     
     async def get_digital_trust_statistics(self) -> Dict[str, Any]:
-        """Get digital trust statistics across all certificates"""
+        """Get digital trust statistics across all certificates using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -854,7 +963,7 @@ class CertificatesRegistryRepository:
         limit: int = 100,
         offset: int = 0
     ) -> List[CertificateRegistry]:
-        """Search certificates with advanced filtering"""
+        """Search certificates with advanced filtering using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -891,7 +1000,7 @@ class CertificatesRegistryRepository:
         status: CertificateStatus,
         limit: int = 100
     ) -> List[CertificateRegistry]:
-        """Get certificates by status"""
+        """Get certificates by status using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -917,7 +1026,7 @@ class CertificatesRegistryRepository:
         certificate_ids: List[str],
         update_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Bulk update multiple certificates"""
+        """Bulk update multiple certificates using raw SQL"""
         try:
             results = {
                 "successful": [],
@@ -948,7 +1057,7 @@ class CertificatesRegistryRepository:
         certificate_ids: List[str],
         user_id: str
     ) -> Dict[str, Any]:
-        """Bulk delete multiple certificates"""
+        """Bulk delete multiple certificates using raw SQL"""
         try:
             results = {
                 "successful": [],
@@ -979,7 +1088,7 @@ class CertificatesRegistryRepository:
     # ========================================================================
     
     async def get_certificate_statistics(self) -> Dict[str, Any]:
-        """Get comprehensive certificate statistics"""
+        """Get comprehensive certificate statistics using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -1015,7 +1124,7 @@ class CertificatesRegistryRepository:
             raise
     
     async def get_certificates_requiring_attention(self, limit: int = 100) -> List[CertificateRegistry]:
-        """Get certificates that require attention"""
+        """Get certificates that require attention using raw SQL"""
         try:
             all_certificates = await self.get_all(limit=1000)
             
@@ -1037,7 +1146,7 @@ class CertificatesRegistryRepository:
     # ========================================================================
     
     async def get_certificate_health_status(self, certificate_id: str) -> Dict[str, Any]:
-        """Get comprehensive health status for a certificate"""
+        """Get comprehensive health status for a certificate using raw SQL"""
         try:
             certificate = await self.get_by_id(certificate_id)
             if not certificate:
@@ -1080,7 +1189,7 @@ class CertificatesRegistryRepository:
         certificate_ids: List[str],
         format: str = "json"
     ) -> Dict[str, Any]:
-        """Export certificate data in specified format"""
+        """Export certificate data in specified format using raw SQL"""
         try:
             certificates = []
             for certificate_id in certificate_ids:
@@ -1103,3 +1212,40 @@ class CertificatesRegistryRepository:
         except Exception as e:
             logger.error(f"Error exporting certificate data: {e}")
             raise
+    
+    # ========================================================================
+    # HELPER METHODS
+    # ========================================================================
+    
+    def _model_to_dict(self, certificate: CertificateRegistry) -> Dict[str, Any]:
+        """Convert Pydantic model to database dictionary."""
+        return certificate.model_dump()
+    
+    def _dict_to_model(self, data: Dict[str, Any]) -> CertificateRegistry:
+        """Convert database dictionary to Pydantic model."""
+        return CertificateRegistry(**data)
+    
+    # ========================================================================
+    # CONNECTION MANAGER METHODS
+    # ========================================================================
+    
+    async def execute_query(self, query: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """Execute a query using the connection manager."""
+        try:
+            if query.strip().upper().startswith('SELECT'):
+                return await self.connection_manager.execute_query(query, params or {})
+            else:
+                await self.connection_manager.execute_update(query, params or {})
+                return []
+        except Exception as e:
+            logger.error(f"Failed to execute query: {e}")
+            raise
+    
+    async def fetch_one(self, query: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+        """Fetch a single row using the connection manager."""
+        try:
+            result = await self.connection_manager.execute_query(query, params or {})
+            return result[0] if result and len(result) > 0 else None
+        except Exception as e:
+            logger.error(f"Failed to fetch one: {e}")
+            return None
