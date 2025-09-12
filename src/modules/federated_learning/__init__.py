@@ -12,6 +12,7 @@ from .core.aggregation_server import AggregationServer
 from .core.federated_learning_service import FederatedLearningService
 
 __all__ = [
+    # Core components available for import
     'FederationEngine',
     'LocalTrainer', 
     'AggregationServer',

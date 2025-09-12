@@ -6,10 +6,10 @@ Supports ML model training, deployment, and performance tracking with enterprise
 Enhanced with computed fields and business intelligence methods.
 """
 
-from src.engine.models.engine_base_model import EngineBaseModel
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
-from pydantic import Field, ConfigDict, computed_field
+from pydantic import BaseModel, Field, ConfigDict, computed_field
 import uuid
 import asyncio
 
@@ -22,7 +22,11 @@ class KGNeo4jMLRegistry(EngineBaseModel):
     Supports ML model training, deployment, performance tracking, and enterprise-grade features.
     """
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # Primary Identification
     ml_registry_id: str = Field(..., description="Unique ML registry identifier")
@@ -36,12 +40,14 @@ class KGNeo4jMLRegistry(EngineBaseModel):
     model_version: str = Field(default="1.0.0", description="Model version")
     model_architecture: Optional[str] = Field(default=None, description="Model architecture description")
     model_framework: Optional[str] = Field(default=None, description="ML framework used (PyTorch, TensorFlow, etc.)")
+    model_description: Optional[str] = Field(default=None, description="Detailed description of the model")
     
     # Training Session Metadata (NO raw data - only metadata)
     training_status: str = Field(default="pending", description="Training status: pending, in_progress, completed, failed, cancelled, paused")
     training_type: str = Field(default="supervised", description="Training type: supervised, unsupervised, semi_supervised, reinforcement, transfer")
     training_algorithm: Optional[str] = Field(default=None, description="Training algorithm used")
     training_parameters: Dict[str, Any] = Field(default={}, description="JSON: hyperparameters, learning rate, etc.")
+    training_metrics: Dict[str, Any] = Field(default={}, description="JSON: training metrics and progress data")
     
     # External Storage References (NO data storage - only file paths)
     model_file_path: Optional[str] = Field(default=None, description="Path to trained model file (external storage)")
@@ -152,6 +158,7 @@ class KGNeo4jMLRegistry(EngineBaseModel):
     # User Management & Ownership (NO raw data - only metadata)
     user_id: str = Field(..., description="User who created/trained this model")
     org_id: str = Field(..., description="Organization this model belongs to")
+    dept_id: str = Field(..., description="Department this model belongs to")
     owner_team: Optional[str] = Field(default=None, description="Team responsible for this model")
     steward_user_id: Optional[str] = Field(default=None, description="Data steward for this model")
     
@@ -187,9 +194,9 @@ class KGNeo4jMLRegistry(EngineBaseModel):
     tags: List[str] = Field(default=[], description="List of tags for categorization")
     
     # Additional Enterprise Fields (Missing from schema)
-    compliance_type: str = Field(default="standard", description="Type of compliance being tracked")
+    compliance_type: str = Field(default="enterprise", description="Type of compliance being tracked")
     security_event_type: str = Field(default="none", description="Type of security event")
-    performance_metric: str = Field(default="standard", description="Specific performance metric identifier")
+    performance_metric: str = Field(default="enterprise", description="Specific performance metric identifier")
     
     # Time-based Analytics (Framework Time Analysis)
     hour_of_day: Optional[int] = Field(default=None, ge=0, le=23, description="Hour of day (0-23)")
@@ -200,6 +207,9 @@ class KGNeo4jMLRegistry(EngineBaseModel):
     graph_management_trend: Optional[float] = Field(default=None, description="Compared to historical average")
     resource_efficiency_trend: Optional[float] = Field(default=None, description="Performance over time")
     quality_trend: Optional[float] = Field(default=None, description="Quality metrics over time")
+    
+    # System Fields
+    is_deleted: bool = Field(default=False, description="Soft delete flag")
 
     # Computed Fields for Business Intelligence
     @computed_field

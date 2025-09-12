@@ -14,6 +14,7 @@ Provides event-driven communication between system components:
 
 from .event_emitter import EventEmitter, AsyncEventEmitter
 from .message_bus import MessageBus, AsyncMessageBus
+from .event_bus import EventBus, AsyncEventBus
 from .event_store import EventStore, AsyncEventStore
 from .message_queue import MessageQueue, AsyncMessageQueue
 from .event_sourcing import EventSourcing, AsyncEventSourcing
@@ -37,6 +38,8 @@ __all__ = [
     'AsyncEventEmitter',
     'MessageBus',
     'AsyncMessageBus',
+    'EventBus',
+    'AsyncEventBus',
     'EventStore',
     'AsyncEventStore',
     'MessageQueue',

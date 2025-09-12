@@ -7,15 +7,12 @@ Extends the engine BaseModel and represents the existing database schema.
 
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict, computed_field
 from pydantic_core import PydanticCustomError
 import asyncio
-from pydantic import computed_field
-
-from src.engine.models.base_model import BaseModel as EngineBaseModel
 
 
-class AasxProcessingMetrics(EngineBaseModel):
+class AasxProcessingMetrics(BaseModel):
     """
     AASX Processing Metrics Model - Performance and Health Monitoring
     
@@ -23,6 +20,8 @@ class AasxProcessingMetrics(EngineBaseModel):
     performance analysis, and health monitoring for AASX processing operations.
     Pure async implementation for modern architecture.
     """
+    
+    model_config = ConfigDict(extra='ignore')
     
     # Primary Identification
     metric_id: Optional[int] = Field(None, description="Unique metric identifier")
@@ -881,6 +880,9 @@ async def create_aasx_processing_metrics(
     # Simulate async operation
     await asyncio.sleep(0.001)
     
+    # Remove timestamp from kwargs if it exists to avoid conflicts
+    kwargs.pop('timestamp', None)
+    
     return AasxProcessingMetrics(
         job_id=job_id,
         timestamp=now,
@@ -920,3 +922,6 @@ class MetricsSummary(BaseModel):
         json_encoders = {
             str: lambda v: v
         }
+
+
+

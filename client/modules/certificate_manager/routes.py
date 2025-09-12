@@ -12,8 +12,8 @@ from pathlib import Path
 import logging
 
 # Import authentication decorators and user context
-from webapp.core.decorators.auth_decorators import require_auth, get_current_user
-from webapp.core.context.user_context import UserContext
+from src.integration.api.dependencies import require_auth, get_current_user
+from src.engine.models.request_context import UserContext
 
 # Import services
 from .services.certificate_service import CertificateService
@@ -40,10 +40,9 @@ template_service = TemplateService()
 
 # HTML Page Routes
 @router.get("/", response_class=HTMLResponse)
-@require_auth("read", allow_independent=True)
 async def certificate_dashboard(
     request: Request,
-    user_context: UserContext = Depends(get_current_user)
+    user_context: UserContext = Depends(require_auth)
 ):
     """Main certificate dashboard page."""
     try:
@@ -88,11 +87,10 @@ async def certificate_dashboard(
 
 
 @router.get("/viewer/{certificate_id}", response_class=HTMLResponse)
-@require_auth("read", allow_independent=True)
 async def certificate_viewer(
     request: Request, 
     certificate_id: str,
-    user_context: UserContext = Depends(get_current_user)
+    user_context: UserContext = Depends(require_auth)
 ):
     """Certificate viewer page."""
     try:
@@ -126,7 +124,6 @@ async def certificate_viewer(
 
 
 @router.get("/export", response_class=HTMLResponse)
-@require_auth("read", allow_independent=True)
 async def export_page(
     request: Request,
     user_context: UserContext = Depends(get_current_user)
@@ -161,7 +158,6 @@ async def export_page(
 
 # API Routes
 @router.get("/certificates")
-@require_auth("read", allow_independent=True)
 async def get_certificates(user_context: UserContext = Depends(get_current_user)):
     """Get all certificates."""
     try:
@@ -183,7 +179,6 @@ async def get_certificates(user_context: UserContext = Depends(get_current_user)
 
 
 @router.get("/certificates/{certificate_id}")
-@require_auth("read", allow_independent=True)
 async def get_certificate(
     certificate_id: str,
     user_context: UserContext = Depends(get_current_user)
@@ -209,7 +204,6 @@ async def get_certificate(
 
 
 @router.post("/certificates")
-@require_auth("create", allow_independent=True)
 async def create_certificate(
     certificate_data: dict,
     user_context: UserContext = Depends(get_current_user)
@@ -239,7 +233,6 @@ async def create_certificate(
 
 
 @router.put("/certificates/{certificate_id}")
-@require_auth("update", allow_independent=True)
 async def update_certificate(
     certificate_id: str, 
     updates: dict,
@@ -263,7 +256,6 @@ async def update_certificate(
 
 
 @router.delete("/certificates/{certificate_id}")
-@require_auth("delete", allow_independent=True)
 async def delete_certificate(
     certificate_id: str,
     user_context: UserContext = Depends(get_current_user)
@@ -286,7 +278,6 @@ async def delete_certificate(
 
 
 @router.get("/certificates/stats")
-@require_auth("read", allow_independent=True)
 async def get_certificate_stats(user_context: UserContext = Depends(get_current_user)):
     """Get certificate statistics."""
     try:
@@ -312,7 +303,6 @@ async def get_certificate_stats(user_context: UserContext = Depends(get_current_
 
 
 @router.get("/certificates/search")
-@require_auth("read", allow_independent=True)
 async def search_certificates(
     query: str, 
     status: str = None, 
@@ -353,7 +343,6 @@ async def search_certificates(
 
 
 @router.post("/certificates/{certificate_id}/export")
-@require_auth("read", allow_independent=True)
 async def export_certificate(
     certificate_id: str, 
     format: str = "html", 
@@ -378,7 +367,6 @@ async def export_certificate(
 
 
 @router.get("/export/formats")
-@require_auth("read", allow_independent=True)
 async def get_export_formats(user_context: UserContext = Depends(get_current_user)):
     """Get available export formats."""
     try:
@@ -389,7 +377,6 @@ async def get_export_formats(user_context: UserContext = Depends(get_current_use
 
 
 @router.get("/templates")
-@require_auth("read", allow_independent=True)
 async def get_templates(user_context: UserContext = Depends(get_current_user)):
     """Get all available templates."""
     try:
@@ -410,7 +397,6 @@ async def get_templates(user_context: UserContext = Depends(get_current_user)):
 
 
 @router.get("/templates/{template_id}")
-@require_auth("read", allow_independent=True)
 async def get_template(
     template_id: str,
     user_context: UserContext = Depends(get_current_user)

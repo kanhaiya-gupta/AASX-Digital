@@ -10,8 +10,8 @@ import json
 import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, validator
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, validator, ConfigDict
+from src.engine.models.base_model import EngineBaseModel
 
 
 class Embedding(EngineBaseModel):
@@ -60,14 +60,16 @@ class Embedding(EngineBaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Creation timestamp")
     updated_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Last update timestamp")
     
-    class Config:
-        """Pydantic configuration"""
-        json_encoders = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True,
+        validate_assignment=True,
+        json_encoders={
             datetime: lambda v: v.isoformat(),
             uuid.UUID: lambda v: str(v)
         }
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    )
     
     # Validators
     @validator('vector_type')

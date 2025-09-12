@@ -142,33 +142,9 @@ class ImageProcessor(BaseDataProcessor):
             return None
     
     def _extract_text_with_paddleocr(self, file_path: Path) -> Optional[str]:
-        """Extract text using PaddleOCR."""
-        try:
-            from paddleocr import PaddleOCR
-            
-            # Initialize OCR
-            ocr = PaddleOCR(use_angle_cls=True, lang='en')
-            
-            # Read text from image
-            results = ocr.ocr(str(file_path), cls=True)
-            
-            # Extract text from results
-            text_parts = []
-            for line in results:
-                for word_info in line:
-                    text = word_info[1][0]  # Extract text from result
-                    confidence = word_info[1][1]  # Extract confidence
-                    if confidence > 0.5:  # Only include high-confidence results
-                        text_parts.append(text)
-            
-            return ' '.join(text_parts) if text_parts else None
-            
-        except ImportError:
-            self.logger.warning("paddleocr not available")
-            return None
-        except Exception as e:
-            self.logger.error(f"PaddleOCR failed for {file_path}: {e}")
-            return None
+        """Extract text using PaddleOCR - disabled due to dependency conflicts."""
+        self.logger.warning("PaddleOCR disabled due to PyMuPDF dependency conflicts")
+        return None
     
     def _get_image_metadata(self, file_path: Path) -> Dict[str, Any]:
         """Get basic image metadata."""

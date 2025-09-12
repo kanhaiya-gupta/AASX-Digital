@@ -3,7 +3,7 @@
 {% block title %}Certificate Manager - Digital Twin Analytics{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', path='/css/certificate-manager.css') }}" rel="stylesheet">
+<link href="/static/css/certificate-manager.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -322,7 +322,7 @@
     console.log('🔍 Certificate Manager Template: Loading modular Certificate Manager system...');
     
     try {
-        const { initCertificateManager } = await import("{{ url_for('static', path='/js/modules/certificate_manager/index.js') }}");
+        const { initCertificateManager } = await import("/static/js/modules/certificate_manager/index.js");
         console.log('✅ Certificate Manager Template: Modular system imported successfully');
         
         // Initialize the modular Certificate Manager system

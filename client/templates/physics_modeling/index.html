@@ -3,7 +3,7 @@
 {% block title %}Physics Modeling - Plugin-Based Simulations{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', path='/css/physics_modeling.css') }}" rel="stylesheet">
+<link href="/static/css/physics_modeling.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -246,7 +246,7 @@
     console.log('🔧 Physics Modeling Template: Loading plugin-based simulation system with tabs...');
     
     try {
-        const { initPhysicsModelingModule } = await import("{{ url_for('static', path='/js/modules/physics_modeling/index.js') }}?v={{ range(1, 1000) | random }}");
+        const { initPhysicsModelingModule } = await import("/static/js/modules/physics_modeling/index.js?v={{ range(1, 1000) | random }}");
         console.log('✅ Physics Modeling Template: System imported successfully');
         
         // Initialize the Physics Modeling system

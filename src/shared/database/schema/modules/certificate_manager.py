@@ -168,10 +168,10 @@ class CertificateManagerSchema(BaseSchemaModule):
             version_description TEXT,                     -- Description of what this version contains
             
             -- Complete Data Snapshot (JSON)
-            module_data_snapshot TEXT NOT NULL,           -- Complete data from ALL modules at this version
-            consolidated_summary TEXT NOT NULL,           -- Consolidated view at this version
-            change_summary TEXT DEFAULT '{}',             -- JSON: what changed in this version
-            diff_summary TEXT DEFAULT '{}',               -- JSON: detailed changes from previous version
+            module_data_snapshot JSON NOT NULL,           -- Complete data from ALL modules at this version
+            consolidated_summary JSON NOT NULL,           -- Consolidated view at this version
+            change_summary JSON DEFAULT '{}',             -- JSON: what changed in this version
+            diff_summary JSON DEFAULT '{}',               -- JSON: detailed changes from previous version
             
             -- Version Metadata
             change_reason TEXT,                           -- Why this version was created
@@ -203,6 +203,39 @@ class CertificateManagerSchema(BaseSchemaModule):
             review_timestamp TEXT,                        -- When version was reviewed
             published_at TEXT,                            -- When version was published
             
+            -- Soft Delete Support
+            is_deleted BOOLEAN DEFAULT FALSE,              -- Soft delete flag
+            deleted_at TEXT,                               -- When version was soft deleted
+            deleted_by TEXT,                               -- User who soft deleted the version
+            
+            -- Environment Management
+            deployment_environment TEXT DEFAULT 'development', -- Current deployment environment
+            deployment_status TEXT DEFAULT 'not_deployed' CHECK (deployment_status IN ('not_deployed', 'deployed', 'failed', 'rolling_back')),
+            deployment_timestamp TEXT,                     -- When deployed to environment
+            environment_promotion_history JSON DEFAULT '{}', -- JSON: history of environment promotions
+            
+            -- Performance & Analytics
+            performance_metrics JSON DEFAULT '{}',         -- JSON: performance data
+            usage_statistics JSON DEFAULT '{}',            -- JSON: usage analytics
+            storage_optimization_data JSON DEFAULT '{}',   -- JSON: storage optimization info
+            
+            -- Security & Access Control
+            version_permissions JSON DEFAULT '{}',         -- JSON: version-specific permissions
+            access_control_list JSON DEFAULT '{}',         -- JSON: ACL data
+            security_level TEXT DEFAULT 'standard' CHECK (security_level IN ('low', 'standard', 'high', 'critical')),
+            encryption_status TEXT DEFAULT 'none' CHECK (encryption_status IN ('none', 'encrypted', 'encryption_failed')),
+            
+            -- Reporting & Compliance
+            compliance_status JSON DEFAULT '{}',           -- JSON: compliance data
+            audit_trail_data JSON DEFAULT '{}',            -- JSON: audit trail
+            reporting_metadata JSON DEFAULT '{}',          -- JSON: reporting metadata
+            
+            -- Version Lifecycle Management
+            archive_status TEXT DEFAULT 'active' CHECK (archive_status IN ('active', 'archived', 'restored')),
+            archive_timestamp TEXT,                        -- When version was archived
+            archive_reason TEXT,                           -- Reason for archiving
+            restore_timestamp TEXT,                        -- When version was restored
+            
             -- Constraints
             FOREIGN KEY (certificate_id) REFERENCES certificates_registry(certificate_id) ON DELETE CASCADE,
             FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE CASCADE,
@@ -222,7 +255,11 @@ class CertificateManagerSchema(BaseSchemaModule):
             "CREATE INDEX IF NOT EXISTS idx_certificate_versions_created_at ON certificates_versions(created_at);",
             "CREATE INDEX IF NOT EXISTS idx_certificate_versions_created_by ON certificates_versions(created_by);",
             "CREATE INDEX IF NOT EXISTS idx_certificate_versions_approval ON certificates_versions(approval_status);",
-            "CREATE INDEX IF NOT EXISTS idx_certificate_versions_version ON certificates_versions(version_number);"
+            "CREATE INDEX IF NOT EXISTS idx_certificate_versions_version ON certificates_versions(version_number);",
+            "CREATE INDEX IF NOT EXISTS idx_certificate_versions_deployment ON certificates_versions(deployment_environment, deployment_status);",
+            "CREATE INDEX IF NOT EXISTS idx_certificate_versions_archive ON certificates_versions(archive_status);",
+            "CREATE INDEX IF NOT EXISTS idx_certificate_versions_security ON certificates_versions(security_level);",
+            "CREATE INDEX IF NOT EXISTS idx_certificate_versions_encryption ON certificates_versions(encryption_status);"
         ]
         
         return self.create_indexes("certificates_versions", index_queries)

@@ -7,18 +7,22 @@ Pure async implementation for modern architecture.
 Enhanced with enterprise-grade computed fields, business intelligence methods, and full Certificate Manager method parity.
 """
 
-from src.engine.models.engine_base_model import EngineBaseModel
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 import uuid
 import asyncio
-from pydantic import computed_field, Field, ConfigDict
+from pydantic import BaseModel, computed_field, Field, ConfigDict
 
 
 class TwinRegistry(EngineBaseModel):
     """Main twin registry model matching our new database schema - Pure async implementation"""
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True
+    )
     
     # Primary Identification
     registry_id: str = Field(..., description="Unique registry identifier")
@@ -72,7 +76,7 @@ class TwinRegistry(EngineBaseModel):
     compliance_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Compliance score (0.0-1.0)")
     
     # Security & Access Control
-    security_level: str = Field(default="standard", description="Security level: public, internal, confidential, secret, top_secret")
+    security_level: str = Field(default="internal", description="Security level: public, internal, confidential, secret, top_secret")
     access_control_level: str = Field(default="user", description="Access control level: public, user, admin, system, restricted")
     encryption_enabled: bool = Field(default=False, description="Whether twin data is encrypted")
     audit_logging_enabled: bool = Field(default=True, description="Whether audit logging is enabled")

@@ -11,11 +11,11 @@ Services:
 - PluginManagementService: Plugin lifecycle management
 - SimulationManagementService: Simulation lifecycle and queue management
 - SolverManagementService: Solver management and optimization
-- PerformanceAnalyticsService: Performance monitoring and analytics
-- ComplianceMonitoringService: Compliance and regulatory monitoring
 - ValidationService: Data validation and quality assurance
 - IntegrationService: Cross-module integration and data flow
 - SecurityService: Security, authentication, and access control
+
+Note: PerformanceAnalyticsService and ComplianceMonitoringService are planned for future implementation.
 """
 
 # Core orchestration service
@@ -27,8 +27,8 @@ from .simulation_management_service import SimulationManagementService
 from .solver_management_service import SolverManagementService
 
 # Analytics and monitoring services
-from .performance_analytics_service import PerformanceAnalyticsService
-from .compliance_monitoring_service import ComplianceMonitoringService
+# from .performance_analytics_service import PerformanceAnalyticsService
+# from .compliance_monitoring_service import ComplianceMonitoringService
 
 # Data quality and integration services
 from .validation_service import ValidationService
@@ -48,8 +48,8 @@ __all__ = [
     'SolverManagementService',
     
     # Analytics and monitoring
-    'PerformanceAnalyticsService',
-    'ComplianceMonitoringService',
+    # 'PerformanceAnalyticsService',
+    # 'ComplianceMonitoringService',
     
     # Data quality and integration
     'ValidationService',

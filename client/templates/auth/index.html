@@ -5,14 +5,14 @@
 <!-- CACHE BUST: 2025-08-10-21:22 -->
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='css/auth.css') }}">
+<link rel="stylesheet" href="/static/css/auth.css">
 {% endblock %}
 
 {% block extra_scripts %}
 
 
 <!-- Load the authentication module -->
-<script type="module" src="{{ url_for('static', path='js/modules/auth/index.js') }}?v=2025-08-10-21:22"></script>
+<script type="module" src="/static/js/modules/auth/index.js?v=2025-08-10-21:22"></script>
 
 
 {% endblock %}

@@ -8,8 +8,8 @@ Represents the complete graph structure with nodes, edges, and analytics.
 import json
 from typing import Dict, Any, List, Optional, Union, Set
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, root_validator
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, validator, model_validator
+from src.engine.models.base_model import EngineBaseModel
 
 from .graph_node import GraphNode
 from .graph_edge import GraphEdge
@@ -181,27 +181,25 @@ class GraphStructure(EngineBaseModel):
             raise ValueError('overall_quality_score must be between 0.0 and 1.0')
         return v
     
-    @root_validator
-    def validate_properties_json(cls, values):
+    @model_validator(mode='after')
+    def validate_properties_json(self):
         """Validate that properties is valid JSON."""
-        properties = values.get('properties')
-        if properties:
+        if self.properties:
             try:
-                json.loads(properties)
+                json.loads(self.properties)
             except json.JSONDecodeError:
                 raise ValueError('properties must be valid JSON')
-        return values
+        return self
     
-    @root_validator
-    def validate_metadata_json(cls, values):
+    @model_validator(mode='after')
+    def validate_metadata_json(self):
         """Validate that metadata is valid JSON."""
-        metadata = values.get('metadata')
-        if metadata:
+        if self.metadata:
             try:
-                json.loads(metadata)
+                json.loads(self.metadata)
             except json.JSONDecodeError:
                 raise ValueError('metadata must be valid JSON')
-        return values
+        return self
     
     # Business Logic Methods
     def add_node(self, node: GraphNode) -> None:

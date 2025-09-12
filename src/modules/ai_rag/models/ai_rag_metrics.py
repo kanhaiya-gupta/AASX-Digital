@@ -12,11 +12,11 @@ import uuid
 import asyncio
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, validator, computed_field
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, computed_field, ConfigDict
 
 
-class AIRagMetrics(EngineBaseModel):
+
+class AIRagMetrics(BaseModel):
     """
     AI RAG Metrics Model - Pure Async Implementation
     
@@ -25,10 +25,31 @@ class AIRagMetrics(EngineBaseModel):
     Enhanced with enterprise-grade computed fields and business intelligence methods.
     """
     
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
+    
     # Primary Identification
     metric_id: Optional[int] = Field(None, description="Unique metric identifier")
     registry_id: str = Field(..., description="Associated registry ID")
+    
+    # Business Context (REQUIRED for enterprise operations)
+    org_id: str = Field(..., description="Organization ID for access control")
+    dept_id: str = Field(..., description="Department ID for access control")
+    user_id: Optional[str] = Field(None, description="User who created the metrics")
+    
+    # Timestamps
     timestamp: str = Field(..., description="Metric timestamp")
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Creation timestamp")
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Last update timestamp")
+    
+    # Metadata and Configuration
+    metric_type: str = Field(default="performance", description="Type of metric")
+    metric_category: str = Field(default="ai_rag", description="Metric category")
+    metric_priority: str = Field(default="normal", description="Metric priority")
+    metric_tags: List[str] = Field(default_factory=list, description="Metric tags")
     
     # Real-time Health Metrics (Framework Health)
     health_score: Optional[int] = Field(None, ge=0, le=100, description="Health score")
@@ -45,36 +66,63 @@ class AIRagMetrics(EngineBaseModel):
     response_quality_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Response quality score")
     user_satisfaction_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="User satisfaction score")
     
+    # AI/RAG Size Metrics (Framework Performance - AI/RAG Scale)
+    total_documents: int = Field(default=0, ge=0, description="Total number of documents")
+    total_embeddings: int = Field(default=0, ge=0, description="Total number of embeddings")
+    total_rag_operations: int = Field(default=0, ge=0, description="Total number of RAG operations")
+    
+    # AI/RAG Analytics Metrics (Framework Performance - NOT Data)
+    rag_query_speed_sec: Optional[float] = Field(None, ge=0, description="RAG query speed in seconds")
+    embedding_search_speed_sec: Optional[float] = Field(None, ge=0, description="Embedding search speed in seconds")
+    context_retrieval_speed_sec: Optional[float] = Field(None, ge=0, description="Context retrieval speed in seconds")
+    rag_analysis_efficiency: Optional[float] = Field(None, ge=0.0, le=1.0, description="RAG analysis efficiency")
+    
     # Resource Utilization Metrics
-    memory_usage_mb: Optional[float] = Field(None, ge=0, description="Memory usage in MB")
+    memory_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="Memory usage percentage")
     cpu_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="CPU usage percentage")
-    gpu_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="GPU usage percentage")
-    disk_io_mbps: Optional[float] = Field(None, ge=0, description="Disk I/O in MB/s")
-    network_io_mbps: Optional[float] = Field(None, ge=0, description="Network I/O in MB/s")
+    network_throughput_mbps: Optional[float] = Field(None, ge=0, description="Network throughput in MB/s")
+    storage_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="Storage usage percentage")
     
     # Quality and Validation Metrics
     data_quality_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Data quality score")
-    validation_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Validation score")
-    completeness_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Completeness score")
-    accuracy_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Accuracy score")
+    schema_validation_rate: Optional[float] = Field(None, ge=0.0, le=1.0, description="Schema validation rate")
+    data_completeness_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Data completeness score")
+    data_accuracy_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Data accuracy score")
     
     # Additional Data Quality Metrics (from schema)
     data_freshness_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Data freshness score")
-    data_completeness_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Data completeness score")
     data_consistency_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Data consistency score")
-    data_accuracy_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Data accuracy score")
+    
+    # Schema Quality Metrics (NEW for schema traceability - NO raw data)
+    schema_validation_rate: Optional[float] = Field(None, ge=0.0, le=1.0, description="Schema validation rate")
+    ontology_consistency_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Ontology consistency score")
+    quality_rule_effectiveness: Optional[float] = Field(None, ge=0.0, le=1.0, description="Quality rule effectiveness")
+    validation_rule_count: int = Field(default=0, ge=0, description="Number of validation rules")
     
     # User Interaction Metrics
-    user_interaction_count: Optional[int] = Field(None, default=0, ge=0, description="Number of user interactions")
-    query_execution_count: Optional[int] = Field(None, default=0, ge=0, description="Number of queries executed")
-    successful_rag_operations: Optional[int] = Field(None, default=0, ge=0, description="Successful operations")
-    failed_rag_operations: Optional[int] = Field(None, default=0, ge=0, description="Failed operations")
+    user_interaction_count: int = Field(default=0, ge=0, description="Number of user interactions")
+    query_execution_count: int = Field(default=0, ge=0, description="Number of queries executed")
+    successful_rag_operations: int = Field(default=0, ge=0, description="Successful operations")
+    failed_rag_operations: int = Field(default=0, ge=0, description="Failed operations")
     
-    # System Resource Metrics
-    cpu_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="CPU usage percentage")
-    memory_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="Memory usage percentage")
+    # Extended User Interaction Metrics
+    user_requests_count: int = Field(default=0, ge=0, description="User requests count")
+    successful_requests_count: int = Field(default=0, ge=0, description="Successful requests count")
+    failed_requests_count: int = Field(default=0, ge=0, description="Failed requests count")
+    average_session_duration_ms: float = Field(default=0.0, ge=0, description="Average session duration")
+    
+    # ML Training Metrics (NEW for ML traceability - NO raw data)
+    active_training_sessions: int = Field(default=0, ge=0, description="Active training sessions")
+    completed_sessions: int = Field(default=0, ge=0, description="Completed training sessions")
+    failed_sessions: int = Field(default=0, ge=0, description="Failed training sessions")
+    avg_model_accuracy: Optional[float] = Field(None, ge=0.0, le=1.0, description="Average model accuracy")
+    training_success_rate: Optional[float] = Field(None, ge=0.0, le=1.0, description="Training success rate")
+    model_deployment_rate: Optional[float] = Field(None, ge=0.0, le=1.0, description="Model deployment rate")
+    
+    # System Resource Metrics (Additional)
     network_throughput_mbps: Optional[float] = Field(None, ge=0, description="Network throughput in MB/s")
     storage_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="Storage usage percentage")
+    memory_usage_percent: Optional[float] = Field(None, ge=0.0, le=100.0, description="Memory usage percentage")
     
     # Performance Trends (JSON)
     performance_trends: Dict[str, Any] = Field(default_factory=dict, description="Performance trends")
@@ -84,11 +132,26 @@ class AIRagMetrics(EngineBaseModel):
     compliance_status: Dict[str, Any] = Field(default_factory=dict, description="Compliance status")
     security_events: Dict[str, Any] = Field(default_factory=dict, description="Security events")
     
+    # Time-based Metrics
+    processing_time_ms: Optional[int] = Field(None, ge=0, description="Processing time in milliseconds")
+    queue_time_ms: Optional[int] = Field(None, ge=0, description="Queue time in milliseconds")
+    total_time_ms: Optional[int] = Field(None, ge=0, description="Total time in milliseconds")
+    
     # AI/RAG-Specific Metrics (JSON)
     rag_analytics: Dict[str, Any] = Field(default_factory=dict, description="RAG analytics")
     technique_effectiveness: Dict[str, Any] = Field(default_factory=dict, description="Technique effectiveness")
-    model_performance: Dict[str, Any] = Field(default_factory=dict, description="Model performance")
+    model_performance: Dict[str, Any] = Field(default_factory=dict, description="AI model performance")
     file_type_processing_efficiency: Dict[str, Any] = Field(default_factory=dict, description="File type processing efficiency")
+    
+    # Additional Schema Fields (JSON)
+    rag_technique_performance: Dict[str, Any] = Field(default_factory=dict, description="RAG technique performance metrics")
+    document_processing_stats: Dict[str, Any] = Field(default_factory=dict, description="Document processing statistics")
+    
+    # Vector Database Performance Metrics (JSON for better framework analysis)
+    vector_db_performance: Dict[str, Any] = Field(default_factory=dict, description="Vector database performance metrics")
+    
+    # AI/RAG Category Performance Metrics (JSON for better framework analysis)
+    ai_rag_category_performance_stats: Dict[str, Any] = Field(default_factory=dict, description="AI/RAG category performance statistics")
     
     # Enterprise Metrics
     enterprise_metric_type: str = Field(default="performance", description="Enterprise metric type")
@@ -110,7 +173,7 @@ class AIRagMetrics(EngineBaseModel):
     
     # Enterprise Health Metrics
     enterprise_health_score: Optional[int] = Field(None, ge=0, le=100, description="Enterprise health score")
-    enterprise_health_status: Optional[str] = Field(None, description="Enterprise health status")
+    enterprise_health_status_raw: Optional[str] = Field(None, description="Raw enterprise health status")
     enterprise_risk_level: Optional[str] = Field(None, description="Enterprise risk level")
     enterprise_alert_count: Optional[int] = Field(None, ge=0, description="Enterprise alert count")
     
@@ -120,10 +183,10 @@ class AIRagMetrics(EngineBaseModel):
     enterprise_threat_level: Optional[str] = Field(None, description="Enterprise threat level")
     enterprise_vulnerability_count: Optional[int] = Field(None, ge=0, description="Enterprise vulnerability count")
     
-    # Time-based Metrics
-    processing_time_ms: Optional[int] = Field(None, ge=0, description="Processing time in milliseconds")
-    queue_time_ms: Optional[int] = Field(None, ge=0, description="Queue time in milliseconds")
-    total_time_ms: Optional[int] = Field(None, ge=0, description="Total time in milliseconds")
+    # Additional Enterprise Fields (from repository expectations)
+    # Note: enterprise_health_status is computed, not stored
+    
+
     
     # User Interaction Metrics
     user_requests_count: Optional[int] = Field(None, ge=0, description="User requests count")
@@ -158,8 +221,8 @@ class AIRagMetrics(EngineBaseModel):
             scores.append(self.user_satisfaction_score)
         if self.data_quality_score is not None:
             scores.append(self.data_quality_score)
-        if self.validation_score is not None:
-            scores.append(self.validation_score)
+        if self.schema_validation_rate is not None:
+            scores.append(self.schema_validation_rate)
         if self.data_freshness_score is not None:
             scores.append(self.data_freshness_score)
         if self.data_completeness_score is not None:
@@ -405,8 +468,8 @@ class AIRagMetricsQuery(BaseModel):
     user_satisfaction_score_max: Optional[float] = None
     data_quality_score_min: Optional[float] = None
     data_quality_score_max: Optional[float] = None
-    validation_score_min: Optional[float] = None
-    validation_score_max: Optional[float] = None
+    schema_validation_rate_min: Optional[float] = None
+    schema_validation_rate_max: Optional[float] = None
     
     # Enterprise Filters
     enterprise_performance_score_min: Optional[float] = None
@@ -419,18 +482,16 @@ class AIRagMetricsQuery(BaseModel):
     enterprise_threat_level: Optional[str] = None
     
     # Resource Utilization Filters
-    memory_usage_min: Optional[float] = None
-    memory_usage_max: Optional[float] = None
+    memory_usage_percent_min: Optional[float] = None
+    memory_usage_percent_max: Optional[float] = None
     cpu_usage_min: Optional[float] = None
     cpu_usage_max: Optional[float] = None
-    gpu_usage_min: Optional[float] = None
-    gpu_usage_max: Optional[float] = None
+
     
     # Time-based Filters
     timestamp_after: Optional[str] = None
     timestamp_before: Optional[str] = None
-    processing_time_min: Optional[int] = None
-    processing_time_max: Optional[int] = None
+
     
     # User Interaction Filters
     user_requests_count_min: Optional[int] = None
@@ -468,94 +529,93 @@ class AIRagMetricsQuery(BaseModel):
 class AIRagMetricsSummary(BaseModel):
     """Summary model for AI RAG metrics analytics with comprehensive enterprise insights"""
     
-    # Basic Counts
-    total_metrics: int = 0
-    active_metrics: int = 0
-    error_metrics: int = 0
-    warning_metrics: int = 0
+    # Summary Statistics
+    total_metrics: int = Field(default=0, ge=0, description="Total metrics count")
+    active_metrics: int = Field(default=0, ge=0, description="Active metrics count")
+    error_metrics: int = Field(default=0, ge=0, description="Error metrics count")
+    warning_metrics: int = Field(default=0, ge=0, description="Warning metrics count")
     
     # Metric Type Distribution
-    metric_type_distribution: Dict[str, int] = {}
-    metric_category_distribution: Dict[str, int] = {}
-    metric_priority_distribution: Dict[str, int] = {}
+    metric_type_distribution: Dict[str, int] = Field(default_factory=dict, description="Metric type distribution")
+    metric_category_distribution: Dict[str, int] = Field(default_factory=dict, description="Metric category distribution")
+    metric_priority_distribution: Dict[str, int] = Field(default_factory=dict, description="Metric priority distribution")
     
-    # Health Distribution
-    health_score_distribution: Dict[str, int] = {}
-    enterprise_health_distribution: Dict[str, int] = {}
-    risk_assessment_distribution: Dict[str, int] = {}
-    optimization_priority_distribution: Dict[str, int] = {}
-    maintenance_schedule_distribution: Dict[str, int] = {}
+    # Health and Risk Distribution
+    health_score_distribution: Dict[str, int] = Field(default_factory=dict, description="Health score distribution")
+    enterprise_health_distribution: Dict[str, int] = Field(default_factory=dict, description="Enterprise health distribution")
+    risk_assessment_distribution: Dict[str, int] = Field(default_factory=dict, description="Risk assessment distribution")
+    optimization_priority_distribution: Dict[str, int] = Field(default_factory=dict, description="Optimization priority distribution")
+    maintenance_schedule_distribution: Dict[str, int] = Field(default_factory=dict, description="Maintenance schedule distribution")
     
-    # Performance Metrics
-    average_health_score: float = 0.0
-    average_response_time_ms: float = 0.0
-    average_uptime_percentage: float = 0.0
-    average_error_rate: float = 0.0
-    average_overall_metrics_score: float = 0.0
+    # Health and Performance Averages
+    average_health_score: float = Field(default=0.0, ge=0.0, le=100.0, description="Average health score")
+    average_response_time_ms: float = Field(default=0.0, ge=0.0, description="Average response time")
+    average_uptime_percentage: float = Field(default=0.0, ge=0.0, le=100.0, description="Average uptime percentage")
+    average_error_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="Average error rate")
+    average_overall_metrics_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average overall metrics score")
     
-    # AI/RAG Performance Metrics
-    average_embedding_generation_speed: float = 0.0
-    average_vector_db_response_time: float = 0.0
-    average_rag_response_time: float = 0.0
-    average_context_retrieval_accuracy: float = 0.0
-    average_response_quality_score: float = 0.0
-    average_user_satisfaction_score: float = 0.0
+    # AI/RAG Performance Averages
+    average_embedding_generation_speed: float = Field(default=0.0, ge=0.0, description="Average embedding generation speed")
+    average_vector_db_response_time: float = Field(default=0.0, ge=0.0, description="Average vector DB response time")
+    average_rag_response_time: float = Field(default=0.0, ge=0.0, description="Average RAG response time")
+    average_context_retrieval_accuracy: float = Field(default=0.0, ge=0.0, le=1.0, description="Average context retrieval accuracy")
+    average_response_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average response quality score")
+    average_user_satisfaction_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average user satisfaction score")
     
-    # Quality Metrics
-    average_data_quality_score: float = 0.0
-    average_validation_score: float = 0.0
-    average_completeness_score: float = 0.0
-    average_accuracy_score: float = 0.0
+    # Quality Averages
+    average_data_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average data quality score")
+    average_schema_validation_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="Average schema validation rate")
+    average_data_completeness_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average data completeness score")
+    average_data_accuracy_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average data accuracy score")
     
-    # Enterprise Metrics
-    average_enterprise_performance_score: float = 0.0
-    average_enterprise_quality_score: float = 0.0
-    average_enterprise_reliability_score: float = 0.0
-    average_enterprise_compliance_score: float = 0.0
-    average_enterprise_security_score: float = 0.0
+    # Enterprise Averages
+    average_enterprise_performance_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average enterprise performance score")
+    average_enterprise_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average enterprise quality score")
+    average_enterprise_reliability_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average enterprise reliability score")
+    average_enterprise_compliance_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average enterprise compliance score")
+    average_enterprise_security_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Average enterprise security score")
     
-    # Resource Utilization Metrics
-    average_memory_usage: float = 0.0
-    average_cpu_usage: float = 0.0
-    average_gpu_usage: float = 0.0
-    average_disk_io: float = 0.0
-    average_network_io: float = 0.0
+    # Resource Utilization Averages
+    average_memory_usage_percent: float = Field(default=0.0, ge=0.0, le=100.0, description="Average memory usage percentage")
+    average_cpu_usage: float = Field(default=0.0, ge=0.0, le=100.0, description="Average CPU usage")
+    average_network_throughput: float = Field(default=0.0, ge=0.0, description="Average network throughput")
+    average_storage_usage: float = Field(default=0.0, ge=0.0, le=100.0, description="Average storage usage")
     
     # Time-based Metrics
-    time_trend: Dict[str, float] = {}
-    performance_trend: Dict[str, float] = {}
-    quality_trend: Dict[str, float] = {}
-    health_trend: Dict[str, float] = {}
+    time_trend: Dict[str, float] = Field(default_factory=dict, description="Time trend data")
+    performance_trend: Dict[str, float] = Field(default_factory=dict, description="Performance trend data")
+    quality_trend: Dict[str, float] = Field(default_factory=dict, description="Quality trend data")
+    health_trend: Dict[str, float] = Field(default_factory=dict, description="Health trend data")
     
     # User Interaction Metrics
-    total_user_requests: int = 0
-    total_successful_requests: int = 0
-    total_failed_requests: int = 0
-    average_session_duration: float = 0.0
-    user_satisfaction_distribution: Dict[str, int] = {}
+    total_user_requests: int = Field(default=0, ge=0, description="Total user requests")
+    total_successful_requests: int = Field(default=0, ge=0, description="Total successful requests")
+    total_failed_requests: int = Field(default=0, ge=0, description="Total failed requests")
+    average_session_duration: float = Field(default=0.0, ge=0, description="Average session duration")
+    user_satisfaction_distribution: Dict[str, int] = Field(default_factory=dict, description="User satisfaction distribution")
     
     # Enterprise Compliance and Security
-    compliance_status_distribution: Dict[str, int] = {}
-    security_score_distribution: Dict[str, int] = {}
-    threat_level_distribution: Dict[str, int] = {}
-    vulnerability_count_distribution: Dict[str, int] = {}
+    compliance_status_distribution: Dict[str, int] = Field(default_factory=dict, description="Compliance status distribution")
+    security_score_distribution: Dict[str, int] = Field(default_factory=dict, description="Security score distribution")
+    threat_level_distribution: Dict[str, int] = Field(default_factory=dict, description="Threat level distribution")
+    vulnerability_count_distribution: Dict[str, int] = Field(default_factory=dict, description="Vulnerability count distribution")
     
     # Performance Trends
-    response_time_trend: Dict[str, float] = {}
-    accuracy_trend: Dict[str, float] = {}
-    quality_trend: Dict[str, float] = {}
-    resource_utilization_trend: Dict[str, float] = {}
+    response_time_trend: Dict[str, float] = Field(default_factory=dict, description="Response time trend")
+    accuracy_trend: Dict[str, float] = Field(default_factory=dict, description="Accuracy trend")
+    quality_trend: Dict[str, float] = Field(default_factory=dict, description="Quality trend")
+    resource_utilization_trend: Dict[str, float] = Field(default_factory=dict, description="Resource utilization trend")
     
     # Business Intelligence Metrics
-    critical_issues_count: int = 0
-    optimization_opportunities: int = 0
-    maintenance_required: int = 0
-    high_priority_items: int = 0
+    critical_issues_count: int = Field(default=0, ge=0, description="Critical issues count")
+    optimization_opportunities: int = Field(default=0, ge=0, description="Optimization opportunities")
+    maintenance_required: int = Field(default=0, ge=0, description="Maintenance required")
+    high_priority_items: int = Field(default=0, ge=0, description="High priority items")
     
     # Cost and Resource Metrics
-    estimated_processing_cost: float = 0.0
-    resource_utilization: Dict[str, float] = {}
-    performance_efficiency: Dict[str, float] = {}
+    estimated_processing_cost: float = Field(default=0.0, ge=0, description="Estimated processing cost")
+    resource_utilization: Dict[str, float] = Field(default_factory=dict, description="Resource utilization")
+    performance_efficiency: Dict[str, float] = Field(default_factory=dict, description="Performance efficiency")
     
     async def calculate_totals(self) -> None:
         """Calculate all totals asynchronously"""
@@ -595,10 +655,10 @@ class AIRagMetricsSummary(BaseModel):
         """Get quality summary overview"""
         return {
             "average_scores": {
-                "data_quality": self.average_data_quality_score,
-                "validation": self.average_validation_score,
-                "completeness": self.average_completeness_score,
-                "accuracy": self.average_accuracy_score
+            "data_quality": self.average_data_quality_score,
+            "schema_validation": self.average_schema_validation_rate,
+            "data_completeness": self.average_data_completeness_score,
+            "data_accuracy": self.average_data_accuracy_score
             },
             "trends": self.quality_trend
         }

@@ -14,8 +14,8 @@ import json
 
 # Import core Twin Registry services (only those that exist)
 try:
-    from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
-    from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+    from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+    from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
     print("✅ Twin Registry core services imported successfully")
     CORE_SERVICES_AVAILABLE = True
 except ImportError as e:

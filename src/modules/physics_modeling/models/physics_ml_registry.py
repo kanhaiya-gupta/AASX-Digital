@@ -8,19 +8,26 @@ Enhanced with enterprise-grade computed fields, business intelligence methods, a
 
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import Field, validator, computed_field
-from src.engine.models import BaseModel
+from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 import uuid
 import asyncio
 
 
-class PhysicsMLRegistry(BaseModel):
+class PhysicsMLRegistry(EngineBaseModel):
     """
     Physics ML Registry Model
     
     Represents machine learning models (PINNs, hybrid physics-ML) with integrated enterprise features
     for ML compliance tracking, security monitoring, and performance analytics.
     """
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True,
+        extra="allow",  # Allow extra fields to prevent validation errors
+    )
     
     # Primary Identification
     ml_registry_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique ML registry identifier")
@@ -288,14 +295,6 @@ class PhysicsMLRegistry(BaseModel):
         if self.physics_compliance_score > 0.7:
             integration_factors.append(0.9)
         return sum(integration_factors) / len(integration_factors) if integration_factors else 0.0
-    
-    class Config:
-        """Pydantic configuration"""
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
-        validate_assignment = True
-        arbitrary_types_allowed = True
     
     # Validators
     @validator('ml_model_type')

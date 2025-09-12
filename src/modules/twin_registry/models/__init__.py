@@ -18,13 +18,12 @@ ENHANCED WITH ADDITIONAL COMPUTED FIELDS:
 from .twin_registry import (
     TwinRegistry, 
     TwinRegistryQuery, 
-    TwinRegistrySummary,
-    create_twin_registry
+    TwinRegistrySummary
 )
 from .twin_registry_metrics import (
     TwinRegistryMetrics,
-    MetricsQuery,
-    MetricsSummary,
+    TwinMetricsQuery,
+    TwinMetricsSummary,
     create_metrics
 )
 
@@ -36,11 +35,10 @@ __all__ = [
     # Query & Summary Models
     'TwinRegistryQuery',
     'TwinRegistrySummary',
-    'MetricsQuery',
-    'MetricsSummary',
+    'TwinMetricsQuery',
+    'TwinMetricsSummary',
     
     # Factory Functions
-    'create_twin_registry',
     'create_metrics',
     
     # Enterprise Features Available:

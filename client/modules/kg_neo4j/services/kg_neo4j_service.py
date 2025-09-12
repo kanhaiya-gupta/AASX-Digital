@@ -22,17 +22,17 @@ from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.use_case_repository import UseCaseRepository
 
 # Import new backend services from src/kg_neo4j/
-from src.kg_neo4j.services import KGGraphOperationsService
-from src.kg_neo4j.core import KGGraphService, KGMetricsService, KGNeo4jIntegrationService
-from src.kg_neo4j.neo4j import Neo4jManager, AASXGraphAnalyzer
-from src.kg_neo4j.utils import docker_manager
+# Note: KGGraphOperationsService doesn't exist, using available services
+from src.modules.kg_neo4j.core import KGGraphService, KGMetricsService, KGNeo4jIntegrationService
+from src.modules.kg_neo4j.neo4j import Neo4jManager, AASXGraphAnalyzer
+from src.modules.kg_neo4j.utils import docker_manager
 
 # Migrated to new twin registry system
-from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.services.project_service import ProjectService as SharedProjectService
 from src.shared.services.file_service import FileService
 from src.shared.services.use_case_service import UseCaseService
-from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +105,9 @@ class KGNeo4jService:
             logger.info("🔧 Initializing new backend services...")
             
             # Initialize new backend services with async database manager
-            logger.info("📦 Initializing KGGraphOperationsService...")
-            self.operations_service = KGGraphOperationsService(self.async_db_manager)
-            logger.info("✅ KGGraphOperationsService initialized")
+            # Note: KGGraphOperationsService doesn't exist, skipping operations service
+            logger.info("📦 Skipping KGGraphOperationsService (not available)")
+            self.operations_service = None
             
             logger.info("📦 Initializing KGGraphService...")
             self.graph_service = KGGraphService(self.async_db_manager)
@@ -123,7 +123,7 @@ class KGNeo4jService:
             
             # Get Neo4j connection parameters from settings
             logger.info("🔧 Getting Neo4j connection parameters...")
-            from webapp.config.settings import settings
+            from src.engine.config.settings import settings
             neo4j_uri = settings.neo4j_uri
             neo4j_user = settings.neo4j_user
             neo4j_password = settings.neo4j_password

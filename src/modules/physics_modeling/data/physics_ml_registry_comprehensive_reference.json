@@ -1,0 +1,711 @@
+{
+  "physics_ml_registry_comprehensive_reference": {
+    "description": "Comprehensive reference for Physics ML Registry data structures",
+    "version": "1.0.0",
+    "created_date": "2024-01-15",
+    "purpose": "Reference for Stage 2 implementation of populate_from_ml_training_job method",
+    "model_types": {
+      "PINN": "Physics-Informed Neural Networks",
+      "Traditional_NN": "Traditional Neural Networks",
+      "Graph_Neural_Network": "Graph Neural Networks for Physics",
+      "Transformer": "Transformer models for Physics",
+      "Reinforcement_Learning": "RL models for Physics control",
+      "Hybrid_Model": "Combination of multiple approaches"
+    },
+    "examples": {
+      "PINN_Model_Example": {
+        "ml_registry_id": "PINN_001",
+        "org_id": "ORG_001",
+        "dept_id": "DEPT_001",
+        "model_name": "Fluid_Dynamics_PINN_v2.0",
+        "model_version": "2.0.0",
+        "model_type": "PINN",
+        "model_framework": "PyTorch",
+        "model_architecture": "Physics-Informed Neural Network",
+        "training_data_source": "Fluid_Simulation_Data_2024",
+        
+        "physics_constraints": {
+          "conservation_laws": [
+            "mass_conservation",
+            "momentum_conservation",
+            "energy_conservation"
+          ],
+          "boundary_conditions": {
+            "inlet_velocity": "u(x=0) = 1.0 m/s",
+            "outlet_pressure": "p(x=L) = 0 Pa",
+            "wall_condition": "no-slip boundary",
+            "symmetry_condition": "∂u/∂y = 0 at y = 0"
+          },
+          "initial_conditions": {
+            "initial_velocity": "u(t=0) = 0 m/s",
+            "initial_pressure": "p(t=0) = 101325 Pa",
+            "initial_temperature": "T(t=0) = 300 K"
+          },
+          "physical_constraints": {
+            "velocity_magnitude_limit": "|u| < 100 m/s",
+            "pressure_range": "0 Pa < p < 1000000 Pa",
+            "temperature_range": "200 K < T < 1000 K"
+          }
+        },
+        
+        "physics_equations": {
+          "navier_stokes": true,
+          "continuity_equation": true,
+          "energy_equation": true,
+          "state_equation": true,
+          "custom_equations": [
+            "∂u/∂t + u·∇u = -∇p/ρ + ν∇²u + F",
+            "∇·u = 0",
+            "ρc_p(∂T/∂t + u·∇T) = k∇²T + Φ",
+            "p = ρRT"
+          ],
+          "equation_parameters": {
+            "viscosity": 1.789e-5,
+            "density": 1.225,
+            "gravity": 9.81,
+            "thermal_conductivity": 0.0242,
+            "specific_heat": 1005.0,
+            "gas_constant": 287.1
+          },
+          "source_terms": {
+            "body_force": "F = [0, -g, 0]",
+            "heat_source": "Φ = μ(∇u)²",
+            "external_heat": "Q_ext = 0"
+          }
+        },
+        
+        "training_parameters": {
+          "learning_rate": 0.001,
+          "batch_size": 32,
+          "epochs": 100,
+          "optimizer": "Adam",
+          "scheduler": "ReduceLROnPlateau",
+          "loss_weights": {
+            "physics_loss_weight": 0.5,
+            "data_loss_weight": 0.3,
+            "boundary_loss_weight": 0.2,
+            "initial_condition_weight": 0.1,
+            "regularization_weight": 0.01
+          },
+          "regularization": {
+            "L1_weight": 0.001,
+            "L2_weight": 0.01,
+            "dropout_rate": 0.1
+          }
+        },
+        
+        "collocation_points": {
+          "total_points": 100000,
+          "interior_points": 80000,
+          "boundary_points": 15000,
+          "initial_points": 5000,
+          "sampling_strategy": "Latin Hypercube",
+          "adaptive_sampling": true,
+          "spatial_domain": {
+            "x_min": 0.0,
+            "x_max": 10.0,
+            "y_min": 0.0,
+            "y_max": 2.0,
+            "z_min": 0.0,
+            "z_max": 1.0
+          },
+          "temporal_domain": {
+            "t_min": 0.0,
+            "t_max": 5.0,
+            "time_steps": 100
+          }
+        },
+        
+        "physics_validation": {
+          "conservation_check": true,
+          "symmetry_preservation": true,
+          "dimensional_consistency": true,
+          "physical_constraints_satisfaction": 0.98,
+          "mass_conservation_error": 0.001,
+          "momentum_conservation_error": 0.002,
+          "energy_conservation_error": 0.003,
+          "boundary_condition_satisfaction": 0.99,
+          "initial_condition_satisfaction": 0.99
+        },
+        
+        "model_metrics": {
+          "accuracy": 0.97,
+          "loss": 0.08,
+          "physics_loss": 0.05,
+          "data_loss": 0.02,
+          "boundary_loss": 0.01,
+          "validation_rmse": 0.03,
+          "training_time_per_epoch": 45.2,
+          "memory_usage_gb": 8.5
+        },
+        
+        "model_file_path": "/models/fluid_dynamics_pinn_v2.0.pt",
+        "model_file_size": 104857600,
+        "model_hash": "sha256:def789ghi012...",
+        "training_job_id": "PINN_TRAIN_001",
+        "training_start_time": "2024-01-15T10:00:00Z",
+        "training_end_time": "2024-01-15T20:00:00Z",
+        "training_duration_minutes": 600,
+        "training_status": "completed",
+        "model_status": "active",
+        "deployment_status": "production",
+        "created_by": "user_001",
+        "created_at": "2024-01-15T20:00:00Z",
+        "updated_by": "user_001",
+        "updated_at": "2024-01-15T20:00:00Z",
+        "description": "Physics-Informed Neural Network for fluid dynamics simulation with heat transfer",
+        "tags": ["pinn", "fluid_dynamics", "navier_stokes", "heat_transfer", "physics_informed"],
+        "metadata": {
+          "physics_domain": "fluid_dynamics",
+          "simulation_type": "turbulent_flow_with_heat_transfer",
+          "input_features": ["x_coord", "y_coord", "z_coord", "time", "boundary_conditions"],
+          "output_features": ["velocity_x", "velocity_y", "velocity_z", "pressure", "temperature"],
+          "data_points": 100000,
+          "validation_split": 0.2,
+          "pinn_specific": {
+            "automatic_differentiation": true,
+            "gradient_flow": "adjoint_method",
+            "physics_regularization": "L2_norm",
+            "adaptive_loss_balancing": true,
+            "multi_scale_training": true
+          }
+        }
+      },
+      
+      "Traditional_Neural_Network_Example": {
+        "ml_registry_id": "NN_001",
+        "org_id": "ORG_001",
+        "dept_id": "DEPT_001",
+        "model_name": "Physics_Simulation_Predictor_v1.0",
+        "model_version": "1.0.0",
+        "model_type": "Neural Network",
+        "model_framework": "TensorFlow",
+        "model_architecture": "LSTM",
+        "training_data_source": "Physics_Simulation_Dataset_2024",
+        
+        "model_structure": {
+          "input_layer": {
+            "input_shape": [100, 10],
+            "input_features": 10
+          },
+          "hidden_layers": [
+            {
+              "layer_type": "LSTM",
+              "units": 128,
+              "return_sequences": true,
+              "dropout": 0.2
+            },
+            {
+              "layer_type": "LSTM",
+              "units": 64,
+              "return_sequences": false,
+              "dropout": 0.2
+            },
+            {
+              "layer_type": "Dense",
+              "units": 32,
+              "activation": "relu"
+            }
+          ],
+          "output_layer": {
+            "layer_type": "Dense",
+            "units": 5,
+            "activation": "linear"
+          }
+        },
+        
+        "training_parameters": {
+          "learning_rate": 0.001,
+          "batch_size": 32,
+          "epochs": 100,
+          "optimizer": "Adam",
+          "loss_function": "mse",
+          "metrics": ["mae", "rmse"],
+          "validation_split": 0.2,
+          "early_stopping": true,
+          "patience": 10,
+          "reduce_lr": true,
+          "factor": 0.5,
+          "patience_lr": 5
+        },
+        
+        "data_preprocessing": {
+          "normalization": "min_max",
+          "scaling_factor": 1000.0,
+          "sequence_length": 100,
+          "stride": 1,
+          "augmentation": {
+            "noise_injection": true,
+            "noise_level": 0.01,
+            "time_shift": true,
+            "max_shift": 5
+          }
+        },
+        
+        "model_metrics": {
+          "accuracy": 0.95,
+          "loss": 0.12,
+          "mae": 0.08,
+          "rmse": 0.15,
+          "precision": 0.94,
+          "recall": 0.96,
+          "f1_score": 0.95,
+          "training_time_per_epoch": 12.5,
+          "memory_usage_gb": 2.1
+        },
+        
+        "model_file_path": "/models/physics_simulation_predictor_v1.0.h5",
+        "model_file_size": 52428800,
+        "model_hash": "sha256:abc123def456...",
+        "training_job_id": "TRAIN_JOB_001",
+        "training_start_time": "2024-01-15T10:00:00Z",
+        "training_end_time": "2024-01-15T18:00:00Z",
+        "training_duration_minutes": 480,
+        "training_status": "completed",
+        "model_status": "active",
+        "deployment_status": "staging",
+        "created_by": "user_001",
+        "created_at": "2024-01-15T18:00:00Z",
+        "updated_by": "user_001",
+        "updated_at": "2024-01-15T18:00:00Z",
+        "description": "LSTM model for physics simulation prediction",
+        "tags": ["physics", "simulation", "lstm", "neural_network"],
+        "metadata": {
+          "physics_domain": "fluid_dynamics",
+          "simulation_type": "turbulent_flow",
+          "input_features": ["velocity", "pressure", "temperature", "time"],
+          "output_features": ["flow_prediction", "turbulence_level", "pressure_gradient"],
+          "data_points": 1000000,
+          "validation_split": 0.2
+        }
+      },
+      
+      "Graph_Neural_Network_Example": {
+        "ml_registry_id": "GNN_001",
+        "org_id": "ORG_001",
+        "dept_id": "DEPT_001",
+        "model_name": "Molecular_Dynamics_GNN_v1.0",
+        "model_version": "1.0.0",
+        "model_type": "Graph Neural Network",
+        "model_framework": "PyTorch Geometric",
+        "model_architecture": "Graph Convolutional Network",
+        "training_data_source": "Molecular_Dynamics_Trajectories_2024",
+        
+        "graph_structure": {
+          "node_features": ["atom_type", "position", "velocity", "charge"],
+          "edge_features": ["distance", "bond_type", "angle"],
+          "graph_type": "molecular_graph",
+          "max_nodes": 1000,
+          "max_edges": 5000
+        },
+        
+        "gnn_architecture": {
+          "convolution_layers": [
+            {
+              "layer_type": "GCNConv",
+              "in_channels": 64,
+              "out_channels": 128,
+              "normalize": true
+            },
+            {
+              "layer_type": "GATConv",
+              "in_channels": 128,
+              "out_channels": 256,
+              "heads": 8,
+              "dropout": 0.1
+            },
+            {
+              "layer_type": "GraphConv",
+              "in_channels": 256,
+              "out_channels": 512,
+              "aggr": "mean"
+            }
+          ],
+          "pooling": "global_mean_pool",
+          "readout": "attention"
+        },
+        
+        "physics_constraints": {
+          "conservation_laws": ["energy_conservation", "momentum_conservation"],
+          "symmetries": ["rotational_invariance", "translational_invariance"],
+          "physical_constraints": {
+            "energy_positive": true,
+            "temperature_range": "0 K < T < 10000 K"
+          }
+        },
+        
+        "training_parameters": {
+          "learning_rate": 0.001,
+          "batch_size": 16,
+          "epochs": 200,
+          "optimizer": "AdamW",
+          "loss_function": "mse",
+          "scheduler": "CosineAnnealingLR"
+        },
+        
+        "model_metrics": {
+          "accuracy": 0.92,
+          "loss": 0.18,
+          "energy_prediction_error": 0.05,
+          "force_prediction_error": 0.12,
+          "training_time_per_epoch": 25.3,
+          "memory_usage_gb": 4.2
+        },
+        
+        "model_file_path": "/models/molecular_dynamics_gnn_v1.0.pt",
+        "model_file_size": 78643200,
+        "model_hash": "sha256:ghi789jkl012...",
+        "training_job_id": "GNN_TRAIN_001",
+        "training_start_time": "2024-01-15T10:00:00Z",
+        "training_end_time": "2024-01-15T22:00:00Z",
+        "training_duration_minutes": 720,
+        "training_status": "completed",
+        "model_status": "active",
+        "deployment_status": "development",
+        "created_by": "user_001",
+        "created_at": "2024-01-15T22:00:00Z",
+        "updated_by": "user_001",
+        "updated_at": "2024-01-15T22:00:00Z",
+        "description": "Graph Neural Network for molecular dynamics prediction",
+        "tags": ["gnn", "molecular_dynamics", "graph_convolution", "physics"],
+        "metadata": {
+          "physics_domain": "molecular_dynamics",
+          "simulation_type": "protein_folding",
+          "input_features": ["atom_coordinates", "bond_information", "interatomic_forces"],
+          "output_features": ["energy", "forces", "trajectory_prediction"],
+          "data_points": 500000,
+          "molecules": 1000,
+          "atoms_per_molecule": 500
+        }
+      },
+      
+      "Transformer_Model_Example": {
+        "ml_registry_id": "TRANS_001",
+        "org_id": "ORG_001",
+        "dept_id": "DEPT_001",
+        "model_name": "Physics_Sequence_Transformer_v1.0",
+        "model_version": "1.0.0",
+        "model_type": "Transformer",
+        "model_framework": "PyTorch",
+        "model_architecture": "Encoder-Only Transformer",
+        "training_data_source": "Physics_Time_Series_Data_2024",
+        
+        "transformer_architecture": {
+          "embedding_dim": 512,
+          "num_heads": 8,
+          "num_layers": 12,
+          "feedforward_dim": 2048,
+          "dropout": 0.1,
+          "max_sequence_length": 1000,
+          "positional_encoding": "learned"
+        },
+        
+        "attention_mechanism": {
+          "attention_type": "multi_head_self_attention",
+          "attention_dropout": 0.1,
+          "layer_norm": true,
+          "residual_connections": true
+        },
+        
+        "training_parameters": {
+          "learning_rate": 0.0001,
+          "batch_size": 8,
+          "epochs": 300,
+          "optimizer": "AdamW",
+          "loss_function": "mse",
+          "scheduler": "CosineAnnealingWarmRestarts",
+          "warmup_steps": 1000,
+          "gradient_clipping": 1.0
+        },
+        
+        "model_metrics": {
+          "accuracy": 0.94,
+          "loss": 0.15,
+          "perplexity": 2.1,
+          "attention_weights_analysis": true,
+          "training_time_per_epoch": 35.7,
+          "memory_usage_gb": 12.8
+        },
+        
+        "model_file_path": "/models/physics_sequence_transformer_v1.0.pt",
+        "model_file_size": 157286400,
+        "model_hash": "sha256:jkl012mno345...",
+        "training_job_id": "TRANS_TRAIN_001",
+        "training_start_time": "2024-01-15T10:00:00Z",
+        "training_end_time": "2024-01-16T02:00:00Z",
+        "training_duration_minutes": 960,
+        "training_status": "completed",
+        "model_status": "active",
+        "deployment_status": "testing",
+        "created_by": "user_001",
+        "created_at": "2024-01-16T02:00:00Z",
+        "updated_by": "user_001",
+        "updated_at": "2024-01-16T02:00:00Z",
+        "description": "Transformer model for physics time series prediction",
+        "tags": ["transformer", "attention", "time_series", "physics"],
+        "metadata": {
+          "physics_domain": "general_physics",
+          "simulation_type": "time_series_prediction",
+          "input_features": ["time", "physical_quantities", "system_state"],
+          "output_features": ["future_states", "system_evolution", "critical_points"],
+          "data_points": 2000000,
+          "sequence_length": 1000,
+          "vocabulary_size": 50000
+        }
+      },
+      
+      "Reinforcement_Learning_Example": {
+        "ml_registry_id": "RL_001",
+        "org_id": "ORG_001",
+        "dept_id": "DEPT_001",
+        "model_name": "Physics_Control_RL_v1.0",
+        "model_version": "1.0.0",
+        "model_type": "Reinforcement Learning",
+        "model_framework": "Stable Baselines3",
+        "model_architecture": "PPO (Proximal Policy Optimization)",
+        "training_data_source": "Physics_Control_Simulation_2024",
+        
+        "rl_architecture": {
+          "algorithm": "PPO",
+          "policy_network": "MLP",
+          "value_network": "MLP",
+          "action_space": "continuous",
+          "observation_space": "continuous",
+          "state_dim": 64,
+          "action_dim": 8
+        },
+        
+        "environment_config": {
+          "environment_type": "physics_simulation",
+          "physics_engine": "Bullet",
+          "simulation_frequency": 1000,
+          "control_frequency": 100,
+          "max_episode_length": 1000,
+          "reward_function": "custom_physics_reward"
+        },
+        
+        "training_parameters": {
+          "learning_rate": 0.0003,
+          "batch_size": 64,
+          "total_timesteps": 1000000,
+          "n_steps": 2048,
+          "n_epochs": 10,
+          "gamma": 0.99,
+          "gae_lambda": 0.95,
+          "clip_range": 0.2,
+          "ent_coef": 0.01
+        },
+        
+        "reward_structure": {
+          "primary_reward": "task_completion",
+          "secondary_rewards": [
+            "energy_efficiency",
+            "smoothness",
+            "stability"
+          ],
+          "penalty_terms": [
+            "constraint_violation",
+            "excessive_force",
+            "unstable_behavior"
+          ]
+        },
+        
+        "model_metrics": {
+          "episode_reward_mean": 150.5,
+          "episode_reward_std": 25.3,
+          "episode_length_mean": 850,
+          "success_rate": 0.87,
+          "training_time_hours": 12.5,
+          "memory_usage_gb": 6.4
+        },
+        
+        "model_file_path": "/models/physics_control_rl_v1.0.zip",
+        "model_file_size": 52428800,
+        "model_hash": "sha256:mno345pqr678...",
+        "training_job_id": "RL_TRAIN_001",
+        "training_start_time": "2024-01-15T10:00:00Z",
+        "training_end_time": "2024-01-16T10:00:00Z",
+        "training_duration_minutes": 1440,
+        "training_status": "completed",
+        "model_status": "active",
+        "deployment_status": "development",
+        "created_by": "user_001",
+        "created_at": "2024-01-16T10:00:00Z",
+        "updated_by": "user_001",
+        "updated_at": "2024-01-16T10:00:00Z",
+        "description": "Reinforcement Learning model for physics-based control systems",
+        "tags": ["reinforcement_learning", "ppo", "control", "physics"],
+        "metadata": {
+          "physics_domain": "control_systems",
+          "simulation_type": "robotic_control",
+          "input_features": ["joint_positions", "joint_velocities", "external_forces"],
+          "output_features": ["joint_torques", "control_commands", "trajectory"],
+          "episodes": 5000,
+          "timesteps": 1000000,
+          "environment_instances": 100
+        }
+      },
+      
+      "Hybrid_Model_Example": {
+        "ml_registry_id": "HYBRID_001",
+        "org_id": "ORG_001",
+        "dept_id": "DEPT_001",
+        "model_name": "Physics_Hybrid_Model_v1.0",
+        "model_version": "1.0.0",
+        "model_type": "Hybrid Model",
+        "model_framework": "Custom (PyTorch + TensorFlow)",
+        "model_architecture": "PINN + GNN + Transformer",
+        "training_data_source": "Multi_Physics_Data_2024",
+        
+        "hybrid_components": {
+          "pinn_component": {
+            "type": "PINN",
+            "purpose": "physics_constraint_enforcement",
+            "weight": 0.4
+          },
+          "gnn_component": {
+            "type": "GNN",
+            "purpose": "spatial_relationships",
+            "weight": 0.3
+          },
+          "transformer_component": {
+            "type": "Transformer",
+            "purpose": "temporal_dependencies",
+            "weight": 0.3
+          }
+        },
+        
+        "integration_strategy": {
+          "fusion_method": "weighted_ensemble",
+          "training_strategy": "end_to_end",
+          "loss_combination": "weighted_sum",
+          "gradient_flow": "unified"
+        },
+        
+        "physics_constraints": {
+          "conservation_laws": ["mass", "momentum", "energy"],
+          "boundary_conditions": "adaptive",
+          "physical_constraints": "multi_scale"
+        },
+        
+        "training_parameters": {
+          "learning_rate": 0.0005,
+          "batch_size": 16,
+          "epochs": 500,
+          "optimizer": "AdamW",
+          "loss_weights": {
+            "pinn_loss": 0.4,
+            "gnn_loss": 0.3,
+            "transformer_loss": 0.3,
+            "consistency_loss": 0.1
+          }
+        },
+        
+        "model_metrics": {
+          "overall_accuracy": 0.96,
+          "pinn_component_accuracy": 0.94,
+          "gnn_component_accuracy": 0.95,
+          "transformer_component_accuracy": 0.93,
+          "consistency_score": 0.97,
+          "training_time_hours": 24.0,
+          "memory_usage_gb": 16.0
+        },
+        
+        "model_file_path": "/models/physics_hybrid_model_v1.0.zip",
+        "model_file_size": 209715200,
+        "model_hash": "sha256:pqr678stu901...",
+        "training_job_id": "HYBRID_TRAIN_001",
+        "training_start_time": "2024-01-15T10:00:00Z",
+        "training_end_time": "2024-01-17T10:00:00Z",
+        "training_duration_minutes": 2880,
+        "training_status": "completed",
+        "model_status": "active",
+        "deployment_status": "research",
+        "created_by": "user_001",
+        "created_at": "2024-01-17T10:00:00Z",
+        "updated_by": "user_001",
+        "updated_at": "2024-01-17T10:00:00Z",
+        "description": "Hybrid model combining PINN, GNN, and Transformer for complex physics",
+        "tags": ["hybrid", "pinn", "gnn", "transformer", "multi_physics"],
+        "metadata": {
+          "physics_domain": "multi_physics",
+          "simulation_type": "coupled_systems",
+          "input_features": ["multi_scale_data", "spatial_graphs", "temporal_sequences"],
+          "output_features": ["unified_predictions", "physics_consistent_results"],
+          "data_points": 500000,
+          "physics_domains": ["fluid_dynamics", "solid_mechanics", "heat_transfer"],
+          "integration_complexity": "high"
+        }
+      }
+    },
+    
+    "common_fields": {
+      "required_fields": [
+        "ml_registry_id",
+        "org_id",
+        "dept_id",
+        "model_name",
+        "model_version",
+        "model_type",
+        "model_framework",
+        "training_data_source",
+        "training_job_id",
+        "training_status",
+        "model_status",
+        "created_by",
+        "created_at"
+      ],
+      "optional_fields": [
+        "description",
+        "tags",
+        "metadata",
+        "deployment_status",
+        "updated_by",
+        "updated_at"
+      ],
+      "model_specific_fields": {
+        "PINN": ["physics_constraints", "physics_equations", "collocation_points", "physics_validation"],
+        "Traditional_NN": ["model_structure", "data_preprocessing"],
+        "GNN": ["graph_structure", "gnn_architecture"],
+        "Transformer": ["transformer_architecture", "attention_mechanism"],
+        "RL": ["rl_architecture", "environment_config", "reward_structure"],
+        "Hybrid": ["hybrid_components", "integration_strategy"]
+      }
+    },
+    
+    "validation_rules": {
+      "PINN": {
+        "required_physics_constraints": ["conservation_laws", "boundary_conditions"],
+        "required_physics_equations": ["at_least_one_equation"],
+        "required_collocation_points": ["total_points", "sampling_strategy"]
+      },
+      "Traditional_NN": {
+        "required_model_structure": ["input_layer", "hidden_layers", "output_layer"],
+        "required_training_parameters": ["learning_rate", "batch_size", "epochs"]
+      },
+      "GNN": {
+        "required_graph_structure": ["node_features", "edge_features"],
+        "required_gnn_architecture": ["convolution_layers", "pooling"]
+      },
+      "Transformer": {
+        "required_transformer_architecture": ["embedding_dim", "num_heads", "num_layers"],
+        "required_attention_mechanism": ["attention_type"]
+      },
+      "RL": {
+        "required_rl_architecture": ["algorithm", "policy_network", "action_space"],
+        "required_environment_config": ["environment_type", "reward_function"]
+      },
+      "Hybrid": {
+        "required_hybrid_components": ["at_least_two_components"],
+        "required_integration_strategy": ["fusion_method", "training_strategy"]
+      }
+    },
+    
+    "usage_notes": {
+      "stage_1": "Basic service infrastructure and CRUD operations",
+      "stage_2": "Implement populate_from_ml_training_job method using this reference",
+      "validation": "Use validation_rules to ensure data integrity",
+      "extensibility": "Add new model types by extending the examples and validation rules"
+    }
+  }
+}

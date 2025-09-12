@@ -18,20 +18,20 @@ from fastapi import HTTPException, BackgroundTasks
 try:
     from src.shared.database.base_manager import BaseDatabaseManager
     # Migrated to new twin registry system
-from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
-from src.twin_registry.models.twin_registry import TwinRegistry
-from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+from src.modules.twin_registry.models.twin_registry import TwinRegistry
+from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
 except ImportError as e:
     logging.error(f"Shared database components not available: {e}")
     raise
 
 # Import the physics modeling framework
 try:
-    from src.physics_modeling import DynamicPhysicsModelingFramework
-    from src.physics_modeling.core.dynamic_types import PhysicsPlugin
-    from src.physics_modeling.core.plugin_manager import PluginManager
-    from src.physics_modeling.core.model_factory import ModelFactory
-    from src.physics_modeling.simulation.simulation_engine import SimulationEngine
+    from src.modules.physics_modeling import DynamicPhysicsModelingFramework
+    from src.modules.physics_modeling.core.dynamic_types import PhysicsPlugin
+    from src.modules.physics_modeling.core.plugin_manager import PluginManager
+    from src.modules.physics_modeling.core.model_factory import ModelFactory
+    from src.modules.physics_modeling.simulation.simulation_engine import SimulationEngine
 except ImportError as e:
     logging.warning(f"Physics Modeling modules not available: {e}")
     DynamicPhysicsModelingFramework = None

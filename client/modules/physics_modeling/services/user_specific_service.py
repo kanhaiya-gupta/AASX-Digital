@@ -6,7 +6,7 @@ Distinguishes between independent users and organization members.
 
 import logging
 from typing import Dict, Any, List, Optional
-from webapp.core.context.user_context import UserContext
+from src.engine.models.request_context import UserContext
 
 logger = logging.getLogger(__name__)
 

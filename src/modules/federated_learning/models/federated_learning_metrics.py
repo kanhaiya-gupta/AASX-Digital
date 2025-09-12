@@ -10,17 +10,29 @@ Uses pure async patterns for optimal performance.
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import asyncio
-from src.engine.models.base_model import BaseModel
-from pydantic import Field, validator, computed_field
+from src.engine.models.base_model import EngineBaseModel
+from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
 
 
 class FederatedLearningMetrics(BaseModel):
     """Model for federated learning metrics with enterprise metrics"""
     
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True,
+        extra="allow",  # Allow extra fields to prevent validation errors
+    )
+
     # Primary identification
     metric_id: Optional[int] = Field(None, description="Auto-incrementing metric ID")
     registry_id: str = Field(..., description="Foreign key to federated_learning_registry")
     timestamp: datetime = Field(default_factory=datetime.now, description="Timestamp for this metric")
+    
+    # Organizational hierarchy (REQUIRED for proper access control)
+    user_id: str = Field(..., description="User who generated this metric")
+    org_id: str = Field(..., description="Organization this metric belongs to")  
+    dept_id: str = Field(..., description="Department for complete traceability")
     
     # Real-time Health Metrics
     health_score: int = Field(default=0, description="Health score (0-100)")
@@ -98,12 +110,6 @@ class FederatedLearningMetrics(BaseModel):
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
-    class Config:
-        """Pydantic configuration"""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
-        validate_assignment = True
     
     # Computed Fields
     @computed_field
@@ -633,7 +639,7 @@ class FederatedLearningMetrics(BaseModel):
 
 
 # Query Models for API Operations
-class FederatedLearningMetricsQuery(BaseModel):
+class FederatedLearningMetricsQuery(EngineBaseModel):
     """Query model for filtering federated learning metrics"""
     
     # Basic filters

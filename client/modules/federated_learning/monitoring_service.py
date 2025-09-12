@@ -12,7 +12,7 @@ import json
 import random
 
 # Import shared services and database managers (following twin_registry pattern)
-from src.federated_learning.core.federated_learning_service import FederatedLearningService
+from src.modules.federated_learning.core.federated_learning_service import FederatedLearningService
 from src.shared.services.digital_twin_service import DigitalTwinService
 from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager

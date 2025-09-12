@@ -6,10 +6,8 @@ These services handle specific operations and analytics.
 Phase 2: Service Layer Modernization - Pure Async Implementation
 """
 
-from .kg_graph_operations_service import KGGraphOperationsService
-from .kg_analytics_service import KGAnalyticsService
+from .kg_graph_registry_service import KGGraphRegistryService
 
 __all__ = [
-    'KGGraphOperationsService',
-    'KGAnalyticsService'
+    'KGGraphRegistryService'
 ]

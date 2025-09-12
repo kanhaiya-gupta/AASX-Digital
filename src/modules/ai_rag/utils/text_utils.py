@@ -101,7 +101,7 @@ def normalize_text(text: str) -> str:
     
     # Normalize quotes
     text = re.sub(r'["""]', '"', text)
-    text = re.sub(r'[''']', "'", text)
+    text = re.sub(r'['']', "'", text)
     
     # Normalize dashes
     text = re.sub(r'[–—]', '-', text)
@@ -318,5 +318,6 @@ def generate_text_hash(text: str, algorithm: str = "md5") -> str:
     else:
         logger.warning(f"Unknown hash algorithm: {algorithm}, using MD5")
         return hashlib.md5(text_bytes).hexdigest()
+
 
 

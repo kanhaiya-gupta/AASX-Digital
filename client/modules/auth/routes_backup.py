@@ -515,7 +515,7 @@ async def upload_avatar(request: Request, avatar: UploadFile = File(...)):
             )
         
         # Create avatars directory if it doesn't exist
-        avatars_dir = Path("webapp/static/avatars")
+        avatars_dir = Path("client/static/avatars")
         avatars_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate unique filename
@@ -606,7 +606,7 @@ async def remove_avatar(request: Request):
             }
         
         # Remove avatar file if it exists
-        avatar_path = Path("webapp/static/avatars") / Path(current_user.avatar_url).name
+        avatar_path = Path("client/static/avatars") / Path(current_user.avatar_url).name
         if avatar_path.exists():
             try:
                 avatar_path.unlink()

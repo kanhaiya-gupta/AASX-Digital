@@ -3,7 +3,7 @@
 {% block title %}Knowledge Graph - Advanced Graph Analytics{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/kg_neo4j.css') }}">
+<link rel="stylesheet" href="/static/css/kg_neo4j.css">
 {% endblock %}
 
 {% block content %}
@@ -155,7 +155,7 @@
     console.log('🧠 Knowledge Graph Template: Loading modular KG system...');
     
     try {
-        const { initKnowledgeGraphModule } = await import("{{ url_for('static', path='/js/modules/kg_neo4j/index.js') }}?v={{ range(1, 1000) | random }}");
+        const { initKnowledgeGraphModule } = await import("/static/js/modules/kg_neo4j/index.js?v={{ range(1, 1000) | random }}");
         console.log('✅ Knowledge Graph Template: Modular system imported successfully');
         
         // Initialize the modular Knowledge Graph system
@@ -164,7 +164,7 @@
         
         // Initialize analytics module
         try {
-            await import("{{ url_for('static', path='/js/modules/kg_neo4j/modules/analytics/index.js') }}?v={{ range(1, 1000) | random }}");
+            await import("/static/js/modules/kg_neo4j/modules/analytics/index.js?v={{ range(1, 1000) | random }}");
             console.log('✅ Knowledge Graph Template: Analytics module loaded');
         } catch (analyticsError) {
             console.warn('⚠️ Analytics module not available:', analyticsError);
@@ -176,7 +176,7 @@
         // Fallback: Initialize basic configuration functionality
         console.log('🔄 Fallback: Initializing basic configuration functionality...');
         try {
-            const { ConfigurationManager } = await import("{{ url_for('static', path='/js/modules/kg_neo4j/modules/configuration/index.js') }}?v={{ range(1, 1000) | random }}");
+            const { ConfigurationManager } = await import("/static/js/modules/kg_neo4j/modules/configuration/index.js?v={{ range(1, 1000) | random }}");
             const configManager = new ConfigurationManager('/api/kg-neo4j');
             await configManager.init();
             window.configurationManager = configManager;

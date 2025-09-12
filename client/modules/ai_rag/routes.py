@@ -13,8 +13,8 @@ import logging
 from datetime import datetime
 
 # Import authentication components
-from webapp.core.context.user_context import UserContext
-from webapp.core.decorators.auth_decorators import require_auth, get_current_user
+from src.engine.models.request_context import UserContext
+from src.integration.api.dependencies import require_auth, get_current_user
 
 # Import our service modules
 from .query_service import QueryService
@@ -25,7 +25,7 @@ from .services.organization_service import AIRAGOrganizationService
 
 # Import the new modular RAG system
 try:
-    from src.ai_rag.rag_system import RAGManager
+    from src.modules.ai_rag.rag_system import RAGManager
     print("✅ AI/RAG modules imported successfully")
 except ImportError as e:
     print(f"❌ Failed to import AI/RAG modules: {e}")
@@ -183,7 +183,7 @@ async def ai_rag_page(
 ):
     """AI/RAG system main page"""
     try:
-        templates = Jinja2Templates(directory="webapp/templates")
+        templates = Jinja2Templates(directory="client/templates")
         
         # Initialize user-specific and organization services
         user_specific_service = AIRAGUserSpecificService(user_context)

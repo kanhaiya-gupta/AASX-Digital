@@ -182,7 +182,7 @@ class ErrorTracker:
             }
         ]
     
-    def track_error(self, error_type: str, error_message: str, error_details: str = "",
+    async def track_error(self, error_type: str, error_message: str, error_details: str = "",
                    severity: ErrorSeverity = ErrorSeverity.MEDIUM, 
                    category: Optional[ErrorCategory] = None,
                    context: Optional[ErrorContext] = None,
@@ -421,6 +421,57 @@ class ErrorTracker:
         
         return summary
     
+    async def initialize(self):
+        """Initialize the error tracker"""
+        try:
+            # Setup default patterns and rules
+            self._setup_default_patterns()
+            self._setup_default_rules()
+            
+            # Initialize error storage
+            self.errors = []
+            self.error_patterns = {}
+            self.error_rules = []
+            
+            print("Error tracker initialized successfully")
+        except Exception as e:
+            print(f"Failed to initialize error tracker: {e}")
+            raise
+
+    async def get_health(self) -> Dict[str, Any]:
+        """Get health status of the error tracker"""
+        try:
+            return {
+                "status": "healthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "total_errors": len(self.errors),
+                "error_patterns_count": len(self.error_patterns),
+                "error_rules_count": len(self.error_rules),
+                "message": "Error tracker is operational"
+            }
+        except Exception as e:
+            return {
+                "status": "unhealthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "error": str(e),
+                "message": "Error tracker has errors"
+            }
+    
+    async def cleanup(self):
+        """Cleanup error tracker resources"""
+        try:
+            # Clear errors
+            self.errors.clear()
+            self.error_patterns.clear()
+            self.error_rules.clear()
+            self.error_handlers.clear()
+            self.error_filters.clear()
+            
+            print("Error tracker cleaned up successfully")
+        except Exception as e:
+            print(f"Failed to cleanup error tracker: {e}")
+            raise
+
     def get_error_patterns(self) -> Dict[str, Any]:
         """Get error pattern analysis"""
         patterns = {}

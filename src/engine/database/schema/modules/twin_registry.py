@@ -144,7 +144,7 @@ class TwinRegistrySchema(BaseSchema):
                 compliance_score REAL DEFAULT 0.0,               -- 0.0-1.0 compliance rating
                 
                 -- Security & Access Control
-                security_level TEXT NOT NULL DEFAULT 'standard' CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')),
+                security_level TEXT NOT NULL DEFAULT 'internal' CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')),
                 access_control_level TEXT NOT NULL DEFAULT 'user' CHECK (access_control_level IN ('public', 'user', 'admin', 'system', 'restricted')),
                 encryption_enabled BOOLEAN DEFAULT FALSE,        -- Whether data is encrypted
                 audit_logging_enabled BOOLEAN DEFAULT TRUE,      -- Whether audit logging is enabled
@@ -341,6 +341,15 @@ class TwinRegistrySchema(BaseSchema):
                 performance_optimization_status TEXT DEFAULT 'none',       -- none, scheduled, in_progress, completed
                 resource_optimization_efficiency REAL DEFAULT 0.0,         -- 0.0-1.0 optimization efficiency
                 enterprise_analytics_metadata TEXT DEFAULT '{}',           -- JSON: enterprise analytics data
+                
+                -- Multi-Tenant Support (REQUIRED for RBAC)
+                user_id TEXT NOT NULL,                                    -- User ID for access control
+                org_id TEXT NOT NULL,                                     -- Organization ID for multi-tenant isolation
+                dept_id TEXT NOT NULL,                                    -- Department ID for department-level access control
+                
+                -- Timestamps
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,            -- Creation timestamp
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,            -- Last update timestamp
                 
                 -- Foreign Key Constraints
                 FOREIGN KEY (registry_id) REFERENCES twin_registry (registry_id) ON DELETE CASCADE

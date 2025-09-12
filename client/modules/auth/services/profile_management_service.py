@@ -265,7 +265,7 @@ class ProfileManagementService:
             avatar_filename = f"{user_id}_{uuid.uuid4().hex}{file_extension}"
             
             # Save avatar file
-            avatar_path = f"webapp/static/avatars/{avatar_filename}"
+            avatar_path = f"client/static/avatars/{avatar_filename}"
             os.makedirs(os.path.dirname(avatar_path), exist_ok=True)
             
             with open(avatar_path, "wb") as f:
@@ -297,7 +297,7 @@ class ProfileManagementService:
                 return True  # No avatar to remove
             
             avatar_url = user.avatar_url
-            avatar_path = f"webapp/static/avatars/{os.path.basename(avatar_url)}"
+            avatar_path = f"client/static/avatars/{os.path.basename(avatar_url)}"
             
             # Remove avatar file if it exists
             if os.path.exists(avatar_path):

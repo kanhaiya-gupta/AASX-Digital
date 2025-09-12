@@ -10,6 +10,7 @@ Welcome to the comprehensive documentation for the AASX Digital Twin Analytics F
 
 ### 🔧 Core Components
 - **[AAS Processor](AAS_PROCESSOR.md)** - .NET-based AASX file processing
+- **[AASX Processing Service](AASX_PROCESSING_SERVICE_GUIDE.md)** - ✅ Production-ready service with 100% test coverage
 - **[Knowledge Graph](KNOWLEDGE_GRAPH.md)** - Neo4j integration and graph analytics
 - **[ETL Pipeline](AASX_ETL_PIPELINE.md)** - Data extraction, transformation, and loading
 - **[Export Formats](EXPORT_FORMATS.md)** - 7 comprehensive data export formats

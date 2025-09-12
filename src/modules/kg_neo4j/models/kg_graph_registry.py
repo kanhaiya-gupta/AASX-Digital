@@ -6,10 +6,10 @@ Supports both extraction and generation workflows with full graph lifecycle mana
 Enhanced with enterprise-grade computed fields and business intelligence methods.
 """
 
-from src.engine.models.engine_base_model import EngineBaseModel
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
-from pydantic import Field, ConfigDict, computed_field
+from pydantic import BaseModel, Field, ConfigDict, computed_field
 import uuid
 import asyncio
 
@@ -23,7 +23,11 @@ class KGGraphRegistry(EngineBaseModel):
     Neo4j integration, and enterprise-grade features.
     """
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # Primary Identification
     graph_id: str = Field(..., description="Unique graph identifier")
@@ -153,7 +157,7 @@ class KGGraphRegistry(EngineBaseModel):
     reliability_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Reliability score (0.0-1.0)")
     
     # Security & Access Control
-    security_level: str = Field(default="standard", description="Security level: public, internal, confidential, secret, top_secret")
+    security_level: str = Field(default="internal", description="Security level: public, internal, confidential, secret, top_secret")
     access_control_level: str = Field(default="user", description="Access control level: public, user, admin, system, restricted")
     encryption_enabled: bool = Field(default=False, description="Whether graph data is encrypted")
     audit_logging_enabled: bool = Field(default=True, description="Whether audit logging is enabled")
@@ -162,9 +166,6 @@ class KGGraphRegistry(EngineBaseModel):
     compliance_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Compliance score (0.0-1.0)")
     security_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Security score (0.0-1.0)")
     overall_health_score: int = Field(default=0, ge=0, le=100, description="Overall health score (0-100)")
-    risk_level: str = Field(default="low", description="Risk level: low, medium, high, critical")
-    threat_level: str = Field(default="low", description="Threat level: low, medium, high, critical")
-    security_status: str = Field(default="secure", description="Security status: secure, warning, compromised, unknown")
     compliance_status: str = Field(default="compliant", description="Compliance status: compliant, warning, non_compliant, unknown")
     last_security_scan: Optional[datetime] = Field(default=None, description="Last security scan timestamp")
     last_compliance_check: Optional[datetime] = Field(default=None, description="Last compliance check timestamp")
@@ -173,9 +174,9 @@ class KGGraphRegistry(EngineBaseModel):
     security_vulnerabilities_count: int = Field(default=0, description="Number of known vulnerabilities")
     
     # Additional Enterprise Fields (Missing from schema)
-    metric_type: str = Field(default="standard", description="Type of metric being tracked")
+    metric_type: str = Field(default="enterprise", description="Type of metric being tracked")
     metric_timestamp: Optional[datetime] = Field(default=None, description="Specific timestamp for the metric")
-    compliance_type: str = Field(default="standard", description="Type of compliance being tracked")
+    compliance_type: str = Field(default="enterprise", description="Type of compliance being tracked")
     last_compliance_audit: Optional[datetime] = Field(default=None, description="Last compliance audit date")
     next_compliance_audit: Optional[datetime] = Field(default=None, description="Next scheduled compliance audit")
     compliance_audit_details: Dict[str, Any] = Field(default={}, description="JSON: detailed compliance audit information")

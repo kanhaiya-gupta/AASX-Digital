@@ -7,7 +7,7 @@ from typing import Dict, List, Any
 import openai
 from datetime import datetime
 from .base_technique import BaseRAGTechnique
-from src.ai_rag.embedding_models.text_embeddings import TextEmbeddingManager
+from ...embedding_models.text_embeddings import TextEmbeddingManager
 
 
 class AdvancedRAGTechnique(BaseRAGTechnique):

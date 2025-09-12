@@ -16,8 +16,8 @@ from typing import Optional, List, Dict, Any
 logger = logging.getLogger(__name__)
 
 # Import authentication dependencies
-from webapp.core.context.user_context import UserContext
-from webapp.core.decorators.auth_decorators import get_current_user, require_auth
+from src.engine.models.request_context import UserContext
+from src.integration.api.dependencies import get_current_user, require_auth
 
 # Import module-specific services
 from .services.kg_neo4j_service import KGNeo4jService
@@ -60,7 +60,7 @@ class QueryRequest(BaseModel):
 @require_auth("read", allow_independent=True)
 async def index(request: Request, user_context: UserContext = Depends(get_current_user)):
     """Knowledge Graph Neo4j main page"""
-    templates = Jinja2Templates(directory="webapp/templates")
+    templates = Jinja2Templates(directory="client/templates")
     
     # Initialize authentication services
     user_specific_service = KGNeo4jUserSpecificService(user_context)

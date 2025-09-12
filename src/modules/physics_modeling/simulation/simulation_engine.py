@@ -21,7 +21,7 @@ import json
 # Import the new twin registry system
 from ...twin_registry.models.twin_registry import TwinRegistry
 from ...twin_registry.repositories.twin_registry_repository import TwinRegistryRepository
-from ...twin_registry.core.twin_registry_service import TwinRegistryService
+from ...twin_registry.services.twin_registry_service import TwinRegistryService
 
 # Import physics modeling components
 from ..core.plugin_manager import PluginManager
@@ -76,7 +76,7 @@ class SimulationEngine:
             self.twin_registry_repo = TwinRegistryRepository()
         
         if not self.twin_registry_service:
-            from ...twin_registry.core.twin_registry_service import TwinRegistryService
+            from ...twin_registry.services.twin_registry_service import TwinRegistryService
             self.twin_registry_service = TwinRegistryService(self.twin_registry_repo)
         
         logger.info("Simulation engine initialized with twin registry integration")

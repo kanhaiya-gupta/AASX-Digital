@@ -8,12 +8,12 @@ Enhanced with enterprise-grade computed fields, business intelligence methods, a
 
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import Field, validator, computed_field
-from src.engine.models import BaseModel
+from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 import asyncio
 
 
-class PhysicsModelingMetrics(BaseModel):
+class PhysicsModelingMetrics(EngineBaseModel):
     """
     Physics Modeling Metrics Model
     
@@ -21,9 +21,21 @@ class PhysicsModelingMetrics(BaseModel):
     for comprehensive tracking, analytics, and monitoring.
     """
     
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True,
+        extra="allow",  # Allow extra fields to prevent validation errors
+    )
+    
     # Primary Identification
     metric_id: Optional[int] = Field(None, description="Auto-incrementing metric ID")
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Metric timestamp")
+    
+    # Organizational Hierarchy (REQUIRED for proper access control)
+    org_id: str = Field(default="default", description="Organization this metric belongs to")
+    dept_id: str = Field(default="default", description="Department for complete traceability")
+    user_id: str = Field(..., description="User who owns/accesses this metric")
     
     # Model Reference (Links to either traditional or ML registry)
     registry_id: Optional[str] = Field(None, description="Reference to physics_modeling_registry (traditional)")
@@ -92,6 +104,20 @@ class PhysicsModelingMetrics(BaseModel):
     performance_analytics_score: float = Field(default=0.0, ge=0.0, le=100.0, description="Performance analytics score (0.0-100.0)")
     performance_analytics_details: Dict[str, Any] = Field(default_factory=dict, description="JSON: performance analytics information")
     
+    # Alerting & Monitoring (NEW for enterprise monitoring)
+    alert_status: str = Field(default="normal", description="Alert status: normal, warning, critical, resolved")
+    warning_threshold: Optional[float] = Field(None, description="Warning threshold value")
+    critical_threshold: Optional[float] = Field(None, description="Critical threshold value")
+    alert_history: Dict[str, Any] = Field(default_factory=dict, description="JSON object: alert history tracking")
+    
+    # Categorization & Metadata (NEW for enterprise organization)
+    tags: Dict[str, Any] = Field(default_factory=dict, description="JSON: tags for categorization")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="JSON: additional metadata")
+    
+    # Audit Timestamps (REQUIRED for audit trails)
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="When metric was created")
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="When metric was last updated")
+    
     # Computed Fields for Business Intelligence
     @computed_field
     @property
@@ -116,6 +142,11 @@ class PhysicsModelingMetrics(BaseModel):
             scores.append(self.security_metrics_score / 100.0)  # Normalize to 0-1
         if self.performance_analytics_score > 0:
             scores.append(self.performance_analytics_score / 100.0)  # Normalize to 0-1
+        
+        # Alert status scoring (normal=1.0, warning=0.7, critical=0.3, resolved=0.9)
+        alert_scores = {'normal': 1.0, 'warning': 0.7, 'critical': 0.3, 'resolved': 0.9}
+        if self.alert_status in alert_scores:
+            scores.append(alert_scores[self.alert_status])
         
         return sum(scores) / len(scores) if scores else 0.0
     
@@ -280,13 +311,31 @@ class PhysicsModelingMetrics(BaseModel):
         
         return sum(efficiency_factors) / len(efficiency_factors) if efficiency_factors else 0.0
     
-    class Config:
-        """Pydantic configuration"""
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
-        validate_assignment = True
-        arbitrary_types_allowed = True
+    @computed_field
+    @property
+    def alert_monitoring_score(self) -> float:
+        """Calculate alert monitoring score based on alert status and thresholds"""
+        base_score = 1.0
+        
+        # Deduct points for warning/critical alerts
+        if self.alert_status == 'warning':
+            base_score -= 0.3
+        elif self.alert_status == 'critical':
+            base_score -= 0.7
+        elif self.alert_status == 'resolved':
+            base_score -= 0.1  # Small deduction for resolved alerts
+        
+        # Bonus for having thresholds set
+        if self.warning_threshold is not None:
+            base_score += 0.1
+        if self.critical_threshold is not None:
+            base_score += 0.1
+        
+        # Bonus for alert history tracking
+        if self.alert_history and len(self.alert_history) > 0:
+            base_score += 0.1
+        
+        return max(0.0, min(1.0, base_score))  # Ensure score is between 0.0 and 1.0
     
     # Enterprise Methods for Business Intelligence
     async def update_enterprise_metrics(self, metrics: Dict[str, Any]) -> None:
@@ -326,6 +375,32 @@ class PhysicsModelingMetrics(BaseModel):
             self.performance_analytics_score = new_score
             if details:
                 self.performance_analytics_details.update(details)
+            # Simulate async operation
+            await asyncio.sleep(0.001)
+    
+    async def update_alert_status(self, new_status: str, details: Optional[Dict[str, Any]] = None) -> None:
+        """Update alert status and add to alert history asynchronously"""
+        valid_statuses = ['normal', 'warning', 'critical', 'resolved']
+        if new_status in valid_statuses:
+            self.alert_status = new_status
+            
+            # Add to alert history
+            alert_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "status": new_status,
+                "details": details or {},
+                "previous_status": getattr(self, 'alert_status', 'normal')
+            }
+            self.alert_history.append(alert_entry)
+            
+            # Simulate async operation
+            await asyncio.sleep(0.001)
+    
+    async def set_alert_thresholds(self, warning_threshold: float, critical_threshold: float) -> None:
+        """Set alert thresholds asynchronously"""
+        if warning_threshold < critical_threshold:  # Warning should be less severe than critical
+            self.warning_threshold = warning_threshold
+            self.critical_threshold = critical_threshold
             # Simulate async operation
             await asyncio.sleep(0.001)
     
@@ -443,6 +518,17 @@ class PhysicsModelingMetrics(BaseModel):
                     "details": self.performance_analytics_details
                 }
             },
+            "alerting_monitoring": {
+                "alert_status": self.alert_status,
+                "warning_threshold": self.warning_threshold,
+                "critical_threshold": self.critical_threshold,
+                "alert_history_count": len(self.alert_history),
+                "alert_monitoring_score": self.alert_monitoring_score
+            },
+            "categorization": {
+                "tags": self.tags,
+                "metadata": self.metadata
+            },
             "business_intelligence": {
                 "overall_metrics_score": self.overall_metrics_score,
                 "enterprise_health_status": self.enterprise_health_status,
@@ -489,7 +575,8 @@ class PhysicsModelingMetrics(BaseModel):
                     "maintenance_schedule": self.maintenance_schedule,
                     "system_efficiency_score": self.system_efficiency_score,
                     "physics_quality_score": self.physics_quality_score,
-                    "computational_efficiency_score": self.computational_efficiency_score
+                    "computational_efficiency_score": self.computational_efficiency_score,
+                    "alert_monitoring_score": self.alert_monitoring_score
                 },
                 "export_timestamp": datetime.now().isoformat(),
                 "export_format": format
@@ -555,6 +642,14 @@ class PhysicsModelingMetrics(BaseModel):
         valid_statuses = ['pending', 'active', 'completed', 'failed']
         if v not in valid_statuses:
             raise ValueError(f'Tracking status must be one of: {valid_statuses}')
+        return v
+    
+    @validator('alert_status')
+    def validate_alert_status(cls, v):
+        """Validate alert status"""
+        valid_statuses = ['normal', 'warning', 'critical', 'resolved']
+        if v not in valid_statuses:
+            raise ValueError(f'Alert status must be one of: {valid_statuses}')
         return v
     
     # Basic Pydantic methods only

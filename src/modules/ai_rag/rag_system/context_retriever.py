@@ -175,7 +175,7 @@ class ContextRetriever:
         """Generate embedding for the query."""
         try:
             # Use the text embedding manager from the AI/RAG system
-            from src.ai_rag.embedding_models.text_embeddings import TextEmbeddingManager
+            from ..embedding_models.text_embeddings import TextEmbeddingManager
             
             embedding_manager = TextEmbeddingManager()
             embedding = embedding_manager.get_model().embed_text(query)

@@ -7,7 +7,7 @@ import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import os
-from src.ai_rag.embedding_models.text_embeddings import TextEmbeddingManager
+from ..embedding_models.text_embeddings import TextEmbeddingManager
 
 
 class LLMIntegration:

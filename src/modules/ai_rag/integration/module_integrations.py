@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from ..events.event_types import (
     BaseEvent, EventPriority, EventStatus, EventCategory,
-    AASXIntegrationEvent, TwinRegistryIntegrationEvent, KGNeo4jIntegrationEvent
+    IntegrationEvent, IntegrationSuccessEvent, IntegrationFailureEvent
 )
 from ..events.event_bus import EventBus
 from ..events.event_logger import EventLogger
@@ -87,13 +87,18 @@ class AASXIntegration:
             start_time = datetime.now()
             
             # Publish AASX integration event
-            event = AASXIntegrationEvent(
+            event = IntegrationEvent(
                 event_id=f"aasx_integration_{datetime.now().timestamp()}",
-                aasx_file_path=file_path,
-                aasx_metadata=file_metadata,
-                integration_status="processing",
+                event_type="aasx_integration",
+                event_category=EventCategory.INTEGRATION,
                 priority=EventPriority.HIGH,
-                category=EventCategory.INTEGRATION
+                source="ai_rag_integration",
+                target="aasx_module",
+                metadata={
+                    "aasx_file_path": file_path,
+                    "aasx_metadata": file_metadata,
+                    "integration_status": "processing"
+                }
             )
             await self.event_bus.publish(event)
             
@@ -112,13 +117,19 @@ class AASXIntegration:
             }
             
             # Publish completion event
-            completion_event = AASXIntegrationEvent(
+            completion_event = IntegrationSuccessEvent(
                 event_id=f"aasx_completion_{datetime.now().timestamp()}",
-                aasx_file_path=file_path,
-                aasx_metadata=file_metadata,
-                integration_status="completed",
+                event_type="aasx_integration_completed",
+                event_category=EventCategory.INTEGRATION,
                 priority=EventPriority.HIGH,
-                category=EventCategory.INTEGRATION
+                source="ai_rag_integration",
+                target="aasx_module",
+                metadata={
+                    "aasx_file_path": file_path,
+                    "aasx_metadata": file_metadata,
+                    "integration_status": "completed",
+                    "result": result
+                }
             )
             await self.event_bus.publish(completion_event)
             
@@ -131,14 +142,19 @@ class AASXIntegration:
             self.status = IntegrationStatus.FAILED
             
             # Publish error event
-            error_event = AASXIntegrationEvent(
+            error_event = IntegrationFailureEvent(
                 event_id=f"aasx_error_{datetime.now().timestamp()}",
-                aasx_file_path=file_path,
-                aasx_metadata=file_metadata,
-                integration_status="failed",
-                error_message=str(e),
+                event_type="aasx_integration_failed",
+                event_category=EventCategory.ERROR,
                 priority=EventPriority.HIGH,
-                category=EventCategory.ERROR
+                source="ai_rag_integration",
+                target="aasx_module",
+                error_message=str(e),
+                metadata={
+                    "aasx_file_path": file_path,
+                    "aasx_metadata": file_metadata,
+                    "integration_status": "failed"
+                }
             )
             await self.event_bus.publish(error_event)
             
@@ -189,13 +205,18 @@ class TwinRegistryIntegration:
             start_time = datetime.now()
             
             # Publish twin registry integration event
-            event = TwinRegistryIntegrationEvent(
+            event = IntegrationEvent(
                 event_id=f"twin_registry_sync_{datetime.now().timestamp()}",
-                twin_ids=twin_ids,
-                sync_type="health_scores",
-                integration_status="processing",
+                event_type="twin_registry_sync",
+                event_category=EventCategory.INTEGRATION,
                 priority=EventPriority.NORMAL,
-                category=EventCategory.INTEGRATION
+                source="ai_rag_integration",
+                target="twin_registry_module",
+                metadata={
+                    "twin_ids": twin_ids,
+                    "sync_type": "health_scores",
+                    "integration_status": "processing"
+                }
             )
             await self.event_bus.publish(event)
             
@@ -214,13 +235,19 @@ class TwinRegistryIntegration:
             }
             
             # Publish completion event
-            completion_event = TwinRegistryIntegrationEvent(
+            completion_event = IntegrationSuccessEvent(
                 event_id=f"twin_registry_completion_{datetime.now().timestamp()}",
-                twin_ids=twin_ids,
-                sync_type="health_scores",
-                integration_status="completed",
+                event_type="twin_registry_sync_completed",
+                event_category=EventCategory.INTEGRATION,
                 priority=EventPriority.NORMAL,
-                category=EventCategory.INTEGRATION
+                source="ai_rag_integration",
+                target="twin_registry_module",
+                metadata={
+                    "twin_ids": twin_ids,
+                    "sync_type": "health_scores",
+                    "integration_status": "completed",
+                    "result": result
+                }
             )
             await self.event_bus.publish(completion_event)
             
@@ -233,14 +260,19 @@ class TwinRegistryIntegration:
             self.status = IntegrationStatus.FAILED
             
             # Publish error event
-            error_event = TwinRegistryIntegrationEvent(
+            error_event = IntegrationFailureEvent(
                 event_id=f"twin_registry_error_{datetime.now().timestamp()}",
-                twin_ids=twin_ids,
-                sync_type="health_scores",
-                integration_status="failed",
-                error_message=str(e),
+                event_type="twin_registry_sync_failed",
+                event_category=EventCategory.ERROR,
                 priority=EventPriority.NORMAL,
-                category=EventCategory.ERROR
+                source="ai_rag_integration",
+                target="twin_registry_module",
+                error_message=str(e),
+                metadata={
+                    "twin_ids": twin_ids,
+                    "sync_type": "health_scores",
+                    "integration_status": "failed"
+                }
             )
             await self.event_bus.publish(error_event)
             
@@ -295,14 +327,19 @@ class KGNeo4jIntegration:
             start_time = datetime.now()
             
             # Publish KG Neo4j integration event
-            event = KGNeo4jIntegrationEvent(
+            event = IntegrationEvent(
                 event_id=f"kg_neo4j_enhancement_{datetime.now().timestamp()}",
-                graph_id=graph_id,
-                enhancement_type="graph_enhancement",
-                enhancement_config=enhancement_config,
-                integration_status="processing",
+                event_type="kg_neo4j_enhancement",
+                event_category=EventCategory.INTEGRATION,
                 priority=EventPriority.HIGH,
-                category=EventCategory.INTEGRATION
+                source="ai_rag_integration",
+                target="kg_neo4j_module",
+                metadata={
+                    "graph_id": graph_id,
+                    "enhancement_type": "graph_enhancement",
+                    "enhancement_config": enhancement_config,
+                    "integration_status": "processing"
+                }
             )
             await self.event_bus.publish(event)
             
@@ -326,14 +363,20 @@ class KGNeo4jIntegration:
             }
             
             # Publish completion event
-            completion_event = KGNeo4jIntegrationEvent(
+            completion_event = IntegrationSuccessEvent(
                 event_id=f"kg_neo4j_completion_{datetime.now().timestamp()}",
-                graph_id=graph_id,
-                enhancement_type="graph_enhancement",
-                enhancement_config=enhancement_config,
-                integration_status="completed",
+                event_type="kg_neo4j_enhancement_completed",
+                event_category=EventCategory.INTEGRATION,
                 priority=EventPriority.HIGH,
-                category=EventCategory.INTEGRATION
+                source="ai_rag_integration",
+                target="kg_neo4j_module",
+                metadata={
+                    "graph_id": graph_id,
+                    "enhancement_type": "graph_enhancement",
+                    "enhancement_config": enhancement_config,
+                    "integration_status": "completed",
+                    "result": result
+                }
             )
             await self.event_bus.publish(completion_event)
             
@@ -346,15 +389,20 @@ class KGNeo4jIntegration:
             self.status = IntegrationStatus.FAILED
             
             # Publish error event
-            error_event = KGNeo4jIntegrationEvent(
+            error_event = IntegrationFailureEvent(
                 event_id=f"kg_neo4j_error_{datetime.now().timestamp()}",
-                graph_id=graph_id,
-                enhancement_type="graph_enhancement",
-                enhancement_config=enhancement_config,
-                integration_status="failed",
-                error_message=str(e),
+                event_type="kg_neo4j_enhancement_failed",
+                event_category=EventCategory.ERROR,
                 priority=EventPriority.HIGH,
-                category=EventCategory.ERROR
+                source="ai_rag_integration",
+                target="kg_neo4j_module",
+                error_message=str(e),
+                metadata={
+                    "graph_id": graph_id,
+                    "enhancement_type": "graph_enhancement",
+                    "enhancement_config": enhancement_config,
+                    "integration_status": "failed"
+                }
             )
             await self.event_bus.publish(error_event)
             

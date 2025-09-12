@@ -8,7 +8,7 @@ supporting multi-tenancy and organization-specific data management.
 
 import logging
 from typing import Dict, List, Optional, Any
-from webapp.core.context.user_context import UserContext
+from src.engine.models.request_context import UserContext
 
 logger = logging.getLogger(__name__)
 

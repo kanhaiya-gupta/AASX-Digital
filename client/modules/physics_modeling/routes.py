@@ -13,8 +13,8 @@ import logging
 from datetime import datetime
 
 # Import authentication components
-from webapp.core.decorators.auth_decorators import require_auth, get_current_user
-from webapp.core.context.user_context import UserContext
+from src.integration.api.dependencies import require_auth, get_current_user
+from src.engine.models.request_context import UserContext
 
 # Import services
 from .services import (
@@ -32,7 +32,7 @@ from src.shared.database.base_manager import BaseDatabaseManager
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.project_repository import ProjectRepository
 # Migrated to new twin registry system
-from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from pathlib import Path
 
 # Create data directory and set database path
@@ -160,7 +160,7 @@ async def physics_modeling_page(
         can_create_model = user_specific_service.can_create_model()
         can_manage_org = organization_service.can_manage_organization()
         
-        templates = Jinja2Templates(directory="webapp/templates")
+        templates = Jinja2Templates(directory="client/templates")
         return templates.TemplateResponse(
             "physics_modeling/index.html",
             {
@@ -205,7 +205,7 @@ async def use_cases_page(
         # Check permissions
         can_create_use_case = any(perm in user_context.permissions for perm in ['create'])
         
-        templates = Jinja2Templates(directory="webapp/templates")
+        templates = Jinja2Templates(directory="client/templates")
         return templates.TemplateResponse(
             "physics_modeling/use_cases_showcase.html",
             {

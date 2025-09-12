@@ -60,7 +60,8 @@ async def get_request_context(request: Request):
 
 async def require_auth(
     request: Request,
-    required_permissions: Optional[List[PermissionLevel]] = None
+    required_permissions: Optional[List[PermissionLevel]] = None,
+    allow_independent: bool = True
 ) -> UserContext:
     """
     FastAPI dependency that requires authentication and optionally specific permissions.
@@ -68,6 +69,7 @@ async def require_auth(
     Args:
         request: FastAPI request object
         required_permissions: List of required permissions (optional)
+        allow_independent: Whether to allow independent users (default: True)
         
     Returns:
         UserContext if authenticated and authorized

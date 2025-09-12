@@ -8,8 +8,8 @@ Represents individual nodes in the knowledge graph.
 import json
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, root_validator
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, validator, model_validator
+from src.engine.models.base_model import EngineBaseModel
 
 
 class GraphNode(EngineBaseModel):
@@ -130,16 +130,15 @@ class GraphNode(EngineBaseModel):
             raise ValueError('quality_score must be between 0.0 and 1.0')
         return v
     
-    @root_validator
-    def validate_properties_json(cls, values):
+    @model_validator(mode='after')
+    def validate_properties_json(self):
         """Validate that properties is valid JSON."""
-        properties = values.get('properties')
-        if properties:
+        if self.properties:
             try:
-                json.loads(properties)
+                json.loads(self.properties)
             except json.JSONDecodeError:
                 raise ValueError('properties must be valid JSON')
-        return values
+        return self
     
     # Business Logic Methods
     def add_property(self, key: str, value: Any) -> None:

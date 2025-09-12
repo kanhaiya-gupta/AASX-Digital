@@ -10,7 +10,7 @@ import json
 from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, validator, model_validator
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from src.engine.models.base_model import EngineBaseModel
 
 
 class AIRagGraphMetadata(EngineBaseModel):

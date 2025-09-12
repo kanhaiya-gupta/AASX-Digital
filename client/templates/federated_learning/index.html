@@ -3,7 +3,7 @@
 {% block title %}Federated Learning - Distributed AI Analytics{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', path='/css/federated_learning.css') }}" rel="stylesheet">
+<link href="/static/css/federated_learning.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -75,7 +75,7 @@
 console.log('🔍 Debug: Federated Learning extra_scripts block loaded');
 console.log('🔍 Debug: Document ready state:', document.readyState);
 </script>
-<script type="module" src="{{ url_for('static', path='/js/modules/federated_learning/index.js') }}?v={{ range(1, 1000) | random }}"></script>
+<script type="module" src="/static/js/modules/federated_learning/index.js?v={{ range(1, 1000) | random }}"></script>
 <script>
 console.log('🔍 Debug: Federated Learning modular script tag added');
 // Check if the script loaded

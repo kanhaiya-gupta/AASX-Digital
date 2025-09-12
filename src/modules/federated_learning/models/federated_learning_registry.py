@@ -10,12 +10,19 @@ Uses pure async patterns for optimal performance.
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import asyncio
-from src.engine.models.base_model import BaseModel
-from pydantic import Field, validator, computed_field
+from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 
 
-class FederatedLearningRegistry(BaseModel):
+class FederatedLearningRegistry(EngineBaseModel):
     """Model for federated learning registry with enterprise features"""
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True,
+        extra="allow"  # Allow extra fields to prevent validation errors
+    )
     
     # Primary identification
     registry_id: str = Field(..., description="Unique registry identifier")
@@ -105,7 +112,7 @@ class FederatedLearningRegistry(BaseModel):
     optimization_suggestions: List[str] = Field(default_factory=list, description="Optimization suggestions")
     
     # Security & Access Control
-    security_level: str = Field(default="standard", description="Security level")
+    security_level: str = Field(default="internal", description="Security level")
     access_control_level: str = Field(default="user", description="Access control level")
     encryption_enabled: bool = Field(default=True, description="Whether federation data is encrypted")
     audit_logging_enabled: bool = Field(default=True, description="Whether audit logging is enabled")
@@ -134,14 +141,15 @@ class FederatedLearningRegistry(BaseModel):
     relationships: Dict[str, Any] = Field(default_factory=dict, description="Object of relationship objects")
     dependencies: Dict[str, Any] = Field(default_factory=dict, description="Object of dependency objects")
     federation_instances: Dict[str, Any] = Field(default_factory=dict, description="Object of federation instance objects")
-
-    class Config:
-        """Pydantic configuration"""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
-        validate_assignment = True
     
+    # NEW: Comprehensive Federated Learning Traceability (JSON fields)
+    federation_rounds: Dict[str, Any] = Field(default_factory=dict, description="JSON field tracking all federation rounds with complete traceability")
+    organization_participation: Dict[str, Any] = Field(default_factory=dict, description="JSON field tracking detailed organization involvement and metrics")
+    model_evolution: Dict[str, Any] = Field(default_factory=dict, description="JSON field tracking complete model progression and version history")
+    privacy_compliance: Dict[str, Any] = Field(default_factory=dict, description="JSON field tracking detailed privacy and compliance metrics")
+    performance_metrics: Dict[str, Any] = Field(default_factory=dict, description="JSON field tracking comprehensive performance and convergence metrics")
+    federation_algorithms: Dict[str, Any] = Field(default_factory=dict, description="JSON field tracking algorithm configuration and performance")
+
     # Computed Fields
     @computed_field
     @property

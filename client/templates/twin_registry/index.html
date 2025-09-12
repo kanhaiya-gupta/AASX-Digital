@@ -3,7 +3,7 @@
 {% block title %}Digital Twin Registry{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', path='/css/twin_registry.css') }}">
+<link rel="stylesheet" href="/static/css/twin_registry.css">
 {% endblock %}
 
 {% block content %}
@@ -149,7 +149,7 @@
     console.log('🔍 Twin Registry Template: Loading modular Twin Registry system...');
     
     try {
-        const { initTwinRegistryModule } = await import("{{ url_for('static', path='/js/modules/twin_registry/index.js') }}?v={{ range(1, 1000) | random }}");
+        const { initTwinRegistryModule } = await import("/static/js/modules/twin_registry/index.js?v={{ range(1, 1000) | random }}");
         console.log('✅ Twin Registry Template: Modular system imported successfully');
         
         // Initialize the modular Twin Registry system
@@ -158,7 +158,7 @@
         
         // Initialize performance monitoring module
         try {
-            await import("{{ url_for('static', path='/js/modules/twin_registry/modules/performance/index.js') }}?v={{ range(1, 1000) | random }}");
+            await import("/static/js/modules/twin_registry/modules/performance/index.js?v={{ range(1, 1000) | random }}");
             console.log('✅ Twin Registry Template: Performance monitoring module loaded');
         } catch (perfError) {
             console.warn('⚠️ Performance monitoring module not available:', perfError);
@@ -170,7 +170,7 @@
         // Fallback: Initialize basic configuration functionality
         console.log('🔄 Fallback: Initializing basic configuration functionality...');
         try {
-            const { ConfigurationManager } = await import("{{ url_for('static', path='/js/modules/twin_registry/modules/configuration/index.js') }}?v={{ range(1, 1000) | random }}");
+            const { ConfigurationManager } = await import("/static/js/modules/twin_registry/modules/configuration/index.js?v={{ range(1, 1000) | random }}");
             const configManager = new ConfigurationManager('/api/twin-registry');
             await configManager.init();
             window.configurationManager = configManager;

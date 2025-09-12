@@ -1,0 +1,576 @@
+<!-- System Configuration Component -->
+<div class="dp-system-configuration">
+    <!-- Analytics Header -->
+    <div class="dp-analytics-header">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2><i class="fas fa-cogs me-3"></i>System Configuration</h2>
+                <p class="mb-0">Manage system settings, security, and infrastructure</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-outline-light btn-sm me-2" onclick="exportSystemConfig()">
+                    <i class="fas fa-download me-1"></i>Export Config
+                </button>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="backupSystemConfig()">
+                    <i class="fas fa-save me-1"></i>Backup
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="saveAllConfigurations()">
+                    <i class="fas fa-save me-1"></i>Save All Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="metric-content">
+                    <h3 id="systemUptime">99.9%</h3>
+                    <p>System Uptime</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="metric-content">
+                    <h3 id="securityScore">98.5%</h3>
+                    <p>Security Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <div class="metric-content">
+                    <h3 id="performanceScore">95.2%</h3>
+                    <p>Performance Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="metric-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="metric-content">
+                    <h3 id="complianceScore">100%</h3>
+                    <p>Compliance Score</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration Tabs -->
+    <div class="dp-config-tabs">
+        <ul class="nav nav-tabs" id="configTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                    <i class="fas fa-cog me-2"></i>General Settings
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                    <i class="fas fa-shield-alt me-2"></i>Security & Compliance
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                    <i class="fas fa-tachometer-alt me-2"></i>Performance & Monitoring
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="integration-tab" data-bs-toggle="tab" data-bs-target="#integration" type="button" role="tab">
+                    <i class="fas fa-plug me-2"></i>Integrations
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button" role="tab">
+                    <i class="fas fa-database me-2"></i>Backup & Recovery
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="configTabContent">
+            <!-- General Settings Tab -->
+            <div class="tab-pane fade show active" id="general" role="tabpanel">
+                <div class="dp-config-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">System Name</label>
+                                        <input type="text" class="form-control" id="systemName" value="AASX Digital Twin Analytics Framework">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Environment</label>
+                                        <select class="form-select" id="environment">
+                                            <option value="development">Development</option>
+                                            <option value="staging">Staging</option>
+                                            <option value="production" selected>Production</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Timezone</label>
+                                        <select class="form-select" id="timezone">
+                                            <option value="UTC">UTC</option>
+                                            <option value="EST">Eastern Time</option>
+                                            <option value="PST">Pacific Time</option>
+                                            <option value="GMT">GMT</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Language</label>
+                                        <select class="form-select" id="language">
+                                            <option value="en">English</option>
+                                            <option value="de">German</option>
+                                            <option value="fr">French</option>
+                                            <option value="es">Spanish</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-bell me-2"></i>Notification Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                        <label class="form-check-label">Email Notifications</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="smsNotifications">
+                                        <label class="form-check-label">SMS Notifications</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="browserNotifications" checked>
+                                        <label class="form-check-label">Browser Notifications</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="maintenanceMode">
+                                        <label class="form-check-label">Maintenance Mode</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security & Compliance Tab -->
+            <div class="tab-pane fade" id="security" role="tabpanel">
+                <div class="dp-config-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-lock me-2"></i>Authentication</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Session Timeout (minutes)</label>
+                                        <input type="number" class="form-control" id="sessionTimeout" value="30" min="5" max="480">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Max Login Attempts</label>
+                                        <input type="number" class="form-control" id="maxLoginAttempts" value="5" min="3" max="10">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Password Policy</label>
+                                        <select class="form-select" id="passwordPolicy">
+                                            <option value="low">Low (8 chars)</option>
+                                            <option value="medium" selected>Medium (10 chars + symbols)</option>
+                                            <option value="high">High (12 chars + complexity)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="twoFactorAuth" checked>
+                                        <label class="form-check-label">Two-Factor Authentication</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-shield-alt me-2"></i>Security Policies</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="dataEncryption" checked>
+                                        <label class="form-check-label">Data Encryption at Rest</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="sslEnforcement" checked>
+                                        <label class="form-check-label">SSL/TLS Enforcement</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="auditLogging" checked>
+                                        <label class="form-check-label">Audit Logging</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="complianceMode">
+                                        <label class="form-check-label">GDPR Compliance Mode</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance & Monitoring Tab -->
+            <div class="tab-pane fade" id="performance" role="tabpanel">
+                <div class="dp-config-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-tachometer-alt me-2"></i>Performance Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Cache TTL (seconds)</label>
+                                        <input type="number" class="form-control" id="cacheTTL" value="300" min="60" max="3600">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Max Concurrent Users</label>
+                                        <input type="number" class="form-control" id="maxConcurrentUsers" value="1000" min="100" max="10000">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Database Connection Pool</label>
+                                        <input type="number" class="form-control" id="dbConnectionPool" value="20" min="5" max="100">
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="autoScaling" checked>
+                                        <label class="form-check-label">Auto-scaling Enabled</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-line me-2"></i>Monitoring</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="performanceMonitoring" checked>
+                                        <label class="form-check-label">Performance Monitoring</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="errorTracking" checked>
+                                        <label class="form-check-label">Error Tracking</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="resourceMonitoring" checked>
+                                        <label class="form-check-label">Resource Monitoring</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="alerting" checked>
+                                        <label class="form-check-label">Automated Alerting</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Real-time Performance Metrics -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-area me-2"></i>Real-time Performance Metrics</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 text-center">
+                                            <div class="performance-metric">
+                                                <h4 id="cpuUsage">45%</h4>
+                                                <p>CPU Usage</p>
+                                                <div class="progress">
+                                                    <div class="progress-bar" style="width: 45%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="performance-metric">
+                                                <h4 id="memoryUsage">62%</h4>
+                                                <p>Memory Usage</p>
+                                                <div class="progress">
+                                                    <div class="progress-bar" style="width: 62%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="performance-metric">
+                                                <h4 id="diskUsage">78%</h4>
+                                                <p>Disk Usage</p>
+                                                <div class="progress">
+                                                    <div class="progress-bar" style="width: 78%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="performance-metric">
+                                                <h4 id="networkLatency">12ms</h4>
+                                                <p>Network Latency</p>
+                                                <div class="progress">
+                                                    <div class="progress-bar" style="width: 12%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integrations Tab -->
+            <div class="tab-pane fade" id="integration" role="tabpanel">
+                <div class="dp-config-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-plug me-2"></i>API Configuration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">API Rate Limit (requests/min)</label>
+                                        <input type="number" class="form-control" id="apiRateLimit" value="1000" min="100" max="10000">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">API Version</label>
+                                        <input type="text" class="form-control" id="apiVersion" value="v1.0" readonly>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="apiDocumentation" checked>
+                                        <label class="form-check-label">API Documentation</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="apiMonitoring" checked>
+                                        <label class="form-check-label">API Monitoring</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-external-link-alt me-2"></i>External Integrations</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Database Connection</label>
+                                        <select class="form-select" id="databaseType">
+                                            <option value="postgresql" selected>PostgreSQL</option>
+                                            <option value="mysql">MySQL</option>
+                                            <option value="mongodb">MongoDB</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Message Queue</label>
+                                        <select class="form-select" id="messageQueue">
+                                            <option value="redis" selected>Redis</option>
+                                            <option value="rabbitmq">RabbitMQ</option>
+                                            <option value="kafka">Apache Kafka</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="webhookEnabled" checked>
+                                        <label class="form-check-label">Webhook Support</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="thirdPartyAPIs">
+                                        <label class="form-check-label">Third-party API Integration</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup & Recovery Tab -->
+            <div class="tab-pane fade" id="backup" role="tabpanel">
+                <div class="dp-config-section">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-database me-2"></i>Backup Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Backup Frequency</label>
+                                        <select class="form-select" id="backupFrequency">
+                                            <option value="hourly">Hourly</option>
+                                            <option value="daily" selected>Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Retention Period (days)</label>
+                                        <input type="number" class="form-control" id="retentionPeriod" value="30" min="7" max="365">
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="autoBackup" checked>
+                                        <label class="form-check-label">Automatic Backup</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="encryptedBackup" checked>
+                                        <label class="form-check-label">Encrypted Backup</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-undo me-2"></i>Recovery Options</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="pointInTimeRecovery" checked>
+                                        <label class="form-check-label">Point-in-time Recovery</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="disasterRecovery" checked>
+                                        <label class="form-check-label">Disaster Recovery</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="failoverSupport">
+                                        <label class="form-check-label">Failover Support</label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Recovery Time Objective (RTO)</label>
+                                        <select class="form-select" id="recoveryTimeObjective">
+                                            <option value="15min">15 minutes</option>
+                                            <option value="1hour" selected>1 hour</option>
+                                            <option value="4hours">4 hours</option>
+                                            <option value="24hours">24 hours</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Backup Status -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-info-circle me-2"></i>Backup Status</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 text-center">
+                                            <div class="backup-status">
+                                                <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                                                <h6>Last Backup</h6>
+                                                <p id="lastBackupTime">2 hours ago</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="backup-status">
+                                                <i class="fas fa-clock text-warning fa-2x mb-2"></i>
+                                                <h6>Next Backup</h6>
+                                                <p id="nextBackupTime">22 hours</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="backup-status">
+                                                <i class="fas fa-database text-info fa-2x mb-2"></i>
+                                                <h6>Backup Size</h6>
+                                                <p id="backupSize">2.4 GB</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 text-center">
+                                            <div class="backup-status">
+                                                <i class="fas fa-shield-alt text-success fa-2x mb-2"></i>
+                                                <h6>Status</h6>
+                                                <p id="backupStatus">Healthy</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Status -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-heartbeat me-2"></i>System Health Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="system-health-grid">
+                                <div class="health-item healthy">
+                                    <i class="fas fa-server"></i>
+                                    <span>Database</span>
+                                </div>
+                                <div class="health-item healthy">
+                                    <i class="fas fa-network-wired"></i>
+                                    <span>Network</span>
+                                </div>
+                                <div class="health-item warning">
+                                    <i class="fas fa-memory"></i>
+                                    <span>Memory</span>
+                                </div>
+                                <div class="health-item healthy">
+                                    <i class="fas fa-hdd"></i>
+                                    <span>Storage</span>
+                                </div>
+                                <div class="health-item healthy">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Security</span>
+                                </div>
+                                <div class="health-item healthy">
+                                    <i class="fas fa-sync"></i>
+                                    <span>Backup</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="health-summary">
+                                <h6>Overall Health</h6>
+                                <div class="health-score">
+                                    <span id="overallHealthScore">95%</span>
+                                </div>
+                                <p class="text-muted">System operating normally</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

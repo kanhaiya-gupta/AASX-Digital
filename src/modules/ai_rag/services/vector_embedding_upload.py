@@ -8,68 +8,53 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
-from src.shared.services.project_service import ProjectService
-from src.shared.services.file_service import FileService
-from src.shared.database.connection_manager import DatabaseConnectionManager
-from src.ai_rag.config import VECTOR_DB_CONFIG, EMBEDDING_MODELS_CONFIG, PROCESSING_CONFIG, OUTPUT_CONFIG
+from src.engine.services.business_domain.project_service import ProjectService
+from src.engine.services.business_domain.file_service import FileService
+from src.engine.database.connection_manager import ConnectionManager
+from ..config import VECTOR_DB_CONFIG, EMBEDDING_MODELS_CONFIG, PROCESSING_CONFIG, OUTPUT_CONFIG
 from src.shared.utils import setup_logging, ensure_dir
 
-from .vector_db.qdrant_client import QdrantClient
-from .embedding_models.text_embeddings import TextEmbeddingModel, TextEmbeddingManager
-from .processors import ProcessorManager
+from ..vector_db.qdrant_client import QdrantClient
+from ..embedding_models.text_embeddings import TextEmbeddingModel, TextEmbeddingManager
+from ..processors import ProcessorManager
 
 
 class VectorEmbeddingUploader:
     """Main class for vector embedding and upload operations."""
     
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, connection_manager: ConnectionManager, config: Dict[str, Any] = None):
         """
         Initialize vector embedding uploader.
         
         Args:
+            connection_manager: Database connection manager (must implement ConnectionManager interface)
             config: Configuration dictionary
         """
         self.logger = setup_logging("vector_embedding_uploader")
         self.config = config or {}
+        self.connection_manager = connection_manager
         
         # Initialize database connection and services
         from pathlib import Path
-        from src.shared.database.base_manager import BaseDatabaseManager
-        from src.shared.repositories.project_repository import ProjectRepository
-        from src.shared.repositories.file_repository import FileRepository
-        from src.shared.repositories.use_case_repository import UseCaseRepository
-        from src.shared.repositories.digital_twin_repository import DigitalTwinRepository
-        
-        data_dir = Path("data")
-        data_dir.mkdir(exist_ok=True)
-        db_path = data_dir / "aasx_database.db"
-        connection_manager = DatabaseConnectionManager(db_path)
-        self.db_manager = BaseDatabaseManager(connection_manager)
+        from src.engine.repositories.business_domain_repository import BusinessDomainRepository
         
         # Initialize repositories
-        self.project_repo = ProjectRepository(self.db_manager)
-        self.file_repo = FileRepository(self.db_manager)
-        self.use_case_repo = UseCaseRepository(self.db_manager)
-        self.digital_twin_repo = DigitalTwinRepository(self.db_manager)
+        self.business_domain_repo = BusinessDomainRepository(self.connection_manager)
         
         self.project_service = ProjectService(
-            self.db_manager,
-            self.use_case_repo,
-            self.file_repo
+            self.business_domain_repo
         )
         self.file_service = FileService(
-            self.db_manager,
-            self.project_repo,
-            self.digital_twin_repo
+            self.business_domain_repo
         )
+        
+        # Initialize project manager (using project service for now)
+        self.project_manager = self.project_service
         
         # Initialize AI/RAG components
         self.vector_db = None
         self.text_embedding_manager = TextEmbeddingManager()
         self.processor_manager = None
-        
-        # Initialize vector database
-        self._initialize_vector_db()
         
         # Initialize processor manager
         self.processor_manager = ProcessorManager(
@@ -77,19 +62,23 @@ class VectorEmbeddingUploader:
             vector_db=self.vector_db
         )
     
-    def _initialize_vector_db(self):
+    async def initialize(self):
+        """Async initialization method for database connections."""
+        await self._initialize_vector_db()
+    
+    async def _initialize_vector_db(self):
         """Initialize vector database client."""
         try:
             # Use Qdrant as default
             self.vector_db = QdrantClient(VECTOR_DB_CONFIG)
-            self.vector_db.connect()
+            await self.vector_db.connect()
             self.logger.info("Connected to Qdrant vector database")
                 
         except Exception as e:
             self.logger.error(f"Failed to initialize vector database: {e}")
             raise
     
-    def process_project(self, project_id: str) -> Dict[str, Any]:
+    async def process_project(self, project_id: str) -> Dict[str, Any]:
         """
         Process a single project for vector embedding.
         
@@ -103,7 +92,7 @@ class VectorEmbeddingUploader:
         
         try:
             # Get project files using the file service
-            files = self.file_service.get_files_by_project(project_id)
+            files = await self.file_service.get_project_files(project_id)
             if not files:
                 self.logger.warning(f"No files found for project: {project_id}")
                 return {'status': 'no_files', 'project_id': project_id}
@@ -120,7 +109,7 @@ class VectorEmbeddingUploader:
             }
             
             for file_info in files:
-                file_result = self._process_file_and_graph(project_id, file_info)
+                file_result = await self._process_file_and_graph(project_id, file_info)
                 results['file_results'].append(file_result)
                 
                 if file_result['status'] == 'success':
@@ -133,7 +122,7 @@ class VectorEmbeddingUploader:
             results['end_time'] = datetime.now().isoformat()
             
             # Save results
-            self._save_project_results(project_id, results)
+            await self._save_project_results(project_id, results)
             
             self.logger.info(f"Completed vector embedding for project {project_id}: "
                            f"{results['files_processed']} files, {results['embeddings_created']} embeddings")
@@ -149,7 +138,7 @@ class VectorEmbeddingUploader:
                 'end_time': datetime.now().isoformat()
             }
     
-    def _process_file_and_graph(self, project_id: str, file_info: Dict[str, Any]) -> Dict[str, Any]:
+    async def _process_file_and_graph(self, project_id: str, file_info: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process a single file and its associated graph data for vector embedding.
         
@@ -168,7 +157,7 @@ class VectorEmbeddingUploader:
         try:
             # Get file path from output directory
             output_dir = Path("output/projects") / project_id
-            file_path = self._find_file_in_output(output_dir, filename)
+            file_path = await self._find_file_in_output(output_dir, filename)
             
             if not file_path:
                 return {
@@ -183,7 +172,7 @@ class VectorEmbeddingUploader:
             
             # Also process graph data if available
             base_name = Path(filename).stem
-            graph_file_path = self._find_graph_file(output_dir, base_name)
+            graph_file_path = await self._find_graph_file(output_dir, base_name)
             
             if graph_file_path:
                 self.logger.info(f"Found graph file for {filename}, processing graph data")
@@ -217,7 +206,7 @@ class VectorEmbeddingUploader:
                 'error': str(e)
             }
     
-    def _find_file_in_output(self, output_dir: Path, filename: str) -> Optional[Path]:
+    async def _find_file_in_output(self, output_dir: Path, filename: str) -> Optional[Path]:
         """Find a file in the output directory structure."""
         if not output_dir.exists():
             return None
@@ -240,7 +229,7 @@ class VectorEmbeddingUploader:
         self.logger.warning(f"No files found for {filename} in {output_dir}")
         return None
     
-    def _find_graph_file(self, output_dir: Path, base_filename: str) -> Optional[Path]:
+    async def _find_graph_file(self, output_dir: Path, base_filename: str) -> Optional[Path]:
         """Find graph file for a given base filename."""
         if not output_dir.exists():
             return None
@@ -259,7 +248,7 @@ class VectorEmbeddingUploader:
         
         return None
     
-    def _save_project_results(self, project_id: str, results: Dict[str, Any]):
+    async def _save_project_results(self, project_id: str, results: Dict[str, Any]):
         """Save project processing results."""
         try:
             output_dir = Path("output/projects") / project_id
@@ -273,7 +262,7 @@ class VectorEmbeddingUploader:
         except Exception as e:
             self.logger.error(f"Failed to save project results: {e}")
     
-    def process_all_projects(self) -> Dict[str, Any]:
+    async def process_all_projects(self) -> Dict[str, Any]:
         """Process all projects for vector embedding."""
         self.logger.info("Starting vector embedding for all projects")
         
@@ -291,7 +280,7 @@ class VectorEmbeddingUploader:
             for project in projects:
                 project_id = project.get('project_id')
                 if project_id:
-                    project_result = self.process_project(project_id)
+                    project_result = await self.process_project(project_id)
                     results['project_results'].append(project_result)
                     
                     if project_result.get('status') == 'completed':
@@ -316,7 +305,7 @@ class VectorEmbeddingUploader:
                 'end_time': datetime.now().isoformat()
             }
     
-    def search_similar(self, query: str, limit: int = 10, project_id: str = None) -> List[Dict[str, Any]]:
+    async def search_similar(self, query: str, limit: int = 10, project_id: str = None) -> List[Dict[str, Any]]:
         """
         Search for similar content using vector similarity.
         
@@ -331,7 +320,7 @@ class VectorEmbeddingUploader:
         try:
             # Generate query embedding
             text_model = self.text_embedding_manager.get_model()
-            query_embedding = text_model.embed_text(query)
+            query_embedding = await text_model.embed_text(query)
             
             if not query_embedding:
                 self.logger.error("Failed to generate query embedding")
@@ -343,7 +332,7 @@ class VectorEmbeddingUploader:
                 filter_dict = {'project_id': project_id}
             
             # Search vector database
-            results = self.vector_db.search_vectors(
+            results = await self.vector_db.search_vectors(
                 query_vector=query_embedding,
                 limit=limit,
                 filter_dict=filter_dict
@@ -355,10 +344,10 @@ class VectorEmbeddingUploader:
             self.logger.error(f"Search failed: {e}")
             return []
     
-    def close(self):
+    async def close(self):
         """Clean up resources."""
         if self.vector_db:
-            self.vector_db.disconnect()
+            await self.vector_db.disconnect()
         
         self.text_embedding_manager.close()
         self.logger.info("Vector embedding uploader closed")
@@ -367,9 +356,18 @@ class VectorEmbeddingUploader:
         """Context manager entry."""
         return self
     
+    async def __aenter__(self):
+        """Async context manager entry."""
+        return self
+    
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
-        self.close()
+        # Note: This is sync context manager, close() is async
+        pass
+    
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit."""
+        await self.close()
 
 
 def main():
@@ -384,23 +382,39 @@ def main():
     
     args = parser.parse_args()
     
-    with VectorEmbeddingUploader() as uploader:
-        if args.search:
-            results = uploader.search_similar(args.search, args.limit)
-            print(f"Search results for '{args.search}':")
-            for i, result in enumerate(results, 1):
-                print(f"{i}. Score: {result['score']:.3f}")
-                print(f"   File: {result['payload'].get('source_file', 'Unknown')}")
-                print(f"   Preview: {result['payload'].get('content_preview', 'No preview')}")
-                print()
-        elif args.project_id:
-            result = uploader.process_project(args.project_id)
-            print(f"Project processing result: {result}")
-        elif args.all_projects:
-            result = uploader.process_all_projects()
-            print(f"All projects processing result: {result}")
-        else:
-            print("Please specify --project-id, --all-projects, or --search")
+    import asyncio
+    
+    async def async_main():
+        # Create connection manager for testing
+        from src.engine.database.sqlite_manager import SQLiteConnectionManager
+        connection_manager = SQLiteConnectionManager(":memory:")
+        await connection_manager.connect()
+        
+        try:
+            uploader = VectorEmbeddingUploader(connection_manager)
+            await uploader.initialize()
+            
+            async with uploader:
+                if args.search:
+                    results = await uploader.search_similar(args.search, args.limit)
+                    print(f"Search results for '{args.search}':")
+                    for i, result in enumerate(results, 1):
+                        print(f"{i}. Score: {result['score']:.3f}")
+                        print(f"   File: {result['payload'].get('source_file', 'Unknown')}")
+                        print(f"   Preview: {result['payload'].get('content_preview', 'No preview')}")
+                        print()
+                elif args.project_id:
+                    result = await uploader.process_project(args.project_id)
+                    print(f"Project processing result: {result}")
+                elif args.all_projects:
+                    result = await uploader.process_all_projects()
+                    print(f"All projects processing result: {result}")
+                else:
+                    print("Please specify --project-id, --all-projects, or --search")
+        finally:
+            await connection_manager.disconnect()
+    
+    asyncio.run(async_main())
 
 
 if __name__ == "__main__":

@@ -1719,6 +1719,11 @@ class DatabaseSchemaManager:
                 registry_id TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
                 
+                -- Organizational Hierarchy (REQUIRED for proper access control)
+                org_id TEXT NOT NULL DEFAULT 'default',
+                dept_id TEXT NOT NULL DEFAULT 'default',
+                user_id TEXT DEFAULT 'system',
+                
                 -- Real-time Health Metrics (Framework Health)
                 health_score INTEGER CHECK (health_score >= 0 AND health_score <= 100),
                 response_time_ms REAL,

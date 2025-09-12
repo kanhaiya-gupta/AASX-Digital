@@ -124,38 +124,29 @@ class PhysicsModelingSchema(BaseSchema):
                 -- Plugin & Model Information (CRITICAL for plugin management)
                 plugin_id TEXT, -- Plugin identifier for plugin-based models
                 plugin_name TEXT, -- Plugin name for plugin-based models
-                model_type TEXT NOT NULL DEFAULT 'traditional' -- traditional, plugin, hybrid, ml_integrated
-                    CHECK (model_type IN ('traditional', 'plugin', 'hybrid', 'ml_integrated')),
+                model_type TEXT NOT NULL DEFAULT 'traditional' CHECK (model_type IN ('traditional', 'plugin', 'hybrid', 'ml_integrated')), -- traditional, plugin, hybrid, ml_integrated
                 model_version TEXT NOT NULL DEFAULT '1.0.0', -- Model version (separate from physics_version)
                 model_description TEXT, -- Detailed description of the model
                 
                 -- Physics Classification & Metadata
-                physics_category TEXT NOT NULL DEFAULT 'structural' -- structural, thermal, fluid, electromagnetic, multi_physics, acoustics, quantum
-                    CHECK (physics_category IN ('structural', 'thermal', 'fluid', 'electromagnetic', 'multi_physics', 'acoustics', 'quantum')),
+                physics_category TEXT NOT NULL DEFAULT 'structural' CHECK (physics_category IN ('structural', 'thermal', 'fluid', 'electromagnetic', 'multi_physics', 'acoustics', 'quantum')), -- structural, thermal, fluid, electromagnetic, multi_physics, acoustics, quantum
                 physics_subcategory TEXT, -- e.g., linear_elastic, non_linear_plastic, laminar_flow, turbulent_flow
-                physics_domain TEXT NOT NULL DEFAULT 'mechanical' -- mechanical, electrical, thermal, fluid, electromagnetic, quantum, multi_domain
-                    CHECK (physics_domain IN ('mechanical', 'electrical', 'thermal', 'fluid', 'electromagnetic', 'quantum', 'multi_domain')),
-                complexity_level TEXT NOT NULL DEFAULT 'medium' -- simple, medium, complex, very_complex
-                    CHECK (complexity_level IN ('simple', 'medium', 'complex', 'very_complex')),
+                physics_domain TEXT NOT NULL DEFAULT 'mechanical' CHECK (physics_domain IN ('mechanical', 'electrical', 'thermal', 'fluid', 'electromagnetic', 'quantum', 'multi_domain')), -- mechanical, electrical, thermal, fluid, electromagnetic, quantum, multi_domain
+                complexity_level TEXT NOT NULL DEFAULT 'medium' CHECK (complexity_level IN ('simple', 'medium', 'complex', 'very_complex')), -- simple, medium, complex, very_complex
                 physics_version TEXT NOT NULL DEFAULT '1.0.0', -- Semantic versioning
                 
                 -- Workflow Classification (CRITICAL for dual workflow support)
-                registry_type TEXT NOT NULL -- extraction, generation, hybrid
-                    CHECK (registry_type IN ('extraction', 'generation', 'hybrid')),
-                workflow_source TEXT NOT NULL -- aasx_file, structured_data, both
-                    CHECK (workflow_source IN ('aasx_file', 'structured_data', 'both')),
+                registry_type TEXT NOT NULL CHECK (registry_type IN ('extraction', 'generation', 'hybrid')), -- extraction, generation, hybrid
+                workflow_source TEXT NOT NULL CHECK (workflow_source IN ('aasx_file', 'structured_data', 'both')), -- aasx_file, structured_data, both
                 
                 -- Traditional Solver Configuration (CRITICAL for physics simulations)
-                solver_type TEXT NOT NULL DEFAULT 'finite_element' -- finite_element, finite_difference, finite_volume, boundary_element, spectral
-                    CHECK (solver_type IN ('finite_element', 'finite_difference', 'finite_volume', 'boundary_element', 'spectral')),
+                solver_type TEXT NOT NULL DEFAULT 'finite_element' CHECK (solver_type IN ('finite_element', 'finite_difference', 'finite_volume', 'boundary_element', 'spectral')), -- finite_element, finite_difference, finite_volume, boundary_element, spectral
                 solver_name TEXT, -- Specific solver name/implementation (e.g., ANSYS, COMSOL, OpenFOAM)
                 solver_version TEXT, -- Solver software version
                 solver_parameters TEXT DEFAULT '{}', -- JSON: solver-specific parameters (tolerance, max_iterations, etc.)
                 mesh_configuration TEXT DEFAULT '{}', -- JSON: mesh settings, element types, refinement criteria
-                time_integration_scheme TEXT -- Time integration method: explicit, implicit, semi_implicit, adaptive
-                    CHECK (time_integration_scheme IN ('explicit', 'implicit', 'semi_implicit', 'adaptive') OR time_integration_scheme IS NULL),
-                spatial_discretization TEXT -- Spatial discretization method: first_order, second_order, higher_order
-                    CHECK (spatial_discretization IN ('first_order', 'second_order', 'higher_order') OR spatial_discretization IS NULL),
+                time_integration_scheme TEXT CHECK (time_integration_scheme IN ('explicit', 'implicit', 'semi_implicit', 'adaptive') OR time_integration_scheme IS NULL), -- Time integration method: explicit, implicit, semi_implicit, adaptive
+                spatial_discretization TEXT CHECK (spatial_discretization IN ('first_order', 'second_order', 'higher_order') OR spatial_discretization IS NULL), -- Spatial discretization method: first_order, second_order, higher_order
                 convergence_criteria TEXT DEFAULT '{}', -- JSON: convergence thresholds and criteria
                 solver_optimization TEXT DEFAULT '{}', -- JSON: solver optimization settings (parallelization, memory, etc.)
                 
@@ -175,32 +166,22 @@ class PhysicsModelingSchema(BaseSchema):
                 certificate_manager_id TEXT, -- Reference to certificate module
                 
                 -- Integration Status & Health
-                integration_status TEXT NOT NULL DEFAULT 'pending' -- pending, active, inactive, error, maintenance, deprecated
-                    CHECK (integration_status IN ('pending', 'active', 'inactive', 'error', 'maintenance', 'deprecated')),
-                overall_health_score INTEGER DEFAULT 0 -- 0-100 health score across all modules
-                    CHECK (overall_health_score >= 0 AND overall_health_score <= 100),
-                health_status TEXT NOT NULL DEFAULT 'unknown' -- unknown, healthy, warning, critical, offline
-                    CHECK (health_status IN ('unknown', 'healthy', 'warning', 'critical', 'offline')),
+                integration_status TEXT NOT NULL DEFAULT 'pending' CHECK (integration_status IN ('pending', 'active', 'inactive', 'error', 'maintenance', 'deprecated')), -- pending, active, inactive, error, maintenance, deprecated
+                overall_health_score INTEGER DEFAULT 0 CHECK (overall_health_score >= 0 AND overall_health_score <= 100), -- 0-100 health score across all modules
+                health_status TEXT NOT NULL DEFAULT 'unknown' CHECK (health_status IN ('unknown', 'healthy', 'warning', 'critical', 'offline')), -- unknown, healthy, warning, critical, offline
                 
                 -- Lifecycle Management
-                lifecycle_status TEXT NOT NULL DEFAULT 'created' -- created, active, suspended, archived, retired
-                    CHECK (lifecycle_status IN ('created', 'active', 'suspended', 'archived', 'retired')),
-                lifecycle_phase TEXT NOT NULL DEFAULT 'setup' -- setup, validation, deployment, monitoring, maintenance
-                    CHECK (lifecycle_phase IN ('setup', 'validation', 'deployment', 'monitoring', 'maintenance')),
+                lifecycle_status TEXT NOT NULL DEFAULT 'created' CHECK (lifecycle_status IN ('created', 'active', 'suspended', 'archived', 'retired')), -- created, active, suspended, archived, retired
+                lifecycle_phase TEXT NOT NULL DEFAULT 'setup' CHECK (lifecycle_phase IN ('setup', 'validation', 'deployment', 'monitoring', 'maintenance')), -- setup, validation, deployment, monitoring, maintenance
                 
                 -- Operational Status
-                operational_status TEXT NOT NULL DEFAULT 'stopped' -- running, stopped, paused, error, maintenance
-                    CHECK (operational_status IN ('running', 'stopped', 'paused', 'error', 'maintenance')),
-                availability_status TEXT NOT NULL DEFAULT 'offline' -- online, offline, degraded, maintenance
-                    CHECK (availability_status IN ('online', 'offline', 'degraded', 'maintenance')),
+                operational_status TEXT NOT NULL DEFAULT 'stopped' CHECK (operational_status IN ('running', 'stopped', 'paused', 'error', 'maintenance')), -- running, stopped, paused, error, maintenance
+                availability_status TEXT NOT NULL DEFAULT 'offline' CHECK (availability_status IN ('online', 'offline', 'degraded', 'maintenance')), -- online, offline, degraded, maintenance
                 
                 -- Physics-Specific Status
-                simulation_status TEXT DEFAULT 'pending' -- pending, running, completed, failed, paused
-                    CHECK (simulation_status IN ('pending', 'running', 'completed', 'failed', 'paused')),
-                validation_status TEXT DEFAULT 'pending' -- pending, in_progress, passed, failed, needs_review
-                    CHECK (validation_status IN ('pending', 'in_progress', 'passed', 'failed', 'needs_review')),
-                convergence_status TEXT DEFAULT 'unknown' -- unknown, converging, converged, diverged, oscillating
-                    CHECK (convergence_status IN ('unknown', 'converging', 'converged', 'diverged', 'oscillating')),
+                simulation_status TEXT DEFAULT 'pending' CHECK (simulation_status IN ('pending', 'running', 'completed', 'failed', 'paused')), -- pending, running, completed, failed, paused
+                validation_status TEXT DEFAULT 'pending' CHECK (validation_status IN ('pending', 'in_progress', 'passed', 'failed', 'needs_review')), -- pending, in_progress, passed, failed, needs_review
+                convergence_status TEXT DEFAULT 'unknown' CHECK (convergence_status IN ('unknown', 'converging', 'converged', 'diverged', 'oscillating')), -- unknown, converging, converged, diverged, oscillating
                 
                 -- Performance & Quality Metrics
                 performance_score REAL DEFAULT 0.0, -- 0.0-1.0 performance rating
@@ -209,30 +190,28 @@ class PhysicsModelingSchema(BaseSchema):
                 numerical_stability REAL DEFAULT 0.0, -- 0.0-1.0 stability rating
                 
                 -- Security & Access Control
-                security_level TEXT NOT NULL DEFAULT 'standard' -- public, internal, confidential, secret, top_secret
-                    CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')),
-                access_control_level TEXT NOT NULL DEFAULT 'user' -- public, user, admin, system, restricted
-                    CHECK (access_control_level IN ('public', 'user', 'admin', 'system', 'restricted')),
+                security_level TEXT NOT NULL DEFAULT 'standard' CHECK (security_level IN ('public', 'internal', 'confidential', 'secret', 'top_secret')), -- public, internal, confidential, secret, top_secret
+                access_control_level TEXT NOT NULL DEFAULT 'user' CHECK (access_control_level IN ('public', 'user', 'admin', 'system', 'restricted')), -- public, user, admin, system, restricted
                 encryption_enabled BOOLEAN DEFAULT TRUE, -- Whether physics data is encrypted
                 audit_logging_enabled BOOLEAN DEFAULT TRUE, -- Whether audit logging is enabled
                 
                 -- Enterprise Compliance & Security (Merged from enterprise tables)
-                compliance_type TEXT DEFAULT 'standard' -- standard, regulatory, industry_specific, custom
-                compliance_status TEXT DEFAULT 'pending' -- pending, compliant, non_compliant, under_review
-                compliance_score REAL DEFAULT 0.0 CHECK (compliance_score >= 0.0 AND compliance_score <= 100.0)
+                compliance_type TEXT DEFAULT 'standard', -- standard, regulatory, industry_specific, custom
+                compliance_status TEXT DEFAULT 'pending', -- pending, compliant, non_compliant, under_review
+                compliance_score REAL DEFAULT 0.0 CHECK (compliance_score >= 0.0 AND compliance_score <= 100.0),
                 last_audit_date TEXT, -- Last compliance audit date
                 next_audit_date TEXT, -- Next scheduled audit date
                 audit_details TEXT DEFAULT '{}', -- JSON: detailed audit information
                 
                 -- Enterprise Security Metrics (Merged from enterprise tables)
-                security_event_type TEXT DEFAULT 'none' -- none, threat_detected, vulnerability_scan, access_violation
-                threat_assessment TEXT DEFAULT 'low' -- low, medium, high, critical
-                security_score REAL DEFAULT 0.0 CHECK (security_score >= 0.0 AND security_score <= 100.0)
+                security_event_type TEXT DEFAULT 'none', -- none, threat_detected, vulnerability_scan, access_violation
+                threat_assessment TEXT DEFAULT 'low', -- low, medium, high, critical
+                security_score REAL DEFAULT 0.0 CHECK (security_score >= 0.0 AND security_score <= 100.0),
                 last_security_scan TEXT, -- Last security scan date
                 security_details TEXT DEFAULT '{}', -- JSON: security scan results and details
                 
                 -- Enterprise Performance Analytics (Merged from enterprise tables)
-                performance_trend TEXT DEFAULT 'stable' -- improving, stable, declining, fluctuating
+                performance_trend TEXT DEFAULT 'stable', -- improving, stable, declining, fluctuating
                 optimization_suggestions TEXT DEFAULT '{}', -- JSON object of optimization recommendations
                 last_optimization_date TEXT, -- Last optimization performed
                 enterprise_metrics TEXT DEFAULT '{}', -- JSON: additional enterprise-specific metrics
@@ -240,7 +219,7 @@ class PhysicsModelingSchema(BaseSchema):
                 -- User Management & Ownership
                 user_id TEXT NOT NULL, -- Current user who owns/accesses this registry
                 org_id TEXT NOT NULL, -- Organization this registry belongs to
-                dept_id TEXT, -- Department for complete traceability
+                dept_id TEXT NOT NULL, -- Department for complete traceability
                 owner_team TEXT, -- Team responsible for this physics model
                 steward_user_id TEXT, -- Data steward for this physics model
                 
@@ -257,16 +236,20 @@ class PhysicsModelingSchema(BaseSchema):
                 custom_attributes TEXT DEFAULT '{}', -- User-defined custom attributes
                 tags TEXT DEFAULT '{}', -- JSON object of tags for categorization
                 
+                -- Results & Physics-Specific Data (CRITICAL for simulation tracking)
+                results_metadata TEXT DEFAULT '{}', -- JSON: simulation results metadata and analysis data
+                physics_specific_metrics TEXT DEFAULT '{}', -- JSON: mesh quality, solver performance, convergence data
+                
                 -- Relationships & Dependencies (JSON objects)
                 relationships TEXT DEFAULT '{}', -- JSON object of relationship objects
                 dependencies TEXT DEFAULT '{}', -- JSON object of dependency objects
-                physics_instances TEXT DEFAULT '{}', -- JSON object of physics instance objects
+                physics_instances TEXT DEFAULT '{}' -- JSON object of physics instance objects
                 
                 -- Constraints
-                FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
-                FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
-                FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
-                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
+                --FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
+                --FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
+                --FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
+                --FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL
             )
         """
 
@@ -302,18 +285,15 @@ class PhysicsModelingSchema(BaseSchema):
                 -- Primary Identification
                 ml_registry_id TEXT PRIMARY KEY,
                 model_name TEXT NOT NULL,
-                ml_model_type TEXT NOT NULL DEFAULT 'pinn' -- pinn, neural_ode, graph_neural_network, transformer, hybrid
-                    CHECK (ml_model_type IN ('pinn', 'neural_ode', 'graph_neural_network', 'transformer', 'hybrid')),
+                ml_model_type TEXT NOT NULL DEFAULT 'pinn' CHECK (ml_model_type IN ('pinn', 'neural_ode', 'graph_neural_network', 'transformer', 'hybrid')), -- pinn, neural_ode, graph_neural_network, transformer, hybrid
                 
                 -- Model Information
-                model_type TEXT NOT NULL DEFAULT 'ml' -- ml, hybrid_ml, traditional_enhanced
-                    CHECK (model_type IN ('ml', 'hybrid_ml', 'traditional_enhanced')),
+                model_type TEXT NOT NULL DEFAULT 'ml' CHECK (model_type IN ('ml', 'hybrid_ml', 'traditional_enhanced')), -- ml, hybrid_ml, traditional_enhanced
                 model_version TEXT NOT NULL DEFAULT '1.0.0', -- Model version (separate from ml_model_type)
                 model_description TEXT, -- Detailed description of the ML model
                 
                 -- Physics Domain Classification
-                physics_domain TEXT NOT NULL DEFAULT 'mechanical' -- mechanical, electrical, thermal, fluid, electromagnetic, quantum, multi_domain
-                    CHECK (physics_domain IN ('mechanical', 'electrical', 'thermal', 'fluid', 'electromagnetic', 'quantum', 'multi_domain')),
+                physics_domain TEXT NOT NULL DEFAULT 'mechanical' CHECK (physics_domain IN ('mechanical', 'electrical', 'thermal', 'fluid', 'electromagnetic', 'quantum', 'multi_domain')), -- mechanical, electrical, thermal, fluid, electromagnetic, quantum, multi_domain
                 
                 -- Neural Network Architecture
                 nn_architecture TEXT DEFAULT '{}', -- JSON: layer sizes, activation functions, regularization
@@ -342,11 +322,11 @@ class PhysicsModelingSchema(BaseSchema):
                 overfitting_score REAL DEFAULT 0.0, -- 0.0-1.0 overfitting assessment
                 
                 -- Enterprise ML Metrics (Merged from enterprise tables)
-                ml_compliance_type TEXT DEFAULT 'standard' -- standard, regulatory, industry_specific, custom
-                ml_compliance_status TEXT DEFAULT 'pending' -- pending, compliant, non_compliant, under_review
-                ml_compliance_score REAL DEFAULT 0.0 CHECK (ml_compliance_score >= 0.0 AND ml_compliance_score <= 100.0)
-                ml_security_score REAL DEFAULT 0.0 CHECK (ml_security_score >= 0.0 AND ml_security_score <= 100.0)
-                ml_performance_trend TEXT DEFAULT 'stable' -- improving, stable, declining, fluctuating
+                ml_compliance_type TEXT DEFAULT 'standard', -- standard, regulatory, industry_specific, custom
+                ml_compliance_status TEXT DEFAULT 'pending', -- pending, compliant, non_compliant, under_review
+                ml_compliance_score REAL DEFAULT 0.0 CHECK (ml_compliance_score >= 0.0 AND ml_compliance_score <= 100.0),
+                ml_security_score REAL DEFAULT 0.0 CHECK (ml_security_score >= 0.0 AND ml_security_score <= 100.0),
+                ml_performance_trend TEXT DEFAULT 'stable', -- improving, stable, declining, fluctuating
                 ml_optimization_suggestions TEXT DEFAULT '{}', -- JSON object of ML optimization recommendations
                 last_ml_optimization_date TEXT, -- Last ML optimization performed
                 enterprise_ml_metrics TEXT DEFAULT '{}', -- JSON: additional enterprise-specific ML metrics
@@ -361,13 +341,9 @@ class PhysicsModelingSchema(BaseSchema):
                 certificate_manager_id TEXT, -- Reference to certificate module
                 
                 -- Status & Lifecycle
-                training_status TEXT NOT NULL DEFAULT 'pending' -- pending, training, completed, failed, paused
-                    CHECK (training_status IN ('pending', 'training', 'completed', 'failed', 'paused')),
-                deployment_status TEXT NOT NULL DEFAULT 'not_deployed' -- not_deployed, deployed, serving, error, maintenance
-                    CHECK (deployment_status IN ('not_deployed', 'deployed', 'serving', 'error', 'maintenance')),
-                model_version TEXT NOT NULL DEFAULT '1.0.0', -- Semantic versioning
-                lifecycle_phase TEXT NOT NULL DEFAULT 'development' -- development, training, validation, deployment, monitoring
-                    CHECK (lifecycle_phase IN ('development', 'training', 'validation', 'deployment', 'monitoring')),
+                training_status TEXT NOT NULL DEFAULT 'pending' CHECK (training_status IN ('pending', 'training', 'completed', 'failed', 'paused')), -- pending, training, completed, failed, paused
+                deployment_status TEXT NOT NULL DEFAULT 'not_deployed' CHECK (deployment_status IN ('not_deployed', 'deployed', 'serving', 'error', 'maintenance')), -- not_deployed, deployed, serving, error, maintenance
+                lifecycle_phase TEXT NOT NULL DEFAULT 'development' CHECK (lifecycle_phase IN ('development', 'training', 'validation', 'deployment', 'monitoring')), -- development, training, validation, deployment, monitoring
                 
                 -- Training History & Metadata
                 training_started_at TEXT, -- When training started
@@ -379,8 +355,11 @@ class PhysicsModelingSchema(BaseSchema):
                 -- User Management & Ownership
                 user_id TEXT NOT NULL, -- Current user who owns/accesses this ML model
                 org_id TEXT NOT NULL, -- Organization this ML model belongs to
+                dept_id TEXT, -- Department for complete traceability
                 ml_engineer_id TEXT, -- ML engineer responsible for this model
                 data_scientist_id TEXT, -- Data scientist who developed this model
+                created_by TEXT, -- User who created this ML model
+                updated_by TEXT, -- User who last updated this ML model
                 
                 -- Timestamps & Audit
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -392,13 +371,13 @@ class PhysicsModelingSchema(BaseSchema):
                 ml_config TEXT DEFAULT '{}', -- ML-specific configuration settings
                 ml_metadata TEXT DEFAULT '{}', -- Additional ML metadata
                 custom_attributes TEXT DEFAULT '{}', -- User-defined custom attributes
-                tags TEXT DEFAULT '{}', -- JSON object of tags for categorization
+                tags TEXT DEFAULT '{}' -- JSON object of tags for categorization
                 
                 -- Constraints
-                FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling_registry (registry_id) ON DELETE SET NULL,
-                FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
-                FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
-                FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL
+                --FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling_registry (registry_id) ON DELETE SET NULL,
+                --FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
+                --FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
+                --FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL
             )
         """
 
@@ -430,30 +409,34 @@ class PhysicsModelingSchema(BaseSchema):
                 metric_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
                 
+                -- Organizational Hierarchy (REQUIRED for proper access control)
+                org_id TEXT NOT NULL DEFAULT 'default', -- Organization this metric belongs to
+                dept_id TEXT DEFAULT 'default', -- Department for complete traceability
+                user_id TEXT NOT NULL DEFAULT 'system', -- User who owns/accesses this metric
+                
                 -- Model Reference (Links to either traditional or ML registry)
                 registry_id TEXT, -- Reference to physics_modeling_registry (traditional)
                 ml_registry_id TEXT, -- Reference to physics_ml_registry (ML)
-                model_type TEXT NOT NULL -- traditional, ml, hybrid
-                    CHECK (model_type IN ('traditional', 'ml', 'hybrid')),
+                model_type TEXT NOT NULL CHECK (model_type IN ('traditional', 'ml', 'hybrid')), -- traditional, ml, hybrid
                 
                 -- Performance Metrics (Unified for both types)
                 simulation_duration_sec REAL, -- Time to complete simulation/training
-                accuracy_score REAL CHECK (accuracy_score >= 0.0 AND accuracy_score <= 1.0),
+                accuracy_score REAL DEFAULT 0.0 CHECK (accuracy_score >= 0.0 AND accuracy_score <= 1.0),
                 convergence_rate REAL, -- Rate of convergence for traditional models
                 error_metrics TEXT DEFAULT '{}', -- JSON: various error metrics
                 
                 -- Resource Utilization
-                cpu_usage_percent REAL CHECK (cpu_usage_percent >= 0.0 AND cpu_usage_percent <= 100.0),
+                cpu_usage_percent REAL DEFAULT 0.0 CHECK (cpu_usage_percent >= 0.0 AND cpu_usage_percent <= 100.0),
                 memory_usage_mb REAL,
-                gpu_usage_percent REAL CHECK (gpu_usage_percent >= 0.0 AND gpu_usage_percent <= 100.0),
+                gpu_usage_percent REAL DEFAULT 0.0 CHECK (gpu_usage_percent >= 0.0 AND gpu_usage_percent <= 100.0),
                 storage_usage_mb REAL,
                 network_throughput_mbps REAL,
                 
                 -- Quality Metrics
-                numerical_stability REAL CHECK (numerical_stability >= 0.0 AND numerical_stability <= 1.0),
-                mesh_quality_score REAL CHECK (mesh_quality_score >= 0.0 AND mesh_quality_score <= 1.0),
-                physics_compliance REAL CHECK (physics_compliance >= 0.0 AND physics_compliance <= 1.0),
-                generalization_error REAL CHECK (generalization_error >= 0.0 AND generalization_error <= 1.0),
+                numerical_stability REAL DEFAULT 0.0 CHECK (numerical_stability >= 0.0 AND numerical_stability <= 1.0),
+                mesh_quality_score REAL DEFAULT 0.0 CHECK (mesh_quality_score >= 0.0 AND mesh_quality_score <= 1.0),
+                physics_compliance REAL DEFAULT 0.0 CHECK (physics_compliance >= 0.0 AND physics_compliance <= 1.0),
+                generalization_error REAL DEFAULT 0.0 CHECK (generalization_error >= 0.0 AND generalization_error <= 1.0),
                 
                 -- Traditional Physics Specific Metrics (JSON for flexibility)
                 traditional_metrics TEXT DEFAULT '{}', -- JSON: finite element metrics, solver performance, etc.
@@ -468,9 +451,9 @@ class PhysicsModelingSchema(BaseSchema):
                 data_requirement_reduction REAL, -- Reduction in training data requirements
                 
                 -- Time-based Analytics
-                hour_of_day INTEGER CHECK (hour_of_day >= 0 AND hour_of_day <= 23),
-                                 day_of_week INTEGER CHECK (day_of_week >= 1 AND day_of_week <= 7),
-                month INTEGER CHECK (month >= 1 AND month <= 12),
+                hour_of_day INTEGER DEFAULT 0 CHECK (hour_of_day >= 0 AND hour_of_day <= 23),
+                day_of_week INTEGER DEFAULT 1 CHECK (day_of_week >= 1 AND day_of_week <= 7),
+                month INTEGER DEFAULT 1 CHECK (month >= 1 AND month <= 12),
                 
                 -- Performance Trends
                 performance_trend REAL, -- Compared to historical average
@@ -478,34 +461,48 @@ class PhysicsModelingSchema(BaseSchema):
                 quality_trend REAL, -- Quality metrics over time
                 
                 -- Enterprise Metrics (Merged from enterprise tables)
-                enterprise_metric_type TEXT DEFAULT 'standard' -- standard, compliance, security, performance
+                enterprise_metric_type TEXT DEFAULT 'standard', -- standard, compliance, security, performance
                 enterprise_metric_value REAL, -- Enterprise-specific metric value
                 enterprise_metric_timestamp TEXT, -- When enterprise metric was recorded
                 enterprise_metadata TEXT DEFAULT '{}', -- JSON: additional enterprise metadata
                 
                 -- Enterprise Compliance Tracking (Merged from enterprise tables)
-                compliance_tracking_status TEXT DEFAULT 'pending' -- pending, active, completed, failed
-                compliance_tracking_score REAL DEFAULT 0.0 CHECK (compliance_tracking_score >= 0.0 AND compliance_tracking_score <= 100.0)
+                compliance_tracking_status TEXT DEFAULT 'pending', -- pending, active, completed, failed
+                compliance_tracking_score REAL DEFAULT 0.0 CHECK (compliance_tracking_score >= 0.0 AND compliance_tracking_score <= 100.0),
                 compliance_tracking_details TEXT DEFAULT '{}', -- JSON: compliance tracking information
                 
                 -- Enterprise Security Metrics (Merged from enterprise tables)
-                security_metrics_status TEXT DEFAULT 'pending' -- pending, active, completed, failed
-                security_metrics_score REAL DEFAULT 0.0 CHECK (security_metrics_score >= 0.0 AND security_metrics_score <= 100.0)
+                security_metrics_status TEXT DEFAULT 'pending', -- pending, active, completed, failed
+                security_metrics_score REAL DEFAULT 0.0 CHECK (security_metrics_score >= 0.0 AND security_metrics_score <= 100.0),
                 security_metrics_details TEXT DEFAULT '{}', -- JSON: security metrics information
                 
                 -- Enterprise Performance Analytics (Merged from enterprise tables)
-                performance_analytics_status TEXT DEFAULT 'pending' -- pending, active, completed, failed
-                performance_analytics_score REAL DEFAULT 0.0 CHECK (performance_analytics_score >= 0.0 AND performance_analytics_score <= 100.0)
+                performance_analytics_status TEXT DEFAULT 'pending', -- pending, active, completed, failed
+                performance_analytics_score REAL DEFAULT 0.0 CHECK (performance_analytics_score >= 0.0 AND performance_analytics_score <= 100.0),
                 performance_analytics_details TEXT DEFAULT '{}', -- JSON: performance analytics information
+                
+                -- Alerting & Monitoring (NEW for enterprise monitoring)
+                alert_status TEXT DEFAULT 'normal', -- normal, warning, critical, resolved
+                warning_threshold REAL DEFAULT 0.7, -- Warning threshold value
+                critical_threshold REAL DEFAULT 0.5, -- Critical threshold value
+                alert_history TEXT DEFAULT '{}', -- JSON: alert history and details
+                
+                -- Categorization & Metadata (NEW for enterprise organization)
+                tags TEXT DEFAULT '{}', -- JSON: tags for categorization
+                metadata TEXT DEFAULT '{}', -- JSON: additional metadata
+                
+                -- Audit Timestamps (REQUIRED for audit trails)
+                created_at TEXT NOT NULL DEFAULT (datetime('now')), -- When metric was created
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')), -- When metric was last updated
                 
                 -- Constraints (Ensure at least one registry reference exists)
                 CHECK ((registry_id IS NOT NULL AND ml_registry_id IS NULL) OR 
                        (registry_id IS NULL AND ml_registry_id IS NOT NULL) OR
-                       (registry_id IS NOT NULL AND ml_registry_id IS NOT NULL)),
+                       (registry_id IS NOT NULL AND ml_registry_id IS NOT NULL))
                 
                 -- Foreign Key Constraints
-                FOREIGN KEY (registry_id) REFERENCES physics_modeling_registry (registry_id) ON DELETE CASCADE,
-                FOREIGN KEY (ml_registry_id) REFERENCES physics_ml_registry (ml_registry_id) ON DELETE CASCADE
+                --FOREIGN KEY (registry_id) REFERENCES physics_modeling_registry (registry_id) ON DELETE CASCADE,
+                --FOREIGN KEY (ml_registry_id) REFERENCES physics_ml_registry (ml_registry_id) ON DELETE CASCADE
             )
         """
 
@@ -518,11 +515,14 @@ class PhysicsModelingSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_registry_id ON physics_modeling_metrics (registry_id)",
             "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_ml_registry_id ON physics_modeling_metrics (ml_registry_id)",
             "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_model_type ON physics_modeling_metrics (model_type)",
+            "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_org_dept ON physics_modeling_metrics (org_id, dept_id, user_id)",
             "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_performance ON physics_modeling_metrics (simulation_duration_sec, accuracy_score, convergence_rate)",
             "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_resources ON physics_modeling_metrics (cpu_usage_percent, memory_usage_mb, gpu_usage_percent)",
             "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_quality ON physics_modeling_metrics (numerical_stability, mesh_quality_score, physics_compliance)",
             "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_comparative ON physics_modeling_metrics (computational_efficiency_gain, accuracy_improvement)",
-            "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_time_analysis ON physics_modeling_metrics (hour_of_day, day_of_week, month)"
+            "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_time_analysis ON physics_modeling_metrics (hour_of_day, day_of_week, month)",
+            "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_alerting ON physics_modeling_metrics (alert_status, warning_threshold, critical_threshold)",
+            "CREATE INDEX IF NOT EXISTS idx_physics_modeling_metrics_audit ON physics_modeling_metrics (created_at, updated_at)"
         ]
 
         return await self.create_indexes("physics_modeling_metrics", index_queries)

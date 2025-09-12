@@ -13,7 +13,8 @@ import json
 import logging
 
 from src.engine.services.core_system import RegistryService, MetricsService
-from src.engine.models.base_model import BaseModel
+from pydantic import BaseModel
+from src.engine.models.base_model import EngineBaseModel
 
 logger = logging.getLogger(__name__)
 

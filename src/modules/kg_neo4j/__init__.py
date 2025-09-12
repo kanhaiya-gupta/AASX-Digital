@@ -14,13 +14,13 @@ Architecture:
 """
 
 # Core Services (Heavy Lifting Business Logic)
-from .core.kg_graph_service import KGGraphService
-from .core.kg_metrics_service import KGMetricsService
-from .core.kg_neo4j_integration_service import KGNeo4jIntegrationService
+from .core.kg_graph import KGGraphService
+from .core.kg_metrics import KGMetricsService
+from .core.kg_neo4j_integration import KGNeo4jIntegrationService
 
 # Operational Services (Workflow Management)
-from .services.kg_graph_operations_service import KGGraphOperationsService
-from .services.kg_analytics_service import KGAnalyticsService
+from .core.kg_graph_operations import KGGraphOperationsService
+from .core.kg_analytics import KGAnalyticsService
 
 # Data Models
 from .models.kg_graph_registry import KGGraphRegistry, KGGraphRegistryQuery

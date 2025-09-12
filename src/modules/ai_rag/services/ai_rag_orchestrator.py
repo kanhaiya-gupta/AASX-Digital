@@ -9,17 +9,17 @@ from typing import Dict, Any, List, Optional, Union
 from pathlib import Path
 from datetime import datetime
 
-from ..core.ai_rag_registry_service import AIRAGRegistryService
+from ..core.ai_rag_registry_service import AIRagRegistryService
 from ..core.document_service import DocumentService
 from ..core.embedding_service import EmbeddingService
 from ..core.retrieval_service import RetrievalService
 from ..core.generation_service import GenerationService
-from ..core.ai_rag_graph_metadata_service import AIRAGGraphMetadataService
+from ..core.ai_rag_graph_metadata_service import AIRagGraphMetadataService
 from ..events.event_bus import EventBus
 from ..events.event_types import (
     DocumentProcessingEvent,
     GraphGenerationEvent,
-    ProcessingCompletedEvent
+    DocumentProcessingCompletedEvent
 )
 from ..utils.performance_utils import measure_async_execution_time, track_memory_usage
 from ..utils.validation_utils import validate_project_id, validate_file_info, validate_processing_config
@@ -27,7 +27,7 @@ from ..utils.validation_utils import validate_project_id, validate_file_info, va
 logger = logging.getLogger(__name__)
 
 
-class AIRAGOrchestrator:
+class AIRagOrchestrator:
     """
     Main orchestrator service that coordinates all AI RAG operations.
     
@@ -40,12 +40,12 @@ class AIRAGOrchestrator:
         self.logger = logging.getLogger(__name__)
         
         # Initialize core services
-        self.registry_service = AIRAGRegistryService()
+        self.registry_service = AIRagRegistryService()
         self.document_service = DocumentService()
         self.embedding_service = EmbeddingService()
         self.retrieval_service = RetrievalService()
         self.generation_service = GenerationService()
-        self.graph_metadata_service = AIRAGGraphMetadataService()
+        self.graph_metadata_service = AIRagGraphMetadataService()
         
         # Initialize event bus
         self.event_bus = EventBus()
@@ -169,8 +169,8 @@ class AIRAGOrchestrator:
             result['status'] = 'completed'
             result['processing_end'] = datetime.now().isoformat()
             
-            # Publish completion event
-            await self.event_bus.publish(ProcessingCompletedEvent(
+                            # Publish completion event
+            await self.event_bus.publish(DocumentProcessingCompletedEvent(
                 project_id=project_id,
                 file_path=str(file_path),
                 status='completed',
@@ -186,7 +186,7 @@ class AIRAGOrchestrator:
             result['errors'].append(str(e))
             
             # Publish error event
-            await self.event_bus.publish(ProcessingCompletedEvent(
+            await self.event_bus.publish(DocumentProcessingCompletedEvent(
                 project_id=project_id,
                 file_path=str(file_path),
                 status='failed',
@@ -450,5 +450,6 @@ class AIRAGOrchestrator:
             
         except Exception as e:
             self.logger.error(f"Error during shutdown: {e}")
+
 
 

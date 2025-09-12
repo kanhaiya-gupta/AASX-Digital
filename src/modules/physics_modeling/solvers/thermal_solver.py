@@ -9,7 +9,7 @@ import logging
 from typing import Dict, Any, List, Optional
 import numpy as np
 
-from src.physics_modeling.solvers.base_solver import BaseSolver
+from .base_solver import BaseSolver
 
 logger = logging.getLogger(__name__)
 

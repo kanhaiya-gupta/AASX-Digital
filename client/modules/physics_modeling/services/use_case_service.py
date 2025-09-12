@@ -14,11 +14,11 @@ from pathlib import Path
 
 # Import the physics modeling framework
 try:
-    from src.physics_modeling import DynamicPhysicsModelingFramework
-    from src.physics_modeling.core.dynamic_types import PhysicsPlugin
-    from src.physics_modeling.core.plugin_manager import PluginManager
-    from src.physics_modeling.core.model_factory import ModelFactory
-    from src.physics_modeling.simulation.simulation_engine import SimulationEngine
+    from src.modules.physics_modeling import DynamicPhysicsModelingFramework
+    from src.modules.physics_modeling.core.dynamic_types import PhysicsPlugin
+    from src.modules.physics_modeling.core.plugin_manager import PluginManager
+    from src.modules.physics_modeling.core.model_factory import ModelFactory
+    from src.modules.physics_modeling.simulation.simulation_engine import SimulationEngine
 except ImportError as e:
     logging.warning(f"Physics Modeling modules not available: {e}")
     DynamicPhysicsModelingFramework = None

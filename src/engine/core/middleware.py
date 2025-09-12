@@ -5,12 +5,14 @@ Provides basic middleware setup for FastAPI applications.
 """
 
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 logger = logging.getLogger(__name__)
+
+
 
 
 def setup_middleware(app: FastAPI) -> None:
@@ -39,8 +41,8 @@ def setup_middleware(app: FastAPI) -> None:
         # Add GZip compression middleware
         app.add_middleware(GZipMiddleware, minimum_size=1000)
         
-        logger.info("Middleware setup completed successfully")
+        logger.info("✅ Middleware setup completed successfully")
         
     except Exception as e:
-        logger.error(f"Failed to setup middleware: {e}")
+        logger.error(f"❌ Failed to setup middleware: {e}")
         # Don't raise - allow app to continue without middleware

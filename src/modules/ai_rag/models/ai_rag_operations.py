@@ -12,8 +12,8 @@ import uuid
 import asyncio
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, validator, computed_field
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 
 
 class AIRagOperations(EngineBaseModel):
@@ -24,6 +24,13 @@ class AIRagOperations(EngineBaseModel):
     Follows the same convention as AASX and Twin Registry modules.
     Enhanced with enterprise-grade computed fields and business intelligence methods.
     """
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True,
+        extra="allow"  # Allow extra fields to prevent validation errors
+    )
     
     # Primary Identification
     operation_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique operation identifier")
@@ -102,8 +109,9 @@ class AIRagOperations(EngineBaseModel):
     # Tracing & Audit
     created_by: str = Field(..., description="Created by user")
     updated_by: Optional[str] = Field(None, description="Updated by user")
-    dept_id: Optional[str] = Field(None, description="Department ID")
-    org_id: Optional[str] = Field(None, description="Organization ID")
+    # Organizational Hierarchy (REQUIRED for access control and traceability)
+    org_id: str = Field(..., description="Organization ID for access control and traceability")
+    dept_id: str = Field(..., description="Department ID for access control and traceability")
     
     # Performance Metrics
     memory_usage_mb: Optional[float] = Field(None, ge=0, description="Memory usage in MB")
@@ -112,6 +120,53 @@ class AIRagOperations(EngineBaseModel):
     # Metadata (JSON for flexibility)
     operation_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional operation-specific metadata")
     tags: Dict[str, Any] = Field(default_factory=dict, description="JSON object of tags with categories and metadata")
+    
+    # Audit and Timestamps (REQUIRED for repository operations)
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Creation timestamp")
+    updated_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Last update timestamp")
+    
+    # Field Validation
+    @validator('operation_type')
+    def validate_operation_type(cls, v):
+        allowed_types = ['session', 'generation', 'embedding', 'graph', 'retrieval']
+        if v not in allowed_types:
+            raise ValueError(f'operation_type must be one of {allowed_types}')
+        return v
+    
+    @validator('processing_status')
+    def validate_processing_status(cls, v):
+        allowed_statuses = ['processing', 'completed', 'failed']
+        if v not in allowed_statuses:
+            raise ValueError(f'processing_status must be one of {allowed_statuses}')
+        return v
+    
+    @validator('validation_status')
+    def validate_validation_status(cls, v):
+        allowed_statuses = ['pending', 'validated', 'failed']
+        if v not in allowed_statuses:
+            raise ValueError(f'validation_status must be one of {allowed_statuses}')
+        return v
+    
+    @validator('vector_type')
+    def validate_vector_type(cls, v):
+        allowed_types = ['float32', 'float64', 'int32', 'int64', 'uint8']
+        if v not in allowed_types:
+            raise ValueError(f'vector_type must be one of {allowed_types}')
+        return v
+    
+    @validator('storage_format')
+    def validate_storage_format(cls, v):
+        allowed_formats = ['base64', 'json', 'binary', 'hex']
+        if v not in allowed_formats:
+            raise ValueError(f'storage_format must be one of {allowed_formats}')
+        return v
+    
+    @validator('dept_id')
+    def validate_dept_id(cls, v, values):
+        """Ensure dept_id is present when org_id is provided"""
+        if 'org_id' in values and values['org_id'] and not v:
+            raise ValueError('dept_id is required when org_id is provided')
+        return v
     
     # Computed Fields for Business Intelligence
     @computed_field

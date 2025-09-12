@@ -24,11 +24,11 @@ from .services.user_specific_service import TwinRegistryUserSpecificService
 from .services.organization_service import TwinRegistryOrganizationService
 
 # Import configuration service
-from src.twin_registry.core.configuration_service import configuration_service
+from src.modules.twin_registry.core.configuration_service import configuration_service
 
 # Import authentication decorators and context
-from webapp.core.decorators.auth_decorators import require_auth, get_current_user
-from webapp.core.context.user_context import UserContext
+from src.integration.api.dependencies import require_auth, get_current_user
+from src.engine.models.request_context import UserContext
 
 # Create router
 router = APIRouter(tags=["twin-registry"])

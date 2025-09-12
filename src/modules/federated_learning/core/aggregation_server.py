@@ -10,9 +10,9 @@ import logging
 import numpy as np
 from datetime import datetime
 
-from ..algorithms.fedavg import FedAvg
-from ..algorithms.secure_aggregation import SecureAggregation
-from ..algorithms.performance_weighting import PerformanceWeighting
+from ..algorithms.fedavg import FedAvgAlgorithm
+from ..algorithms.secure_aggregation import SecureAggregationAlgorithm
+from ..algorithms.performance_weighting import PerformanceWeightingAlgorithm
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,9 @@ class AggregationServer:
     """Server for aggregating federated updates"""
     
     def __init__(self):
-        self.fedavg_algorithm = FedAvg()
-        self.secure_aggregation = SecureAggregation()
-        self.performance_weighting = PerformanceWeighting()
+        self.fedavg_algorithm = FedAvgAlgorithm()
+        self.secure_aggregation = SecureAggregationAlgorithm()
+        self.performance_weighting = PerformanceWeightingAlgorithm()
     
     def aggregate_models(self, updates: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Aggregate model updates using FedAvg"""

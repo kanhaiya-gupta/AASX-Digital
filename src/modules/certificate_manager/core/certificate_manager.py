@@ -20,7 +20,7 @@ from ..models.certificates_registry import (
     ComplianceStatus,
     SecurityLevel
 )
-from ..models.certificates_versions import CertificateVersion, VersionType
+from ..models.certificates_versions import CertificateVersions, VersionType
 from ..models.certificates_metrics import CertificateMetrics, MetricCategory
 from ..services.certificates_registry_service import CertificatesRegistryService
 from ..services.certificates_versions_service import CertificatesVersionsService

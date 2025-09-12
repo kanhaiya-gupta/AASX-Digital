@@ -12,8 +12,8 @@ import uuid
 import asyncio
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, validator, computed_field
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 
 
 class AIRagRegistry(EngineBaseModel):
@@ -24,6 +24,13 @@ class AIRagRegistry(EngineBaseModel):
     Follows the same convention as AASX and Twin Registry modules.
     Enhanced with enterprise-grade computed fields and business intelligence methods.
     """
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True,
+        extra="allow"  # Allow extra fields to prevent validation errors
+    )
     
     # Primary Identification
     registry_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique registry identifier")
@@ -90,11 +97,20 @@ class AIRagRegistry(EngineBaseModel):
     audit_logging_enabled: bool = Field(default=True, description="Audit logging enabled")
     
     # User Management & Ownership (Framework Access Control)
+    # IMPORTANT: Both org_id and dept_id are required for proper organizational hierarchy
+    # This ensures complete access control and organizational isolation
     user_id: str = Field(..., description="User ID")
     org_id: str = Field(..., description="Organization ID")
-    dept_id: Optional[str] = Field(None, description="Department ID for complete traceability")
+    dept_id: str = Field(..., description="Department ID - required for complete organizational hierarchy and access control")
     owner_team: Optional[str] = Field(None, description="Owner team")
     steward_user_id: Optional[str] = Field(None, description="Steward user ID")
+    
+    @validator('dept_id')
+    def validate_dept_id_with_org_id(cls, v, values):
+        """Ensure dept_id is provided when org_id is present"""
+        if 'org_id' in values and values['org_id'] and not v:
+            raise ValueError('dept_id is required when org_id is provided for proper organizational hierarchy')
+        return v
     
     # Timestamps & Audit (Framework Audit Trail)
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Creation timestamp")

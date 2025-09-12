@@ -76,7 +76,7 @@ class BaseRepository(ABC, Generic[T]):
         Initialize repository with enterprise-grade components.
         
         Args:
-            db_manager: Database connection manager instance
+            db_manager: Database connection manager instance (MySQL, PostgreSQL, SQLite)
             cache_manager: Cache manager for performance optimization
             metrics_collector: Metrics collection service
         """

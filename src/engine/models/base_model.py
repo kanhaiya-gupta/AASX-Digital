@@ -30,9 +30,9 @@ class AuditInfo(BaseModel):
     """Audit information for compliance and traceability."""
     
     created_by: Optional[str] = Field(None, description="User who created the record")
-    created_at: str = Field(..., description="Creation timestamp in ISO format")
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat(), description="Creation timestamp in ISO format")
     updated_by: Optional[str] = Field(None, description="User who last updated the record")
-    updated_at: str = Field(..., description="Last update timestamp in ISO format")
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat(), description="Last update timestamp in ISO format")
     version: int = Field(default=1, description="Version number for optimistic locking")
     change_reason: Optional[str] = Field(None, description="Reason for the last change")
     ip_address: Optional[str] = Field(None, description="IP address of the last change")
@@ -101,7 +101,7 @@ class BusinessRuleViolation(BaseModel):
         }
 
 
-class BaseModel(BaseModel):
+class EngineBaseModel(BaseModel):
     """
     Base model with world-class features.
     
@@ -130,30 +130,27 @@ class BaseModel(BaseModel):
     )
     
     # Audit fields
-    audit_info: Optional[AuditInfo] = Field(None, description="Audit information")
+    audit_info: Optional[AuditInfo] = Field(description="Audit information")
     
     # Business rule validation
-    _validation_context: Optional[ValidationContext] = None
-    _business_rule_violations: List[BusinessRuleViolation] = []
+    validation_context: Optional[ValidationContext] = None
+    business_rule_violations: List[BusinessRuleViolation] = []
     
     # Performance optimization
-    _cached_properties: Dict[str, Any] = {}
-    _lazy_loaded: Dict[str, bool] = {}
+    cached_properties: Dict[str, Any] = Field(default_factory=dict)
+    lazy_loaded: Dict[str, bool] = Field(default_factory=dict)
     
     # Observer pattern support
-    _observers: List['ModelObserver'] = []
+    observers: List['ModelObserver'] = Field(default_factory=list)
     
     # Plugin system
-    _plugins: Dict[str, Any] = {}
+    plugins: Dict[str, Any] = Field(default_factory=dict)
     
     def __init__(self, **data):
         """Initialize the base model."""
         # Set default audit info if not provided
         if 'audit_info' not in data:
-            data['audit_info'] = AuditInfo(
-                created_at=datetime.now(timezone.utc).isoformat(),
-                updated_at=datetime.now(timezone.utc).isoformat()
-            )
+            data['audit_info'] = AuditInfo()
         
         # Initialize the model
         super().__init__(**data)
@@ -163,10 +160,6 @@ class BaseModel(BaseModel):
     
     def _post_init(self):
         """Post-initialization processing."""
-        # Initialize caches
-        self._cached_properties = {}
-        self._lazy_loaded = {}
-        
         # Run plugin initialization
         self._initialize_plugins()
         
@@ -318,7 +311,7 @@ class BaseModel(BaseModel):
     @model_validator(mode='after')
     def validate_business_rules(self):
         """Validate business rules after model creation."""
-        if not self._validation_context or not self._validation_context.skip_business_rules:
+        if not self.validation_context or not self.validation_context.skip_business_rules:
             self._validate_business_rules()
         
         return self
@@ -340,8 +333,8 @@ class BaseModel(BaseModel):
                     severity="error"
                 ))
         
-        # Store violations for later access
-        self._business_rule_violations = violations
+        # Store violations for later access - bypass Pydantic validation to prevent recursion
+        object.__setattr__(self, 'business_rule_violations', violations)
         
         # Raise exception if there are violations
         if violations:
@@ -382,8 +375,8 @@ class BaseModel(BaseModel):
         return {
             "model_type": self.__class__.__name__,
             "audit_info": self.audit_info.dict() if self.audit_info else None,
-            "business_rule_violations": [v.dict() for v in self._business_rule_violations],
-            "validation_context": self._validation_context.dict() if self._validation_context else None,
+            "business_rule_violations": [v.dict() for v in self.business_rule_violations],
+            "validation_context": self.validation_context.dict() if self.validation_context else None,
             "last_validation": datetime.now(timezone.utc).isoformat()
         }
     
@@ -391,40 +384,40 @@ class BaseModel(BaseModel):
     
     def _get_cached_property(self, property_name: str, compute_func: callable) -> Any:
         """Get a cached property value, computing if necessary."""
-        if property_name not in self._cached_properties:
-            self._cached_properties[property_name] = compute_func()
-        return self._cached_properties[property_name]
+        if property_name not in self.cached_properties:
+            self.cached_properties[property_name] = compute_func()
+        return self.cached_properties[property_name]
     
     def _invalidate_cache(self, property_name: Optional[str] = None):
         """Invalidate cached properties."""
         if property_name:
-            self._cached_properties.pop(property_name, None)
+            self.cached_properties.pop(property_name, None)
         else:
-            self._cached_properties.clear()
+            self.cached_properties.clear()
     
     def lazy_load_property(self, property_name: str, loader_func: callable) -> Any:
         """Lazy load a property value."""
-        if not self._lazy_loaded.get(property_name, False):
-            self._cached_properties[property_name] = loader_func()
-            self._lazy_loaded[property_name] = True
+        if not self.lazy_loaded.get(property_name, False):
+            self.cached_properties[property_name] = loader_func()
+            self.lazy_loaded[property_name] = True
         
-        return self._cached_properties.get(property_name)
+        return self.cached_properties.get(property_name)
     
     # Observer Pattern Methods
     
     def add_observer(self, observer: 'ModelObserver'):
         """Add an observer to this model."""
-        if observer not in self._observers:
-            self._observers.append(observer)
+        if observer not in self.observers:
+            self.observers.append(observer)
     
     def remove_observer(self, observer: 'ModelObserver'):
         """Remove an observer from this model."""
-        if observer in self._observers:
-            self._observers.remove(observer)
+        if observer in self.observers:
+            self.observers.remove(observer)
     
     def _notify_observers(self, event_type: EventType, **kwargs):
         """Notify all observers of an event."""
-        for observer in self._observers:
+        for observer in self.observers:
             try:
                 observer.on_model_event(self, event_type, **kwargs)
             except Exception as e:
@@ -440,11 +433,11 @@ class BaseModel(BaseModel):
     
     def register_plugin(self, plugin_name: str, plugin_instance: Any):
         """Register a plugin with this model."""
-        self._plugins[plugin_name] = plugin_instance
+        self.plugins[plugin_name] = plugin_instance
     
     def get_plugin(self, plugin_name: str) -> Optional[Any]:
         """Get a registered plugin."""
-        return self._plugins.get(plugin_name)
+        return self.plugins.get(plugin_name)
     
     # Utility Methods
     
@@ -456,8 +449,8 @@ class BaseModel(BaseModel):
             del data['audit_info']
         
         if include_cache:
-            data['_cached_properties'] = self._cached_properties
-            data['_lazy_loaded'] = self._lazy_loaded
+            data['cached_properties'] = self.cached_properties
+            data['lazy_loaded'] = self.lazy_loaded
         
         return data
     
@@ -496,19 +489,19 @@ class BaseModel(BaseModel):
     
     def is_valid_for_business(self) -> bool:
         """Check if the model is valid according to business rules."""
-        return len(self._business_rule_violations) == 0
+        return len(self.business_rule_violations) == 0
     
     def get_business_rule_violations(self) -> List[BusinessRuleViolation]:
         """Get list of business rule violations."""
-        return self._business_rule_violations.copy()
+        return self.business_rule_violations.copy()
     
     def add_business_rule_violation(self, violation: BusinessRuleViolation):
         """Add a business rule violation."""
-        self._business_rule_violations.append(violation)
+        self.business_rule_violations.append(violation)
     
     def clear_business_rule_violations(self):
         """Clear all business rule violations."""
-        self._business_rule_violations.clear()
+        self.business_rule_violations.clear()
     
     # Security Methods
     
@@ -531,11 +524,11 @@ class BaseModel(BaseModel):
     
     def set_validation_context(self, context: ValidationContext):
         """Set the validation context for this model."""
-        self._validation_context = context
+        self.validation_context = context
     
     def get_validation_context(self) -> Optional[ValidationContext]:
         """Get the current validation context."""
-        return self._validation_context
+        return self.validation_context
     
     # Lifecycle Methods
     
@@ -568,10 +561,10 @@ class BaseModel(BaseModel):
     def post_delete(self):
         """Hook called after deleting the model."""
         # Clean up observers
-        self._observers.clear()
+        self.observers.clear()
         
         # Clean up plugins
-        self._plugins.clear()
+        self.plugins.clear()
     
     # Magic Methods
     
@@ -630,7 +623,7 @@ class ModelBuilder(Generic[T]):
     def __init__(self, model_class: type[T]):
         self.model_class = model_class
         self._data = {}
-        self._validation_context = None
+        self.validation_context = None
     
     def with_field(self, field_name: str, value: Any) -> 'ModelBuilder[T]':
         """Set a field value."""
@@ -639,15 +632,15 @@ class ModelBuilder(Generic[T]):
     
     def with_validation_context(self, context: ValidationContext) -> 'ModelBuilder[T]':
         """Set validation context."""
-        self._validation_context = context
+        self.validation_context = context
         return self
     
     def build(self) -> T:
         """Build and return the model instance."""
         instance = self.model_class(**self._data)
         
-        if self._validation_context:
-            instance.set_validation_context(self._validation_context)
+        if self.validation_context:
+            instance.set_validation_context(self.validation_context)
         
         return instance
 

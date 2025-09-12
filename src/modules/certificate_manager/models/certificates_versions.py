@@ -10,7 +10,8 @@ from typing import List, Optional, Dict, Any, Union
 from uuid import uuid4
 from enum import Enum
 
-from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from pydantic import BaseModel, Field, validator, field_validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,39 @@ class PublicationStatus(str, Enum):
     PUBLISHED = "published"
     PUBLICATION_FAILED = "publication_failed"
     ROLLED_BACK = "rolled_back"
+
+
+class VersionStatus(str, Enum):
+    """Version status classification"""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DEPRECATED = "deprecated"
+    ARCHIVED = "archived"
+
+
+class ChangeType(str, Enum):
+    """Change type classification"""
+    ADDITION = "addition"
+    MODIFICATION = "modification"
+    REMOVAL = "removal"
+    REFACTORING = "refactoring"
+
+
+class QualityLevel(str, Enum):
+    """Quality level classification"""
+    EXCELLENT = "excellent"
+    GOOD = "good"
+    AVERAGE = "average"
+    POOR = "poor"
+    CRITICAL = "critical"
+
+
+class ComplianceStatus(str, Enum):
+    """Compliance status classification"""
+    COMPLIANT = "compliant"
+    NON_COMPLIANT = "non_compliant"
+    PARTIALLY_COMPLIANT = "partially_compliant"
+    UNDER_REVIEW = "under_review"
 
 
 # ============================================================================
@@ -212,7 +246,7 @@ class ChangeTracking(BaseModel):
     
     # Change information
     change_summary: str = Field(default="", description="Summary of changes in this version")
-    change_description: str = Field(default="", description="Detailed description of changes")
+    change_description: Optional[str] = Field(default="", description="Detailed description of changes")
     change_reason: str = Field(default="", description="Reason for the change")
     change_request_id: Optional[str] = Field(None, description="Change request identifier")
     
@@ -274,6 +308,16 @@ class ChangeTracking(BaseModel):
             return "low"
         else:
             return "very_low"
+    
+    @field_validator('change_description')
+    @classmethod
+    def validate_change_description(cls, v):
+        """Validate change description - allow empty since it's optional"""
+        if v is None:
+            return None
+        if v and len(v) > 2000:
+            raise ValueError('Change description too long')
+        return v.strip() if v else v
 
 
 class ApprovalWorkflow(BaseModel):
@@ -486,12 +530,17 @@ class BusinessIntelligence(BaseModel):
 # MAIN VERSION MODEL
 # ============================================================================
 
-class CertificateVersion(BaseModel):
+class CertificateVersions(EngineBaseModel):
     """
     Version model for certificates_versions table
     Comprehensive version tracking with all business components
     """
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True,
+        extra="allow"  # Allow extra fields to prevent validation errors
+    )
     
     # ========================================================================
     # PRIMARY IDENTIFIERS
@@ -503,10 +552,7 @@ class CertificateVersion(BaseModel):
     # VERSION METADATA
     # ========================================================================
     version_number: str = Field(..., description="Version number string")
-    version_type: VersionType = Field(default=VersionType.PATCH, description="Type of version")
-    change_description: str = Field(..., description="Description of changes")
-    change_impact: ChangeImpact = Field(default=ChangeImpact.LOW, description="Impact of changes")
-    change_category: ChangeCategory = Field(default=ChangeCategory.BUG_FIX, description="Category of changes")
+    version_status: Optional[str] = Field(default="draft", description="Version status")
     
     # ========================================================================
     # TIMESTAMPS
@@ -529,8 +575,9 @@ class CertificateVersion(BaseModel):
     # WORKFLOW FIELDS
     # ========================================================================
     approval_status: ApprovalStatus = Field(default=ApprovalStatus.PENDING, description="Approval status")
-    approved_by: Optional[str] = Field(None, description="User who approved")
-    approved_at: Optional[datetime] = Field(None, description="When approved")
+    is_approved: bool = Field(default=False, description="Whether this version is approved")
+    is_rejected: bool = Field(default=False, description="Whether this version is rejected")
+    is_pending_approval: bool = Field(default=True, description="Whether this version is pending approval")
     approval_notes: Optional[str] = Field(None, description="Approval notes")
     
     rejected_by: Optional[str] = Field(None, description="User who rejected")
@@ -548,30 +595,82 @@ class CertificateVersion(BaseModel):
     # ========================================================================
     # ADDITIONAL METADATA
     # ========================================================================
-    tags: List[str] = Field(default_factory=list, description="Version tags")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    tags: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Version tags")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
+    
+    # ========================================================================
+    # SCHEMA FIELDS (Direct database fields - only new fields not in nested models)
+    # ========================================================================
+    
+    # Version Information (from schema - new fields only)
+    version_name: Optional[str] = Field(None, description="Human-readable version name")
+    version_description: Optional[str] = Field(None, description="Description of what this version contains")
+    
+    # Complete Data Snapshot (JSON from schema - new fields only)
+    module_data_snapshot: Dict[str, Any] = Field(default_factory=dict, description="Complete data from ALL modules at this version")
+    consolidated_summary: Dict[str, Any] = Field(default_factory=dict, description="Consolidated view at this version")
+    change_summary: Dict[str, Any] = Field(default_factory=dict, description="JSON: what changed in this version")
+    diff_summary: Dict[str, Any] = Field(default_factory=dict, description="JSON: detailed changes from previous version")
+    
+    # Version Metadata (from schema - new fields only)
+    change_reason: Optional[str] = Field(None, description="Why this version was created")
+    change_request_id: Optional[str] = Field(None, description="Reference to change request")
+    change_priority: str = Field(default="normal", description="Priority of the change")
+    
+    # Approval & Review (from schema - new fields only)
+    approval_timestamp: Optional[datetime] = Field(None, description="When approval was given")
+    reviewer_user_id: Optional[str] = Field(None, description="User who reviewed this version")
+    
+    # Digital Trust (from schema - new fields only)
+    version_signature: Optional[str] = Field(None, description="Digital signature for this version")
+    version_hash: Optional[str] = Field(None, description="Hash for integrity verification")
+    signature_timestamp: Optional[datetime] = Field(None, description="When signature was applied")
+    
+    # Quality & Validation (from schema - new fields only)
+    version_quality_score: Optional[float] = Field(None, ge=0.0, le=100.0, description="Version quality score")
+    validation_status: str = Field(default="pending", description="Validation status")
+    validation_notes: Optional[str] = Field(None, description="Notes from validation process")
+    
+    # Timestamps & Audit (from schema - new fields only)
+    created_from: Optional[str] = Field(None, description="Source of version creation (manual, auto, system)")
+    review_timestamp: Optional[datetime] = Field(None, description="When version was reviewed")
+    published_at: Optional[datetime] = Field(None, description="When version was published")
+    
+    # Environment Management (new fields)
+    deployment_environment: str = Field(default="development", description="Current deployment environment")
+    deployment_status: str = Field(default="not_deployed", description="Deployment status")
+    is_deployed: bool = Field(default=False, description="Whether this version is deployed")
+    deployment_timestamp: Optional[datetime] = Field(None, description="When deployed to environment")
+    environment_promotion_history: Dict[str, Any] = Field(default_factory=dict, description="JSON: history of environment promotions")
+    
+    # Performance & Analytics (new fields)
+    performance_metrics: Dict[str, Any] = Field(default_factory=dict, description="JSON: performance data")
+    usage_statistics: Dict[str, Any] = Field(default_factory=dict, description="JSON: usage analytics")
+    storage_optimization_data: Dict[str, Any] = Field(default_factory=dict, description="JSON: storage optimization info")
+    
+    # Security & Access Control (new fields)
+    version_permissions: Dict[str, Any] = Field(default_factory=dict, description="JSON: version-specific permissions")
+    access_control_list: Dict[str, Any] = Field(default_factory=dict, description="JSON: ACL data")
+    security_level: str = Field(default="standard", description="Security level")
+    is_high_security: bool = Field(default=False, description="Whether this version has high security level")
+    encryption_status: str = Field(default="none", description="Encryption status")
+    is_encrypted: bool = Field(default=False, description="Whether this version data is encrypted")
+    
+    # Reporting & Compliance (new fields)
+    compliance_status: Dict[str, Any] = Field(default_factory=dict, description="JSON: compliance data")
+    audit_trail_data: Dict[str, Any] = Field(default_factory=dict, description="JSON: audit trail")
+    reporting_metadata: Dict[str, Any] = Field(default_factory=dict, description="JSON: reporting metadata")
+    
+    # Version Lifecycle Management (new fields)
+    archive_status: str = Field(default="active", description="Archive status")
+    is_archived: bool = Field(default=False, description="Whether this version is archived")
+    archive_timestamp: Optional[datetime] = Field(None, description="When version was archived")
+    archive_reason: Optional[str] = Field(None, description="Reason for archiving")
+    restore_timestamp: Optional[datetime] = Field(None, description="When version was restored")
     
     # ========================================================================
     # COMPUTED FIELDS
     # ========================================================================
-    
-    @computed_field
-    @property
-    def is_approved(self) -> bool:
-        """Check if version is approved"""
-        return self.approval_status == ApprovalStatus.APPROVED
-    
-    @computed_field
-    @property
-    def is_rejected(self) -> bool:
-        """Check if version is rejected"""
-        return self.approval_status == ApprovalStatus.REJECTED
-    
-    @computed_field
-    @property
-    def is_pending_approval(self) -> bool:
-        """Check if version is pending approval"""
-        return self.approval_status in [ApprovalStatus.PENDING, ApprovalStatus.IN_REVIEW]
     
     @computed_field
     @property
@@ -600,6 +699,28 @@ class CertificateVersion(BaseModel):
         ]
         return sum(scores) / len(scores)
     
+    # ========================================================================
+    # NEW COMPUTED FIELDS FOR BUSINESS DOMAIN METHODS
+    # ========================================================================
+    
+    @computed_field
+    @property
+    def deployment_age_hours(self) -> Optional[float]:
+        """Calculate deployment age in hours"""
+        if not self.deployment_timestamp:
+            return None
+        delta = datetime.utcnow() - self.deployment_timestamp
+        return delta.total_seconds() / 3600
+    
+    @computed_field
+    @property
+    def archive_age_hours(self) -> Optional[float]:
+        """Calculate archive age in hours"""
+        if not self.archive_timestamp:
+            return None
+        delta = datetime.utcnow() - self.archive_timestamp
+        return delta.total_seconds() / 3600
+    
     @computed_field
     @property
     def requires_attention(self) -> bool:
@@ -615,7 +736,8 @@ class CertificateVersion(BaseModel):
     # VALIDATION METHODS
     # ========================================================================
     
-    @validator('version_id')
+    @field_validator('version_id')
+    @classmethod
     def validate_version_id(cls, v):
         """Validate version ID format"""
         if not v or len(v.strip()) == 0:
@@ -624,7 +746,8 @@ class CertificateVersion(BaseModel):
             raise ValueError('Version ID too long')
         return v.strip()
     
-    @validator('version_number')
+    @field_validator('version_number')
+    @classmethod
     def validate_version_number(cls, v):
         """Validate version number format"""
         if not v or len(v.strip()) == 0:
@@ -633,14 +756,7 @@ class CertificateVersion(BaseModel):
             raise ValueError('Version number too long')
         return v.strip()
     
-    @validator('change_description')
-    def validate_change_description(cls, v):
-        """Validate change description"""
-        if not v or len(v.strip()) == 0:
-            raise ValueError('Change description cannot be empty')
-        if len(v) > 2000:
-            raise ValueError('Change description too long')
-        return v.strip()
+
     
     # ========================================================================
     # ASYNC METHODS
@@ -650,7 +766,7 @@ class CertificateVersion(BaseModel):
         """Validate version data integrity"""
         try:
             # Validate required fields
-            if not all([self.version_id, self.certificate_id, self.version_number, self.change_description]):
+            if not all([self.version_id, self.certificate_id, self.version_number]):
                 return False
             
             # Validate component models
@@ -665,7 +781,7 @@ class CertificateVersion(BaseModel):
                 return False
             
             # Validate business rules
-            if self.is_approved and not self.approved_by:
+            if self.is_approved and not self.approval_workflow.approved_by:
                 return False
             
             if self.is_rejected and not self.rejection_reason:

@@ -213,13 +213,13 @@ import { createAlert } from '/js/shared/alerts.js';
 ### Base Template (`base.html`)
 ```html
 <!-- Core Module (replaces main.js and api.js) -->
-<script type="module" src="{{ url_for('static', path='/js/core/index.js') }}"></script>
+<script type="module" src="/static/js/core/index.js"></script>
 ```
 
 ### Auth Template (`auth/index.html`)
 ```html
 <!-- Auth Module -->
-<script type="module" src="{{ url_for('static', path='/js/modules/auth/index.js') }}"></script>
+<script type="module" src="/static/js/modules/auth/index.js"></script>
 ```
 
 ## Testing Status

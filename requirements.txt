@@ -1,54 +1,219 @@
-# AASX Digital Twin Analytics Framework - Requirements
+# AASX Digital Twin Analytics Framework - Production Requirements
 # Core framework dependencies for ETL, Knowledge Graph, and AI/RAG capabilities
+# This file contains all Python dependencies required for production deployment.
 
-# Web Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-jinja2==3.1.2
-python-multipart==0.0.6
+# =============================================================================
+# CORE WEB FRAMEWORK
+# =============================================================================
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+gunicorn==21.2.0
 
-# Authentication and Security
-PyJWT==2.8.0
+# =============================================================================
+# DATABASE & ORM
+# =============================================================================
+# PostgreSQL support
+psycopg2-binary==2.9.9
+asyncpg==0.29.0
+# MySQL support
+aiomysql==0.2.0
+# Database ORM
+sqlalchemy==2.0.23
+alembic==1.12.1
+sqlalchemy-utils==0.41.1
+# SQLite support
+aiosqlite==0.19.0
+# Graph database
+neo4j==5.15.0
+# Vector database
+qdrant-client==1.7.0
+# Cache
+redis==5.0.1
+aioredis==2.0.1
+hiredis==2.2.3
+
+# =============================================================================
+# AUTHENTICATION & SECURITY
+# =============================================================================
+python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+cryptography==42.0.8
+PyJWT==2.8.0
 bcrypt==4.1.2
 email-validator==2.1.0
 pyotp==2.9.0
 qrcode[pil]==7.4.2
 user-agents==2.2.0
 
-# Database and Storage
-neo4j==5.15.0
-qdrant-client==1.7.0
-redis==5.0.1
-aiosqlite==0.19.0
-
-# AI and Machine Learning
-openai==1.3.7
+# =============================================================================
+# DATA PROCESSING & ANALYSIS
+# =============================================================================
+numpy==1.26.2
+pandas==2.1.3
 scikit-learn==1.3.2
-numpy==1.24.3
-pandas==2.0.3
+scipy==1.11.4
+# Scientific visualization
+matplotlib==3.7.2
+seaborn==0.12.2
+plotly==5.17.0
+# Mesh processing
+meshio==5.3.4
 
-# Data Processing
-pyyaml==6.0.1
+# =============================================================================
+# AI & MACHINE LEARNING
+# =============================================================================
+openai==1.3.7
+transformers==4.36.2
+huggingface-hub==0.19.4
+torch==2.1.2
+torchvision==0.16.2
+
+# =============================================================================
+# LOCAL AI MODELS & OLLAMA
+# =============================================================================
+# Ollama Python client
+ollama==0.1.7
+# Additional local model support
+langchain==0.1.0
+langchain-community==0.0.10
+# Local embeddings
+sentence-transformers==2.2.2
+# Local text generation
+ctranslate2==3.20.0
+# Local model quantization
+bitsandbytes==0.41.3
+# Local model optimization
+optimum==1.16.0
+
+# =============================================================================
+# IMAGE PROCESSING
+# =============================================================================
+Pillow==10.1.0
+opencv-python==4.6.0.66
+opencv-contrib-python==4.6.0.66
+scikit-image==0.22.0
+imageio==2.33.1
+# OCR and text extraction
+pytesseract==0.3.10
+easyocr==1.7.0
+# paddleocr==2.7.0  # Removed due to PyMuPDF dependency conflict
+
+# =============================================================================
+# AWS & CLOUD SERVICES
+# =============================================================================
+boto3==1.34.34
+botocore==1.34.34
+
+# =============================================================================
+# HTTP & API CLIENT
+# =============================================================================
 requests==2.31.0
+httpx==0.25.2
+aiohttp==3.9.1
+
+# =============================================================================
+# FILE HANDLING & UTILITIES
+# =============================================================================
+python-magic==0.4.27
 aiofiles==23.2.1
-
-# Utilities
 python-dotenv==1.0.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
-typing-extensions==4.8.0
-psutil==5.9.6
+pyyaml==6.0.1
+toml==0.10.2
+# PDF processing
+PyPDF2==3.0.0
+pdfplumber>=0.7.0,<0.8.0
+pymupdf>=1.22.5
+# Document processing
+python-docx==0.8.11
+# textract>=1.6.0,<1.7.0  # Removed due to dependency conflicts
+# Using python-docx for DOC files instead
+striprtf==0.0.26
+# Spreadsheet processing
+openpyxl==3.1.0
+# xlrd==2.0.0  # Removed due to dependency conflicts, using openpyxl instead
+odfpy==1.4.0
+# CAD processing
+ezdxf==0.17.0
+trimesh==3.20.0
+# Progress bars
+tqdm==4.65.0
 
-# Development and Testing
+# =============================================================================
+# TEMPLATING & RENDERING
+# =============================================================================
+jinja2==3.1.2
+markupsafe==2.1.3
+
+# =============================================================================
+# VALIDATION & SERIALIZATION
+# =============================================================================
+pydantic==2.6.1
+pydantic-settings==2.1.0
+# Additional data validation
+marshmallow==3.19.0
+
+# =============================================================================
+# DATE & TIME
+# =============================================================================
+python-dateutil==2.8.2
+pytz==2023.3
+
+# =============================================================================
+# PLOTTING & VISUALIZATION
+# =============================================================================
+
+# =============================================================================
+# MONITORING & LOGGING
+# =============================================================================
+structlog==23.2.0
+sentry-sdk[fastapi]==1.38.0
+
+# =============================================================================
+# BACKGROUND TASKS
+# =============================================================================
+celery==5.3.4
+
+# =============================================================================
+# MQTT & MESSAGING
+# =============================================================================
+asyncio-mqtt==0.11.0
+
+# =============================================================================
+# EMAIL
+# =============================================================================
+emails==0.6.0
+
+# =============================================================================
+# SYSTEM INTEGRATION
+# =============================================================================
+psutil==5.9.6
+memory-profiler==0.61.0
+
+# =============================================================================
+# TESTING
+# =============================================================================
 pytest==7.4.3
+pytest-cov==4.1.0
 pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+
+# =============================================================================
+# CODE QUALITY & LINTING
+# =============================================================================
 black==23.11.0
 flake8==6.1.0
+mypy==1.6.1
+isort==5.13.2
+bandit==1.7.5
 
-# Documentation
+# =============================================================================
+# DOCUMENTATION
+# =============================================================================
 mkdocs==1.5.3
 mkdocs-material==9.4.8
 
-# Additional dependencies for specific modules
-# These may be installed separately based on module requirements
+# =============================================================================
+# PDF GENERATION
+# =============================================================================
+reportlab==4.0.7

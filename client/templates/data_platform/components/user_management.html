@@ -1,0 +1,651 @@
+<!-- World-Class User Management Component -->
+<div class="dp-user-management">
+    <!-- Real-Time User Analytics Dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dp-analytics-header card border-0 shadow-lg">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="dp-analytics-title mb-2">
+                                <i class="fas fa-users-cog text-primary me-3"></i>
+                                User Management Analytics
+                            </h3>
+                            <p class="dp-analytics-subtitle text-muted mb-0">
+                                Comprehensive user lifecycle management with real-time insights and enterprise security
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="dp-last-update">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Last Updated: <span id="lastUserUpdate">Just now</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="dp-metric-icon bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-users text-primary fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="dp-metric-value mb-1" id="totalUsers">0</h4>
+                            <p class="dp-metric-label text-muted mb-0">Total Users</p>
+                        </div>
+                    </div>
+                    <div class="dp-metric-trend mt-3">
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up me-1"></i>
+                            <span id="userGrowthRate">+12%</span> this month
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="dp-metric-icon bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-user-check text-success fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="dp-metric-value mb-1" id="activeUsers">0</h4>
+                            <p class="dp-metric-label text-muted mb-0">Active Users</p>
+                        </div>
+                    </div>
+                    <div class="dp-metric-trend mt-3">
+                        <small class="text-info">
+                            <i class="fas fa-circle me-1"></i>
+                            <span id="activeUserRate">0%</span> of total
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="dp-metric-icon bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-user-clock text-warning fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="dp-metric-value mb-1" id="pendingUsers">0</h4>
+                            <p class="dp-metric-label text-muted mb-0">Pending Approval</p>
+                        </div>
+                    </div>
+                    <div class="dp-metric-trend mt-3">
+                        <small class="text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Requires attention
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="dp-metric-icon bg-info bg-opacity-10 p-3 rounded-3 me-3">
+                            <i class="fas fa-shield-alt text-info fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="dp-metric-value mb-1" id="securityScore">0</h4>
+                            <p class="dp-metric-label text-muted mb-0">Security Score</p>
+                        </div>
+                    </div>
+                    <div class="dp-metric-trend mt-3">
+                        <small class="text-success">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Excellent
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dp-search-filters card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-lg-4">
+                            <div class="dp-search-box">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent border-end-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" id="userSearchInput" 
+                                           placeholder="Search by name, email, or username...">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-2">
+                            <select class="form-select" id="roleFilter">
+                                <option value="">All Roles</option>
+                                <option value="admin">Administrator</option>
+                                <option value="manager">Manager</option>
+                                <option value="user">User</option>
+                                <option value="viewer">Viewer</option>
+                                <option value="guest">Guest</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-lg-2">
+                            <select class="form-select" id="departmentFilter">
+                                <option value="">All Departments</option>
+                                <option value="engineering">Engineering</option>
+                                <option value="research">Research</option>
+                                <option value="management">Management</option>
+                                <option value="operations">Operations</option>
+                                <option value="sales">Sales</option>
+                                <option value="marketing">Marketing</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-lg-2">
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="pending">Pending</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-lg-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                                <i class="fas fa-undo me-2"></i>Reset
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Filters Toggle -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="btn btn-link text-decoration-none p-0" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                                <i class="fas fa-filter me-2"></i>
+                                Advanced Filters
+                                <i class="fas fa-chevron-down ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Filters Collapse -->
+                    <div class="collapse mt-3" id="advancedFilters">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Last Login</label>
+                                <select class="form-select form-select-sm" id="lastLoginFilter">
+                                    <option value="">Any Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                    <option value="year">This Year</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Account Age</label>
+                                <select class="form-select form-select-sm" id="accountAgeFilter">
+                                    <option value="">Any Age</option>
+                                    <option value="new">New (< 30 days)</option>
+                                    <option value="recent">Recent (30-90 days)</option>
+                                    <option value="established">Established (3-12 months)</option>
+                                    <option value="longterm">Long-term (> 1 year)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Permission Level</label>
+                                <select class="form-select form-select-sm" id="permissionFilter">
+                                    <option value="">All Levels</option>
+                                    <option value="read">Read Only</option>
+                                    <option value="write">Read/Write</option>
+                                    <option value="admin">Administrative</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label small text-muted">Organization</label>
+                                <select class="form-select form-select-sm" id="orgFilter">
+                                    <option value="">All Organizations</option>
+                                    <option value="main">Main Organization</option>
+                                    <option value="subsidiary">Subsidiary</option>
+                                    <option value="partner">Partner</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dp-action-bar d-flex justify-content-between align-items-center">
+                <div class="dp-bulk-actions">
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="bulkActivate()" disabled id="bulkActivateBtn">
+                        <i class="fas fa-user-check me-2"></i>Activate Selected
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm me-2" onclick="bulkSuspend()" disabled id="bulkSuspendBtn">
+                        <i class="fas fa-user-clock me-2"></i>Suspend Selected
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm me-2" onclick="bulkDelete()" disabled id="bulkDeleteBtn">
+                        <i class="fas fa-trash me-2"></i>Delete Selected
+                    </button>
+                </div>
+                
+                <div class="dp-primary-actions">
+                    <button class="btn btn-success btn-sm me-2" onclick="exportUserData()">
+                        <i class="fas fa-download me-2"></i>Export Data
+                    </button>
+                    <button class="btn btn-info btn-sm me-2" onclick="importUsers()">
+                        <i class="fas fa-upload me-2"></i>Import Users
+                    </button>
+                    <button class="btn btn-primary" onclick="showCreateUserModal()">
+                        <i class="fas fa-plus me-2"></i>Create New User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Data Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dp-users-table card border-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="usersTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0" style="width: 40px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAllUsers" onchange="toggleSelectAll()">
+                                        </div>
+                                    </th>
+                                    <th class="border-0">User Profile</th>
+                                    <th class="border-0">Contact Info</th>
+                                    <th class="border-0">Role & Permissions</th>
+                                    <th class="border-0">Department & Organization</th>
+                                    <th class="border-0">Status & Security</th>
+                                    <th class="border-0">Activity & Analytics</th>
+                                    <th class="border-0">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Sample data - will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="dp-pagination p-3 border-top">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of 
+                                    <span id="totalResults">0</span> users
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <nav aria-label="Users pagination">
+                                    <ul class="pagination pagination-sm justify-content-end mb-0" id="usersPagination">
+                                        <!-- Pagination will be generated by JavaScript -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Activity Insights -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="dp-activity-insights card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 p-4">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        User Activity Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="dp-chart-container">
+                                <h6 class="text-muted mb-3">User Growth Trend</h6>
+                                <div class="dp-chart-placeholder bg-light rounded p-4 text-center">
+                                    <i class="fas fa-chart-area fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">Chart will be rendered here</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="dp-chart-container">
+                                <h6 class="text-muted mb-3">Active Users by Department</h6>
+                                <div class="dp-chart-placeholder bg-light rounded p-4 text-center">
+                                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">Chart will be rendered here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="createUserModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Create New User Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="createUserForm" class="needs-validation" novalidate>
+                    <!-- Basic Information -->
+                    <div class="dp-form-section mb-4">
+                        <h6 class="dp-section-title text-primary mb-3">
+                            <i class="fas fa-user me-2"></i>Basic Information
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="firstName" required>
+                                <div class="invalid-feedback">Please provide a first name.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="lastName" required>
+                                <div class="invalid-feedback">Please provide a last name.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Username <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">@</span>
+                                    <input type="text" class="form-control" name="username" required>
+                                </div>
+                                <div class="invalid-feedback">Please provide a username.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" required>
+                                <div class="invalid-feedback">Please provide a valid email address.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Security -->
+                    <div class="dp-form-section mb-4">
+                        <h6 class="dp-section-title text-primary mb-3">
+                            <i class="fas fa-shield-alt me-2"></i>Account Security
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Password <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" name="password" id="passwordInput" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()">
+                                        <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                                    </button>
+                                </div>
+                                <div class="dp-password-strength mt-2">
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar" id="passwordStrengthBar" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted" id="passwordStrengthText">Password strength indicator</small>
+                                </div>
+                                <div class="invalid-feedback">Please provide a strong password.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" name="confirmPassword" required>
+                                <div class="invalid-feedback">Passwords do not match.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role & Permissions -->
+                    <div class="dp-form-section mb-4">
+                        <h6 class="dp-section-title text-primary mb-3">
+                            <i class="fas fa-user-tag me-2"></i>Role & Permissions
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Primary Role <span class="text-danger">*</span></label>
+                                <select class="form-select" name="role" required>
+                                    <option value="">Select a role</option>
+                                    <option value="admin">Administrator</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="user">User</option>
+                                    <option value="viewer">Viewer</option>
+                                    <option value="guest">Guest</option>
+                                </select>
+                                <div class="invalid-feedback">Please select a role.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Department</label>
+                                <select class="form-select" name="department">
+                                    <option value="">Select department</option>
+                                    <option value="engineering">Engineering</option>
+                                    <option value="research">Research</option>
+                                    <option value="management">Management</option>
+                                    <option value="operations">Operations</option>
+                                    <option value="sales">Sales</option>
+                                    <option value="marketing">Marketing</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Additional Permissions</label>
+                                <div class="dp-permissions-grid">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="permissions" value="file_upload" id="permFileUpload">
+                                        <label class="form-check-label" for="permFileUpload">File Upload</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="permissions" value="data_export" id="permDataExport">
+                                        <label class="form-check-label" for="permDataExport">Data Export</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="permissions" value="user_management" id="permUserManagement">
+                                        <label class="form-check-label" for="permUserManagement">User Management</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="permissions" value="system_config" id="permSystemConfig">
+                                        <label class="form-check-label" for="permSystemConfig">System Configuration</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organization & Contact -->
+                    <div class="dp-form-section mb-4">
+                        <h6 class="dp-section-title text-primary mb-3">
+                            <i class="fas fa-building me-2"></i>Organization & Contact
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Organization</label>
+                                <select class="form-select" name="organization">
+                                    <option value="">Select organization</option>
+                                    <option value="main">Main Organization</option>
+                                    <option value="subsidiary">Subsidiary</option>
+                                    <option value="partner">Partner Organization</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" name="phone" placeholder="+1 (555) 123-4567">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Job Title</label>
+                                <input type="text" class="form-control" name="jobTitle" placeholder="e.g., Senior Software Engineer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Settings -->
+                    <div class="dp-form-section mb-4">
+                        <h6 class="dp-section-title text-primary mb-3">
+                            <i class="fas fa-cog me-2"></i>Account Settings
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Account Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="active">Active</option>
+                                    <option value="pending">Pending Approval</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expiration Date</label>
+                                <input type="date" class="form-control" name="expirationDate">
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="requirePasswordChange" id="requirePasswordChange">
+                                    <label class="form-check-label" for="requirePasswordChange">
+                                        Require password change on first login
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="enableMFA" id="enableMFA">
+                                    <label class="form-check-label" for="enableMFA">
+                                        Enable Multi-Factor Authentication
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-outline-primary" onclick="saveAsDraft()">
+                    <i class="fas fa-save me-2"></i>Save as Draft
+                </button>
+                <button type="button" class="btn btn-primary" onclick="createUser()">
+                    <i class="fas fa-user-plus me-2"></i>Create User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="userDetailsModalLabel">
+                    <i class="fas fa-user me-2"></i>
+                    User Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="userDetailsContent">
+                    <!-- User details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editCurrentUser()">
+                    <i class="fas fa-edit me-2"></i>Edit User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for World-Class User Management -->
+<script>
+// User Management functionality will be handled by the main module
+// This script provides basic modal functionality and form validation
+
+function showCreateUserModal() {
+    const modal = new bootstrap.Modal(document.getElementById('createUserModal'));
+    modal.show();
+}
+
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('passwordInput');
+    const toggleIcon = document.getElementById('passwordToggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+function saveAsDraft() {
+    // Save user data as draft
+    console.log('Saving user data as draft...');
+    showNotification('User data saved as draft', 'success');
+}
+
+function createUser() {
+    // Validate form and create user
+    const form = document.getElementById('createUserForm');
+    if (form.checkValidity()) {
+        console.log('Creating new user...');
+        showNotification('User created successfully', 'success');
+        // Close modal and refresh user list
+        const modal = bootstrap.Modal.getInstance(document.getElementById('createUserModal'));
+        modal.hide();
+    } else {
+        form.classList.add('was-validated');
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Show notification using the main module's notification system
+    if (window.dataPlatformDashboard && window.dataPlatformDashboard.showNotification) {
+        window.dataPlatformDashboard.showNotification(message, type);
+    } else {
+        // Fallback notification
+        alert(message);
+    }
+}
+
+// Form validation and other utility functions will be handled by the main module
+</script>

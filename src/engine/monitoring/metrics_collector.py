@@ -12,7 +12,7 @@ import asyncio
 from typing import Dict, Any, List, Optional, Callable, Union
 from dataclasses import dataclass, field, asdict
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import logging
 
@@ -49,6 +49,10 @@ class Metric:
         )
         self.values.append(metric_value)
     
+    def record_value(self, value: Union[int, float, str, bool], metadata: Optional[Dict[str, Any]] = None):
+        """Record a value to the metric (alias for add_value)"""
+        self.add_value(value, metadata=metadata)
+    
     def get_latest_value(self) -> Optional[MetricValue]:
         """Get the most recent value"""
         return self.values[-1] if self.values else None
@@ -78,6 +82,8 @@ class Metric:
                 "count": len(recent_values),
                 "latest": recent_values[-1]
             }
+    
+
 
 
 class MetricsCollector:
@@ -155,7 +161,7 @@ class MetricsCollector:
         
         self.metrics[metric_name].add_value(value, labels, metadata)
     
-    def increment_counter(self, metric_name: str, increment: int = 1, labels: Optional[Dict[str, str]] = None):
+    async def increment_counter(self, metric_name: str, increment: int = 1, labels: Optional[Dict[str, str]] = None):
         """Increment a counter metric"""
         if metric_name not in self.metrics:
             self.create_metric(metric_name, f"Counter: {metric_name}", "count", "counter")
@@ -279,17 +285,51 @@ class MetricsCollector:
                 maxlen=metric.values.maxlen
             )
     
-    def start_collection(self):
-        """Start automatic metrics collection"""
-        if self._running:
+    async def initialize(self):
+        """Initialize the metrics collector"""
+        try:
+            # Initialize default metrics
+            self._init_default_metrics()
+            
+            # Start collection if enabled
+            if self.config.metrics.enabled:
+                await self.start_collection()
+            
+            self.logger.info("Metrics collector initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize metrics collector: {e}")
+            raise
+
+    async def get_health(self) -> Dict[str, Any]:
+        """Get health status of the metrics collector"""
+        try:
+            return {
+                "status": "healthy",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "metrics_count": len(self.metrics),
+                "custom_metrics_count": len(self.custom_metrics),
+                "last_collection": self._last_collection,
+                "message": "Metrics collector is operational"
+            }
+        except Exception as e:
+            return {
+                "status": "unhealthy",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "error": str(e),
+                "message": "Metrics collector has errors"
+            }
+    
+    async def start_collection(self):
+        """Start metrics collection"""
+        if self._collection_task and not self._collection_task.done():
             return
         
         self._running = True
         self._collection_task = asyncio.create_task(self._collection_loop())
         self.logger.info("Started metrics collection")
     
-    def stop_collection(self):
-        """Stop automatic metrics collection"""
+    async def stop_collection(self):
+        """Stop metrics collection"""
         if not self._running:
             return
         
@@ -297,6 +337,24 @@ class MetricsCollector:
         if self._collection_task:
             self._collection_task.cancel()
         self.logger.info("Stopped metrics collection")
+    
+    async def cleanup(self):
+        """Cleanup metrics collector resources"""
+        try:
+            # Stop collection if running
+            await self.stop_collection()
+            
+            # Clear metrics
+            self.metrics.clear()
+            self.custom_metrics.clear()
+            
+            # Reset state
+            self._last_collection = time.time()
+            
+            self.logger.info("Metrics collector cleaned up successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to cleanup metrics collector: {e}")
+            raise
     
     async def _collection_loop(self):
         """Main collection loop"""
@@ -318,7 +376,42 @@ class MetricsCollector:
         """Get all metrics"""
         return self.metrics.copy()
     
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    async def record_metric(self, metric_name: str, metric_value: float, metadata: Optional[Dict[str, Any]] = None) -> None:
+        """Record a metric value with optional metadata"""
+        try:
+            if metric_name not in self.metrics:
+                # Create a new metric if it doesn't exist
+                self.metrics[metric_name] = Metric(
+                    name=metric_name,
+                    description=f"Auto-generated metric: {metric_name}",
+                    unit="count",
+                    type="counter"
+                )
+            
+            # Record the metric value
+            self.metrics[metric_name].record_value(metric_value, metadata=metadata)
+            
+        except Exception as e:
+            self.logger.error(f"Failed to record metric {metric_name}: {e}")
+    
+    async def get_metrics(self) -> Dict[str, Any]:
+        """Get all metrics data"""
+        try:
+            metrics_data = {}
+            for name, metric in self.metrics.items():
+                metrics_data[name] = {
+                    "description": metric.description,
+                    "unit": metric.unit,
+                    "type": metric.type,
+                    "latest_value": metric.get_latest_value().value if metric.get_latest_value() else None,
+                    "statistics": metric.get_statistics()
+                }
+            return metrics_data
+        except Exception as e:
+            self.logger.error(f"Failed to get metrics: {e}")
+            return {}
+    
+    async def get_metrics_summary(self) -> Dict[str, Any]:
         """Get a summary of all metrics"""
         summary = {
             "total_metrics": len(self.metrics),
@@ -419,4 +512,6 @@ class MetricsCollector:
     
     def __del__(self):
         """Cleanup on destruction"""
-        self.stop_collection()
+        # Note: Cannot call async methods in destructor
+        # The collection task will be cleaned up by the event loop
+        pass

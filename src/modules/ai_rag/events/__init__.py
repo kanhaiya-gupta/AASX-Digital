@@ -23,6 +23,7 @@ from .event_types import (
     GraphTransferFailedEvent,
     GraphSyncEvent,
     GraphSyncCompletedEvent,
+    GraphSyncFailedEvent,
     GraphLifecycleEvent,
     PerformanceEvent,
     PerformanceThresholdExceededEvent,
@@ -33,6 +34,8 @@ from .event_types import (
     IntegrationFailureEvent,
     ErrorEvent,
     WarningEvent,
+    ExternalAPIEvent,
+    WebhookEvent,
     EventFactory,
     EVENT_TYPE_REGISTRY
 )
@@ -73,6 +76,7 @@ __all__ = [
     'GraphTransferFailedEvent',
     'GraphSyncEvent',
     'GraphSyncCompletedEvent',
+    'GraphSyncFailedEvent',
     'GraphLifecycleEvent',
     'PerformanceEvent',
     'PerformanceThresholdExceededEvent',
@@ -83,6 +87,8 @@ __all__ = [
     'IntegrationFailureEvent',
     'ErrorEvent',
     'WarningEvent',
+    'ExternalAPIEvent',
+    'WebhookEvent',
     'EventFactory',
     'EVENT_TYPE_REGISTRY',
     

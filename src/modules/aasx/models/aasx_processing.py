@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator, ConfigD
 from pydantic_core import PydanticCustomError
 import asyncio
 
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 
 
 class AasxProcessing(EngineBaseModel):
@@ -22,6 +22,12 @@ class AasxProcessing(EngineBaseModel):
     processing status, integration points, and performance metrics.
     Pure async implementation for modern architecture.
     """
+    
+    model_config = ConfigDict(
+        protected_namespaces=(),
+        validate_assignment=True,
+        arbitrary_types_allowed=True
+    )
     
     # Primary Identification
     job_id: str = Field(..., description="Unique job identifier")
@@ -106,8 +112,7 @@ class AasxProcessing(EngineBaseModel):
     steward_user_id: Optional[str] = Field(None, description="Steward user ID")
     
     # Timestamps & Audit (Framework Audit Trail)
-    created_at: str = Field(..., description="Creation timestamp")
-    updated_at: str = Field(..., description="Last update timestamp")
+    # Note: created_at and updated_at are inherited from EngineBaseModel.audit_info
     started_at: Optional[str] = Field(None, description="Processing start timestamp")
     completed_at: Optional[str] = Field(None, description="Processing completion timestamp")
     cancelled_at: Optional[str] = Field(None, description="Cancellation timestamp")
@@ -131,7 +136,7 @@ class AasxProcessing(EngineBaseModel):
     consent_terms_version: Optional[str] = Field(None, description="Consent terms version")
     federated_participation_status: str = Field(default="inactive", description="Federated participation status")
     
-    # Processing Metadata (JSON)
+                   # Processing Metadata (JSON)
     processing_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional processing metadata")
     custom_attributes: Dict[str, Any] = Field(default_factory=dict, description="Custom attributes for extensibility")
     
@@ -324,12 +329,13 @@ class AasxProcessing(EngineBaseModel):
     async def update_processing_status(self, new_status: str, user_id: str) -> None:
         """Update processing status asynchronously with audit trail."""
         self.processing_status = new_status
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         self.current_step = new_status
         
         # Update audit trail
         audit_entry = {
-            "timestamp": self.updated_at,
+            "timestamp": self.audit_info.updated_at if self.audit_info else datetime.now().isoformat(),
             "user_id": user_id,
             "action": "status_update",
             "old_status": self.processing_status,
@@ -344,7 +350,8 @@ class AasxProcessing(EngineBaseModel):
         """Update overall health score asynchronously."""
         if 0 <= new_score <= 100:
             self.overall_health_score = new_score
-            self.updated_at = datetime.now().isoformat()
+            if self.audit_info:
+                self.audit_info.updated_at = datetime.now().isoformat()
             
             # Update health status based on score
             if new_score >= 90:
@@ -362,7 +369,8 @@ class AasxProcessing(EngineBaseModel):
         valid_statuses = ['created', 'active', 'suspended', 'archived', 'retired']
         if new_status in valid_statuses:
             self.lifecycle_status = new_status
-            self.updated_at = datetime.now().isoformat()
+            if self.audit_info:
+                self.audit_info.updated_at = datetime.now().isoformat()
             
             # Simulate async operation
             await asyncio.sleep(0.001)
@@ -372,7 +380,8 @@ class AasxProcessing(EngineBaseModel):
         valid_statuses = ['running', 'stopped', 'paused', 'error', 'maintenance']
         if new_status in valid_statuses:
             self.operational_status = new_status
-            self.updated_at = datetime.now().isoformat()
+            if self.audit_info:
+                self.audit_info.updated_at = datetime.now().isoformat()
             
             # Simulate async operation
             await asyncio.sleep(0.001)
@@ -380,13 +389,14 @@ class AasxProcessing(EngineBaseModel):
     async def update_extraction_status(self, new_status: str, extraction_time: Optional[float] = None) -> None:
         """Update extraction status asynchronously."""
         self.extraction_status = new_status
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         if extraction_time is not None:
             self.extraction_time = extraction_time
         
         if new_status == 'completed':
-            self.last_extraction_at = self.updated_at
+            self.last_extraction_at = self.audit_info.updated_at if self.audit_info else datetime.now().isoformat()
             self.progress_percentage = min(100.0, self.progress_percentage + 33.33)
         
         # Simulate async operation
@@ -395,13 +405,14 @@ class AasxProcessing(EngineBaseModel):
     async def update_generation_status(self, new_status: str, generation_time: Optional[float] = None) -> None:
         """Update generation status asynchronously."""
         self.generation_status = new_status
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         if generation_time is not None:
             self.generation_time = generation_time
         
         if new_status == 'completed':
-            self.last_generation_at = self.updated_at
+            self.last_generation_at = self.audit_info.updated_at if self.audit_info else datetime.now().isoformat()
             self.progress_percentage = min(100.0, self.progress_percentage + 33.33)
         
         # Simulate async operation
@@ -410,13 +421,14 @@ class AasxProcessing(EngineBaseModel):
     async def update_validation_status(self, new_status: str, validation_time: Optional[float] = None) -> None:
         """Update validation status asynchronously."""
         self.validation_status = new_status
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         if validation_time is not None:
             self.validation_time = validation_time
         
         if new_status == 'completed':
-            self.last_validation_at = self.updated_at
+            self.last_validation_at = self.audit_info.updated_at if self.audit_info else datetime.now().isoformat()
             self.progress_percentage = min(100.0, self.progress_percentage + 33.34)
         
         # Simulate async operation
@@ -428,11 +440,12 @@ class AasxProcessing(EngineBaseModel):
         self.error_code = error_code
         self.processing_status = 'failed'
         self.operational_status = 'error'
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Update audit trail
         audit_entry = {
-            "timestamp": self.updated_at,
+            "timestamp": self.audit_info.updated_at if self.audit_info else datetime.now().isoformat(),
             "action": "error_added",
             "error_message": error_message,
             "error_code": error_code
@@ -445,11 +458,12 @@ class AasxProcessing(EngineBaseModel):
     async def increment_retry_count(self) -> None:
         """Increment retry count asynchronously."""
         self.retry_count += 1
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Update audit trail
         audit_entry = {
-            "timestamp": self.updated_at,
+            "timestamp": self.audit_info.updated_at if self.audit_info else datetime.now().isoformat(),
             "action": "retry_incremented",
             "retry_count": self.retry_count
         }
@@ -462,7 +476,8 @@ class AasxProcessing(EngineBaseModel):
         """Update processing progress asynchronously."""
         self.current_step = step
         self.progress_percentage = max(0.0, min(100.0, percentage))
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Simulate async operation
         await asyncio.sleep(0.001)
@@ -470,7 +485,8 @@ class AasxProcessing(EngineBaseModel):
     async def add_extraction_result(self, result_key: str, result_value: Any) -> None:
         """Add extraction result asynchronously."""
         self.extraction_results[result_key] = result_value
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Simulate async operation
         await asyncio.sleep(0.001)
@@ -478,7 +494,8 @@ class AasxProcessing(EngineBaseModel):
     async def add_generation_result(self, result_key: str, result_value: Any) -> None:
         """Add generation result asynchronously."""
         self.generation_results[result_key] = result_value
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Simulate async operation
         await asyncio.sleep(0.001)
@@ -486,7 +503,8 @@ class AasxProcessing(EngineBaseModel):
     async def add_validation_result(self, result_key: str, result_value: Any) -> None:
         """Add validation result asynchronously."""
         self.validation_results[result_key] = result_value
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Simulate async operation
         await asyncio.sleep(0.001)
@@ -514,33 +532,37 @@ class AasxProcessing(EngineBaseModel):
         if processing_accuracy is not None:
             self.processing_accuracy = processing_accuracy
         
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Simulate async operation
         await asyncio.sleep(0.001)
     
     async def add_tag(self, tag: str) -> None:
         """Add a tag asynchronously."""
-        if tag not in self.tags:
-            self.tags.append(tag)
-            self.updated_at = datetime.now().isoformat()
-            
+        if tag not in self.tags_config:
+            self.tags_config[tag] = {"added_at": datetime.now().isoformat(), "category": "user"}
+            if self.audit_info:
+                self.audit_info.updated_at = datetime.now().isoformat()
+             
             # Simulate async operation
             await asyncio.sleep(0.001)
-    
+     
     async def remove_tag(self, tag: str) -> None:
         """Remove a tag asynchronously."""
-        if tag in self.tags:
-            self.tags.remove(tag)
-            self.updated_at = datetime.now().isoformat()
-            
+        if tag in self.tags_config:
+            del self.tags_config[tag]
+            if self.audit_info:
+                self.audit_info.updated_at = datetime.now().isoformat()
+             
             # Simulate async operation
             await asyncio.sleep(0.001)
     
     async def add_custom_attribute(self, key: str, value: Any) -> None:
         """Add a custom attribute asynchronously."""
         self.custom_attributes[key] = value
-        self.updated_at = datetime.now().isoformat()
+        if self.audit_info:
+            self.audit_info.updated_at = datetime.now().isoformat()
         
         # Simulate async operation
         await asyncio.sleep(0.001)
@@ -549,7 +571,8 @@ class AasxProcessing(EngineBaseModel):
         """Update quality score asynchronously."""
         if 0.0 <= new_score <= 1.0:
             self.quality_score = new_score
-            self.updated_at = datetime.now().isoformat()
+            if self.audit_info:
+                self.audit_info.updated_at = datetime.now().isoformat()
             
             # Simulate async operation
             await asyncio.sleep(0.001)
@@ -559,7 +582,8 @@ class AasxProcessing(EngineBaseModel):
         self.processing_status = 'running'
         self.operational_status = 'running'
         self.started_at = datetime.now().isoformat()
-        self.updated_at = self.started_at
+        if self.audit_info:
+            self.audit_info.updated_at = self.started_at
         self.progress_percentage = 0.0
         
         # Simulate async operation
@@ -570,7 +594,8 @@ class AasxProcessing(EngineBaseModel):
         self.processing_status = 'completed'
         self.operational_status = 'stopped'
         self.completed_at = datetime.now().isoformat()
-        self.updated_at = self.completed_at
+        if self.audit_info:
+            self.audit_info.updated_at = self.completed_at
         self.progress_percentage = 100.0
         
         # Simulate async operation
@@ -581,12 +606,13 @@ class AasxProcessing(EngineBaseModel):
         self.processing_status = 'cancelled'
         self.operational_status = 'stopped'
         self.cancelled_at = datetime.now().isoformat()
-        self.updated_at = self.cancelled_at
+        if self.audit_info:
+            self.audit_info.updated_at = self.cancelled_at
         self.error_message = reason
         
         # Update audit trail
         audit_entry = {
-            "timestamp": self.updated_at,
+            "timestamp": self.audit_info.updated_at if self.audit_info else datetime.now().isoformat(),
             "action": "processing_cancelled",
             "reason": reason
         }
@@ -661,8 +687,8 @@ class AasxProcessing(EngineBaseModel):
             bool(self.source_type) and
             bool(self.processed_by) and
             bool(self.org_id) and
-            bool(self.created_at) and
-            bool(self.updated_at)
+            bool(self.audit_info.created_at if self.audit_info else False) and
+            bool(self.audit_info.updated_at if self.audit_info else False)
         )
     
     # Async Methods for Database Operations
@@ -1102,11 +1128,8 @@ async def create_aasx_processing_job(
         project_id=project_id,
         job_type=job_type,
         source_type=source_type,
-        processing_status="pending",  # Set default processing status
         processed_by=processed_by,
         org_id=org_id,
         dept_id=dept_id,
-        created_at=now,
-        updated_at=now,
         **kwargs
     )

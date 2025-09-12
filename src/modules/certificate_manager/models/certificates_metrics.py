@@ -11,6 +11,7 @@ from uuid import uuid4
 from enum import Enum
 
 from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 
 logger = logging.getLogger(__name__)
 
@@ -78,9 +79,13 @@ class AlertLevel(str, Enum):
 # NESTED COMPONENT MODELS
 # ============================================================================
 
-class PerformanceMetrics(BaseModel):
+class PerformanceMetrics(EngineBaseModel):
     """Generation times, cache rates, processing speeds"""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # Performance timing metrics
     generation_time_ms: float = Field(default=0.0, ge=0.0, description="Certificate generation time in milliseconds")
@@ -172,7 +177,11 @@ class PerformanceMetrics(BaseModel):
 
 class UsageAnalytics(BaseModel):
     """View counts, exports, verifications, downloads"""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # Usage counts
     total_views: int = Field(default=0, ge=0, description="Total number of views")
@@ -253,7 +262,11 @@ class UsageAnalytics(BaseModel):
 
 class QualityAnalytics(BaseModel):
     """Data completeness, validation rates, coverage"""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # Data completeness metrics
     data_completeness_score: float = Field(default=0.0, ge=0.0, le=100.0, description="Overall data completeness score")
@@ -331,7 +344,11 @@ class QualityAnalytics(BaseModel):
 
 class BusinessMetrics(BaseModel):
     """Stakeholder access, compliance checks, requests"""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # Stakeholder metrics
     stakeholder_access_count: int = Field(default=0, ge=0, description="Number of stakeholder accesses")
@@ -404,7 +421,11 @@ class BusinessMetrics(BaseModel):
 
 class EnterpriseAnalytics(BaseModel):
     """SLA compliance, resource utilization, scalability"""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # SLA compliance metrics
     sla_compliance_rate: float = Field(default=0.0, ge=0.0, le=100.0, description="SLA compliance rate")
@@ -488,7 +509,11 @@ class EnterpriseAnalytics(BaseModel):
 
 class RealTimeMetrics(BaseModel):
     """Live performance monitoring"""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
     
     # Real-time performance metrics
     current_response_time_ms: float = Field(default=0.0, ge=0.0, description="Current response time in milliseconds")
@@ -590,12 +615,17 @@ class RealTimeMetrics(BaseModel):
 # MAIN METRICS MODEL
 # ============================================================================
 
-class CertificateMetrics(BaseModel):
+class CertificateMetrics(EngineBaseModel):
     """
     Metrics model for certificates_metrics table
     Comprehensive metrics and analytics with all business components
     """
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True,
+        extra="allow"  # Allow extra fields to prevent validation errors
+    )
     
     # ========================================================================
     # PRIMARY IDENTIFIERS

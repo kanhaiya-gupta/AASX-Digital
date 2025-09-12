@@ -102,6 +102,47 @@ class LoggingConfig:
 
 
 @dataclass
+class AuditConfig:
+    """Configuration for audit logging and compliance tracking"""
+    enabled: bool = True
+    max_events: int = 10000
+    retention_days: int = 90
+    compliance_frameworks: List[str] = field(default_factory=lambda: ["GDPR", "ISO27001", "SOX"])
+    security_events: bool = True
+    data_access_events: bool = True
+    business_operations: bool = True
+    export_formats: List[str] = field(default_factory=lambda: ["json", "csv", "xml"])
+    real_time_monitoring: bool = True
+
+
+@dataclass
+class ValidationConfig:
+    """Configuration for data validation and schema enforcement"""
+    enabled: bool = True
+    strict_mode: bool = False
+    max_validation_time: float = 30.0  # seconds
+    cache_validation_rules: bool = True
+    custom_validators: Dict[str, str] = field(default_factory=dict)
+    validation_schemas: List[str] = field(default_factory=lambda: ["default", "strict", "relaxed"])
+    enable_sanitization: bool = True
+    log_validation_errors: bool = True
+
+
+@dataclass
+class BusinessRulesConfig:
+    """Configuration for business rules engine"""
+    enabled: bool = True
+    max_history: int = 1000
+    rule_cache_size: int = 100
+    enable_rule_chaining: bool = True
+    max_chain_length: int = 10
+    rule_timeout: float = 60.0  # seconds
+    enable_rule_metrics: bool = True
+    rule_versioning: bool = True
+    default_rule_set: str = "standard"
+
+
+@dataclass
 class ExportConfig:
     """Configuration for data export and visualization"""
     enabled: bool = True
@@ -124,6 +165,9 @@ class MonitoringConfig:
     alerts: AlertConfig = field(default_factory=AlertConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     export: ExportConfig = field(default_factory=ExportConfig)
+    audit: AuditConfig = field(default_factory=AuditConfig)
+    validation: ValidationConfig = field(default_factory=ValidationConfig)
+    business_rules: BusinessRulesConfig = field(default_factory=BusinessRulesConfig)
     
     # Global settings
     enabled: bool = True
@@ -162,7 +206,10 @@ class MonitoringConfig:
             "resources": self.resources.__dict__,
             "alerts": self.alerts.__dict__,
             "logging": self.logging.__dict__,
-            "export": self.export.__dict__
+            "export": self.export.__dict__,
+            "audit": self.audit.__dict__,
+            "validation": self.validation.__dict__,
+            "business_rules": self.business_rules.__dict__
         }
     
     @classmethod
@@ -176,7 +223,7 @@ class MonitoringConfig:
                 setattr(config, key, config_dict[key])
         
         # Update component configurations
-        for component in ["metrics", "health", "performance", "resources", "alerts", "logging", "export"]:
+        for component in ["metrics", "health", "performance", "resources", "alerts", "logging", "export", "audit", "validation", "business_rules"]:
             if component in config_dict:
                 component_config = getattr(config, component)
                 for key, value in config_dict[component].items():

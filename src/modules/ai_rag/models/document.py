@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, validator
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from src.engine.models.base_model import EngineBaseModel
 
 
 class Document(EngineBaseModel):

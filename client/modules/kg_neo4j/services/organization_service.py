@@ -7,7 +7,7 @@ for the Knowledge Graph Neo4j module.
 """
 
 from typing import List, Dict, Any, Optional
-from webapp.core.context.user_context import UserContext
+from src.engine.models.request_context import UserContext
 import logging
 
 logger = logging.getLogger(__name__)

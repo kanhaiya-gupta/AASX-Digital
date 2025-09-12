@@ -112,6 +112,11 @@ def _setup_root_routes(app: FastAPI) -> None:
             """Root route - redirect to main dashboard page"""
             return RedirectResponse(url="/api/dashboard")
         
+        @app.get("/health")
+        async def health_check():
+            """Health check endpoint for container health monitoring"""
+            return {"status": "healthy", "message": "AASX Digital Twin Analytics Framework is running"}
+        
         @app.get("/api/dashboard")
         async def dashboard(request: Request):
             """Main dashboard - renders the homepage"""

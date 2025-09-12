@@ -29,7 +29,7 @@ class FederatedLearningSchema(BaseSchema):
     Enterprise-Grade Federated Learning Schema Module
 
     Manages the following tables with enterprise functionality integrated:
-    - federated_learning_registry: Main registry for federation sessions, models, metadata, compliance, security, and performance analytics
+    - federated_learning_registry: Main registry for federation sessions, models, metadata, compliance, security, performance analytics, and comprehensive traceability (45 columns total)
     - federated_learning_metrics: Performance metrics, contribution tracking, analytics, and enterprise metrics
     """
 
@@ -116,7 +116,18 @@ class FederatedLearningSchema(BaseSchema):
             return False
 
     async def _create_federated_learning_registry_table(self) -> bool:
-        """Create the federated_learning_registry table for comprehensive federation management."""
+        """
+        Create the federated_learning_registry table for comprehensive federation management.
+        
+        Total columns: 45
+        New traceability fields added:
+        - federation_rounds: Complete round-by-round tracking
+        - organization_participation: Detailed org involvement metrics
+        - model_evolution: Model version progression history
+        - privacy_compliance: Privacy and compliance audit trails
+        - performance_metrics: Performance and convergence tracking
+        - federation_algorithms: Algorithm configuration and performance
+        """
         query = """
             CREATE TABLE IF NOT EXISTS federated_learning_registry (
                 -- Primary Identification
@@ -256,16 +267,24 @@ class FederatedLearningSchema(BaseSchema):
                 dependencies TEXT DEFAULT '{}', -- Object of dependency objects
                 federation_instances TEXT DEFAULT '{}', -- Object of federation instance objects
                 
+                -- NEW: Comprehensive Federated Learning Traceability (JSON fields)
+                federation_rounds TEXT DEFAULT '{}', -- JSON field tracking all federation rounds with complete traceability
+                organization_participation TEXT DEFAULT '{}', -- JSON field tracking detailed organization involvement and metrics
+                model_evolution TEXT DEFAULT '{}', -- JSON field tracking complete model progression and version history
+                privacy_compliance TEXT DEFAULT '{}', -- JSON field tracking detailed privacy and compliance metrics
+                performance_metrics TEXT DEFAULT '{}', -- JSON field tracking comprehensive performance and convergence metrics
+                federation_algorithms TEXT DEFAULT '{}' -- JSON field tracking algorithm configuration and performance
+                
                 -- Constraints
-                FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
-                FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
-                FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL,
-                FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
-                FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
-                FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
-                FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling(physics_id) ON DELETE SET NULL,
-                FOREIGN KEY (ai_rag_id) REFERENCES ai_rag_registry(registry_id) ON DELETE SET NULL,
-                FOREIGN KEY (certificate_manager_id) REFERENCES certificate_manager(cert_id) ON DELETE SET NULL
+                --FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
+                --FOREIGN KEY (org_id) REFERENCES organizations (org_id) ON DELETE CASCADE,
+                --FOREIGN KEY (dept_id) REFERENCES departments (dept_id) ON DELETE SET NULL,
+                --FOREIGN KEY (aasx_integration_id) REFERENCES aasx_processing(job_id) ON DELETE SET NULL,
+                --FOREIGN KEY (twin_registry_id) REFERENCES twin_registry(registry_id) ON DELETE SET NULL,
+                --FOREIGN KEY (kg_neo4j_id) REFERENCES kg_graph_registry(graph_id) ON DELETE SET NULL,
+                --FOREIGN KEY (physics_modeling_id) REFERENCES physics_modeling(physics_id) ON DELETE SET NULL,
+                --FOREIGN KEY (ai_rag_id) REFERENCES ai_rag_registry(registry_id) ON DELETE SET NULL,
+                --FOREIGN KEY (certificate_manager_id) REFERENCES certificate_manager(cert_id) ON DELETE SET NULL
             )
         """
 
@@ -291,7 +310,8 @@ class FederatedLearningSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_created ON federated_learning_registry (created_at)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_updated ON federated_learning_registry (updated_at)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_integration ON federated_learning_registry (aasx_integration_id, twin_registry_id, kg_neo4j_id, physics_modeling_id, ai_rag_id, certificate_manager_id)",
-            "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_performance ON federated_learning_registry (performance_score, data_quality_score, reliability_score)"
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_performance ON federated_learning_registry (performance_score, data_quality_score, reliability_score)",
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_registry_traceability ON federated_learning_registry (federation_rounds, organization_participation, model_evolution, privacy_compliance, performance_metrics, federation_algorithms)"
         ]
 
         return await self.create_indexes("federated_learning_registry", index_queries)
@@ -304,6 +324,11 @@ class FederatedLearningSchema(BaseSchema):
                 metric_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 registry_id TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
+                
+                -- Organizational Hierarchy (REQUIRED for proper access control)
+                user_id TEXT NOT NULL, -- User who generated this metric
+                org_id TEXT NOT NULL, -- Organization this metric belongs to
+                dept_id TEXT NOT NULL, -- Department for complete traceability
                 
                 -- Real-time Health Metrics (Framework Health)
                 health_score INTEGER CHECK (health_score >= 0 AND health_score <= 100),
@@ -387,8 +412,15 @@ class FederatedLearningSchema(BaseSchema):
                 resource_efficiency_trend REAL, -- Performance over time
                 quality_trend REAL, -- Quality metrics over time
                 
+                -- Additional Metadata (JSON for flexibility)
+                metadata TEXT DEFAULT '{}', -- Additional metadata
+                
+                -- Timestamps & Audit (REQUIRED for repository operations)
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                
                 -- Foreign Key Constraints
-                FOREIGN KEY (registry_id) REFERENCES federated_learning_registry (registry_id) ON DELETE CASCADE
+                --FOREIGN KEY (registry_id) REFERENCES federated_learning_registry (registry_id) ON DELETE CASCADE
             )
         """
 
@@ -406,7 +438,12 @@ class FederatedLearningSchema(BaseSchema):
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_user_activity ON federated_learning_metrics (user_interaction_count, federation_access_count)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_federation ON federated_learning_metrics (federation_performance)",
             "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_category ON federated_learning_metrics (federation_category_performance_stats)",
-            "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_time_analysis ON federated_learning_metrics (hour_of_day, day_of_week, month)"
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_time_analysis ON federated_learning_metrics (hour_of_day, day_of_week, month)",
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_created ON federated_learning_metrics (created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_updated ON federated_learning_metrics (updated_at)",
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_user_id ON federated_learning_metrics (user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_org_id ON federated_learning_metrics (org_id)",
+            "CREATE INDEX IF NOT EXISTS idx_federated_learning_metrics_dept_id ON federated_learning_metrics (dept_id)"
         ]
 
         return await self.create_indexes("federated_learning_metrics", index_queries)

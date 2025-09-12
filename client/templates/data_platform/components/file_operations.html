@@ -1,0 +1,449 @@
+<!-- File Operations Component -->
+<div class="dp-file-operations">
+    <!-- Analytics Header -->
+    <div class="dp-analytics-header mb-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-1"><i class="fas fa-file-alt me-2"></i>File Operations</h3>
+                        <p class="text-muted mb-0">Enterprise-grade file management and data operations</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary" onclick="exportFileData()">
+                            <i class="fas fa-download me-2"></i>Export
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="showBulkUploadModal()">
+                            <i class="fas fa-upload me-2"></i>Bulk Upload
+                        </button>
+                        <button class="btn btn-primary" onclick="showUploadModal()">
+                            <i class="fas fa-plus me-2"></i>Upload Files
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="dp-metric-icon bg-primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="dp-metric-content">
+                    <h4 id="totalFiles">0</h4>
+                    <p>Total Files</p>
+                    <small class="text-success">
+                        <i class="fas fa-arrow-up me-1"></i>
+                        <span id="fileGrowthRate">0%</span> this month
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="dp-metric-icon bg-success">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div class="dp-metric-content">
+                    <h4 id="totalStorage">0 GB</h4>
+                    <p>Storage Used</p>
+                    <small class="text-muted">
+                        <span id="storageEfficiency">0%</span> efficiency
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="dp-metric-icon bg-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="dp-metric-content">
+                    <h4 id="pendingFiles">0</h4>
+                    <p>Pending Processing</p>
+                    <small class="text-info">
+                        <i class="fas fa-arrow-down me-1"></i>
+                        <span id="processingRate">0%</span> completion
+                    </small>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="dp-metric-card">
+                <div class="dp-metric-icon bg-info">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="dp-metric-content">
+                    <h4 id="secureFiles">0</h4>
+                    <p>Secured Files</p>
+                    <small class="text-success">
+                        <span id="securityScore">0%</span> security rating
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="fileSearchInput" placeholder="Search files by name, type, project, or tags..." onkeyup="filterFiles()">
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearFileSearch()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-secondary w-100" type="button" onclick="toggleAdvancedFileFilters()">
+                        <i class="fas fa-filter me-2"></i>Advanced Filters
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Advanced Filters (Collapsible) -->
+            <div class="row mt-3" id="advancedFileFilters" style="display: none;">
+                <div class="col-md-3">
+                    <select class="form-select" id="fileTypeFilter" onchange="filterFiles()">
+                        <option value="">All File Types</option>
+                        <option value="document">Documents</option>
+                        <option value="image">Images</option>
+                        <option value="video">Videos</option>
+                        <option value="audio">Audio</option>
+                        <option value="archive">Archives</option>
+                        <option value="data">Data Files</option>
+                        <option value="code">Code Files</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="fileStatusFilter" onchange="filterFiles()">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="archived">Archived</option>
+                        <option value="processing">Processing</option>
+                        <option value="error">Error</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="fileSizeFilter" onchange="filterFiles()">
+                        <option value="">All Sizes</option>
+                        <option value="small">Small (< 1MB)</option>
+                        <option value="medium">Medium (1MB - 10MB)</option>
+                        <option value="large">Large (10MB - 100MB)</option>
+                        <option value="xlarge">Extra Large (> 100MB)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="fileProjectFilter" onchange="filterFiles()">
+                        <option value="">All Projects</option>
+                        <option value="project-a">Project A</option>
+                        <option value="project-b">Project B</option>
+                        <option value="project-c">Project C</option>
+                        <option value="research">Research</option>
+                        <option value="development">Development</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <div class="form-check me-3">
+                            <input class="form-check-input" type="checkbox" id="selectAllFiles" onchange="toggleSelectAllFiles()">
+                            <label class="form-check-label" for="selectAllFiles">
+                                Select All
+                            </label>
+                        </div>
+                        <span class="text-muted" id="fileResultsCount">Showing 0 files</span>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-outline-success" onclick="bulkDownloadFiles()" disabled id="bulkDownloadBtn">
+                            <i class="fas fa-download me-2"></i>Download
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="bulkArchiveFiles()" disabled id="bulkArchiveBtn">
+                            <i class="fas fa-archive me-2"></i>Archive
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="bulkDeleteFiles()" disabled id="bulkDeleteBtn">
+                            <i class="fas fa-trash me-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Files Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="filesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="40">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAllFilesHeader" onchange="toggleSelectAllFiles()">
+                                </div>
+                            </th>
+                            <th>File</th>
+                            <th>Type & Size</th>
+                            <th>Project & Tags</th>
+                            <th>Status & Security</th>
+                            <th>Upload Info</th>
+                            <th>Performance</th>
+                            <th width="120">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="filesTableBody">
+                        <!-- Files will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="Files pagination" class="mt-4">
+                <ul class="pagination justify-content-center" id="filesPagination">
+                    <!-- Pagination will be populated here -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- File Insights -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Storage Growth Trend</h6>
+                </div>
+                <div class="card-body">
+                    <div class="dp-chart-placeholder">
+                        <i class="fas fa-chart-line fa-3x text-muted"></i>
+                        <p class="text-muted mt-2">Storage growth chart will be displayed here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Files by Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="dp-chart-placeholder">
+                        <i class="fas fa-chart-pie fa-3x text-muted"></i>
+                        <p class="text-muted mt-2">File type distribution chart will be displayed here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload File Modal -->
+<div class="modal fade" id="uploadFileModal" tabindex="-1" aria-labelledby="uploadFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadFileModalLabel">
+                    <i class="fas fa-upload me-2"></i>Upload New Files
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadFileForm">
+                    <!-- File Selection -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">File Selection</h6>
+                        </div>
+                        <div class="col-12">
+                            <div class="drop-zone" id="fileDropZone">
+                                <div class="drop-zone-content">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                    <h6>Drag & Drop files here</h6>
+                                    <p class="text-muted">or click to browse</p>
+                                    <input type="file" id="fileInput" multiple accept="*/*" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                        <i class="fas fa-folder-open me-2"></i>Browse Files
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="fileList" class="mt-3" style="display: none;">
+                                <!-- Selected files will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Details -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">File Details</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fileProject" class="form-label">Project *</label>
+                            <select class="form-select" id="fileProject" required>
+                                <option value="">Select Project</option>
+                                <option value="project-a">Project A</option>
+                                <option value="project-b">Project B</option>
+                                <option value="project-c">Project C</option>
+                                <option value="research">Research</option>
+                                <option value="development">Development</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fileCategory" class="form-label">Category</label>
+                            <select class="form-select" id="fileCategory">
+                                <option value="">Select Category</option>
+                                <option value="documentation">Documentation</option>
+                                <option value="data">Data</option>
+                                <option value="media">Media</option>
+                                <option value="code">Code</option>
+                                <option value="archive">Archive</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="fileTags" class="form-label">Tags</label>
+                            <input type="text" class="form-control" id="fileTags" placeholder="Enter tags separated by commas">
+                            <small class="text-muted">Example: important, draft, final, confidential</small>
+                        </div>
+                        <div class="col-12">
+                            <label for="fileDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="fileDescription" rows="3" placeholder="Describe the files being uploaded..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Upload Settings -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2 mb-3">Upload Settings</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fileCompression" checked>
+                                <label class="form-check-label" for="fileCompression">
+                                    Enable compression
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fileEncryption" checked>
+                                <label class="form-check-label" for="fileEncryption">
+                                    Enable encryption
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fileBackup">
+                                <label class="form-check-label" for="fileBackup">
+                                    Create backup
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fileNotification">
+                                <label class="form-check-label" for="fileNotification">
+                                    Send notifications
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="uploadFiles()" id="uploadBtn" disabled>
+                    <i class="fas fa-upload me-2"></i>Upload Files
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Upload Modal -->
+<div class="modal fade" id="bulkUploadModal" tabindex="-1" aria-labelledby="bulkUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkUploadModalLabel">
+                    <i class="fas fa-upload me-2"></i>Bulk File Upload
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="drop-zone-large" id="bulkFileDropZone">
+                            <div class="drop-zone-content">
+                                <i class="fas fa-cloud-upload-alt fa-4x text-muted mb-3"></i>
+                                <h5>Drag & Drop multiple files or folders</h5>
+                                <p class="text-muted">Supports batch processing and automatic organization</p>
+                                <input type="file" id="bulkFileInput" multiple webkitdirectory directory style="display: none;">
+                                <button type="button" class="btn btn-outline-primary btn-lg" onclick="document.getElementById('bulkFileInput').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Select Folder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Upload Progress</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="bulkUploadProgress">
+                                    <p class="text-muted">No files selected</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="startBulkUpload()" id="bulkUploadBtn" disabled>
+                    <i class="fas fa-play me-2"></i>Start Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Details Modal -->
+<div class="modal fade" id="fileDetailsModal" tabindex="-1" aria-labelledby="fileDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileDetailsModalLabel">
+                    <i class="fas fa-file-alt me-2"></i>File Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="fileDetailsContent">
+                <!-- File details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editFile()">
+                    <i class="fas fa-edit me-2"></i>Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

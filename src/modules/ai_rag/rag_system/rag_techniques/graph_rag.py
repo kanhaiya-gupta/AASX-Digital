@@ -8,7 +8,7 @@ import openai
 from datetime import datetime
 import json
 from .base_technique import BaseRAGTechnique
-from src.ai_rag.embedding_models.text_embeddings import TextEmbeddingManager
+from ...embedding_models.text_embeddings import TextEmbeddingManager
 
 
 class GraphRAGTechnique(BaseRAGTechnique):

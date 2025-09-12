@@ -14,10 +14,10 @@ import logging
 # Import core Twin Registry services
 try:
     from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
-from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
-from src.modules.twin_registry.core.twin_relationship_service import TwinRelationshipService
-from src.modules.twin_registry.core.twin_instance_service import TwinInstanceService
-from src.modules.twin_registry.core.twin_sync_service import TwinSyncService
+    from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+    from src.modules.twin_registry.core.twin_relationship_service import TwinRelationshipService
+    from src.modules.twin_registry.core.twin_instance_service import TwinInstanceService
+    from src.modules.twin_registry.core.twin_sync_service import TwinSyncService
     print("✅ Twin Registry core services imported successfully")
     CORE_SERVICES_AVAILABLE = True
 except ImportError as e:

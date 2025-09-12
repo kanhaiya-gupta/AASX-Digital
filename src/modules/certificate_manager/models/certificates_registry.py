@@ -11,6 +11,7 @@ from uuid import uuid4
 from enum import Enum
 
 from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 
 logger = logging.getLogger(__name__)
 
@@ -342,6 +343,7 @@ class ModuleSummaries(BaseModel):
     workflow_engine_summary: Dict[str, Any] = Field(default_factory=dict, description="Workflow Engine summary")
     integration_layer_summary: Dict[str, Any] = Field(default_factory=dict, description="Integration Layer summary")
     security_module_summary: Dict[str, Any] = Field(default_factory=dict, description="Security Module summary")
+    digital_product_passport_summary: Dict[str, Any] = Field(default_factory=dict, description="Digital Product Passport (DPP) summary")
     
     # Summary metadata
     summary_generated_at: datetime = Field(default_factory=datetime.utcnow, description="When summary was generated")
@@ -349,7 +351,7 @@ class ModuleSummaries(BaseModel):
     summary_checksum: str = Field(default="", description="Summary data checksum")
     
     # Data coverage
-    modules_with_data: int = Field(default=0, ge=0, le=7, description="Number of modules with data")
+    modules_with_data: int = Field(default=0, ge=0, le=8, description="Number of modules with data (including DPP)")
     total_data_records: int = Field(default=0, ge=0, description="Total data records across modules")
     data_freshness_hours: float = Field(default=0.0, ge=0.0, description="Data freshness in hours")
     
@@ -369,7 +371,8 @@ class ModuleSummaries(BaseModel):
             "analytics_engine": self.analytics_engine_summary,
             "workflow_engine": self.workflow_engine_summary,
             "integration_layer": self.integration_layer_summary,
-            "security_module": self.security_module_summary
+            "security_module": self.security_module_summary,
+            "digital_product_passport": self.digital_product_passport_summary
         }
     
     @computed_field
@@ -378,7 +381,7 @@ class ModuleSummaries(BaseModel):
         """Calculate data coverage percentage"""
         if self.modules_with_data == 0:
             return 0.0
-        return (self.modules_with_data / 7) * 100
+        return (self.modules_with_data / 8) * 100  # Updated for 8 modules including DPP
 
 
 class DigitalTrust(BaseModel):
@@ -447,12 +450,17 @@ class DigitalTrust(BaseModel):
 # MAIN CERTIFICATE MODEL
 # ============================================================================
 
-class CertificateRegistry(BaseModel):
+class CertificateRegistry(EngineBaseModel):
     """
     Main certificate model for certificates_registry table
     Comprehensive certificate data with all business components
     """
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True,
+        extra="allow"  # Allow extra fields to prevent validation errors
+    )
     
     # ========================================================================
     # PRIMARY IDENTIFIERS
@@ -468,7 +476,7 @@ class CertificateRegistry(BaseModel):
     dept_id: str = Field(..., description="Department identifier for complete traceability")
     project_id: Optional[str] = Field(None, description="Project context identifier")
     twin_id: Optional[str] = Field(None, description="Digital twin reference")
-    use_case_id: str = Field(..., description="Use case context identifier")
+    use_case_id: Optional[str] = Field(None, description="Use case context identifier")
     
     # ========================================================================
     # CERTIFICATE METADATA
@@ -501,8 +509,51 @@ class CertificateRegistry(BaseModel):
     # ADDITIONAL METADATA
     # ========================================================================
     description: Optional[str] = Field(None, description="Certificate description")
-    tags: List[str] = Field(default_factory=list, description="Certificate tags")
+    tags: Dict[str, Any] = Field(default_factory=dict, description="Certificate tags")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    custom_attributes: Dict[str, Any] = Field(default_factory=dict, description="Custom business attributes")
+    
+    # ========================================================================
+    # AUDIT AND SECURITY DETAILS (JSON format)
+    # ========================================================================
+    audit_details: Dict[str, Any] = Field(default_factory=dict, description="Detailed audit information")
+    security_details: Dict[str, Any] = Field(default_factory=dict, description="Security scan results and details")
+    
+    # ========================================================================
+    # MODULE INTEGRATION STATUS (Real-time tracking)
+    # ========================================================================
+    aasx_etl_status: str = Field(default="pending", description="AASX ETL processing status")
+    twin_registry_status: str = Field(default="pending", description="Twin registry processing status")
+    ai_rag_status: str = Field(default="pending", description="AI RAG processing status")
+    kg_neo4j_status: str = Field(default="pending", description="KG Neo4j processing status")
+    physics_modeling_status: str = Field(default="pending", description="Physics modeling processing status")
+    federated_learning_status: str = Field(default="pending", description="Federated learning processing status")
+    data_governance_status: str = Field(default="pending", description="Data governance processing status")
+    digital_product_passport_status: str = Field(default="pending", description="Digital Product Passport processing status")
+    
+    # ========================================================================
+    # MODULE INTEGRATION IDs (for cross-module references) - Keep these for database compatibility
+    # ========================================================================
+    aasx_etl_job_id: Optional[str] = Field(None, description="AASX ETL job identifier")
+    twin_registry_id: Optional[str] = Field(None, description="Twin registry integration ID")
+    ai_rag_registry_id: Optional[str] = Field(None, description="AI RAG registry integration ID")
+    kg_neo4j_registry_id: Optional[str] = Field(None, description="KG Neo4j registry integration ID")
+    federated_learning_registry_id: Optional[str] = Field(None, description="Federated learning registry integration ID")
+    physics_modeling_registry_id: Optional[str] = Field(None, description="Physics modeling registry integration ID")
+    data_governance_registry_id: Optional[str] = Field(None, description="Data governance registry integration ID")
+    digital_product_passport_registry_id: Optional[str] = Field(None, description="Digital Product Passport registry integration ID")
+    
+    # ========================================================================
+    # MODULE DATA SUMMARIES (JSON format)
+    # ========================================================================
+    aasx_etl_summary: Dict[str, Any] = Field(default_factory=dict, description="AASX ETL processing summary")
+    twin_registry_summary: Dict[str, Any] = Field(default_factory=dict, description="Twin registry processing summary")
+    ai_rag_summary: Dict[str, Any] = Field(default_factory=dict, description="AI RAG processing summary")
+    kg_neo4j_summary: Dict[str, Any] = Field(default_factory=dict, description="KG Neo4j processing summary")
+    federated_learning_summary: Dict[str, Any] = Field(default_factory=dict, description="Federated learning processing summary")
+    physics_modeling_summary: Dict[str, Any] = Field(default_factory=dict, description="Physics modeling processing summary")
+    data_governance_summary: Dict[str, Any] = Field(default_factory=dict, description="Data governance processing summary")
+    digital_product_passport_summary: Dict[str, Any] = Field(default_factory=dict, description="Digital Product Passport (DPP) summary")
     
     # ========================================================================
     # AUDIT FIELDS

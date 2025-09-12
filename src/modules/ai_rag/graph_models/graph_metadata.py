@@ -8,8 +8,8 @@ Represents graph metadata and versioning information.
 import json
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, root_validator
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, validator, model_validator
+from src.engine.models.base_model import EngineBaseModel
 
 
 class GraphMetadata(EngineBaseModel):
@@ -220,34 +220,23 @@ class GraphMetadata(EngineBaseModel):
             raise ValueError('version must be in format X.Y.Z')
         return v
     
-    @root_validator
-    def validate_version_consistency(cls, values):
+    @model_validator(mode='after')
+    def validate_version_consistency(self):
         """Validate version number consistency."""
-        version = values.get('version')
-        major = values.get('version_major')
-        minor = values.get('version_minor')
-        patch = values.get('version_patch')
-        
-        if version and major is not None and minor is not None and patch is not None:
-            expected_version = f"{major}.{minor}.{patch}"
-            if version != expected_version:
-                raise ValueError(f'version {version} does not match version numbers {major}.{minor}.{patch}')
-        
-        return values
+        if self.version and self.version_major is not None and self.version_minor is not None and self.version_patch is not None:
+            expected_version = f"{self.version_major}.{self.version_minor}.{self.version_patch}"
+            if self.version != expected_version:
+                raise ValueError(f'version {self.version} does not match version numbers {self.version_major}.{self.version_minor}.{self.version_patch}')
+        return self
     
-    @root_validator
-    def validate_processing_times(cls, values):
+    @model_validator(mode='after')
+    def validate_processing_times(self):
         """Validate processing time consistency."""
-        start_time = values.get('processing_start_time')
-        end_time = values.get('processing_end_time')
-        duration = values.get('processing_duration_ms')
-        
-        if start_time and end_time and duration:
+        if self.processing_start_time and self.processing_end_time and self.processing_duration_ms:
             # Basic validation that duration is reasonable
-            if duration < 0:
+            if self.processing_duration_ms < 0:
                 raise ValueError('processing_duration_ms cannot be negative')
-        
-        return values
+        return self
     
     # Business Logic Methods
     def add_source_document(self, document_id: str) -> None:

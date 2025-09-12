@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<!-- Data Platform CSS -->
+<link rel="stylesheet" href="/static/css/data_platform.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">
+                        <i class="fas fa-chart-line text-primary me-3"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Central Business Services Hub - Enterprise Data Management & Analytics Platform
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                    <button class="btn btn-primary" onclick="switchToTab('file_operations')">
+                        <i class="fas fa-upload me-2"></i>Quick Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent border-0 p-0">
+            <ul class="nav nav-tabs nav-fill border-0" id="dataPlatformTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Overview Dashboard
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="user-management-tab" data-bs-toggle="tab" data-bs-target="#user-management" type="button" role="tab" aria-controls="user-management" aria-selected="false">
+                        <i class="fas fa-users me-2"></i>
+                        User Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="organization-management-tab" data-bs-toggle="tab" data-bs-target="#organization-management" type="button" role="tab" aria-controls="organization-management" aria-selected="false">
+                        <i class="fas fa-building me-2"></i>
+                        Organization Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="file-operations-tab" data-bs-toggle="tab" data-bs-target="#file-operations" type="button" role="tab" aria-controls="file-operations" aria-selected="false">
+                        <i class="fas fa-file-alt me-2"></i>
+                        File Operations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="project-management-tab" data-bs-toggle="tab" data-bs-target="#project-management" type="button" role="tab" aria-controls="project-management" aria-selected="false">
+                        <i class="fas fa-project-diagram me-2"></i>
+                        Project Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="use-case-management-tab" data-bs-toggle="tab" data-bs-target="#use-case-management" type="button" role="tab" aria-controls="use-case-management" aria-selected="false">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Use Case Management
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analytics-insights-tab" data-bs-toggle="tab" data-bs-target="#analytics-insights" type="button" role="tab" aria-controls="analytics-insights" aria-selected="false">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Analytics & Insights
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="system-configuration-tab" data-bs-toggle="tab" data-bs-target="#system-configuration" type="button" role="tab" aria-controls="system-configuration" aria-selected="false">
+                        <i class="fas fa-cogs me-2"></i>
+                        System Configuration
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="tab-content" id="dataPlatformTabContent">
+                <!-- Overview Dashboard Tab -->
+                <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                    {% include 'data_platform/components/overview_dashboard.html' %}
+                </div>
+                
+                <!-- User Management Tab -->
+                <div class="tab-pane fade" id="user-management" role="tabpanel" aria-labelledby="user-management-tab">
+                    {% include 'data_platform/components/user_management.html' %}
+                </div>
+                
+                <!-- Organization Management Tab -->
+                <div class="tab-pane fade" id="organization-management" role="tabpanel" aria-labelledby="organization-management-tab">
+                    {% include 'data_platform/components/organization_management.html' %}
+                </div>
+                
+                <!-- File Operations Tab -->
+                <div class="tab-pane fade" id="file-operations" role="tabpanel" aria-labelledby="file-operations-tab">
+                    {% include 'data_platform/components/file_operations.html' %}
+                </div>
+                
+                <!-- Project Management Tab -->
+                <div class="tab-pane fade" id="project-management" role="tabpanel" aria-labelledby="project-management-tab">
+                    {% include 'data_platform/components/project_management.html' %}
+                </div>
+                
+                <!-- Use Case Management Tab -->
+                <div class="tab-pane fade" id="use-case-management" role="tabpanel" aria-labelledby="use-case-management-tab">
+                    {% include 'data_platform/components/use_case_management.html' %}
+                </div>
+                
+                <!-- Analytics & Insights Tab -->
+                <div class="tab-pane fade" id="analytics-insights" role="tabpanel" aria-labelledby="analytics-insights-tab">
+                    {% include 'data_platform/components/analytics_insights.html' %}
+                </div>
+                
+                <!-- System Configuration Tab -->
+                <div class="tab-pane fade" id="system-configuration" role="tabpanel" aria-labelledby="system-configuration-tab">
+                    {% include 'data_platform/components/system_configuration.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Data Platform JavaScript -->
+<script src="/static/js/modules/data_platform/index.js"></script>
+{% endblock %}

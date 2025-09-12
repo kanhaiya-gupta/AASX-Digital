@@ -3,7 +3,7 @@
 {% block title %}AI/RAG Analytics - AASX Digital Twin Platform{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', path='/css/ai_rag.css') }}" rel="stylesheet">
+<link href="/static/css/ai_rag.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -91,7 +91,7 @@
     console.log('🔍 AI/RAG Template: Loading enhanced modular AI/RAG system...');
     
     try {
-        const { initAIRAGModule } = await import("{{ url_for('static', path='/js/modules/ai_rag/index.js') }}?v=2025-01-27");
+        const { initAIRAGModule } = await import("/static/js/modules/ai_rag/index.js?v=2025-01-27");
         console.log('✅ AI/RAG Template: Enhanced modular system imported successfully');
         
         // Initialize the enhanced modular AI/RAG system

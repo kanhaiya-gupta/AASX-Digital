@@ -308,11 +308,26 @@ class PerformanceProfiler:
         """Get a specific operation trace"""
         return self.operation_traces.get(operation_id)
     
-    def get_performance_metrics(self, operation_name: Optional[str] = None) -> Union[Dict[str, PerformanceMetrics], PerformanceMetrics]:
+    async def get_performance_metrics(self, operation_name: Optional[str] = None) -> Union[Dict[str, PerformanceMetrics], Dict[str, Any]]:
         """Get performance metrics for operations"""
         if operation_name:
-            return self.performance_metrics.get(operation_name)
+            metrics = self.performance_metrics.get(operation_name)
+            if metrics is None:
+                return {
+                    "operation_name": operation_name,
+                    "status": "no_data",
+                    "message": "No performance data available for this operation",
+                    "timestamp": datetime.now().isoformat()
+                }
+            return metrics
         else:
+            if not self.performance_metrics:
+                return {
+                    "status": "no_data",
+                    "message": "No performance data available",
+                    "timestamp": datetime.now().isoformat(),
+                    "total_operations": 0
+                }
             return self.performance_metrics.copy()
     
     def get_slow_operations(self, limit: Optional[int] = None) -> List[OperationTrace]:
@@ -473,6 +488,26 @@ class PerformanceProfiler:
             self.logger.info(f"Slow query threshold set to {threshold}s")
         else:
             raise ValueError("Slow query threshold must be positive")
+    
+    async def cleanup(self):
+        """Cleanup performance profiler resources"""
+        try:
+            # Cleanup old traces
+            self._cleanup_old_traces()
+            
+            # Clear active operations
+            self._active_operations.clear()
+            
+            # Clear performance metrics
+            self.performance_metrics.clear()
+            
+            # Clear slow operations
+            self.slow_operations.clear()
+            
+            self.logger.info("Performance profiler cleaned up successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to cleanup performance profiler: {e}")
+            raise
 
 
 class OperationProfilerContext:

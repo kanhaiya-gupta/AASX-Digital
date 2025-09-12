@@ -491,7 +491,7 @@ class HealthMonitor:
         else:
             return HealthStatus.HEALTHY
     
-    def get_health_summary(self) -> Dict[str, Any]:
+    async def get_health_summary(self) -> Dict[str, Any]:
         """Get comprehensive health summary"""
         overall_status = self.get_overall_health()
         
@@ -532,7 +532,43 @@ class HealthMonitor:
         
         return summary
     
-    def start_monitoring(self):
+    async def get_component_health(self, component_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get health status for a specific component.
+        
+        Args:
+            component_name: Name of the component to check
+            
+        Returns:
+            Component health data or None if component not found
+        """
+        try:
+            if component_name not in self.component_health:
+                # Run a health check for this component if it exists
+                if component_name in self.health_checks:
+                    await self.run_health_check(component_name)
+                else:
+                    return None
+            
+            health = self.component_health.get(component_name)
+            if not health:
+                return None
+            
+            return {
+                "name": health.name,
+                "status": health.status.value,
+                "last_check": health.last_check.isoformat() if health.last_check else None,
+                "response_time": health.response_time,
+                "details": health.details,
+                "error_message": health.error_message,
+                "metadata": health.metadata
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error getting component health for {component_name}: {e}")
+            return None
+    
+    async def start_monitoring(self):
         """Start automatic health monitoring"""
         if self._running:
             return
@@ -541,7 +577,7 @@ class HealthMonitor:
         self._monitoring_task = asyncio.create_task(self._monitoring_loop())
         self.logger.info("Started health monitoring")
     
-    def stop_monitoring(self):
+    async def stop_monitoring(self):
         """Stop automatic health monitoring"""
         if not self._running:
             return
@@ -572,6 +608,23 @@ class HealthMonitor:
                 self.logger.error(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(5)  # Wait before retrying
     
+    async def cleanup(self):
+        """Cleanup health monitor resources"""
+        try:
+            # Stop monitoring if running
+            await self.stop_monitoring()
+            
+            # Clear health checks and component health
+            self.health_checks.clear()
+            self.component_health.clear()
+            
+            self.logger.info("Health monitor cleaned up successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to cleanup health monitor: {e}")
+            raise
+    
     def __del__(self):
         """Cleanup on destruction"""
-        self.stop_monitoring()
+        # Note: Cannot call async methods in destructor
+        # The monitoring task will be cleaned up by the event loop
+        pass

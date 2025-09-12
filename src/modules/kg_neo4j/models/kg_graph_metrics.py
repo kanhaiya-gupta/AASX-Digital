@@ -6,10 +6,10 @@ Supports real-time monitoring, ML training metrics, and enterprise-grade analyti
 Enhanced with computed fields and business intelligence methods.
 """
 
-from src.engine.models.engine_base_model import EngineBaseModel
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
-from pydantic import Field, ConfigDict, computed_field
+from pydantic import BaseModel, Field, ConfigDict, computed_field
 import uuid
 import asyncio
 
@@ -22,12 +22,22 @@ class KGGraphMetrics(EngineBaseModel):
     Supports real-time monitoring, ML training metrics, and enterprise-grade analytics.
     """
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # Disable protected namespace warnings for Pydantic v2
+        arbitrary_types_allowed=True
+    )
+    
+
     
     # Primary Identification
-    metric_id: int = Field(..., description="Unique metric identifier")
+    metric_id: Optional[int] = Field(default=None, description="Unique metric identifier (auto-generated if not provided)")
     graph_id: str = Field(..., description="Reference to kg_graph_registry")
     timestamp: datetime = Field(..., description="Timestamp when metrics were recorded")
+    
+    # Organizational Hierarchy (REQUIRED for proper access control)
+    org_id: str = Field(..., description="Organization ID for access control and multi-tenancy")
+    dept_id: str = Field(..., description="Department ID for access control and organizational hierarchy")
     
     # Real-time Health Metrics (Framework Health)
     health_score: Optional[int] = Field(default=None, ge=0, le=100, description="Real-time health score (0-100)")
@@ -220,11 +230,11 @@ class KGGraphMetrics(EngineBaseModel):
     )
     
     # Additional Enterprise Fields (Complete coverage)
-    metric_type: str = Field(default="standard", description="Type of metric being tracked")
+    metric_type: str = Field(default="enterprise", description="Type of metric being tracked")
     metric_timestamp: Optional[datetime] = Field(default=None, description="Specific timestamp for the metric")
-    compliance_type: str = Field(default="standard", description="Type of compliance being tracked")
+    compliance_type: str = Field(default="enterprise", description="Type of compliance being tracked")
     security_event_type: str = Field(default="none", description="Type of security event")
-    performance_metric: str = Field(default="standard", description="Specific performance metric identifier")
+    performance_metric: str = Field(default="enterprise", description="Specific performance metric identifier")
     performance_value: Optional[float] = Field(default=None, description="Actual performance value")
     
     # Time-based Analytics (Framework Time Analysis)

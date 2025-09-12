@@ -25,9 +25,9 @@ class AIRAGETLIntegration:
     ) -> Dict[str, Any]:
         """Process ETL output with AI/RAG processors"""
         try:
-            from src.ai_rag.processors import ProcessorManager
-            from src.ai_rag.embedding_models.text_embeddings import TextEmbeddingManager
-            from src.ai_rag.vector_db.qdrant_client import QdrantClient
+            from ..processors import ProcessorManager
+            from ..embedding_models.text_embeddings import TextEmbeddingManager
+            from ..vector_db.qdrant_client import QdrantClient
             from src.shared.database_manager import DatabaseProjectManager
             
             # Get project metadata for human-readable information
@@ -39,7 +39,7 @@ class AIRAGETLIntegration:
             text_embedding_manager = TextEmbeddingManager()
             
             # Initialize Qdrant with config
-            from src.ai_rag.config import VECTOR_DB_CONFIG
+            from ..config import VECTOR_DB_CONFIG
             vector_db_config = {
                 'host': VECTOR_DB_CONFIG['host'],
                 'port': VECTOR_DB_CONFIG['port'],

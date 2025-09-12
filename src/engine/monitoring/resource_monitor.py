@@ -472,17 +472,17 @@ class ResourceMonitor:
             self._disk_threshold = disk
             self.logger.info(f"Disk threshold set to {disk}%")
     
-    def start_monitoring(self):
-        """Start automatic resource monitoring"""
-        if self._running:
+    async def start_monitoring(self):
+        """Start resource monitoring"""
+        if self._monitoring_task and not self._monitoring_task.done():
             return
         
         self._running = True
         self._monitoring_task = asyncio.create_task(self._monitoring_loop())
         self.logger.info("Started resource monitoring")
     
-    def stop_monitoring(self):
-        """Stop automatic resource monitoring"""
+    async def stop_monitoring(self):
+        """Stop resource monitoring"""
         if not self._running:
             return
         
@@ -585,4 +585,6 @@ class ResourceMonitor:
     
     def __del__(self):
         """Cleanup on destruction"""
-        self.stop_monitoring()
+        # Note: Cannot call async methods in destructor
+        # The monitoring task will be cleaned up by the event loop
+        pass

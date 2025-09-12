@@ -8,8 +8,8 @@ Represents relationships between nodes in the knowledge graph.
 import json
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
-from pydantic import BaseModel, Field, validator, root_validator
-from src.engine.models.base_model import BaseModel as EngineBaseModel
+from pydantic import BaseModel, Field, validator, model_validator
+from src.engine.models.base_model import EngineBaseModel
 
 
 class GraphEdge(EngineBaseModel):
@@ -154,25 +154,22 @@ class GraphEdge(EngineBaseModel):
             raise ValueError('weight must be between 0.0 and 10.0')
         return v
     
-    @root_validator
-    def validate_properties_json(cls, values):
+    @model_validator(mode='after')
+    def validate_properties_json(self):
         """Validate that properties is valid JSON."""
-        properties = values.get('properties')
-        if properties:
+        if self.properties:
             try:
-                json.loads(properties)
+                json.loads(self.properties)
             except json.JSONDecodeError:
                 raise ValueError('properties must be valid JSON')
-        return values
+        return self
     
-    @root_validator
-    def validate_source_target_different(cls, values):
+    @model_validator(mode='after')
+    def validate_source_target_different(self):
         """Validate that source and target nodes are different."""
-        source_id = values.get('source_node_id')
-        target_id = values.get('target_node_id')
-        if source_id and target_id and source_id == target_id:
+        if self.source_node_id and self.target_node_id and self.source_node_id == self.target_node_id:
             raise ValueError('source_node_id and target_node_id must be different')
-        return values
+        return self
     
     # Business Logic Methods
     def add_property(self, key: str, value: Any) -> None:

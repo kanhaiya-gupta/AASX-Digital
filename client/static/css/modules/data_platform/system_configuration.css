@@ -1,0 +1,501 @@
+/* System Configuration Component Styles */
+
+.dp-system-configuration {
+    padding: 0;
+}
+
+/* Analytics Header */
+.dp-system-configuration .dp-analytics-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.dp-system-configuration .dp-analytics-header h2 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.8rem;
+}
+
+.dp-system-configuration .dp-analytics-header p {
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.dp-system-configuration .dp-analytics-header .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.dp-system-configuration .dp-analytics-header .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Metric Cards */
+.dp-system-configuration .dp-metric-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.dp-system-configuration .dp-metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.dp-system-configuration .dp-metric-card .metric-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+
+.dp-system-configuration .dp-metric-card .metric-content h3 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.dp-system-configuration .dp-metric-card .metric-content p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Configuration Tabs */
+.dp-system-configuration .dp-config-tabs {
+    margin-bottom: 2rem;
+}
+
+.dp-system-configuration .dp-config-tabs .nav-tabs {
+    border: none;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.dp-system-configuration .dp-config-tabs .nav-tabs .nav-link {
+    border: none;
+    border-radius: 8px;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    margin: 0 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.dp-system-configuration .dp-config-tabs .nav-tabs .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.dp-system-configuration .dp-config-tabs .nav-tabs .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.dp-system-configuration .dp-config-tabs .nav-tabs .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* Configuration Sections */
+.dp-system-configuration .dp-config-section {
+    margin-bottom: 2rem;
+}
+
+.dp-system-configuration .dp-config-section .card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.dp-system-configuration .dp-config-section .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.dp-system-configuration .dp-config-section .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px 12px 0 0;
+    padding: 1rem 1.5rem;
+}
+
+.dp-system-configuration .dp-config-section .card-header h5 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.dp-system-configuration .dp-config-section .card-header h5 i {
+    color: #667eea;
+}
+
+.dp-system-configuration .dp-config-section .card-body {
+    padding: 1.5rem;
+}
+
+/* Form Controls */
+.dp-system-configuration .form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.dp-system-configuration .form-control,
+.dp-system-configuration .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.dp-system-configuration .form-control:focus,
+.dp-system-configuration .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.dp-system-configuration .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.dp-system-configuration .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Performance Metrics */
+.dp-system-configuration .performance-metric {
+    text-align: center;
+    padding: 1rem;
+}
+
+.dp-system-configuration .performance-metric h4 {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.dp-system-configuration .performance-metric p {
+    color: #7f8c8d;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.dp-system-configuration .performance-metric .progress {
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+}
+
+.dp-system-configuration .performance-metric .progress-bar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+/* Backup Status */
+.dp-system-configuration .backup-status {
+    text-align: center;
+    padding: 1rem;
+}
+
+.dp-system-configuration .backup-status i {
+    margin-bottom: 0.5rem;
+}
+
+.dp-system-configuration .backup-status h6 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.dp-system-configuration .backup-status p {
+    color: #7f8c8d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* System Health Status */
+.dp-system-configuration .system-health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.dp-system-configuration .health-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.dp-system-configuration .health-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dp-system-configuration .health-item.healthy {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.dp-system-configuration .health-item.warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.dp-system-configuration .health-item.critical {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.dp-system-configuration .health-item i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.dp-system-configuration .health-item span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.dp-system-configuration .health-summary {
+    text-align: center;
+    padding: 1rem;
+}
+
+.dp-system-configuration .health-summary h6 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.dp-system-configuration .health-summary .health-score {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.dp-system-configuration .health-summary p {
+    color: #7f8c8d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dp-system-configuration .dp-analytics-header {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .dp-system-configuration .dp-analytics-header .text-end {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+    
+    .dp-system-configuration .dp-config-tabs .nav-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .dp-system-configuration .dp-config-tabs .nav-tabs .nav-link {
+        margin-bottom: 0.5rem;
+        flex: 1 1 auto;
+        text-align: center;
+    }
+    
+    .dp-system-configuration .system-health-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .dp-system-configuration .performance-metric {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .dp-system-configuration .dp-analytics-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .dp-system-configuration .dp-metric-card {
+        padding: 1rem;
+    }
+    
+    .dp-system-configuration .dp-metric-card .metric-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .dp-system-configuration .dp-metric-card .metric-content h3 {
+        font-size: 1.5rem;
+    }
+    
+    .dp-system-configuration .system-health-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .dp-system-configuration .dp-config-section .card {
+        background: #2c3e50;
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .dp-config-section .card-header {
+        background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .dp-config-section .card-header h5 {
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .form-label {
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .form-control,
+    .dp-system-configuration .form-select {
+        background: #34495e;
+        border-color: #34495e;
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .dp-metric-card {
+        background: #2c3e50;
+    }
+    
+    .dp-system-configuration .dp-metric-card .metric-content h3 {
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .dp-metric-card .metric-content p {
+        color: #bdc3c7;
+    }
+    
+    .dp-system-configuration .performance-metric h4 {
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .performance-metric p {
+        color: #bdc3c7;
+    }
+    
+    .dp-system-configuration .backup-status h6 {
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .backup-status p {
+        color: #bdc3c7;
+    }
+    
+    .dp-system-configuration .health-summary h6 {
+        color: #ecf0f1;
+    }
+    
+    .dp-system-configuration .health-summary p {
+        color: #bdc3c7;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .dp-system-configuration .dp-analytics-header {
+        border: 2px solid #000;
+    }
+    
+    .dp-system-configuration .dp-metric-card {
+        border: 2px solid #000;
+    }
+    
+    .dp-system-configuration .dp-config-section .card {
+        border: 2px solid #000;
+    }
+    
+    .dp-system-configuration .dp-config-section .card-header {
+        border-bottom: 2px solid #000;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .dp-system-configuration .dp-metric-card,
+    .dp-system-configuration .dp-config-section .card,
+    .dp-system-configuration .dp-analytics-header .btn,
+    .dp-system-configuration .health-item,
+    .dp-system-configuration .performance-metric .progress-bar {
+        transition: none;
+    }
+    
+    .dp-system-configuration .dp-metric-card:hover,
+    .dp-system-configuration .dp-config-section .card:hover,
+    .dp-system-configuration .health-item:hover {
+        transform: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .dp-system-configuration .dp-analytics-header {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
+    
+    .dp-system-configuration .dp-config-tabs {
+        display: none !important;
+    }
+    
+    .dp-system-configuration .dp-config-section .tab-pane {
+        display: block !important;
+        page-break-inside: avoid;
+    }
+    
+    .dp-system-configuration .btn {
+        display: none !important;
+    }
+}
+

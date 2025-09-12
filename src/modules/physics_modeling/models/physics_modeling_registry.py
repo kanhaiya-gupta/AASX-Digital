@@ -8,19 +8,26 @@ Enhanced with enterprise-grade computed fields, business intelligence methods, a
 
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-from pydantic import Field, validator, computed_field
-from src.engine.models import BaseModel
+from pydantic import BaseModel, Field, validator, computed_field, ConfigDict
+from src.engine.models.base_model import EngineBaseModel, ModelObserver
 import uuid
 import asyncio
 
 
-class PhysicsModelingRegistry(BaseModel):
+class PhysicsModelingRegistry(EngineBaseModel):
     """
     Physics Modeling Registry Model
     
     Represents traditional physics models with integrated enterprise features
     for compliance tracking, security monitoring, and performance analytics.
     """
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        arbitrary_types_allowed=True,
+        extra="allow",  # Allow extra fields to prevent validation errors
+    )
     
     # Primary Identification
     registry_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique registry identifier")
@@ -146,6 +153,10 @@ class PhysicsModelingRegistry(BaseModel):
     relationships: Dict[str, Any] = Field(default_factory=dict, description="JSON object of relationship objects")
     dependencies: Dict[str, Any] = Field(default_factory=dict, description="JSON object of dependency objects")
     physics_instances: Dict[str, Any] = Field(default_factory=dict, description="JSON object of physics instance objects")
+    
+    # Results and Metrics (JSON objects)
+    results_metadata: Dict[str, Any] = Field(default_factory=dict, description="JSON: metadata about simulation results")
+    physics_specific_metrics: Dict[str, Any] = Field(default_factory=dict, description="JSON: physics-specific performance metrics")
     
     # Computed Fields for Business Intelligence
     @computed_field
@@ -327,14 +338,6 @@ class PhysicsModelingRegistry(BaseModel):
             "maintenance_type": "preventive" if self.overall_health_score > 70 else "corrective",
             "estimated_duration_hours": 2 if self.overall_health_score > 80 else 4 if self.overall_health_score > 60 else 8
         }
-    
-    class Config:
-        """Pydantic configuration"""
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
-        validate_assignment = True
-        arbitrary_types_allowed = True
     
     # Validators
     @validator('physics_category')
@@ -537,6 +540,77 @@ class PhysicsModelingRegistry(BaseModel):
         valid_trends = ['improving', 'stable', 'declining', 'fluctuating']
         if v not in valid_trends:
             raise ValueError(f'Performance trend must be one of: {valid_trends}')
+        return v
+    
+    # JSON field validators to handle string inputs
+    @validator('solver_parameters', 'mesh_configuration', 'convergence_criteria', 'solver_optimization',
+               'governing_equations', 'boundary_conditions', 'initial_conditions', 'material_properties',
+               'physical_constants', 'audit_details', 'security_details', 'optimization_suggestions',
+               'enterprise_metrics', 'registry_config', 'registry_metadata', 'custom_attributes',
+               'tags', 'relationships', 'dependencies', 'physics_instances',
+               'results_metadata', 'physics_specific_metrics',
+               pre=True)
+    def validate_json_fields(cls, v):
+        """Convert string JSON to dict if needed"""
+        if isinstance(v, str):
+            try:
+                import json
+                return json.loads(v)
+            except (json.JSONDecodeError, ValueError):
+                return {}
+        elif v is None:
+            return {}
+        return v
+    
+    @validator('tags', pre=True)
+    def validate_tags(cls, v):
+        """Convert string tags to dict if needed"""
+        if isinstance(v, str):
+            try:
+                import json
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return {"tags": parsed}
+                return parsed
+            except (json.JSONDecodeError, ValueError):
+                return {}
+        elif v is None:
+            return {}
+        return v
+    
+    @validator('results_metadata', pre=True)
+    def validate_results_metadata(cls, v):
+        """Convert string results_metadata to dict if needed"""
+        if isinstance(v, str):
+            try:
+                import json
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, dict) else {}
+            except (json.JSONDecodeError, ValueError):
+                return {}
+        elif v is None:
+            return {}
+        return v
+    
+    @validator('physics_specific_metrics', pre=True)
+    def validate_physics_specific_metrics(cls, v):
+        """Convert string physics_specific_metrics to dict if needed"""
+        if isinstance(v, str):
+            try:
+                import json
+                parsed = json.loads(v)
+                return parsed if isinstance(parsed, dict) else {}
+            except (json.JSONDecodeError, ValueError):
+                return {}
+        elif v is None:
+            return {}
+        return v
+    
+    @validator('created_at', 'updated_at', 'last_accessed_at', 'last_modified_at', pre=True)
+    def validate_datetime_fields(cls, v):
+        """Convert datetime to string if needed"""
+        if isinstance(v, datetime):
+            return v.isoformat()
         return v
     
     # Basic Pydantic methods only

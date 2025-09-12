@@ -7,19 +7,18 @@ comprehensive error handling, and robust integration capabilities.
 """
 
 # Core services
-from .services.ai_rag_orchestrator import AIRAGOrchestrator
-from .services.pipeline_service import PipelineService
-from .services.integration_service import IntegrationService
-from .services.monitoring_service import MonitoringService
+from .services.ai_rag_orchestrator import AIRagOrchestrator
+from .services.etl_integration import AIRAGETLIntegration
+from .services.vector_embedding_upload import VectorEmbeddingUploader
 
 # Core business logic
-from .core.ai_rag_registry_service import AIRAGRegistryService
-from .core.ai_rag_metrics_service import AIRAGMetricsService
+from .core.ai_rag_registry_service import AIRagRegistryService
+from .services.ai_rag_metrics_service import AIRagMetricsService
 from .core.document_service import DocumentService
 from .core.embedding_service import EmbeddingService
 from .core.retrieval_service import RetrievalService
 from .core.generation_service import GenerationService
-from .core.ai_rag_graph_metadata_service import AIRAGGraphMetadataService
+from .core.ai_rag_graph_metadata_service import AIRagGraphMetadataService
 
 # Event system
 from .events.event_bus import EventBus
@@ -55,21 +54,20 @@ from .utils.performance_utils import *
 
 __all__ = [
     # Main orchestrator
-    'AIRAGOrchestrator',
+    'AIRagOrchestrator',
     
     # Service layer
-    'PipelineService',
-    'IntegrationService', 
-    'MonitoringService',
+    'AIRAGETLIntegration',
+    'VectorEmbeddingUploader',
     
     # Core services
-    'AIRAGRegistryService',
-    'AIRAGMetricsService',
+    'AIRagRegistryService',
+    'AIRagMetricsService',
     'DocumentService',
     'EmbeddingService',
     'RetrievalService',
     'GenerationService',
-    'AIRAGGraphMetadataService',
+    'AIRagGraphMetadataService',
     
     # Event system
     'EventBus',

@@ -8,9 +8,9 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 from src.shared.utils import setup_logging
-from src.ai_rag.config import EMBEDDING_MODELS_CONFIG
+from ..config import EMBEDDING_MODELS_CONFIG
 
-from ..vector_embedding_upload import VectorEmbeddingUploader
+from ..services.vector_embedding_upload import VectorEmbeddingUploader
 from .rag_technique_manager import RAGTechniqueManager
 
 

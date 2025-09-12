@@ -16,7 +16,7 @@ import logging
 from typing import Dict, Any, List
 from dataclasses import dataclass
 
-from src.physics_modeling.core.dynamic_types import (
+from ...core.dynamic_types import (
     PhysicsPlugin, PhysicsParameter, PhysicsEquation, 
     SolverCapability, DynamicPhysicsType, ParameterType
 )

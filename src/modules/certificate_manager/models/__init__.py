@@ -19,7 +19,7 @@ from .certificates_registry import (
 )
 
 from .certificates_versions import (
-    CertificateVersion,
+    CertificateVersions,
     VersionMetadata,
     DataSnapshots,
     ChangeTracking,

@@ -7,18 +7,21 @@ Pure async implementation for modern architecture.
 Enhanced with enterprise-grade computed fields, business intelligence methods, and full Certificate Manager method parity.
 """
 
-from src.engine.models.engine_base_model import EngineBaseModel
+from pydantic import BaseModel, computed_field, Field, ConfigDict
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timezone
 import uuid
 import asyncio
-from pydantic import computed_field, Field, ConfigDict
 
 
-class TwinRegistryMetrics(EngineBaseModel):
+class TwinRegistryMetrics(BaseModel):
     """Model for twin registry metrics and performance data - Pure async implementation"""
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),  # ✅ Fix Pydantic v2 namespace conflicts
+        arbitrary_types_allowed=True
+    )
     
     # Primary Identification
     metric_id: Optional[int] = Field(default=None, description="Primary key (INTEGER AUTOINCREMENT)")
@@ -104,6 +107,11 @@ class TwinRegistryMetrics(EngineBaseModel):
     performance_optimization_status: str = Field(default="none", description="Optimization status: none, scheduled, in_progress, completed")
     resource_optimization_efficiency: float = Field(default=0.0, ge=0.0, le=1.0, description="0.0-1.0 optimization efficiency")
     enterprise_analytics_metadata: Dict[str, Any] = Field(default={}, description="JSON: enterprise analytics data")
+    
+    # Multi-Tenant Support (REQUIRED for RBAC)
+    user_id: str = Field(..., description="User ID for access control")
+    org_id: str = Field(..., description="Organization ID for multi-tenant isolation")
+    dept_id: str = Field(..., description="Department ID for department-level access control")
     
     # Timestamps
     created_at: Optional[datetime] = Field(default=None, description="Creation timestamp")
@@ -844,8 +852,8 @@ class TwinRegistryMetrics(EngineBaseModel):
             return {"error": f"Unsupported format: {format}"}
 
 
-class MetricsQuery(EngineBaseModel):
-    """Query model for filtering metrics with comprehensive enterprise filters"""
+class TwinMetricsQuery(BaseModel):
+    """Query model for twin registry metrics with comprehensive filtering options"""
     
     model_config = ConfigDict(from_attributes=True)
     
@@ -979,7 +987,7 @@ class MetricsQuery(EngineBaseModel):
         }
 
 
-class MetricsSummary(EngineBaseModel):
+class TwinMetricsSummary(BaseModel):
     """Summary model for metrics statistics with comprehensive enterprise analytics"""
     
     model_config = ConfigDict(from_attributes=True)
@@ -1031,7 +1039,7 @@ class MetricsSummary(EngineBaseModel):
     # Time-based Summary
     metrics_by_hour: Dict[int, int]
     metrics_by_day: Dict[int, int]
-    metrics_by_month: Dict[int] = int
+    metrics_by_month: Dict[int, int]
     peak_usage_hours: List[int] = []
     low_usage_hours: List[int] = []
     
@@ -1183,3 +1191,35 @@ class MetricsSummary(EngineBaseModel):
             recommendations.append("Implement storage optimization and cleanup procedures")
             
         self.optimization_recommendations = recommendations
+
+# Standalone factory function for creating new twin registry metrics
+async def create_metrics(
+    registry_id: str,
+    health_score: Optional[int] = None,
+    response_time_ms: Optional[float] = None,
+    **kwargs
+) -> TwinRegistryMetrics:
+    """
+    Async factory function to create a new twin registry metrics entry.
+    
+    Args:
+        registry_id: Reference to twin_registry table
+        health_score: Current health score (0-100)
+        response_time_ms: Response time in milliseconds
+        **kwargs: Additional fields to set
+        
+    Returns:
+        TwinRegistryMetrics: New twin registry metrics instance
+    """
+    now = datetime.now(timezone.utc)
+    
+    # Simulate async operation
+    await asyncio.sleep(0.001)
+    
+    return TwinRegistryMetrics(
+        registry_id=registry_id,
+        timestamp=now,
+        health_score=health_score,
+        response_time_ms=response_time_ms,
+        **kwargs
+    )

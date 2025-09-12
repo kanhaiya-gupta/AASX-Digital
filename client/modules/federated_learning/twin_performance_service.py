@@ -11,9 +11,9 @@ from datetime import datetime, timedelta
 import json
 
 # Import shared services and database managers (following twin_registry pattern)
-from src.federated_learning.core.federated_learning_service import FederatedLearningService
+from src.modules.federated_learning.core.federated_learning_service import FederatedLearningService
 # Migrated to new twin registry system
-from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.database.connection_manager import DatabaseConnectionManager
 from src.shared.database.base_manager import BaseDatabaseManager
 

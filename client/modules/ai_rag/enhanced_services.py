@@ -15,11 +15,11 @@ from src.shared.services.file_service import FileService
 from src.shared.services.project_service import ProjectService
 from src.shared.services.use_case_service import UseCaseService
 # Migrated to new twin registry system
-from src.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
+from src.modules.twin_registry.core.twin_registry_service import TwinRegistryService as CoreTwinRegistryService
 from src.shared.repositories.file_repository import FileRepository
 from src.shared.repositories.project_repository import ProjectRepository
 from src.shared.repositories.use_case_repository import UseCaseRepository
-from src.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
+from src.modules.twin_registry.core.twin_lifecycle_service import TwinLifecycleService
 
 logger = logging.getLogger(__name__)
 

@@ -26,32 +26,42 @@ from .models.certificate_export import CertificateExport, ExportFormat, ExportSt
 __version__ = "1.0.0"
 __author__ = "AASX Digital Twin Analytics Framework"
 
-# Main certificate manager instance
-certificate_manager = CertificateManager()
+# Main certificate manager instance - will be created when needed
+certificate_manager = None
 
-def get_certificate_manager() -> CertificateManager:
+def get_certificate_manager(db_session=None) -> CertificateManager:
     """Get the main certificate manager instance."""
+    global certificate_manager
+    if certificate_manager is None and db_session is not None:
+        certificate_manager = CertificateManager(db_session)
+    elif certificate_manager is None:
+        raise ValueError("Database session is required to initialize CertificateManager")
     return certificate_manager
 
-def create_certificate(twin_id: str, **kwargs) -> Certificate:
+def create_certificate(twin_id: str, db_session=None, **kwargs) -> Certificate:
     """Create a new certificate for a digital twin."""
-    return certificate_manager.create_certificate(twin_id, **kwargs)
+    manager = get_certificate_manager(db_session)
+    return manager.create_certificate(twin_id, **kwargs)
 
-def get_certificate(certificate_id: str) -> Certificate:
+def get_certificate(certificate_id: str, db_session=None) -> Certificate:
     """Get a certificate by ID."""
-    return certificate_manager.get_certificate(certificate_id)
+    manager = get_certificate_manager(db_session)
+    return manager.get_certificate(certificate_id)
 
-def update_certificate(certificate_id: str, **kwargs) -> Certificate:
+def update_certificate(certificate_id: str, db_session=None, **kwargs) -> Certificate:
     """Update a certificate."""
-    return certificate_manager.update_certificate(certificate_id, **kwargs)
+    manager = get_certificate_manager(db_session)
+    return manager.update_certificate(certificate_id, **kwargs)
 
-def delete_certificate(certificate_id: str) -> bool:
+def delete_certificate(certificate_id: str, db_session=None) -> bool:
     """Delete a certificate."""
-    return certificate_manager.delete_certificate(certificate_id)
+    manager = get_certificate_manager(db_session)
+    return manager.delete_certificate(certificate_id)
 
-def list_certificates(**filters) -> list[Certificate]:
+def list_certificates(db_session=None, **filters) -> list[Certificate]:
     """List certificates with optional filters."""
-    return certificate_manager.list_certificates(**filters)
+    manager = get_certificate_manager(db_session)
+    return manager.list_certificates(**filters)
 
 __all__ = [
     'CertificateManager',
